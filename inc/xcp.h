@@ -29,14 +29,27 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define XCP_VERSION_MAJOR       (2)
-#define XCP_VERSION_RELEASE     (1)
+#include "comm.h"
 
-#define XCP_LSDU_LEN            (8)
+#define XCP_VERSION_MAJOR       (1)
+#define XCP_VERSION_RELEASE     (0)
 
 #define XCP_DEBUG_BUILD         (1)
 #define XCP_RELEASE_BUILD       (2)
 
+#define XCP_ON                  (1)
+#define XCP_OFF                 (0)
+
+
+/*
+**  Available Resources.
+*/
+#define XCP_RESOURCE_PGM        (16)
+#define XCP_RESOURCE_STIM       (8)
+#define XCP_RESOURCE_DAQ        (4)
+#define XCP_RESOURCE_CAL_PAG    (1)
+
+typedef void (*Xcp_ServerCommandType)(Xcp_XPDUType const * const pdu);
 
 /*
 ** Global Types.
@@ -148,6 +161,7 @@ typedef enum tagXcp_CommandType {
 
 } Xcp_CommandType;
 
+
 typedef enum tagXcp_ReturnType {
     ERR_CMD_SYNCH           = 0x00, // Command processor synchronization.                            S0
                                     //
@@ -212,10 +226,11 @@ typedef struct tagXcp_ODTType {
 
 } Xcp_ODTType;
 
+/*
 typedef struct tagXcp_DAQListType {
 
 } Xcp_DAQListype;
-
+*/
 
 typedef void(*Xcp_SendCalloutType)(Xcp_MessageObjectType const * cmoOut);
 
@@ -223,16 +238,17 @@ typedef void(*Xcp_SendCalloutType)(Xcp_MessageObjectType const * cmoOut);
 ** Global Functions.
 */
 void Xcp_Init(void);
-void Xcp_DispatchCommand(Xcp_MessageObjectType const * cmoIn);
+void Xcp_DispatchCommand(Xcp_XPDUType const * const cmd);
 void Xcp_SendCmo(Xcp_MessageObjectType const * cmoOut);
 
 
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
 uint32_t Xcp_GetMta0(void);
 uint32_t Xcp_GetMta1(void);
-void Xcp_SetSendCallout(Xcp_SendCalloutType * callout);
-void Xcp_DumpMessageObject(Xcp_MessageObjectType const * cmo);
+void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
+void Xcp_DumpMessageObject(Xcp_XPDUType const * pdu);
 
+#if 0
 #if !defined(TRUE)
 #define TRUE    (1)
 #endif
@@ -240,8 +256,9 @@ void Xcp_DumpMessageObject(Xcp_MessageObjectType const * cmo);
 #if !defined(FALSE)
 #define FALSE   (0)
 #endif
+#endif
 
-#include "ccp_config.h"
+#include "xcp_config.h"
 
 #endif /* __CXCP_H */
 
