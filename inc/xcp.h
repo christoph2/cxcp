@@ -31,8 +31,8 @@
 
 #include "comm.h"
 
-#define XCP_VERSION_MAJOR       (1)
-#define XCP_VERSION_RELEASE     (0)
+#define XCP_PROTOCOL_VERSION_MAJOR       (1)
+#define XCP_PROTOCOL_VERSION_RELEASE     (0)
 
 #define XCP_DEBUG_BUILD         (1)
 #define XCP_RELEASE_BUILD       (2)
