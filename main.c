@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "xcp.h"
-#include "comm.h"
+#include "xcp_tl.h"
 
 
 void sig_handler(int s){
@@ -12,6 +12,14 @@ void sig_handler(int s){
     XcpComm_DeInit();
     exit(1);
 }
+
+
+#pragma bss_seg(push, /*stack1,*/ ".arbeitsseite")
+int in_der_arbeitsseite;
+
+#pragma bss_seg(pop/*, stack1*/)
+int bss_normal;
+
 
 int main()
 {
@@ -31,7 +39,7 @@ int main()
     //  printf("\ncan't catch SIGINT\n");
     //}
 
-    XcpComm_Init();
+    Xcp_Init();
     //for(;;) {
     //}
 
@@ -39,7 +47,7 @@ int main()
     fflush(stdout);
 //#if 0
     for (;;) {
-        XcpComm_Task();
+        XcpTl_Task();
     }
 //#endif
     XcpComm_DeInit();

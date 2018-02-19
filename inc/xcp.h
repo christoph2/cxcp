@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "comm.h"
+#include "xcp_tl.h"
 
 #define XCP_PROTOCOL_VERSION_MAJOR       (1)
 #define XCP_PROTOCOL_VERSION_RELEASE     (0)
@@ -49,7 +49,33 @@
 #define XCP_RESOURCE_DAQ        (4)
 #define XCP_RESOURCE_CAL_PAG    (1)
 
-typedef void (*Xcp_ServerCommandType)(Xcp_XPDUType const * const pdu);
+
+#define XCP_BYTE_ORDER_INTEL    (0)
+#define XCP_BYTE_ORDER_MOTOROLA (1)
+
+#define XCP_SLAVE_BLOCK_MODE    (0x40)
+
+#define XCP_ADDRESS_GRANULARITY_0   (2)
+#define XCP_ADDRESS_GRANULARITY_1   (4)
+
+#define XCP_ADDRESS_GRANULARITY_BYTE    (0)
+#define XCP_ADDRESS_GRANULARITY_WORD    (XCP_ADDRESS_GRANULARITY_0)
+#define XCP_ADDRESS_GRANULARITY_DWORD   (XCP_ADDRESS_GRANULARITY_1)
+
+#define XCP_OPTIONAL_COMM_MODE          (0x80)
+
+#define XCP_MASTER_BLOCK_MODE           (1)
+#define XCP_INTERLEAVED_MODE            (2)
+
+#if defined(_MSC_VER)
+#define INLINE __inline
+#else
+#define INLINE inline
+#endif // defined(_MSC_VER)
+
+
+
+typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
 
 /*
 ** Global Types.
@@ -203,11 +229,6 @@ typedef enum tagXcp_SlaveAccessType {
     CAL = 0x01
 } Xcp_SlaveAccessType;
 
-typedef struct tagXcp_MessageObjectType {
-    uint32_t canID;
-    uint8_t dlc;
-    uint8_t data[XCP_LSDU_LEN];
-} Xcp_MessageObjectType;
 
 typedef struct tagXcp_StationIDType {
     uint16_t len;
@@ -226,29 +247,41 @@ typedef struct tagXcp_ODTType {
 
 } Xcp_ODTType;
 
+
+typedef struct tagXcp_MtaType {
+    uint8_t ext;
+    uint32_t address;
+} Xcp_MtaType;
+
 /*
 typedef struct tagXcp_DAQListType {
 
 } Xcp_DAQListype;
 */
 
-typedef void(*Xcp_SendCalloutType)(Xcp_MessageObjectType const * cmoOut);
+typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 
 /*
 ** Global Functions.
 */
 void Xcp_Init(void);
-void Xcp_DispatchCommand(Xcp_XPDUType const * const cmd);
-void Xcp_SendCmo(Xcp_MessageObjectType const * cmoOut);
+void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
+void Xcp_SendCmo(Xcp_PDUType const * pdu);
 
 
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
-uint32_t Xcp_GetMta0(void);
-uint32_t Xcp_GetMta1(void);
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
-void Xcp_DumpMessageObject(Xcp_XPDUType const * pdu);
+void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 
-#if 0
+#if !defined(LOBYTE)
+#define LOBYTE(w)   ((w) & 0xff)
+#endif
+
+#if !defined(HIBYTE)
+#define HIBYTE(w)   (((w)  & 0xff00) >> 8)
+#endif
+
+//#if 0
 #if !defined(TRUE)
 #define TRUE    (1)
 #endif
@@ -256,7 +289,21 @@ void Xcp_DumpMessageObject(Xcp_XPDUType const * pdu);
 #if !defined(FALSE)
 #define FALSE   (0)
 #endif
-#endif
+//#endif
+
+
+#define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
+#define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)
+#define XCP_CHECKSUM_METHOD_XCP_ADD_14      (3)
+#define XCP_CHECKSUM_METHOD_XCP_ADD_22      (4)
+#define XCP_CHECKSUM_METHOD_XCP_ADD_24      (5)
+#define XCP_CHECKSUM_METHOD_XCP_ADD_44      (6)
+#define XCP_CHECKSUM_METHOD_XCP_CRC_16      (7)
+#define XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT (8)
+#define XCP_CHECKSUM_METHOD_XCP_CRC_32      (9)
+
+uint16_t Xcp_MakeWord(Xcp_PDUType const * const value, uint8_t offs);
+uint32_t Xcp_MakeDWord(Xcp_PDUType const * const value, uint8_t offs);
 
 #include "xcp_config.h"
 

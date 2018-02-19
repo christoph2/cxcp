@@ -36,12 +36,24 @@
 #define XCP_ENABLE_STD_COMMANDS                     XCP_ON
 #define XCP_ENABLE_INTERLEAVED_MODE                 XCP_OFF
 
+#define XCP_DRIVER_VERSION  10
+
+
+typedef struct tagXcp_DaqProcessorType {
+    bool running;
+} Xcp_DaqProcessorType;
+
 
 typedef struct tagXcp_StateType {
     bool connected;
     bool busy;
-    bool daqRunning;
+#if defined(XCP_ENABLE_DAQ_COMMANDS)
+    Xcp_DaqProcessorType daq;
+#endif
     bool programming;
+    uint8_t mode;
+    uint8_t protection;
+    Xcp_MtaType mta;
 } Xcp_StateType;
 
 
@@ -49,8 +61,7 @@ static Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
 
-static uint32_t Xcp_Mta;
-static uint8_t Xcp_MtaExtension;
+static Xcp_StateType Xcp_State;
 
 static Xcp_SendCalloutType Xcp_SendCallout = NULL;
 static const Xcp_StationIDType Xcp_StationID = { sizeof(XCP_STATION_ID), XCP_STATION_ID };
@@ -71,63 +82,114 @@ static uint8_t Xcp_SimulatedMemory[XCP_SIMULATED_MEMORY_SIZE];
 /*
 ** Local Function Prototypes.
 */
-static void Xcp_CommandNotImplemented_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_Connect_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_Disconnect_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetStatus_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_Synch_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetCommModeInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetId_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_SetRequest_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetSeed_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_Unlock_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_SetMta_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_Upload_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ShortUpload_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_BuildChecksum_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_TransportLayerCmd_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_UserCmd_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_Download_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_DownloadNext_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_DownloadMax_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ShortDownload_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ModifyBits_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_SetCalPage_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetCalPage_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetPagProcessorInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetSegmentInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetPageInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_SetSegmentMode_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetSegmentMode_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_CopyCalPage_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ClearDaqList_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_SetDaqPtr_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_WriteDaq_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_SetDaqListMode_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetDaqListMode_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_StartStopDaqList_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_StartStopSynch_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetDaqClock_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ReadDaq_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetDaqProcessorInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetDaqResolutionInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetDaqListInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetDaqEventInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_FreeDaq_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_AllocDaq_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_AllocOdt_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_AllocOdtEntry_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramStart_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramClear_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_Program_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramReset_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetPgmProcessorInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_GetSectorInfo_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramPrepare_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramFormat_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramNext_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramMax_Res(Xcp_XPDUType const * const pdu);
-static void Xcp_ProgramVerify_Res(Xcp_XPDUType const * const pdu);
+static Xcp_MtaType Xcp_GetNonPagedAddress(void * ptr);
+static void Xcp_SetMta(Xcp_MtaType mta);
+
+static void Xcp_ErrorResponse(uint8_t errorCode);
+
+static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
+static void Xcp_Connect_Res(Xcp_PDUType const * const pdu);
+static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu);
+static void Xcp_Synch_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetId_Res(Xcp_PDUType const * const pdu);
+static void Xcp_SetRequest_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetSeed_Res(Xcp_PDUType const * const pdu);
+static void Xcp_Unlock_Res(Xcp_PDUType const * const pdu);
+static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu);
+static void Xcp_Upload_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu);
+static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu);
+static void Xcp_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
+static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu);
+static void Xcp_Download_Res(Xcp_PDUType const * const pdu);
+static void Xcp_DownloadNext_Res(Xcp_PDUType const * const pdu);
+static void Xcp_DownloadMax_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ModifyBits_Res(Xcp_PDUType const * const pdu);
+static void Xcp_SetCalPage_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetCalPage_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetPagProcessorInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetSegmentInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetPageInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_SetSegmentMode_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetSegmentMode_Res(Xcp_PDUType const * const pdu);
+static void Xcp_CopyCalPage_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu);
+static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu);
+static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu);
+static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetDaqListMode_Res(Xcp_PDUType const * const pdu);
+static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu);
+static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ReadDaq_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetDaqProcessorInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetDaqListInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetDaqEventInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_FreeDaq_Res(Xcp_PDUType const * const pdu);
+static void Xcp_AllocDaq_Res(Xcp_PDUType const * const pdu);
+static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu);
+static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramStart_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramClear_Res(Xcp_PDUType const * const pdu);
+static void Xcp_Program_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramReset_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetPgmProcessorInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_GetSectorInfo_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramPrepare_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramFormat_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramNext_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramMax_Res(Xcp_PDUType const * const pdu);
+static void Xcp_ProgramVerify_Res(Xcp_PDUType const * const pdu);
+
+
+static void Xcp_SetMta(Xcp_MtaType mta)
+{
+    Xcp_State.mta = mta;
+}
+
+static Xcp_MtaType Xcp_GetNonPagedAddress(void * ptr)
+{
+    Xcp_MtaType mta;
+
+    mta.ext = 0;
+    mta.address = (uint32_t)ptr;
+    return mta;
+}
+
+void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
+{
+    if (dst.ext == 0 && src.ext == 0) {
+        printf("LEN: %u\n", len);
+        printf("dst: %08X src: %08x\n", dst.address, src.address);
+        memcpy((void*)dst.address, (void*)src.address, len);
+    } else {
+        // We need assistance...
+    }
+}
+
+static void Xcp_Upload(uint8_t len)
+{
+    //uint8_t len = pdu->data[1];
+    uint8_t * dataOut = XcpComm_GetOutPduPtr();
+    Xcp_MtaType dst;
+
+// TODO: RangeCheck / Blockmode!!!
+    dataOut[0] = 0xff;
+
+    dst.address = (uint32_t)(dataOut + 1);
+    dst.ext = 0;
+
+    Xcp_CopyMemory(dst, Xcp_State.mta, len);
+
+    Xcp_State.mta.address += len;   // Advance MTA.
+
+    XcpTl_SetPduOutLen(len);
+    XcpTl_SendPdu();
+}
 
 /*
 ** Big, fat jump table.
@@ -423,18 +485,49 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 ** Global Functions.
 */
 
+INLINE uint16_t Xcp_MakeWord(Xcp_PDUType const * const pdu, uint8_t offs)
+{
+  return (*(pdu->data + offs))        |
+    ((*(pdu->data + 1 + offs)) << 8);
+}
+
+INLINE uint32_t Xcp_MakeDWord(Xcp_PDUType const * const pdu, uint8_t offs)
+{
+  return (*(pdu->data + offs))        |
+    ((*(pdu->data + 1 + offs)) << 8)  |
+    ((*(pdu->data + 2 + offs)) << 16) |
+    ((*(pdu->data + 3 + offs)) << 24);
+}
+
+
 void Xcp_Init(void)
 {
     printf("Xcp_Init()\n");
     Xcp_ConnectionState = XCP_DISCONNECTED;
-    Xcp_Mta = 0x000000000L;
-    Xcp_MtaExtension = 0x00;
+
+    memset(&Xcp_State, '\x00', sizeof(Xcp_StateType));
+
+#if XCP_PROTECT_CAL == XCP_ON || XCP_PROTECT_PAG == XCP_ON
+    Xcp_State.protection |= XCP_RESOURCE_CAL_PAG;
+#endif // XCP_PROTECT_CAL
+#if XCP_PROTECT_DAQ == XCP_ON
+    Xcp_State.protection |= XCP_RESOURCE_DAQ;
+#endif // XCP_PROTECT_DAQ
+#if XCP_PROTECT_STIM == XCP_ON
+    Xcp_State.protection |= XCP_RESOURCE_STIM;
+#endif // XCP_PROTECT_STIM
+#if XCP_PROTECT_PGM == XCP_ON
+    Xcp_State.protection |= XCP_RESOURCE_PGM;
+#endif // XCP_PROTECT_PGM
+
+    XcpComm_Init();
 #if defined(XCP_SIMULATOR)
     memcpy(&Xcp_SimulatedMemory, &Xcp_StationID.name, Xcp_StationID.len);
 #endif
 }
 
-void Xcp_SetDTOValues(Xcp_MessageObjectType * cmoOut, uint8_t type, uint8_t returnCode,
+#if 0
+void Xcp_SetDTOValues(Xcp_PDUType * cmoOut, uint8_t type, uint8_t returnCode,
           uint8_t counter, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4)
 {
     cmoOut->canID = XCP_MASTER_CANID;
@@ -450,7 +543,7 @@ void Xcp_SetDTOValues(Xcp_MessageObjectType * cmoOut, uint8_t type, uint8_t retu
 }
 
 
-void Xcp_SetUploadDTO(Xcp_MessageObjectType * cmoOut, uint8_t type, uint8_t returnCode, uint8_t counter)
+void Xcp_SetUploadDTO(Xcp_PDUType * cmoOut, uint8_t type, uint8_t returnCode, uint8_t counter)
 {
     cmoOut->canID = XCP_MASTER_CANID;
     cmoOut->dlc = 8;
@@ -460,24 +553,27 @@ void Xcp_SetUploadDTO(Xcp_MessageObjectType * cmoOut, uint8_t type, uint8_t retu
     /* Payload already set. */
 }
 
+
 #define Xcp_AcknowledgedCRM(ctr, b0, b1, b2, b3, b4)    Xcp_SetDTOValues(&cmoOut, COMMAND_RETURN_MESSAGE, 0, ctr, b0, b1, b2, b3, b4)
 #define Xcp_AcknowledgedUploadCRM(ctr)                  Xcp_SetUploadDTO(&cmoOut, COMMAND_RETURN_MESSAGE, 0, ctr)
+
+#endif
 
 /**
  * Entry point, needs to be "wired" to CAN-Rx interrupt.
  *
  * @param pdu
  */
-void Xcp_DispatchCommand(Xcp_XPDUType const * const pdu)
+void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 {
-    Xcp_MessageObjectType cmoOut = {0};
     uint8_t cmd = pdu->data[0];
 
     printf("Req: ");
     Xcp_DumpMessageObject(pdu);
 
-    if (Xcp_ConnectionState == XCP_CONNECTED) { // TODO: bool
-        Xcp_ServerCommands[cmd](pdu);   // TODO: range check!!!
+    if (Xcp_State.connected == TRUE) { // TODO: bool
+        printf("CMD: [%02X]\n", cmd);
+        Xcp_ServerCommands[0xff - cmd](pdu);   // TODO: range check!!!
     } else {    // not connected.
         if (pdu->data[0] == CONNECT) {
             Xcp_Connect_Res(pdu);
@@ -487,106 +583,8 @@ void Xcp_DispatchCommand(Xcp_XPDUType const * const pdu)
     }
     fflush(stdout);
 
-#if 0
-    if (Xcp_ConnectionState == XCP_CONNECTED) {
-        switch (XCP_COMMAND) {
-/*
-            case GET_XCP_VERSION:
-                Xcp_AcknowledgedCRM(COUNTER_IN, XCP_VERSION_MAJOR, XCP_VERSION_RELEASE,0, 0, 0);
-                Xcp_SendCmo(&cmoOut);
-                break;
-            case EXCHANGE_ID:
-                Xcp_AcknowledgedCRM(COUNTER_IN,
-                                    Xcp_StationID.len,
-                                    0 ,                 // data type qualifier of slave device ID (optional and implementation specific).
-                                    PGM | DAQ | CAL,    // TODO: config.
-                                    0,                  // No protection.
-                                    0
-                );
-                Xcp_SendCmo(&cmoOut);
-                Xcp_Mta0 = (uint32_t)&Xcp_StationID.name;
-                break;
-*/
-            case SET_MTA:
-                printf("SetMTA\n");
-                if (DATA_IN(2) == 0) {
-                    Xcp_Mta0 = (DATA_IN(4) << 24) | (DATA_IN(5) << 16) | (DATA_IN(6) << 8) | DATA_IN(7);
-                } else if (DATA_IN(2) == 1) {
-                    Xcp_Mta1 = (DATA_IN(4) << 24) | (DATA_IN(5) << 16) | (DATA_IN(6) << 8) | DATA_IN(7);
-                } else {
-                    /* Invalid MTA number.*/
-                    break;
-                }
-                Xcp_MtaExtension = DATA_IN(3);
-
-                Xcp_AcknowledgedCRM(COUNTER_IN, 0, 0,0, 0, 0);
-                Xcp_SendCmo(&cmoOut);
-                break;
-            case DOWNLOAD:
-                printf("Download\n");
-                Xcp_WriteMemory(&Xcp_Mta0, &DATA_IN(3), DATA_IN(2));
-                Xcp_Mta0 += DATA_IN(2);
-                Xcp_AcknowledgedCRM(
-                    COUNTER_IN,
-                    Xcp_MtaExtension,
-                    (Xcp_Mta0 & 0xff000000) >> 24,
-                    (Xcp_Mta0 & 0x00ff0000) >> 16,
-                    (Xcp_Mta0 & 0x0000ff00) >> 8,
-                    Xcp_Mta0 & 0xff
-                );
-                Xcp_SendCmo(&cmoOut);
-            case UPLOAD:
-                printf("Upload\n");
-                //Xcp_ReadMemory(&Xcp_Mta0, &DATA_OUT(3), DATA_IN(2));
-                Xcp_Mta0 += DATA_IN(2);
-                Xcp_AcknowledgedUploadCRM(COUNTER_IN);
-                break;
-        }
-    } else {
-        /*
-        ** Handle unconnected commands.
-        */
-        if (XCP_COMMAND == CONNECT) {
-            stationAddress = DATA_IN(2) | (DATA_IN(3) << 8);
-
-            //printf("Connect [%u] [%u]\n", XCP_STATION_ADDRESS, stationAddress);
-            if (XCP_STATION_ADDRESS == stationAddress) {
-                Xcp_AcknowledgedCRM(COUNTER_IN, 0, 0, 0, 0, 0);
-                Xcp_SendCmo(&cmoOut);
-                Xcp_ConnectionState = XCP_CONNECTED;
-            } else {
-                /* "A CONNECT command to another station temporary disconnects the active station " */
-                //printf("Disconnecting...\n");
-                Xcp_ConnectionState = XCP_DISCONNECTED;
-            }
-        }
-    }
-    /*
-    // Mandatory Commands.
-    DNLOAD              = 0x03,
-    UPLOAD              = 0x04,
-    GET_DAQ_SIZE        = 0x14,
-    SET_DAQ_PTR         = 0x15,
-    WRITE_DAQ           = 0x16,
-    START_STOP          = 0x06,
-    DISCONNECT          = 0x07
-    */
-#endif
 }
 
-
-void Xcp_SendCmo(Xcp_MessageObjectType const * cmoOut)
-{
-    /*
-    **
-    ** Note: A callout is only needed for unit-testing.
-    ** TODO: Conditional compilation (testing vs. "real-world").
-    **
-    */
-    if (Xcp_SendCallout) {
-        (*Xcp_SendCallout)(cmoOut);
-    }
-}
 
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout)
 {
@@ -606,12 +604,8 @@ Xcp_ConnectionStateType Xcp_GetConnectionState(void)
     return Xcp_ConnectionState;
 }
 
-uint32_t Xcp_GetMta(void)
-{
-    return Xcp_Mta;
-}
 
-void Xcp_DumpMessageObject(Xcp_XPDUType const * pdu)
+void Xcp_DumpMessageObject(Xcp_PDUType const * pdu)
 {
     //printf("LEN: %d CMD: %02X\n", pdu->len, pdu->data[0]);
     //printf("PTR: %p\n", pdu->data);
@@ -625,7 +619,7 @@ void Xcp_DumpMessageObject(Xcp_XPDUType const * pdu)
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 {
 #if defined(XCP_SIMULATOR)
-    ptrdiff_t  diff;
+//    ptrdiff_t  diff;
     printf("Dest: %p -- SimMem: %p\n", dest, &Xcp_SimulatedMemory);
 #else
     memcpy(dest, src, count);
@@ -635,47 +629,214 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 /*
 ** Local Functions.
 */
-static void Xcp_CommandNotImplemented_Res(Xcp_XPDUType const * const pdu)
+static void Xcp_ErrorResponse(uint8_t errorCode)
 {
-    printf("Command not implemented.\n");
+    //uint8_t * dataOut = XcpComm_GetPduOutPtr();
+    printf("-> Error %02X: \n", errorCode);
+
+    XcpTl_Send8(2, 0xfe, errorCode, 0, 0, 0, 0, 0, 0);
+#if 0
+    XcpTl_SetPduOutLen(2);
+    dataOut[0] = 0xfe;
+    dataOut[1] = errorCode;
+    XcpTl_SendPdu();
+#endif
 }
 
-static void Xcp_Connect_Res(Xcp_XPDUType const * const pdu)
+
+static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu)
+{
+    printf("Command not implemented [%02X].\n", pdu->data[0]);
+    Xcp_ErrorResponse(ERR_CMD_UNKNOWN);
+}
+
+
+static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t resource = 0x00;
     uint8_t commModeBasic = 0x00;
 
     printf("CONNECT: \n");
 
+    if (Xcp_State.connected == FALSE) {
+        Xcp_State.connected = TRUE;
+        // TODO: Init stuff
+    }
+
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
     resource |= XCP_RESOURCE_PGM;
-#endif
+#endif  // XCP_ENABLE_PGM_COMMANDS
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     resource |= XCP_RESOURCE_DAQ;
-#endif
+#endif  // XCP_ENABLE_DAQ_COMMANDS
 #if XCP_ENABLE_CAL_COMMANDS == XCP_ON || XCP_ENABLE_PAG_COMMANDS == XCP_ON
     resource |= XCP_RESOURCE_CAL_PAG;
 #endif
 #if XCP_ENABLE_STIM == XCP_ON
     resource |= XCP_RESOURCE_STIM;
-#endif
+#endif  // XCP_ENABLE_STIM
 
+    commModeBasic |= XCP_BYTE_ORDER;
+    commModeBasic |= XCP_ADDRESS_GRANULARITY;
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+    commModeBasic |= XCP_SLAVE_BLOCK_MODE;
+#endif // XCP_ENABLE_SLAVE_BLOCKMODE
+#if XCP_ENABLE_GET_COMM_MODE_INFO
+    commModeBasic |= XCP_OPTIONAL_COMM_MODE;
+#endif // XCP_ENABLE_GET_COMM_MODE_INFO
+
+
+    XcpTl_SaveConnection();
+
+    XcpTl_Send8(8, 0xff, resource, commModeBasic, XCP_MAX_CTO, LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), XCP_PROTOCOL_VERSION_MAJOR, XCP_TRANSPORT_LAYER_VERSION_MAJOR);
+
+    //printf("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
 }
 
-static void Xcp_Disconnect_Res(Xcp_XPDUType const * const pdu)
+
+static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 {
     printf("DISCONNECT: \n");
+
+    XcpTl_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+    XcpTl_ReleaseConnection();
 }
 
-static void Xcp_GetStatus_Res(Xcp_XPDUType const * const pdu)
+
+static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implement!!!
 {
+    printf("GET_STATUS: \n");
 
+    XcpTl_Send8(6, 0xff,
+        0,     // Current session status
+        Xcp_State.protection,  // Current resource protection status
+        0x00,  // Reserved
+        0,     // Session configuration id
+        0,     // "                      "
+        0, 0
+    );
 }
 
-static void Xcp_Synch_Res(Xcp_XPDUType const * const pdu)
+
+static void Xcp_Synch_Res(Xcp_PDUType const * const pdu)
 {
+    printf("SYNCH: \n");
+
+    XcpTl_Send8(2, 0xfe, ERR_CMD_SYNCH, 0, 0, 0, 0, 0, 0);
+}
+
+
+#if XCP_ENABLE_GET_COMM_MODE_INFO == XCP_ON
+static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t commModeOptional = 0;
+
+    printf("GET_COMM_MODE_INFO: \n");
+
+#if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
+    commModeOptional |= XCP_MASTER_BLOCK_MODE;
+#endif // XCP_ENABLE_MASTER_BLOCKMODE
+
+#if XCP_ENABLE_INTERLEAVED_MODE == XCP_ON
+    commModeOptional |= XCP_INTERLEAVED_MODE;
+#endif // XCP_ENABLE_INTERLEAVED_MODE
+
+    XcpTl_Send8(8, 0xff,
+        0,     // Reserved
+        commModeOptional,
+        0,     // Reserved
+        XCP_MAX_BS,
+        XCP_MIN_ST,
+        XCP_QUEUE_SIZE,
+        XCP_DRIVER_VERSION
+    );
+}
+#endif // XCP_ENABLE_GET_COMM_MODE_INFO
+
+
+#if XCP_ENABLE_GET_ID == XCP_ON
+static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t idType = pdu->data[1];
+#if 0
+0 BYTE Packet ID: 0xFF
+1 BYTE Mode
+2 WORD Reserved
+4 DWORD Length [BYTE]
+#endif
+
+    printf("GET_ID [%u]: \n", idType);
+
+    Xcp_SetMta(Xcp_GetNonPagedAddress(&Xcp_StationID.name));
+
+    XcpTl_Send8(8, 0xff, 0, 0, 0, Xcp_StationID.len, 0, 0, 0);
+}
+#endif // XCP_ENABLE_GET_ID
+
+
+#if XCP_ENABLE_UPLOAD == XCP_ON
+static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t len = pdu->data[1];
+
+// TODO: RangeCheck / Blockmode!!!
+    printf("UPLOAD [%u]\n", len);
+
+    Xcp_Upload(len);
+}
+#endif // XCP_ENABLE_UPLOAD
+
+
+#if XCP_ENABLE_SHORT_UPLOAD == XCP_ON
+static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t len = pdu->data[1];
+
+// TODO: RangeCheck / Blockmode!!!
+    printf("SHORT-UPLOAD [%u]\n", len);
+    Xcp_State.mta.ext = pdu->data[3];
+    Xcp_State.mta.address = Xcp_MakeDWord(pdu, 4);
+    Xcp_Upload(len);
+}
+#endif // XCP_ENABLE_SHORT_UPLOAD
+
+
+#if XCP_ENABLE_SET_MTA == XCP_ON
+static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
+{
+#if 0
+0 BYTE Command Code = 0xF6
+1 WORD Reserved
+3 BYTE Address extension
+4 DWORD Address
+#endif // 0
+    Xcp_State.mta.ext = pdu->data[3];
+    Xcp_State.mta.address = Xcp_MakeDWord(pdu, 4);
+
+    printf("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
+
+    XcpTl_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+}
+#endif // XCP_ENABLE_SET_MTA
+
+
+#if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON
+static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
+{
+    uint32_t blockSize = Xcp_MakeDWord(pdu, 4);
+
+    printf("BUILD_CHECKSUM [%lu]\n", blockSize);
+
+#if 0
+0 BYTE Command Code = 0xF3
+1 BYTE reserved
+2 WORD reserved
+4 DWORD Block size [AG]
+#endif // 0
 
 }
+#endif // XCP_ENABLE_BUILD_CHECKSUM
+
 
 #if 0
     XCP_VALIDATE_ADRESS
