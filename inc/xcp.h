@@ -1,7 +1,7 @@
 /*
  * pySART - Simplified AUTOSAR-Toolkit for Python.
  *
- * (C) 2007-2017 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved

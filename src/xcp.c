@@ -1,7 +1,7 @@
 /*
  * pySART - Simplified AUTOSAR-Toolkit for Python.
  *
- * (C) 2007-2017 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -843,3 +843,18 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
         Callout der die gültigkeit eines Speicherzugriffs überprüft [addr;length]
 #endif
 
+
+#if XCP_ENABLE_TRANSPORT_LAYER_CMD
+static void Xcp_TransportLayerCmd_Res(Xcp_PDUType const * const pdu)
+{
+    XcpTl_TransportLayerCmd_Res(pdu);
+}
+#endif // XCP_ENABLE_TRANSPORT_LAYER_CMD
+
+
+#if XCP_ENABLE_USER_CMD
+static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+#endif // XCP_ENABLE_USER_CMD
