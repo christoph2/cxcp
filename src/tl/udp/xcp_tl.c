@@ -327,32 +327,6 @@ void XcpTl_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, ui
     XcpTl_SendPdu();
 }
 
-#if 0
-LARGE_INTEGER StartingTime, EndingTime, ElapsedMicroseconds;
-LARGE_INTEGER Frequency;
-
-QueryPerformanceFrequency(&Frequency);
-QueryPerformanceCounter(&StartingTime);
-
-// Activity to be timed
-
-QueryPerformanceCounter(&EndingTime);
-ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
-
-
-//
-// We now have the elapsed number of ticks, along with the
-// number of ticks-per-second. We use these values
-// to convert to the number of elapsed microseconds.
-// To guard against loss-of-precision, we convert
-// to microseconds *before* dividing by ticks-per-second.
-//
-
-ElapsedMicroseconds.QuadPart *= 1000000;
-ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
-#endif // 0
-
-
 uint8_t * XcpTl_GetOutPduPtr(void)
 {
     return Xcp_PduOut.data + 4;

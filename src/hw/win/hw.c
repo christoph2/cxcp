@@ -26,51 +26,76 @@
  #include <windows.h>
  #include <stdint.h>
 
+ #include "xcp.h"
+
+typedef struct tagHwStateType {
+    LARGE_INTEGER StartingTime;
+    LARGE_INTEGER TicksPerSecond;
+} HwStateType;
+
 
  /*
  ** Prescalers.
  */
- #define TIMER_PS_1US   (1000000UL)
- #define TIMER_PS_10US  (100000UL)
- #define TIMER_PS_100US (10000UL)
+#define TIMER_PS_1US   (1000000UL)
+#define TIMER_PS_10US  (100000UL)
+#define TIMER_PS_100US (10000UL)
 
- #define TIMER_PS_1MS   (1000UL)
- #define TIMER_PS_10MS  (100UL)
- #define TIMER_PS_100MS (10UL)
+#define TIMER_PS_1MS   (1000UL)
+#define TIMER_PS_10MS  (100UL)
+#define TIMER_PS_100MS (10UL)
+
+static HwStateType HwState = {0};
 
 void XcpHw_Init(void)
 {
-    LARGE_INTEGER StartingTime, EndingTime, ElapsedMicroseconds;
-    LARGE_INTEGER Frequency;
+    LARGE_INTEGER EndingTime, ElapsedMicroseconds;
 
-    QueryPerformanceFrequency(&Frequency);
-    printf("Freq: %lu\n", Frequency.QuadPart);
+    QueryPerformanceFrequency(&HwState.TicksPerSecond);
+    printf("Freq: %lu\n", HwState.TicksPerSecond);
 
-    QueryPerformanceCounter(&StartingTime);
+    QueryPerformanceCounter(&HwState.StartingTime);
 
 // Activity to be timed
     Sleep(2000);
 
     QueryPerformanceCounter(&EndingTime);
-    ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
-    printf("ETA: %f\n", (float)ElapsedMicroseconds.QuadPart / (float)Frequency.QuadPart);
+    ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - HwState.StartingTime.QuadPart;
+    printf("ETA: %f\n", (float)ElapsedMicroseconds.QuadPart / (float)HwState.TicksPerSecond.QuadPart);
+    printf("Eta/new: %u\n", XcpHw_GetTimerCounter());
 //////
 //////
 //////
-
-//
-// We now have the elapsed number of ticks, along with the
-// number of ticks-per-second. We use these values
-// to convert to the number of elapsed microseconds.
-// To guard against loss-of-precision, we convert
-// to microseconds *before* dividing by ticks-per-second.
-//
 
     ElapsedMicroseconds.QuadPart *= 1000000;
-    ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
+    ElapsedMicroseconds.QuadPart /= HwState.TicksPerSecond.QuadPart;
 }
 
-uint64_t XcpHw_GetTimerCounter(void)
+uint32_t XcpHw_GetTimerCounter(void)
 {
+    LARGE_INTEGER Now;
+    LARGE_INTEGER Elapsed;
 
+    QueryPerformanceCounter(&Now);
+    Elapsed.QuadPart = Now.QuadPart - HwState.StartingTime.QuadPart;
+
+#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
+    Elapsed.QuadPart *= TIMER_PS_1US;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
+    Elapsed.QuadPart *= TIMER_PS_10US;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
+    Elapsed.QuadPart *= TIMER_PS_100US;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
+    Elapsed.QuadPart *= TIMER_PS_1MS;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
+    Elapsed.QuadPart *= TIMER_PS_10MS;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
+    Elapsed.QuadPart *= TIMER_PS_100MS;
+#else
+#error Timestamp unit not supported
+#endif // XCP_DAQ_TIMESTAMP_UNIT
+
+    Elapsed.QuadPart /= HwState.TicksPerSecond.QuadPart;
+
+    return (uint32_t)Elapsed.QuadPart;
 }
