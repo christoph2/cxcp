@@ -23,11 +23,14 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
- #include <windows.h>
- #include <stdint.h>
+#include <windows.h>
+#include <stdint.h>
 
- #include "xcp.h"
+#include "xcp.h"
 
+/*
+**  Local Types.
+*/
 typedef struct tagHwStateType {
     LARGE_INTEGER StartingTime;
     LARGE_INTEGER TicksPerSecond;
@@ -35,7 +38,7 @@ typedef struct tagHwStateType {
 
 
  /*
- ** Prescalers.
+ ** Local Defines.
  */
 #define TIMER_PS_1US   (1000000UL)
 #define TIMER_PS_10US  (100000UL)
@@ -45,8 +48,19 @@ typedef struct tagHwStateType {
 #define TIMER_PS_10MS  (100UL)
 #define TIMER_PS_100MS (10UL)
 
+#define TIMER_MASK_1    (0x000000FFUL)
+#define TIMER_MASK_2    (0x0000FFFFUL)
+#define TIMER_MASK_4    (0xFFFFFFFFUL)
+
+
+/*
+**  Local Variables.
+*/
 static HwStateType HwState = {0};
 
+/*
+**  Global Functions.
+*/
 void XcpHw_Init(void)
 {
     LARGE_INTEGER EndingTime, ElapsedMicroseconds;
@@ -92,10 +106,18 @@ uint32_t XcpHw_GetTimerCounter(void)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
     Elapsed.QuadPart *= TIMER_PS_100MS;
 #else
-#error Timestamp unit not supported
+#error Timestamp-unit not supported.
 #endif // XCP_DAQ_TIMESTAMP_UNIT
 
     Elapsed.QuadPart /= HwState.TicksPerSecond.QuadPart;
 
-    return (uint32_t)Elapsed.QuadPart;
+#if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
+    return (uint32_t)Elapsed.QuadPart & TIMER_MASK_1;
+#elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_2
+    return (uint32_t)Elapsed.QuadPart) & TIMER_MASK_2;
+#elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_4
+    return (uint32_t)Elapsed.QuadPart & TIMER_MASK_4;
+#else
+#error Timestamp-size not supported.
+#endif // XCP_DAQ_TIMESTAMP_SIZE
 }
