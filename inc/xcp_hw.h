@@ -29,7 +29,5 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void XcpHw_Init(void);
-uint64_t XcpHw_GetTimerCounter(void);
 
 #endif // __XCP_HW_H
