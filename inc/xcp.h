@@ -224,9 +224,9 @@ typedef enum tagXcp_ConnectionStateType {
 
 
 typedef enum tagXcp_SlaveAccessType {
-    PGM = 0x40,
-    DAQ = 0x02,
-    CAL = 0x01
+    XCP_ACC_PGM = 0x40,
+    XCP_ACC_DAQ = 0x02,
+    XCP_ACC_CAL = 0x01
 } Xcp_SlaveAccessType;
 
 
@@ -302,10 +302,34 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 #define XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT (8)
 #define XCP_CHECKSUM_METHOD_XCP_CRC_32      (9)
 
+#define XCP_DAQ_TIMESTAMP_UNIT_1NS          (0)
+#define XCP_DAQ_TIMESTAMP_UNIT_10NS         (1)
+#define XCP_DAQ_TIMESTAMP_UNIT_100NS        (2)
+#define XCP_DAQ_TIMESTAMP_UNIT_1US          (3)
+#define XCP_DAQ_TIMESTAMP_UNIT_10US         (4)
+#define XCP_DAQ_TIMESTAMP_UNIT_100US        (5)
+#define XCP_DAQ_TIMESTAMP_UNIT_1MS          (6)
+#define XCP_DAQ_TIMESTAMP_UNIT_10MS         (7)
+#define XCP_DAQ_TIMESTAMP_UNIT_100MS        (8)
+#define XCP_DAQ_TIMESTAMP_UNIT_1S           (9)
+#define XCP_DAQ_TIMESTAMP_UNIT_1PS          (10)
+#define XCP_DAQ_TIMESTAMP_UNIT_10PS         (11)
+#define XCP_DAQ_TIMESTAMP_UNIT_100PS        (12)
+
+#define XCP_DAQ_TIMESTAMP_SIZE_1            (1)
+#define XCP_DAQ_TIMESTAMP_SIZE_2            (2)
+#define XCP_DAQ_TIMESTAMP_SIZE_4            (4)
+
+
 uint16_t Xcp_GetWord(Xcp_PDUType const * const value, uint8_t offs);
 uint32_t Xcp_GetDWord(Xcp_PDUType const * const value, uint8_t offs);
 
-#include "xcp_hw.h"
+/*
+** Hardware dependent stuff.
+*/
+
+
+//#include "xcp_hw.h"
 #include "xcp_config.h"
 
 #endif /* __CXCP_H */
