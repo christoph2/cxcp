@@ -302,10 +302,10 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 #define XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT (8)
 #define XCP_CHECKSUM_METHOD_XCP_CRC_32      (9)
 
-uint16_t Xcp_MakeWord(Xcp_PDUType const * const value, uint8_t offs);
-uint32_t Xcp_MakeDWord(Xcp_PDUType const * const value, uint8_t offs);
+uint16_t Xcp_GetWord(Xcp_PDUType const * const value, uint8_t offs);
+uint32_t Xcp_GetDWord(Xcp_PDUType const * const value, uint8_t offs);
 
+#include "xcp_hw.h"
 #include "xcp_config.h"
 
 #endif /* __CXCP_H */
-
