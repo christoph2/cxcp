@@ -174,7 +174,7 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 static void Xcp_Upload(uint8_t len)
 {
     //uint8_t len = pdu->data[1];
-    uint8_t * dataOut = XcpComm_GetOutPduPtr();
+    uint8_t * dataOut = XcpTl_GetOutPduPtr();
     Xcp_MtaType dst;
 
 // TODO: RangeCheck / Blockmode!!!
@@ -491,7 +491,7 @@ INLINE uint16_t Xcp_MakeWord(Xcp_PDUType const * const pdu, uint8_t offs)
     ((*(pdu->data + 1 + offs)) << 8);
 }
 
-INLINE uint32_t Xcp_MakeDWord(Xcp_PDUType const * const pdu, uint8_t offs)
+INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
 {
   return (*(pdu->data + offs))        |
     ((*(pdu->data + 1 + offs)) << 8)  |
@@ -520,7 +520,8 @@ void Xcp_Init(void)
     Xcp_State.protection |= XCP_RESOURCE_PGM;
 #endif // XCP_PROTECT_PGM
 
-    XcpComm_Init();
+    XcpHw_Init();
+    XcpTl_Init();
 #if defined(XCP_SIMULATOR)
     memcpy(&Xcp_SimulatedMemory, &Xcp_StationID.name, Xcp_StationID.len);
 #endif
@@ -795,7 +796,7 @@ static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
 // TODO: RangeCheck / Blockmode!!!
     printf("SHORT-UPLOAD [%u]\n", len);
     Xcp_State.mta.ext = pdu->data[3];
-    Xcp_State.mta.address = Xcp_MakeDWord(pdu, 4);
+    Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
     Xcp_Upload(len);
 }
 #endif // XCP_ENABLE_SHORT_UPLOAD
@@ -811,7 +812,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 4 DWORD Address
 #endif // 0
     Xcp_State.mta.ext = pdu->data[3];
-    Xcp_State.mta.address = Xcp_MakeDWord(pdu, 4);
+    Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
 
     printf("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
 
@@ -823,7 +824,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON
 static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 {
-    uint32_t blockSize = Xcp_MakeDWord(pdu, 4);
+    uint32_t blockSize = Xcp_GetDWord(pdu, 4);
 
     printf("BUILD_CHECKSUM [%lu]\n", blockSize);
 

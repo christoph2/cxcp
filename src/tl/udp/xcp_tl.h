@@ -23,8 +23,8 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#if !defined(__COMM_H)
-#define __COMM_H
+#if !defined(__XCP_TL_H)
+#define __XCP_TL_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -41,16 +41,16 @@ typedef struct tagXcp_PDUType {
     uint8_t * data;
 } Xcp_PDUType;
 
-void XcpComm_Init(void);
-void XcpComm_DeInit(void);
-int XcpComm_FrameAvailable(long sec, long usec);
-void XcpComm_RxHandler(void);
+void XcpTl_Init(void);
+void XcpTl_DeInit(void);
+int XcpTl_FrameAvailable(long sec, long usec);
+void XcpTl_RxHandler(void);
 
 void XcpTl_Task(void);
 
 void XcpTl_SendPdu(void);
 
-uint8_t * XcpComm_GetOutPduPtr(void);
+uint8_t * XcpTl_GetOutPduPtr(void);
 void XcpTl_SetPduOutLen(uint16_t len);
 void XcpTl_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
 
@@ -60,5 +60,4 @@ bool XcpTl_VerifyConnection(void);
 
 static void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
 
-#endif // __COMM_H
-
+#endif // __XCP_TL_H

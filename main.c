@@ -9,7 +9,7 @@
 
 void sig_handler(int s){
     printf("Caught signal %d\n",s);
-    XcpComm_DeInit();
+    XcpTl_DeInit();
     exit(1);
 }
 
@@ -50,7 +50,7 @@ int main()
         XcpTl_Task();
     }
 //#endif
-    XcpComm_DeInit();
+    XcpTl_DeInit();
 
     return 0;
 }

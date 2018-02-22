@@ -67,8 +67,8 @@ int addrSize = sizeof(struct sockaddr_in);
 
 /// TODO: HEADER!
 
-void XcpComm_RxHandler(void);
-void XcpComm_TxHandler(void);
+void XcpTl_RxHandler(void);
+
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
@@ -133,35 +133,18 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 }
 
 
-void XcpComm_Init(void)
+void XcpTl_Init(void)
 {
     WSADATA wsa;
 
     DWORD dwTimeAdjustment = 0, dwTimeIncrement = 0, dwClockTick;
     BOOL fAdjustmentDisabled = TRUE;
 
-    LARGE_INTEGER StartingTime, EndingTime, ElapsedMicroseconds;
-    LARGE_INTEGER Frequency;
-
-    QueryPerformanceFrequency(&Frequency);
-    printf("Freq: %lu\n", Frequency.QuadPart);
-
-    QueryPerformanceCounter(&StartingTime);
-
-// Activity to be timed
-    Sleep(2000);
-
-    QueryPerformanceCounter(&EndingTime);
-    ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
-    printf("ETA: %f\n", (float)ElapsedMicroseconds.QuadPart / (float)Frequency.QuadPart);
-//////
-//////
-//////
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     printf("%ld %ld %ld\n", dwTimeAdjustment, dwTimeIncrement, fAdjustmentDisabled);
 
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        Win_ErrorMsg("XcpComm_Init:WSAStartup()", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
         //printf("Winsock started!\n");
@@ -169,7 +152,7 @@ void XcpComm_Init(void)
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);  // AF_INET6
     if (sock == INVALID_SOCKET) {
-        Win_ErrorMsg("XcpComm_Init:socket()", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_Init:socket()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
         //printf("UDP Socket created!\n");
@@ -178,7 +161,7 @@ void XcpComm_Init(void)
     // IN6ADDR_SETV4MAPPED
 
     if (!Xcp_EnableSocketOption(sock, SO_REUSEADDR)) {
-        Win_ErrorMsg("XcpComm_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
 
     //Xcp_DisableSocketOption(sock, IPV6_V6ONLY);
@@ -187,7 +170,7 @@ void XcpComm_Init(void)
 
 #ifdef SO_REUSEPORT
     if (!Xcp_EnableSocketOption(sock, SO_REUSEPORT)) {
-        Win_ErrorMsg("XcpComm_Init:setsockopt(SO_REUSEPORT)", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEPORT)", WSAGetLastError());
     }
 #endif
 
@@ -196,7 +179,7 @@ void XcpComm_Init(void)
     server.sin_port = htons(XCP_COMM_PORT);
 
     if(bind(sock ,(struct sockaddr *)&server , sizeof(server)) == SOCKET_ERROR) {
-        Win_ErrorMsg("XcpComm_Init:bind()", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_Init:bind()", WSAGetLastError());
         exit(EXIT_FAILURE);
     }
 
@@ -207,7 +190,7 @@ void XcpComm_Init(void)
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
 }
 
-void XcpComm_DeInit(void)
+void XcpTl_DeInit(void)
 {
     closesocket(sock);
     WSACleanup();
@@ -215,8 +198,8 @@ void XcpComm_DeInit(void)
 
 void XcpTl_Task(void)
 {
-    if (XcpComm_FrameAvailable(0, 1000) > 0) {
-        XcpComm_RxHandler();
+    if (XcpTl_FrameAvailable(0, 1000) > 0) {
+        XcpTl_RxHandler();
     }
 }
 
@@ -228,7 +211,7 @@ void hexdump(unsigned char const * buf, int sz)
     printf("\n");
 }
 
-void XcpComm_RxHandler(void)
+void XcpTl_RxHandler(void)
 {
     int recv_len;
 
@@ -240,7 +223,7 @@ void XcpComm_RxHandler(void)
     recv_len = recvfrom(sock, buf, XCP_COMM_BUFLEN, 0, (struct sockaddr *)&XcpTl_Connection.currentAddress, &addrSize);
     if (recv_len == SOCKET_ERROR)
     {
-        Win_ErrorMsg("XcpComm_RxHandler:recvfrom()", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
         fflush(stdout);
     } else if (recv_len > 0) {
         // TODO: Big-Ehdian!!!
@@ -267,12 +250,12 @@ void XcpComm_RxHandler(void)
 }
 
 
-void XcpComm_TxHandler(void)
+void XcpTl_TxHandler(void)
 {
 
 }
 
-int XcpComm_FrameAvailable(long sec, long usec)
+int XcpTl_FrameAvailable(long sec, long usec)
 {
     struct timeval timeout;
     timeout.tv_sec = sec;
@@ -289,10 +272,10 @@ int XcpComm_FrameAvailable(long sec, long usec)
     return select(0, &fds, 0, 0, &timeout);
 }
 
-int XcpComm_Send(uint8_t const * buf, uint16_t len)
+int XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
     if (sendto(sock, (char const *)buf, len, 0, (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
-        Win_ErrorMsg("XcpComm_Send:sendto()", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         return 0;
     }
     return 1;
@@ -310,14 +293,14 @@ void XcpTl_SendPdu(void)
     //printf("Sending PDU: ");
     //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
 
-    XcpComm_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
+    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
 }
 
 
 // SendXcpPdu
 void XcpTl_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
 {
-    uint8_t * dataOut = XcpComm_GetOutPduPtr();
+    uint8_t * dataOut = XcpTl_GetOutPduPtr();
 
     XcpTl_SetPduOutLen(len);
 
@@ -369,52 +352,8 @@ ElapsedMicroseconds.QuadPart *= 1000000;
 ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
 #endif // 0
 
-#if 0
 
-HANDLE timerHandle;
-
-void CTimersDlg::OnButtonBegin()
-{
-    .
-    .
-    .
-    // create the timer
-
-    BOOL success = CreateTimerQueueTimer(
-        &timerHandle,
-        NULL,
-        TimerProc,
-        NULL,   // Parameter
-        0,      // DueTime
-        elTime, // Period
-        WT_EXECUTEINTIMERTHREAD);
-}
-
-void CTimersDlg::OnButtonStop()
-{
-    // destroy the timer
-    DeleteTimerQueueTimer(NULL, timerHandle, NULL);
-    CloseHandle (timerHandle);
-}
-
-void CTimersDlg::QueueTimerHandler() // called every elTime milliseconds
-{
-// do what you want to do, but quickly
-    .
-    .
-    .
-}
-
-void CALLBACK TimerProc(void* lpParametar, BOOLEAN TimerOrWaitFired)
-    {
-    // This is used only to call QueueTimerHandler
-    // Typically, this function is static member of CTimersDlg
-    /CTimersDlg* obj = (CTimersDlg*) lpParametar;
-    //obj->QueueTimerHandler();
-    }
-#endif
-
-uint8_t * XcpComm_GetOutPduPtr(void)
+uint8_t * XcpTl_GetOutPduPtr(void)
 {
     return Xcp_PduOut.data + 4;
 }
