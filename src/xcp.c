@@ -482,23 +482,8 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 };
 
 /*
-** Global Functions.
+**  Global Functions.
 */
-
-INLINE uint16_t Xcp_MakeWord(Xcp_PDUType const * const pdu, uint8_t offs)
-{
-  return (*(pdu->data + offs))        |
-    ((*(pdu->data + 1 + offs)) << 8);
-}
-
-INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
-{
-  return (*(pdu->data + offs))        |
-    ((*(pdu->data + 1 + offs)) << 8)  |
-    ((*(pdu->data + 2 + offs)) << 16) |
-    ((*(pdu->data + 3 + offs)) << 24);
-}
-
 
 void Xcp_Init(void)
 {
@@ -859,3 +844,37 @@ static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu)
 
 }
 #endif // XCP_ENABLE_USER_CMD
+
+
+/*
+**  Helpers.
+*/
+INLINE uint16_t Xcp_GetWord(Xcp_PDUType const * const pdu, uint8_t offs)
+{
+  return (*(pdu->data + offs))        |
+    ((*(pdu->data + 1 + offs)) << 8);
+}
+
+
+INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
+{
+  return (*(pdu->data + offs))        |
+    ((*(pdu->data + 1 + offs)) << 8)  |
+    ((*(pdu->data + 2 + offs)) << 16) |
+    ((*(pdu->data + 3 + offs)) << 24);
+}
+
+
+INLINE void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value)
+{
+    (*(pdu->data + offs)) = value & 0xff;
+    (*(pdu->data + 1 + offs)) = (value & 0xff) >> 8;
+}
+
+INLINE void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value)
+{
+    (*(pdu->data + offs)) = value & 0xff;
+    (*(pdu->data + 1 + offs)) = (value & 0xff00) >> 8;
+    (*(pdu->data + 2 + offs)) = (value & 0xff0000) >> 16;
+    (*(pdu->data + 3 + offs)) = (value & 0xff000000) >> 24;
+}
