@@ -23,27 +23,10 @@ int bss_normal;
 
 int main()
 {
-
-    //setvbuf(stdout, NULL, _IONBF, 0);
-
-#if 0
-    struct sigaction sigIntHandler;
-
-    sigIntHandler.sa_handler = my_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-
-    sigaction(SIGINT, &sigIntHandler, NULL);
-#endif
-    //if (signal(SIGINT, sig_handler) == SIG_ERR) {
-    //  printf("\ncan't catch SIGINT\n");
-    //}
-
     Xcp_Init();
-    //for(;;) {
-    //}
 
-    printf("Starting XCP task...\n");
+    //DBG_PRINT("Starting XCP task...\n");
+    DBG_PRINT("Starting XCP task...\n");
     fflush(stdout);
 //#if 0
     for (;;) {

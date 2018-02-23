@@ -229,9 +229,9 @@ void dump(void)
 {
     for (int i = 0; i < 256; ++i) {
         if ((i % 8) == 0 && i > 0) {
-            printf("\n");
+            DBG_PRINT("\n");
         }
-        printf("0x%04X, ", CRC_TAB[i]);
+        DBG_PRINT("0x%04X, ", CRC_TAB[i]);
     }
 }
 

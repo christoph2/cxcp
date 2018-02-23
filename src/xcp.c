@@ -25,7 +25,6 @@
 
 #include "xcp.h"
 
-#include <memory.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,8 +162,8 @@ static Xcp_MtaType Xcp_GetNonPagedAddress(void * ptr)
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 {
     if (dst.ext == 0 && src.ext == 0) {
-        printf("LEN: %u\n", len);
-        printf("dst: %08X src: %08x\n", dst.address, src.address);
+        DBG_PRINT("LEN: %u\n", len);
+        DBG_PRINT("dst: %08X src: %08x\n", dst.address, src.address);
         memcpy((void*)dst.address, (void*)src.address, len);
     } else {
         // We need assistance...
@@ -487,7 +486,7 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 
 void Xcp_Init(void)
 {
-    printf("Xcp_Init()\n");
+    DBG_PRINT("Xcp_Init()\n");
     Xcp_ConnectionState = XCP_DISCONNECTED;
 
     memset(&Xcp_State, '\x00', sizeof(Xcp_StateType));
@@ -554,11 +553,11 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 {
     uint8_t cmd = pdu->data[0];
 
-    printf("Req: ");
+    DBG_PRINT("Req: ");
     Xcp_DumpMessageObject(pdu);
 
     if (Xcp_State.connected == TRUE) { // TODO: bool
-        printf("CMD: [%02X]\n", cmd);
+        DBG_PRINT("CMD: [%02X]\n", cmd);
         Xcp_ServerCommands[0xff - cmd](pdu);   // TODO: range check!!!
     } else {    // not connected.
         if (pdu->data[0] == XCP_CONNECT) {
@@ -593,10 +592,10 @@ Xcp_ConnectionStateType Xcp_GetConnectionState(void)
 
 void Xcp_DumpMessageObject(Xcp_PDUType const * pdu)
 {
-    //printf("LEN: %d CMD: %02X\n", pdu->len, pdu->data[0]);
-    //printf("PTR: %p\n", pdu->data);
+    //DBG_PRINT("LEN: %d CMD: %02X\n", pdu->len, pdu->data[0]);
+    //DBG_PRINT("PTR: %p\n", pdu->data);
 #if 0
-    printf("%08X  %u  [%02X %02X %02X %02X %02X %02X %02X %02X]\n", cmo->canID, cmo->dlc,
+    DBG_PRINT("%08X  %u  [%02X %02X %02X %02X %02X %02X %02X %02X]\n", cmo->canID, cmo->dlc,
            cmo->data[0], cmo->data[1], cmo->data[2], cmo->data[3], cmo->data[4], cmo->data[5], cmo->data[6], cmo->data[7]
     );
 #endif
@@ -606,7 +605,7 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 {
 #if defined(XCP_SIMULATOR)
 //    ptrdiff_t  diff;
-    printf("Dest: %p -- SimMem: %p\n", dest, &Xcp_SimulatedMemory);
+    DBG_PRINT("Dest: %p -- SimMem: %p\n", dest, &Xcp_SimulatedMemory);
 #else
     memcpy(dest, src, count);
 #endif
@@ -618,7 +617,7 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 static void Xcp_ErrorResponse(uint8_t errorCode)
 {
     //uint8_t * dataOut = XcpComm_GetPduOutPtr();
-    printf("-> Error %02X: \n", errorCode);
+    DBG_PRINT("-> Error %02X: \n", errorCode);
 
     XcpTl_Send8(2, 0xfe, errorCode, 0, 0, 0, 0, 0, 0);
 #if 0
@@ -632,7 +631,7 @@ static void Xcp_ErrorResponse(uint8_t errorCode)
 
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu)
 {
-    printf("Command not implemented [%02X].\n", pdu->data[0]);
+    DBG_PRINT("Command not implemented [%02X].\n", pdu->data[0]);
     Xcp_ErrorResponse(ERR_CMD_UNKNOWN);
 }
 
@@ -642,7 +641,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
     uint8_t resource = 0x00;
     uint8_t commModeBasic = 0x00;
 
-    printf("CONNECT: \n");
+    DBG_PRINT("CONNECT: \n");
 
     if (Xcp_State.connected == FALSE) {
         Xcp_State.connected = TRUE;
@@ -676,13 +675,13 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 
     XcpTl_Send8(8, 0xff, resource, commModeBasic, XCP_MAX_CTO, LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), XCP_PROTOCOL_VERSION_MAJOR, XCP_TRANSPORT_LAYER_VERSION_MAJOR);
 
-    //printf("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
+    //DBG_PRINT("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
 }
 
 
 static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 {
-    printf("DISCONNECT: \n");
+    DBG_PRINT("DISCONNECT: \n");
 
     XcpTl_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
     XcpTl_ReleaseConnection();
@@ -691,7 +690,7 @@ static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implement!!!
 {
-    printf("GET_STATUS: \n");
+    DBG_PRINT("GET_STATUS: \n");
 
     XcpTl_Send8(6, 0xff,
         0,     // Current session status
@@ -706,7 +705,7 @@ static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implemen
 
 static void Xcp_Synch_Res(Xcp_PDUType const * const pdu)
 {
-    printf("SYNCH: \n");
+    DBG_PRINT("SYNCH: \n");
 
     XcpTl_Send8(2, 0xfe, ERR_CMD_SYNCH, 0, 0, 0, 0, 0, 0);
 }
@@ -717,7 +716,7 @@ static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t commModeOptional = 0;
 
-    printf("GET_COMM_MODE_INFO: \n");
+    DBG_PRINT("GET_COMM_MODE_INFO: \n");
 
 #if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
     commModeOptional |= XCP_MASTER_BLOCK_MODE;
@@ -751,7 +750,7 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 4 DWORD Length [BYTE]
 #endif
 
-    printf("GET_ID [%u]: \n", idType);
+    DBG_PRINT("GET_ID [%u]: \n", idType);
 
     Xcp_SetMta(Xcp_GetNonPagedAddress(&Xcp_StationID.name));
 
@@ -766,7 +765,7 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
     uint8_t len = pdu->data[1];
 
 // TODO: RangeCheck / Blockmode!!!
-    printf("UPLOAD [%u]\n", len);
+    DBG_PRINT("UPLOAD [%u]\n", len);
 
     Xcp_Upload(len);
 }
@@ -779,7 +778,7 @@ static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
     uint8_t len = pdu->data[1];
 
 // TODO: RangeCheck / Blockmode!!!
-    printf("SHORT-UPLOAD [%u]\n", len);
+    DBG_PRINT("SHORT-UPLOAD [%u]\n", len);
     Xcp_State.mta.ext = pdu->data[3];
     Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
     Xcp_Upload(len);
@@ -799,7 +798,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
     Xcp_State.mta.ext = pdu->data[3];
     Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
 
-    printf("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
+    DBG_PRINT("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
 
     XcpTl_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -811,7 +810,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 {
     uint32_t blockSize = Xcp_GetDWord(pdu, 4);
 
-    printf("BUILD_CHECKSUM [%lu]\n", blockSize);
+    DBG_PRINT("BUILD_CHECKSUM [%lu]\n", blockSize);
 
 #if 0
 0 BYTE Command Code = 0xF3
@@ -877,4 +876,31 @@ INLINE void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t v
     (*(pdu->data + 1 + offs)) = (value & 0xff00) >> 8;
     (*(pdu->data + 2 + offs)) = (value & 0xff0000) >> 16;
     (*(pdu->data + 3 + offs)) = (value & 0xff000000) >> 24;
+}
+
+void Xcp_MemCopy(void * dst, void * src, uint16_t len)
+{
+    uint8_t * pd = (uint8_t *)dst;
+    uint8_t * ps = (uint8_t *)src;
+
+    ASSERT(dst != (void *)NULL);
+    ASSERT(pd >= ps + len || ps >= pd + len);
+    ASSERT(len != (uint16_t)0);
+
+    while (len--) {
+        *pd++ = *ps++;
+    }
+
+}
+
+
+void Xcp_MemSet(void * dest, uint8_t fill_char, uint16_t len)
+{
+    uint8_t * p = (uint8_t *)dest;
+
+    ASSERT(dest != (void *)NULL);
+
+    while (len--) {
+        *p++ = fill_char;
+    }
 }

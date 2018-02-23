@@ -69,8 +69,10 @@
 
 #if defined(_MSC_VER)
 #define INLINE __inline
+#define DBG_PRINT(...)  printf(__VA_ARGS__)
 #else
 #define INLINE inline
+#define DBG_PRINT(...)
 #endif // defined(_MSC_VER)
 
 
