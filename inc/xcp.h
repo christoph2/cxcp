@@ -86,104 +86,104 @@ typedef enum tagXcp_CommandType {
 // STD
 //
     //
-    // Mandantory Commnands.
+    // Mandatory Commands.
     //
-    CONNECT                 = 0xFF,
-    DISCONNECT              = 0xFE,
-    GET_STATUS              = 0xFD,
-    SYNCH                   = 0xFC,
+    XCP_CONNECT                 = 0xFF,
+    XCP_DISCONNECT              = 0xFE,
+    XCP_GET_STATUS              = 0xFD,
+    XCP_SYNCH                   = 0xFC,
     //
     // Optional Commands.
     //
-    GET_COMM_MODE_INFO      = 0xFB,
-    GET_ID                  = 0xFA,
-    SET_REQUEST             = 0xF9,
-    GET_SEED                = 0xF8,
-    UNLOCK                  = 0xF7,
-    SET_MTA                 = 0xF6,
-    UPLOAD                  = 0xF5,
-    SHORT_UPLOAD            = 0xF4,
-    BUILD_CHECKSUM          = 0xF3,
+    XCP_GET_COMM_MODE_INFO      = 0xFB,
+    XCP_GET_ID                  = 0xFA,
+    XCP_SET_REQUEST             = 0xF9,
+    XCP_GET_SEED                = 0xF8,
+    XCP_UNLOCK                  = 0xF7,
+    XCP_SET_MTA                 = 0xF6,
+    XCP_UPLOAD                  = 0xF5,
+    XCP_SHORT_UPLOAD            = 0xF4,
+    XCP_BUILD_CHECKSUM          = 0xF3,
 
-    TRANSPORT_LAYER_CMD     = 0xF2,
-    USER_CMD                = 0xF1,
+    XCP_TRANSPORT_LAYER_CMD     = 0xF2,
+    XCP_USER_CMD                = 0xF1,
 //
 // CAL
 //
     //
-    // Mandantory Commnands.
+    // Mandatory Commands.
     //
-    DOWNLOAD                = 0xF0,
+    XCP_DOWNLOAD                = 0xF0,
     //
     // Optional Commands.
     //
-    DOWNLOAD_NEXT           = 0xEF,
-    DOWNLOAD_MAX            = 0xEE,
-    SHORT_DOWNLOAD          = 0xED,
-    MODIFY_BITS             = 0xEC,
+    XCP_DOWNLOAD_NEXT           = 0xEF,
+    XCP_DOWNLOAD_MAX            = 0xEE,
+    XCP_SHORT_DOWNLOAD          = 0xED,
+    XCP_MODIFY_BITS             = 0xEC,
 //
 // PAG
 //
     //
-    // Mandantory Commnands.
+    // Mandatory Commands.
     //
-    SET_CAL_PAGE            = 0xEB,
-    GET_CAL_PAGE            = 0xEA,
+    XCP_SET_CAL_PAGE            = 0xEB,
+    XCP_GET_CAL_PAGE            = 0xEA,
     //
     // Optional Commands.
     //
-    GET_PAG_PROCESSOR_INFO  = 0xE9,
-    GET_SEGMENT_INFO        = 0xE8,
-    GET_PAGE_INFO           = 0xE7,
-    SET_SEGMENT_MODE        = 0xE6,
-    GET_SEGMENT_MODE        = 0xE5,
-    COPY_CAL_PAGE           = 0xE4,
+    XCP_GET_PAG_PROCESSOR_INFO  = 0xE9,
+    XCP_GET_SEGMENT_INFO        = 0xE8,
+    XCP_GET_PAGE_INFO           = 0xE7,
+    XCP_SET_SEGMENT_MODE        = 0xE6,
+    XCP_GET_SEGMENT_MODE        = 0xE5,
+    XCP_COPY_CAL_PAGE           = 0xE4,
 //
 // DAQ
 //
     //
-    // Mandantory Commnands.
+    // Mandatory Commands.
     //
-    CLEAR_DAQ_LIST          = 0xE3,
-    SET_DAQ_PTR             = 0xE2,
-    WRITE_DAQ               = 0xE1,
-    SET_DAQ_LIST_MODE       = 0xE0,
-    GET_DAQ_LIST_MODE       = 0xDF,
-    START_STOP_DAQ_LIST     = 0xDE,
-    START_STOP_SYNCH        = 0xDD,
+    XCP_CLEAR_DAQ_LIST          = 0xE3,
+    XCP_SET_DAQ_PTR             = 0xE2,
+    XCP_WRITE_DAQ               = 0xE1,
+    XCP_SET_DAQ_LIST_MODE       = 0xE0,
+    XCP_GET_DAQ_LIST_MODE       = 0xDF,
+    XCP_START_STOP_DAQ_LIST     = 0xDE,
+    XCP_START_STOP_SYNCH        = 0xDD,
     //
     // Optional Commands.
     //
-    GET_DAQ_CLOCK           = 0xDC,
-    READ_DAQ                = 0xDB,
-    GET_DAQ_PROCESSOR_INFO  = 0xDA,
-    GET_DAQ_RESOLUTION_INFO = 0xD9,
-    GET_DAQ_LIST_INFO       = 0xD8,
-    GET_DAQ_EVENT_INFO      = 0xD7,
-    FREE_DAQ                = 0xD6,
-    ALLOC_DAQ               = 0xD5,
-    ALLOC_ODT               = 0xD4,
-    ALLOC_ODT_ENTRY         = 0xD3,
+    XCP_GET_DAQ_CLOCK           = 0xDC,
+    XCP_READ_DAQ                = 0xDB,
+    XCP_GET_DAQ_PROCESSOR_INFO  = 0xDA,
+    XCP_GET_DAQ_RESOLUTION_INFO = 0xD9,
+    XCP_GET_DAQ_LIST_INFO       = 0xD8,
+    XCP_GET_DAQ_EVENT_INFO      = 0xD7,
+    XCP_FREE_DAQ                = 0xD6,
+    XCP_ALLOC_DAQ               = 0xD5,
+    XCP_ALLOC_ODT               = 0xD4,
+    XCP_ALLOC_ODT_ENTRY         = 0xD3,
 //
 // PGM
 //
     //
-    // Mandantory Commnands.
+    // Mandatory Commands.
     //
-    PROGRAM_START           = 0xD2,
-    PROGRAM_CLEAR           = 0xD1,
-    PROGRAM                 = 0xD0,
-    PROGRAM_RESET           = 0xCF,
+    XCP_PROGRAM_START           = 0xD2,
+    XCP_PROGRAM_CLEAR           = 0xD1,
+    XCP_PROGRAM                 = 0xD0,
+    XCP_PROGRAM_RESET           = 0xCF,
     //
     // Optional Commands.
     //
-    GET_PGM_PROCESSOR_INFO  = 0xCE,
-    GET_SECTOR_INFO         = 0xCD,
-    PROGRAM_PREPARE         = 0xCC,
-    PROGRAM_FORMAT          = 0xCB,
-    PROGRAM_NEXT            = 0xCA,
-    PROGRAM_MAX             = 0xC9,
-    PROGRAM_VERIFY          = 0xC8,
+    XCP_GET_PGM_PROCESSOR_INFO  = 0xCE,
+    XCP_GET_SECTOR_INFO         = 0xCD,
+    XCP_PROGRAM_PREPARE         = 0xCC,
+    XCP_PROGRAM_FORMAT          = 0xCB,
+    XCP_PROGRAM_NEXT            = 0xCA,
+    XCP_PROGRAM_MAX             = 0xC9,
+    XCP_PROGRAM_VERIFY          = 0xC8,
 
 } Xcp_CommandType;
 

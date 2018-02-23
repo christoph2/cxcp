@@ -561,7 +561,7 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
         printf("CMD: [%02X]\n", cmd);
         Xcp_ServerCommands[0xff - cmd](pdu);   // TODO: range check!!!
     } else {    // not connected.
-        if (pdu->data[0] == CONNECT) {
+        if (pdu->data[0] == XCP_CONNECT) {
             Xcp_Connect_Res(pdu);
         } else {
 
