@@ -33,6 +33,7 @@
 #include <Mstcpip.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory.h>
 
 // Needed for the Windows 2000 IPv6 Tech Preview.
 #if (_WIN32_WINNT == 0x0500)

@@ -26,6 +26,13 @@
 #if !defined(__XCP_TL_H)
 #define __XCP_TL_H
 
+
+#if defined(__cplusplus)
+extern "C"
+{
+#endif  /* __cplusplus */
+
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -59,5 +66,10 @@ void XcpTl_ReleaseConnection(void);
 bool XcpTl_VerifyConnection(void);
 
 static void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
+
+#if defined(__cplusplus)
+}
+#endif  /* __cplusplus */
+
 
 #endif // __XCP_TL_H

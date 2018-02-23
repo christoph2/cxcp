@@ -164,7 +164,7 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
     if (dst.ext == 0 && src.ext == 0) {
         DBG_PRINT("LEN: %u\n", len);
         DBG_PRINT("dst: %08X src: %08x\n", dst.address, src.address);
-        memcpy((void*)dst.address, (void*)src.address, len);
+        Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
     } else {
         // We need assistance...
     }
@@ -489,7 +489,7 @@ void Xcp_Init(void)
     DBG_PRINT("Xcp_Init()\n");
     Xcp_ConnectionState = XCP_DISCONNECTED;
 
-    memset(&Xcp_State, '\x00', sizeof(Xcp_StateType));
+    Xcp_MemSet(&Xcp_State, '\x00', sizeof(Xcp_StateType));
 
 #if XCP_PROTECT_CAL == XCP_ON || XCP_PROTECT_PAG == XCP_ON
     Xcp_State.protection |= XCP_RESOURCE_CAL_PAG;
@@ -507,7 +507,7 @@ void Xcp_Init(void)
     XcpHw_Init();
     XcpTl_Init();
 #if defined(XCP_SIMULATOR)
-    memcpy(&Xcp_SimulatedMemory, &Xcp_StationID.name, Xcp_StationID.len);
+    Xcp_MemCopy(&Xcp_SimulatedMemory, &Xcp_StationID.name, Xcp_StationID.len);
 #endif
 }
 
@@ -607,7 +607,7 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 //    ptrdiff_t  diff;
     DBG_PRINT("Dest: %p -- SimMem: %p\n", dest, &Xcp_SimulatedMemory);
 #else
-    memcpy(dest, src, count);
+    Xcp_MemCopy(dest, src, count);
 #endif
 }
 
@@ -883,9 +883,9 @@ void Xcp_MemCopy(void * dst, void * src, uint16_t len)
     uint8_t * pd = (uint8_t *)dst;
     uint8_t * ps = (uint8_t *)src;
 
-    ASSERT(dst != (void *)NULL);
-    ASSERT(pd >= ps + len || ps >= pd + len);
-    ASSERT(len != (uint16_t)0);
+//    ASSERT(dst != (void *)NULL);
+//    ASSERT(pd >= ps + len || ps >= pd + len);
+//    ASSERT(len != (uint16_t)0);
 
     while (len--) {
         *pd++ = *ps++;
@@ -898,7 +898,7 @@ void Xcp_MemSet(void * dest, uint8_t fill_char, uint16_t len)
 {
     uint8_t * p = (uint8_t *)dest;
 
-    ASSERT(dest != (void *)NULL);
+//    ASSERT(dest != (void *)NULL);
 
     while (len--) {
         *p++ = fill_char;

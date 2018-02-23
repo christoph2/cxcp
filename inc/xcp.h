@@ -26,6 +26,13 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
+
+#if defined(__cplusplus)
+extern "C"
+{
+#endif  /* __cplusplus */
+
+
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -323,6 +330,12 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 #define XCP_DAQ_TIMESTAMP_SIZE_4            (4)
 
 
+/*
+**  Helpers.
+*/
+void Xcp_MemCopy(void * dst, void * src, uint16_t len);
+void Xcp_MemSet(void * dest, uint8_t fill_char, uint16_t len);
+
 uint16_t Xcp_GetWord(Xcp_PDUType const * const value, uint8_t offs);
 uint32_t Xcp_GetDWord(Xcp_PDUType const * const value, uint8_t offs);
 
@@ -330,12 +343,17 @@ void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value);
 void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value);
 
 /*
-** Hardware dependent stuff.
+**  Hardware dependent stuff.
 */
 void XcpHw_Init(void);
 uint32_t XcpHw_GetTimerCounter(void);
 
 //#include "xcp_hw.h"
 #include "xcp_config.h"
+
+#if defined(__cplusplus)
+}
+#endif  /* __cplusplus */
+
 
 #endif /* __CXCP_H */
