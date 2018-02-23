@@ -66,7 +66,7 @@ static Xcp_SendCalloutType Xcp_SendCallout = NULL;
 static const Xcp_StationIDType Xcp_StationID = { sizeof(XCP_STATION_ID), XCP_STATION_ID };
 
 #if defined(XCP_SIMULATOR)
-static uint8_t Xcp_SimulatedMemory[XCP_SIMULATED_MEMORY_SIZE];
+//static uint8_t Xcp_SimulatedMemory[XCP_SIMULATED_MEMORY_SIZE];
 #endif
 
 #define XCP_COMMAND     (cmoIn->data[0])
@@ -507,7 +507,7 @@ void Xcp_Init(void)
     XcpHw_Init();
     XcpTl_Init();
 #if defined(XCP_SIMULATOR)
-    Xcp_MemCopy(&Xcp_SimulatedMemory, &Xcp_StationID.name, Xcp_StationID.len);
+//    Xcp_MemCopy(&Xcp_SimulatedMemory, &Xcp_StationID.name, Xcp_StationID.len);
 #endif
 }
 
@@ -566,8 +566,9 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 
         }
     }
+#if defined(_MSC_VER)
     fflush(stdout);
-
+#endif
 }
 
 
@@ -605,7 +606,7 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 {
 #if defined(XCP_SIMULATOR)
 //    ptrdiff_t  diff;
-    DBG_PRINT("Dest: %p -- SimMem: %p\n", dest, &Xcp_SimulatedMemory);
+//    DBG_PRINT("Dest: %p -- SimMem: %p\n", dest, &Xcp_SimulatedMemory);
 #else
     Xcp_MemCopy(dest, src, count);
 #endif
