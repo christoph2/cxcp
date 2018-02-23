@@ -26,21 +26,10 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-#include "xcp.h"
+#include "xcp_tl.h"
 
-typedef struct tagHwStateType {
-    uint32_t StartingTime;
-} HwStateType;
 
-static HwStateType HwState = {0};
-
-void XcpHw_Init(void)
-{
-    HwState.StartingTime = micros();
-}
-
-uint32_t XcpHw_GetTimerCounter(void)
+void XcpTl_Init(void)
 {
 
 }
-
