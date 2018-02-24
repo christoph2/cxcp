@@ -65,9 +65,6 @@ static Xcp_StateType Xcp_State;
 static Xcp_SendCalloutType Xcp_SendCallout = NULL;
 static const Xcp_StationIDType Xcp_StationID = { sizeof(XCP_STATION_ID), XCP_STATION_ID };
 
-#if defined(XCP_SIMULATOR)
-//static uint8_t Xcp_SimulatedMemory[XCP_SIMULATED_MEMORY_SIZE];
-#endif
 
 #define XCP_COMMAND     (cmoIn->data[0])
 
@@ -81,7 +78,7 @@ static const Xcp_StationIDType Xcp_StationID = { sizeof(XCP_STATION_ID), XCP_STA
 /*
 ** Local Function Prototypes.
 */
-static Xcp_MtaType Xcp_GetNonPagedAddress(void * ptr);
+static Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
 static void Xcp_SetMta(Xcp_MtaType mta);
 
 static void Xcp_ErrorResponse(uint8_t errorCode);
@@ -91,30 +88,81 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu);
 static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu);
 static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu);
 static void Xcp_Synch_Res(Xcp_PDUType const * const pdu);
+#if XCP_ENABLE_GET_COMM_MODE_INFO == XCP_ON
 static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_COMM_MODE_INFO
+#if XCP_ENABLE_GET_ID == XCP_ON
 static void Xcp_GetId_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_ID
+#if XCP_ENABLE_SET_REQUEST == XCP_ON
 static void Xcp_SetRequest_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_SET_REQUEST
+#if XCP_ENABLE_GET_SEED == XCP_ON
 static void Xcp_GetSeed_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_SEED
+#if XCP_ENABLE_UNLOCK == XCP_ON
 static void Xcp_Unlock_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_UNLOCK
+#if XCP_ENABLE_SET_MTA == XCP_ON
 static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_SET_MTA
+#if XCP_ENABLE_UPLOAD == XCP_ON
 static void Xcp_Upload_Res(Xcp_PDUType const * const pdu);
+#endif
+#if XCP_ENABLE_SHORT_UPLOAD == XCP_ON
 static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_SHORT_UPLOAD
+#if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON
 static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu);
+#endif
+#if XCP_ENABLE_TRANSPORT_LAYER_CMD == XCP_ON
 static void Xcp_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_TRANSPORT_LAYER_CMD
+#if XCP_ENABLE_USER_CMD == XCP_ON
 static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_USER_CMD
+
+#if XCP_ENABLE_CAL_COMMANDS == XCP_ON
 static void Xcp_Download_Res(Xcp_PDUType const * const pdu);
+#if XCP_ENABLE_DOWNLOAD_NEXT == XCP_ON
 static void Xcp_DownloadNext_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_DOWNLOAD_NEXT
+#if XCP_ENABLE_DOWNLOAD_MAX == XCP_ON
 static void Xcp_DownloadMax_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_DOWNLOAD_MAX
+#if XCP_ENABLE_SHORT_DOWNLOAD == XCP_ON
 static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_SHORT_DOWNLOAD
+#if XCP_ENABLE_MODIFY_BITS == XCP_ON
 static void Xcp_ModifyBits_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_MODIFY_BITS
+
 static void Xcp_SetCalPage_Res(Xcp_PDUType const * const pdu);
 static void Xcp_GetCalPage_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_CAL_COMMANDS
+
+#if XCP_ENABLE_PAG_COMMANDS == XCP_ON
+#if XCP_ENABLE_GET_PAG_PROCESSOR_INFO == XCP_ON
 static void Xcp_GetPagProcessorInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_PAG_PROCESSOR_INFO
+#if XCP_ENABLE_GET_SEGMENT_INFO == XCP_ON
 static void Xcp_GetSegmentInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_SEGMENT_INFO
+#if XCP_ENABLE_GET_PAGE_INFO == XCP_ON
 static void Xcp_GetPageInfo_Res(Xcp_PDUType const * const pdu);
+#endif
+#if XCP_ENABLE_SET_SEGMENT_MODE == XCP_ON
 static void Xcp_SetSegmentMode_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_SET_SEGMENT_MODE
+#if XCP_ENABLE_GET_SEGMENT_MODE == XCP_ON
 static void Xcp_GetSegmentMode_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_SEGMENT_MODE
+#if XCP_ENABLE_COPY_CAL_PAGE
 static void Xcp_CopyCalPage_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_COPY_CAL_PAGE
+#endif // XCP_ENABLE_PAG_COMMANDS
+
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu);
 static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu);
 static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu);
@@ -122,27 +170,65 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu);
 static void Xcp_GetDaqListMode_Res(Xcp_PDUType const * const pdu);
 static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu);
 static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu);
+#if XCP_ENABLE_GET_DAQ_CLOCK == XCP_ON
 static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_DAQ_CLOCK
+#if XCP_ENABLE_READ_DAQ == XCP_ON
 static void Xcp_ReadDaq_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_READ_DAQ
+#if XCP_ENABLE_GET_DAQ_PROCESSOR_INFO == XCP_ON
 static void Xcp_GetDaqProcessorInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_DAQ_PROCESSOR_INFO
+#if XCP_ENABLE_GET_DAQ_RESOLUTION_INFO == XCP_ON
 static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_DAQ_RESOLUTION_INFO
+#if XCP_ENABLE_GET_DAQ_LIST_INFO == XCP_ON
 static void Xcp_GetDaqListInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_DAQ_LIST_INFO
+#if XCP_ENABLE_GET_DAQ_EVENT_INFO == XCP_ON
 static void Xcp_GetDaqEventInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_DAQ_EVENT_INFO
+#if XCP_ENABLE_FREE_DAQ == XCP_ON
 static void Xcp_FreeDaq_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_FREE_DAQ
+#if XCP_ENABLE_ALLOC_DAQ == XCP_ON
 static void Xcp_AllocDaq_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_ALLOC_DAQ
+#if XCP_ENABLE_ALLOC_ODT == XCP_ON
 static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_ALLOC_ODT
+#if XCP_ENABLE_ALLOC_ODT_ENTRY == XCP_ON
 static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_ALLOC_ODT_ENTRY
+#endif // XCP_ENABLE_DAQ_COMMANDS
+
+#if XCP_ENABLE_PGM_COMMANDS == XCP_ON
 static void Xcp_ProgramStart_Res(Xcp_PDUType const * const pdu);
 static void Xcp_ProgramClear_Res(Xcp_PDUType const * const pdu);
 static void Xcp_Program_Res(Xcp_PDUType const * const pdu);
 static void Xcp_ProgramReset_Res(Xcp_PDUType const * const pdu);
+#if XCP_ENABLE_GET_PGM_PROCESSOR_INFO == XCP_ON
 static void Xcp_GetPgmProcessorInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_PGM_PROCESSOR_INFO
+#if XCP_ENABLE_GET_SECTOR_INFO == XCP_ON
 static void Xcp_GetSectorInfo_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_GET_SECTOR_INFO
+#if XCP_ENABLE_PROGRAM_PREPARE == XCP_ON
 static void Xcp_ProgramPrepare_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_PROGRAM_PREPARE
+#if XCP_ENABLE_PROGRAM_FORMAT == XCP_ON
 static void Xcp_ProgramFormat_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_PROGRAM_FORMAT
+#if XCP_ENABLE_PROGRAM_NEXT == XCP_ON
 static void Xcp_ProgramNext_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_PROGRAM_NEXT
+#if XCP_ENABLE_PROGRAM_MAX == XCP_ON
 static void Xcp_ProgramMax_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_PROGRAM_MAX
+#if XCP_ENABLE_PROGRAM_VERIFY == XCP_ON
 static void Xcp_ProgramVerify_Res(Xcp_PDUType const * const pdu);
+#endif
+#endif // XCP_ENABLE_PGM_COMMANDS
 
 
 static void Xcp_SetMta(Xcp_MtaType mta)
@@ -150,7 +236,7 @@ static void Xcp_SetMta(Xcp_MtaType mta)
     Xcp_State.mta = mta;
 }
 
-static Xcp_MtaType Xcp_GetNonPagedAddress(void * ptr)
+static Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 {
     Xcp_MtaType mta;
 
@@ -506,9 +592,6 @@ void Xcp_Init(void)
 
     XcpHw_Init();
     XcpTl_Init();
-#if defined(XCP_SIMULATOR)
-//    Xcp_MemCopy(&Xcp_SimulatedMemory, &Xcp_StationID.name, Xcp_StationID.len);
-#endif
 }
 
 #if 0
@@ -604,12 +687,7 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu)
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 {
-#if defined(XCP_SIMULATOR)
-//    ptrdiff_t  diff;
-//    DBG_PRINT("Dest: %p -- SimMem: %p\n", dest, &Xcp_SimulatedMemory);
-#else
     Xcp_MemCopy(dest, src, count);
-#endif
 }
 
 /*
@@ -755,7 +833,7 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 
     Xcp_SetMta(Xcp_GetNonPagedAddress(&Xcp_StationID.name));
 
-    XcpTl_Send8(8, 0xff, 0, 0, 0, Xcp_StationID.len, 0, 0, 0);
+    XcpTl_Send8(8, 0xff, 0, 0, 0, (uint8_t)Xcp_StationID.len, 0, 0, 0);
 }
 #endif // XCP_ENABLE_GET_ID
 

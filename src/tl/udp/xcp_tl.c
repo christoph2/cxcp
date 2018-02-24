@@ -66,14 +66,8 @@ typedef struct tagXcpTl_ConnectionType {
 
 static SOCKET sock = INVALID_SOCKET;
 struct sockaddr_in server = {0};
-//struct sockaddr_in remote = {0};
 unsigned char buf[XCP_COMM_BUFLEN];
 int addrSize = sizeof(struct sockaddr_in);
-
-
-/// TODO: HEADER!
-
-void XcpTl_RxHandler(void);
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
