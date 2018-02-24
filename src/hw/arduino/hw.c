@@ -36,11 +36,33 @@ static HwStateType HwState = {0};
 
 void XcpHw_Init(void)
 {
-    HwState.StartingTime = micros();
+    //HwState.StartingTime = micros();
 }
 
 uint32_t XcpHw_GetTimerCounter(void)
 {
-
+#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
+    return micros();
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
+    return millis();
+#else
+#error Timestamp-unit not supported.
+#endif // XCP_DAQ_TIMESTAMP_UNIT
 }
 
+
+void serialEventRun(void)
+{
+    if (Serial.available()) {
+        serialEvent();
+    }
+}
+
+void serialEvent()
+{
+    uint8_t octet;
+    while (Serial.available()) {
+        octet = (uint8_t)Serial.read();
+
+    }
+}

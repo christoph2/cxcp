@@ -23,13 +23,19 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include <Arduino.h>
 #include <stdint.h>
 
 #include "xcp_tl.h"
 
+static Xcp_PDUType Xcp_PduIn;
+static Xcp_PDUType Xcp_PduOut;
 
 void XcpTl_Init(void)
+{
+
+}
+
+void XcpTl_RxHandler(void)
 {
 
 }
