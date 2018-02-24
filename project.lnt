@@ -1,0 +1,109 @@
+
+au-misra2.lnt
+
+-ftg	// warn when trigraphs are used.
+
++fdi
++fcu	// char is unsigned.
++fie	// enums are like integers.
+
+//+pragma(asm, off)
++rw(asm, _ignore_init)
+-dasm=_ignore_init
++rw(_to_brackets)
+//+rw(_ignore_init)
+
+//-function(exit, ASSERT)
+
+-zero(99)
+-passes(2)
+-restore_at_end
++summary()
+
+-t4	// tabsize = four spaces.
+
+-w2 	// Inhibit all informational messages (Nur fuer den Anfang!!!).
+
+-e129
+//-esym(e129,__intrinisic)
++fem	// to suppress Error 140
+
++e429	// Custodial pointer 'Symbol' has not been freed or returned.
+-e537   // Repeated include file.
++e578	// Declaration of symbol 'Symbol' hides 'Symbol'.
+-e621	// 
++e714	// Symbol '___' (___) not referenced
++e715	// Symbol '___' (___) not referenced
++e716	// while(1)
+-e717	// do ... while(0)
++e722	// Suspicious use of ;
++e725	// Expected positive indentation from
++e728	// Symbol '___' (___) not explicitly initialized
++e734	// Loss of precision (___) (___ bits to ___ bits)
++e749	// local enumeration constant '___' (___) not referenced
++e762	// Redundantly declared symbol '___' previously declared at ___
++e765	// external '___' (___) could be made static
++e777	// Testing floats for equality
++e795	// Conceivable disvision by 0
++e801	// Use of goto is deprecated
++e825	// Control flows into case/default
++e832	// Parameter '___' not explicitly declared, int assumed
++e766	// Header file not used in module.
++e936	// old-style function definition for function '___'
++e944	// ___argument for operator '___' always evaluates to ___
+-e950	// Non-ANSI reserved word or construct: '___'
++e952	// Parameter '___' (___) could be declared const
++e953	// variable should declared as consts.
++e954	// Pointer variable '___' (___) could be declared as pointing to c
++e957	// Function '___' defined without a prototype in scope
++e960	// Violates MISRA 2004 Required Rule ___, ___
++e961	// Violates MISRA 2004 Required Rule ___, ___
+-e964	// Header file '___' not directly used in module '___'
+-e966	// Indirectly included header file '___' not used by module '___'
++e971	// ??? unqualified char ???
++e1773	// Attempt to cast away const (or volatile) information.
+
+-esym(534, printf)
+
+-A
+-strong(A)
+-b
+
+-strong(B, _Bool, boolean)
+//-strong(B, boolean)
+
+// Slickedit
+-"format=%(%f %l:%C %)error %n: (%t -- %m)"     //  Messages will contain
+    //  file information (%f), the line number (%l), the
+	//  message number (%n), message type (%t) and message text (%m).
+    //  Notice that all messages are labeled 'error' but are then
+    //  followed by a type (such as Warning, Info, Note, etc.)
+
+-hF2    //  Make sure we ALWAYS provide file information ('F') and use 2
+	//  lines (line in error plus message).
+
+-width(0) //  don't break messages at any particular width
++flm	// make sure nobody can change the output format.
+/////////////////////// 
+
+// -d__STDC_VERSION__=199901L 
+
+//-d__IAR_SYSTEMS_ICC__
+//-d__ICCHCS12__
+
+//-dKOS_MEMORY_MAPPING=STD_ON
+
+-d__STDC__=1
+
+//-i"C:\Programme\IAR Systems\Embedded Workbench Evaluation 4.0\HCS12\inc"
+//+libdir("C:\Programme\IAR Systems\Embedded Workbench Evaluation 4.0\HCS12\inc")
+-i".\inc;.\src\tl\udp;."
+
+//+libh()
++libclass(ansi)
+lib-w32.lnt     // Win32 API options
+lib-win.lnt     // Windows option
+//+compiler(search_actively_including_stack) 
+-vf
+
+-wlib(1)

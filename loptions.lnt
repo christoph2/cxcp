@@ -1,0 +1,35 @@
+//
+-wlib(1)     // Only report errors from the libraries 
+ 
+// Output: One line, file info always, use full path names 
+-hF1 
++ffn 
+-"format=%(\q%f\q %l %C%) %t %n: %m" 
+ 
+// Do not break lines 
+-width(0,0) 
+ 
+// And make sure no foreign includes change the format 
+// or the output option 
++flm 
+ 
+// Warn when trigraphs are used 
+-ftg 
+ 
+// Include files within library includes without full path 
++fdi 
+ 
+// Don't stop make because of warnings 
+-zero(99) 
+ 
+// Make sure to make two passes (for better error messages) 
+-passes(2) 
+ 
+// Include directory where other option files *.lnt are located 
+-iC:/LINT/
+ 
+// Don't let -e<nnnn> options bleed to other source files 
+-restore_at_end 
+ 
+// Produce a summary of all produced messages 
+-summary() 
