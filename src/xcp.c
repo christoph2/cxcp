@@ -890,7 +890,7 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT("GET_ID [%u]: \n", idType);
 
-    Xcp_SetMta(Xcp_GetNonPagedAddress(&Xcp_StationID.name));
+    Xcp_SetMta(Xcp_GetNonPagedAddress(Xcp_StationID.name));
 
     Xcp_Send8(8, 0xff, 0, 0, 0, (uint8_t)Xcp_StationID.len, 0, 0, 0);
 }
