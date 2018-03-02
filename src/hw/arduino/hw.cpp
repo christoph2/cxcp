@@ -28,16 +28,19 @@
 
 #include "xcp.h"
 
+#if 0
 typedef struct tagHwStateType {
     uint32_t StartingTime;
 } HwStateType;
 
 static HwStateType HwState = {0};
+#endif
 
 void XcpHw_Init(void)
 {
     //HwState.StartingTime = micros();
 }
+
 
 uint32_t XcpHw_GetTimerCounter(void)
 {
@@ -51,6 +54,24 @@ uint32_t XcpHw_GetTimerCounter(void)
 }
 
 
+bool XcpHw_SxIAvailable(void)
+{
+    return Serial.available();
+}
+
+
+uint8_t XcpHw_SxIRead(void)
+{
+    return (uint8_t)Serial.read();
+}
+
+
+
+//void Xcp_Tl_FeedReceiver(uint8_t octet);
+
+// Transport-Layer: Frame-based vs. byte-wise interfaces!
+
+#if 0
 void serialEventRun(void)
 {
     if (Serial.available()) {
@@ -60,9 +81,7 @@ void serialEventRun(void)
 
 void serialEvent()
 {
-    uint8_t octet;
-    while (Serial.available()) {
-        octet = (uint8_t)Serial.read();
-
-    }
+    XcpTl_RxHandler();
 }
+#endif
+
