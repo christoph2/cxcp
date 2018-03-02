@@ -26,12 +26,12 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
-
+#if 0
 #if defined(__cplusplus)
 extern "C"
 {
 #endif  /* __cplusplus */
-
+#endif // 0
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -47,6 +47,13 @@ extern "C"
 #define XCP_ON                  (1)
 #define XCP_OFF                 (0)
 
+#define XCP_ON_CAN              (0)
+#define XCP_ON_CANFD            (1)
+#define XCP_ON_FLEXRAY          (2)
+#define XCP_ON_USB              (3)
+#define XCP_ON_ETHERNET         (4)
+#define XCP_ON_SXI              (5)
+//#define XCP_ON_
 
 /*
 **  Available Resources.
@@ -241,7 +248,8 @@ typedef enum tagXcp_SlaveAccessType {
 
 typedef struct tagXcp_StationIDType {
     uint16_t len;
-    const uint8_t name[];
+    //const uint8_t name[];
+    char const * name;
 } Xcp_StationIDType;
 
 typedef struct tagXcp_ODTEntryType {
@@ -348,12 +356,15 @@ void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value);
 void XcpHw_Init(void);
 uint32_t XcpHw_GetTimerCounter(void);
 
-//#include "xcp_hw.h"
-#include "xcp_config.h"
+extern Xcp_PDUType Xcp_PduIn;
+extern Xcp_PDUType Xcp_PduOut;
 
+
+#include "xcp_config.h"
+#if 0
 #if defined(__cplusplus)
 }
 #endif  /* __cplusplus */
-
+#endif
 
 #endif /* __CXCP_H */
