@@ -26,13 +26,6 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
-#if 0
-#if defined(__cplusplus)
-extern "C"
-{
-#endif  /* __cplusplus */
-#endif // 0
-
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -361,10 +354,6 @@ extern Xcp_PDUType Xcp_PduOut;
 
 
 #include "xcp_config.h"
-#if 0
-#if defined(__cplusplus)
-}
-#endif  /* __cplusplus */
-#endif
+
 
 #endif /* __CXCP_H */

@@ -27,14 +27,6 @@
 #define __XCP_TL_H
 
 
-#if 0
-#if defined(__cplusplus)
-extern "C"
-{
-#endif  /* __cplusplus */
-#endif // 0
-
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -73,10 +65,5 @@ void XcpTl_FeedReceiver(uint8_t octet);
 
 void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
 
-#if 0
-#if defined(__cplusplus)
-}
-#endif  /* __cplusplus */
-#endif // 0
 
 #endif // __XCP_TL_H

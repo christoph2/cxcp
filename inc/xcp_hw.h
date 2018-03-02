@@ -27,18 +27,8 @@
 #define __XCP_HW_H
 
 
-#if defined(__cplusplus)
-extern "C"
-{
-#endif  /* __cplusplus */
-
-
 #include <stdint.h>
 #include <stdbool.h>
-
-#if defined(__cplusplus)
-}
-#endif  /* __cplusplus */
 
 
 #endif // __XCP_HW_H
