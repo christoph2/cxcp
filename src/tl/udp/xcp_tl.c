@@ -72,15 +72,14 @@ int addrSize = sizeof(struct sockaddr_in);
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
-static Xcp_PDUType Xcp_PduIn;
-static Xcp_PDUType Xcp_PduOut;
-
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 
 ///
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 ///
 
+extern Xcp_PDUType Xcp_PduIn;
+extern Xcp_PDUType Xcp_PduOut;
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
@@ -103,7 +102,7 @@ void Win_ErrorMsg(char * const fun, DWORD errorCode)
 static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
 {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-    const int enable = 1;
+    const char enable = 1;
 
     if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
         return FALSE;
@@ -119,7 +118,7 @@ static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-    const int enable = 0;
+    const char enable = 0;
 
     if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
         return FALSE;
@@ -281,61 +280,6 @@ int XcpTl_Send(uint8_t const * buf, uint16_t len)
     return 1;
 }
 
-void XcpTl_SendPdu(void)
-{
-    uint16_t len = Xcp_PduOut.len;
-
-    Xcp_PduOut.data[0] = LOBYTE(len);
-    Xcp_PduOut.data[1] = HIBYTE(len);
-    Xcp_PduOut.data[2] = 0;
-    Xcp_PduOut.data[3] = 0;
-
-    //DBG_PRINT("Sending PDU: ");
-    //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
-
-    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
-}
-
-
-// SendXcpPdu
-void XcpTl_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
-{
-    uint8_t * dataOut = XcpTl_GetOutPduPtr();
-
-    XcpTl_SetPduOutLen(len);
-
-    /* Controlled fall-through */
-    switch(len) {
-        case 8:
-            dataOut[7] = b7;
-        case 7:
-            dataOut[6] = b6;
-        case 6:
-            dataOut[5] = b5;
-        case 5:
-            dataOut[4] = b4;
-        case 4:
-            dataOut[3] = b3;
-        case 3:
-            dataOut[2] = b2;
-        case 2:
-            dataOut[1] = b1;
-        case 1:
-            dataOut[0] = b0;
-    }
-
-    XcpTl_SendPdu();
-}
-
-uint8_t * XcpTl_GetOutPduPtr(void)
-{
-    return Xcp_PduOut.data + 4;
-}
-
-void XcpTl_SetPduOutLen(uint16_t len)
-{
-    Xcp_PduOut.len = len;
-}
 
 void XcpTl_SaveConnection(void)
 {

@@ -27,10 +27,12 @@
 #define __XCP_TL_H
 
 
+#if 0
 #if defined(__cplusplus)
 extern "C"
 {
 #endif  /* __cplusplus */
+#endif // 0
 
 
 #include <stdint.h>
@@ -55,21 +57,26 @@ void XcpTl_RxHandler(void);
 
 void XcpTl_Task(void);
 
-void XcpTl_SendPdu(void);
+void Xcp_SendPdu(void);
 
-uint8_t * XcpTl_GetOutPduPtr(void);
-void XcpTl_SetPduOutLen(uint16_t len);
-void XcpTl_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
+uint8_t * Xcp_GetOutPduPtr(void);
+void Xcp_SetPduOutLen(uint16_t len);
+void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
+
+int XcpTl_Send(uint8_t const * buf, uint16_t len);
 
 void XcpTl_SaveConnection(void);
 void XcpTl_ReleaseConnection(void);
 bool XcpTl_VerifyConnection(void);
 
-static void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
+void XcpTl_FeedReceiver(uint8_t octet);
 
+void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
+
+#if 0
 #if defined(__cplusplus)
 }
 #endif  /* __cplusplus */
-
+#endif // 0
 
 #endif // __XCP_TL_H
