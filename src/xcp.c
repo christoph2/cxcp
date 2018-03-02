@@ -55,6 +55,9 @@ typedef struct tagXcp_StateType {
     Xcp_MtaType mta;
 } Xcp_StateType;
 
+Xcp_PDUType Xcp_PduIn;
+Xcp_PDUType Xcp_PduOut;
+
 
 static Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
@@ -256,10 +259,66 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
     }
 }
 
+
+void Xcp_SendPdu(void)
+{
+    uint16_t len = Xcp_PduOut.len;
+
+    Xcp_PduOut.data[0] = LOBYTE(len);
+    Xcp_PduOut.data[1] = HIBYTE(len);
+    Xcp_PduOut.data[2] = 0;
+    Xcp_PduOut.data[3] = 0;
+
+    //DBG_PRINT("Sending PDU: ");
+    //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
+
+    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
+}
+
+
+uint8_t * Xcp_GetOutPduPtr(void)
+{
+    return Xcp_PduOut.data + 4;
+}
+
+void Xcp_SetPduOutLen(uint16_t len)
+{
+    Xcp_PduOut.len = len;
+}
+
+void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
+{
+    uint8_t * dataOut = Xcp_GetOutPduPtr();
+
+    Xcp_SetPduOutLen(len);
+
+    /* Controlled fall-through */
+    switch(len) {
+        case 8:
+            dataOut[7] = b7;
+        case 7:
+            dataOut[6] = b6;
+        case 6:
+            dataOut[5] = b5;
+        case 5:
+            dataOut[4] = b4;
+        case 4:
+            dataOut[3] = b3;
+        case 3:
+            dataOut[2] = b2;
+        case 2:
+            dataOut[1] = b1;
+        case 1:
+            dataOut[0] = b0;
+    }
+
+    Xcp_SendPdu();
+}
+
 static void Xcp_Upload(uint8_t len)
 {
     //uint8_t len = pdu->data[1];
-    uint8_t * dataOut = XcpTl_GetOutPduPtr();
+    uint8_t * dataOut = Xcp_GetOutPduPtr();
     Xcp_MtaType dst;
 
 // TODO: RangeCheck / Blockmode!!!
@@ -272,8 +331,8 @@ static void Xcp_Upload(uint8_t len)
 
     Xcp_State.mta.address += len;   // Advance MTA.
 
-    XcpTl_SetPduOutLen(len);
-    XcpTl_SendPdu();
+    Xcp_SetPduOutLen(len);
+    Xcp_SendPdu();
 }
 
 /*
@@ -698,12 +757,12 @@ static void Xcp_ErrorResponse(uint8_t errorCode)
     //uint8_t * dataOut = XcpComm_GetPduOutPtr();
     DBG_PRINT("-> Error %02X: \n", errorCode);
 
-    XcpTl_Send8(2, 0xfe, errorCode, 0, 0, 0, 0, 0, 0);
+    Xcp_Send8(2, 0xfe, errorCode, 0, 0, 0, 0, 0, 0);
 #if 0
-    XcpTl_SetPduOutLen(2);
+    Xcp_SetPduOutLen(2);
     dataOut[0] = 0xfe;
     dataOut[1] = errorCode;
-    XcpTl_SendPdu();
+    Xcp_SendPdu();
 #endif
 }
 
@@ -752,7 +811,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 
     XcpTl_SaveConnection();
 
-    XcpTl_Send8(8, 0xff, resource, commModeBasic, XCP_MAX_CTO, LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), XCP_PROTOCOL_VERSION_MAJOR, XCP_TRANSPORT_LAYER_VERSION_MAJOR);
+    Xcp_Send8(8, 0xff, resource, commModeBasic, XCP_MAX_CTO, LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), XCP_PROTOCOL_VERSION_MAJOR, XCP_TRANSPORT_LAYER_VERSION_MAJOR);
 
     //DBG_PRINT("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
 }
@@ -762,7 +821,7 @@ static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT("DISCONNECT: \n");
 
-    XcpTl_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+    Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
     XcpTl_ReleaseConnection();
 }
 
@@ -771,7 +830,7 @@ static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implemen
 {
     DBG_PRINT("GET_STATUS: \n");
 
-    XcpTl_Send8(6, 0xff,
+    Xcp_Send8(6, 0xff,
         0,     // Current session status
         Xcp_State.protection,  // Current resource protection status
         0x00,  // Reserved
@@ -786,7 +845,7 @@ static void Xcp_Synch_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT("SYNCH: \n");
 
-    XcpTl_Send8(2, 0xfe, ERR_CMD_SYNCH, 0, 0, 0, 0, 0, 0);
+    Xcp_Send8(2, 0xfe, ERR_CMD_SYNCH, 0, 0, 0, 0, 0, 0);
 }
 
 
@@ -805,7 +864,7 @@ static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
     commModeOptional |= XCP_INTERLEAVED_MODE;
 #endif // XCP_ENABLE_INTERLEAVED_MODE
 
-    XcpTl_Send8(8, 0xff,
+    Xcp_Send8(8, 0xff,
         0,     // Reserved
         commModeOptional,
         0,     // Reserved
@@ -833,7 +892,7 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 
     Xcp_SetMta(Xcp_GetNonPagedAddress(&Xcp_StationID.name));
 
-    XcpTl_Send8(8, 0xff, 0, 0, 0, (uint8_t)Xcp_StationID.len, 0, 0, 0);
+    Xcp_Send8(8, 0xff, 0, 0, 0, (uint8_t)Xcp_StationID.len, 0, 0, 0);
 }
 #endif // XCP_ENABLE_GET_ID
 
@@ -879,7 +938,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
 
-    XcpTl_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+    Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
 }
 #endif // XCP_ENABLE_SET_MTA
 
