@@ -110,7 +110,9 @@ void XcpTl_FeedReceiver(uint8_t octet)
             Xcp_DispatchCommand(&Xcp_PduIn);
         }
     }
-    XcpTl_Receiver.Index++;
+    if (XcpTl_Receiver.State != XCP_RCV_IDLE) {
+        XcpTl_Receiver.Index++;
+    }
 }
 
 int XcpTl_Send(uint8_t const * buf, uint16_t len)
