@@ -33,14 +33,14 @@
 
 #define XCP_SXI_MAKEWORD(buf, offs)  (*(buf+offs)) | (( *(buf+offs+1) << 8))
 
-//static Xcp_PDUType Xcp_PduIn;
-//static Xcp_PDUType Xcp_PduOut;
+void ping(void);
 
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
 
+static uint8_t Xcp_PduOutBuffer[256] = {0};
 
 typedef enum tagXcpTl_ReceiverStateType {
     XCP_RCV_IDLE,
@@ -69,23 +69,16 @@ void XcpTl_Init(void)
     XcpTl_Receiver.Dlc = 0u;
     XcpTl_Receiver.Ctr = 0u;
     XcpTl_Receiver.Remaining = 0u;
+
+    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
 }
-
-#if 0
-   364: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND Xcp_Send8
-   376: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND Xcp_SendPdu
-   384: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND Xcp_SetPduOutLen
-   385: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND XcpTl_ReleaseConnection
-   386: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND Xcp_GetOutPduPtr
-
-
-#endif // 0
 
 
 void XcpTl_RxHandler(void)
 {
 
 }
+
 
 //  DLC   CTR   PAYLOAD
 // [02 00 00 00 fa 01]
@@ -113,7 +106,7 @@ void XcpTl_FeedReceiver(uint8_t octet)
 
             // TODO: ACTION!!!
             Xcp_PduIn.len = XcpTl_Receiver.Dlc;
-            Xcp_PduIn.data = XcpTl_Receiver.Buffer;
+            Xcp_PduIn.data = XcpTl_Receiver.Buffer + 4;
             Xcp_DispatchCommand(&Xcp_PduIn);
         }
     }
@@ -135,3 +128,13 @@ void XcpTl_ReleaseConnection(void)
 
 }
 
+#if 0
+void ping(void)
+{
+    Serial.write((uint8_t)0x08);
+    Serial.write((uint8_t)0x00);
+    Serial.write((uint8_t)0x00);
+    Serial.write((uint8_t)0x00);
+    Serial.print("SEND_XY");
+}
+#endif

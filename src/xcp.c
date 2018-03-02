@@ -278,7 +278,7 @@ void Xcp_SendPdu(void)
 
 uint8_t * Xcp_GetOutPduPtr(void)
 {
-    return Xcp_PduOut.data + 4;
+    return &(Xcp_PduOut.data[4]);
 }
 
 void Xcp_SetPduOutLen(uint16_t len)
@@ -288,6 +288,7 @@ void Xcp_SetPduOutLen(uint16_t len)
 
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
 {
+
     uint8_t * dataOut = Xcp_GetOutPduPtr();
 
     Xcp_SetPduOutLen(len);
@@ -812,7 +813,6 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
     XcpTl_SaveConnection();
 
     Xcp_Send8(8, 0xff, resource, commModeBasic, XCP_MAX_CTO, LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), XCP_PROTOCOL_VERSION_MAJOR, XCP_TRANSPORT_LAYER_VERSION_MAJOR);
-
     //DBG_PRINT("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
 }
 
