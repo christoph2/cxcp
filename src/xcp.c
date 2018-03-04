@@ -46,9 +46,9 @@ typedef struct tagXcp_DaqProcessorType {
 typedef struct tagXcp_StateType {
     bool connected;
     bool busy;
-#if defined(XCP_ENABLE_DAQ_COMMANDS)
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     Xcp_DaqProcessorType daq;
-#endif
+#endif // XCP_ENABLE_DAQ_COMMANDS
     bool programming;
     uint8_t mode;
     uint8_t protection;
@@ -325,7 +325,7 @@ static void Xcp_Upload(uint8_t len)
 // TODO: RangeCheck / Blockmode!!!
     dataOut[0] = 0xff;
 
-    dst.address = (uint32_t)(dataOut + 1);
+    dst.address = (uint32_t)(dataOut + 1);  // FIX ME!!!
     dst.ext = 0;
 
     Xcp_CopyMemory(dst, Xcp_State.mta, len);
@@ -981,6 +981,99 @@ static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu)
 
 }
 #endif // XCP_ENABLE_USER_CMD
+
+/*
+**
+**  DAQ Commands.
+**
+*/
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+
+
+static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+
+static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+
+static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+
+static void Xcp_GetDaqListMode_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+
+static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+
+static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+#endif // XCP_ENABLE_DAQ_COMMANDS
+
+#if XCP_ENABLE_GET_DAQ_CLOCK == XCP_ON
+static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
+{
+    uint32_t timestamp;
+    //uint8_t * dataOut = Xcp_GetOutPduPtr();
+
+    DBG_PRINT("GET_DAQ_CLOCK: \n");
+
+    timestamp = XcpHw_GetTimerCounter();
+
+    Xcp_Send8(8, 0xff,
+    0, 0, 0,
+    LOBYTE(LOWORD(timestamp)), HIBYTE(LOWORD(timestamp)), LOBYTE(HIWORD(timestamp)), HIBYTE(HIWORD(timestamp))
+    );
+#if 0
+0  BYTE  Packet ID: 0xFF
+1  BYTE  reserved
+2  WORD  reserved
+4  DWORD  Receive Timestamp
+#endif // 0
+}
+#endif // XCP_ENABLE_GET_DAQ_CLOCK
+
+
+#if XCP_ENABLE_GET_DAQ_RESOLUTION_INFO == XCP_ON
+static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
+{
+    DBG_PRINT("GET_DAQ_RESOLUTION_INFO: \n");
+
+    Xcp_Send8(8, 0xff,
+              1,    // Granularity for size of ODT entry (DIRECTION = DAQ)
+              0,    // Maximum size of ODT entry (DIRECTION = DAQ)
+              1,    // Granularity for size of ODT entry (DIRECTION = STIM)
+              0,    // Maximum size of ODT entry (DIRECTION = STIM)
+              0x34, // Timestamp unit and size
+              1,    // Timestamp ticks per unit (WORD)
+              0
+    );
+#if 0
+0  BYTE                                     Packet ID: 0xFF
+1  BYTE  GRANULARITY_ODT_ENTRY_SIZE_DAQ
+2  BYTE  MAX_ODT_ENTRY_SIZE_DAQ
+3  BYTE  GRANULARITY_ODT_ENTRY_SIZE_STIM
+4  BYTE  MAX_ODT_ENTRY_SIZE_STIM
+5  BYTE  TIMESTAMP_MODE
+6  WORD  TIMESTAMP_TICKS
+#endif
+}
+#endif // XCP_ENABLE_GET_DAQ_RESOLUTION_INFO
 
 
 /*
