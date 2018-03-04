@@ -245,23 +245,38 @@ typedef struct tagXcp_StationIDType {
     char const * name;
 } Xcp_StationIDType;
 
-typedef struct tagXcp_ODTEntryType {
-    uint32_t address;
-    uint8_t addressExtension;   /* optional */
-    uint32_t length;    /* optional */
-} Xcp_ODTEntryType;
-
-typedef struct tagXcp_ODTType {
-    /* NOTE: ODT sampling needs to be consistent, ie. atomic. */
-    Xcp_ODTEntryType element[7];
-
-} Xcp_ODTType;
-
+#if 0
+Allocate DAQ Lists
+Allocate ODTs to a DAQ List
+Allocate ODT Entries to an ODT
+#endif // 0
 
 typedef struct tagXcp_MtaType {
     uint8_t ext;
     uint32_t address;
 } Xcp_MtaType;
+
+
+typedef struct tagXcp_ODTEntryType {
+    Xcp_MtaType mta;
+    uint32_t length;
+} Xcp_ODTEntryType;
+
+typedef struct tagXcp_ODTType {
+    uint8_t num_entries;
+    Xcp_ODTEntryType * elements;
+} Xcp_ODTType;
+
+typedef struct tagXcp_DaqListType {
+    uint8_t num_entries;
+    Xcp_ODTType * elements;
+} Xcp_DaqListType;
+
+typedef union tagXcp_DaqEntityType {
+    Xcp_ODTEntryType odtEntry;
+    Xcp_ODTType odt;
+    Xcp_DaqListType daqList;
+} Xcp_DaqEntityType;
 
 /*
 typedef struct tagXcp_DAQListType {
@@ -276,8 +291,6 @@ typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 */
 void Xcp_Init(void);
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
-void Xcp_SendCmo(Xcp_PDUType const * pdu);
-
 
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
@@ -290,6 +303,15 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 #if !defined(HIBYTE)
 #define HIBYTE(w)   (((w)  & 0xff00) >> 8)
 #endif
+
+#if !defined(LOWORD)
+#define LOWORD(w)   ((w) & 0xffff)
+#endif
+
+#if !defined(HIWORD)
+#define HIWORD(w)   (((w)  & 0xffff0000) >> 16)
+#endif
+
 
 //#if 0
 #if !defined(TRUE)

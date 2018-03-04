@@ -55,9 +55,12 @@ int in_der_arbeitsseite;
 #pragma bss_seg(pop/*, stack1*/)
 int bss_normal;
 
+void daqTest(void);
 
 int main()
 {
+    //daqTest();
+
     print_PE_section_info(GetModuleHandle(NULL));
     Xcp_Init();
 
