@@ -37,7 +37,7 @@
 #define XCP_TRANSPORT_LAYER_VERSION_RELEASE     (0)
 
 typedef struct tagXcp_PDUType {
-    uint8_t len;
+    uint16_t len;
     //uint8_t data[XCP_MAX_CTO - 1];
     uint8_t * data;
 } Xcp_PDUType;
