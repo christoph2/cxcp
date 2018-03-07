@@ -263,26 +263,38 @@ typedef struct tagXcp_ODTEntryType {
 } Xcp_ODTEntryType;
 
 typedef struct tagXcp_ODTType {
-    uint8_t num_entries;
-    Xcp_ODTEntryType * elements;
+    uint8_t numOdtEntries;
 } Xcp_ODTType;
 
+typedef enum tagXcp_DaqDirectionType {
+    XCP_DIRECTION_DAQ,
+    XCP_DIRECTION_STIM,
+    XCP_DIRECTION_DAQ_STIM,
+} Xcp_DaqDirectionType;
+
+
 typedef struct tagXcp_DaqListType {
-    uint8_t num_entries;
-    Xcp_ODTType * elements;
+    Xcp_DaqDirectionType direction;
+    uint8_t numOdts;
 } Xcp_DaqListType;
 
-typedef union tagXcp_DaqEntityType {
-    Xcp_ODTEntryType odtEntry;
-    Xcp_ODTType odt;
-    Xcp_DaqListType daqList;
+
+typedef enum tagXcp_DaqEntityKindType {
+    XCP_ENTITY_DAQ_LIST,
+    XCP_ENTITY_ODT,
+    XCP_ENTITY_ODT_ENTRY,
+} Xcp_DaqEntityKindType;
+
+
+typedef struct tagXcp_DaqEntityType {
+    Xcp_DaqEntityKindType kind;
+    union {
+        Xcp_ODTEntryType odtEntry;
+        Xcp_ODTType odt;
+        Xcp_DaqListType daqList;
+    } entity;
 } Xcp_DaqEntityType;
 
-/*
-typedef struct tagXcp_DAQListType {
-
-} Xcp_DAQListype;
-*/
 
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 
