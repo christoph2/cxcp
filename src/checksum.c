@@ -48,8 +48,6 @@
 
 #elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16
 
-typedef unsigned short  crc;
-
 #define CRC_NAME                "CRC-16"
 #define POLYNOMIAL              0x8005
 #define INITIAL_REMAINDER       0x0000
@@ -94,8 +92,6 @@ static const uint16_t CRC_TAB[] = {
 };
 
 #elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
-
-typedef unsigned short  crc;
 
 #define CRC_NAME            "CRC-CCITT"
 #define POLYNOMIAL          0x1021
@@ -142,8 +138,6 @@ static const uint16_t CRC_TAB[] = {
 
 #elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32
 
-typedef unsigned long  crc;
-
 #define CRC_NAME            "CRC-32"
 #define POLYNOMIAL          0x04C11DB7
 #define INITIAL_REMAINDER   0xFFFFFFFF
@@ -154,16 +148,12 @@ typedef unsigned long  crc;
 
 #endif // XCP_CHECKSUM_METHOD
 
-
-/*
- * Derive parameters from the standard-specific parameters in crc.h.
- */
-#define WIDTH    (8 * sizeof(crc))
+#define WIDTH    (8 * sizeof(Xcp_CrcType))
 #define TOPBIT   (1 << (WIDTH - 1))
 
 #if (REFLECT_DATA == TRUE)
 #undef  REFLECT_DATA
-#define REFLECT_DATA(X)                 ((unsigned char) reflect((X), 8))
+#define REFLECT_DATA(X)                 ((uint8_t) reflect((X), 8))
 #else
 #undef  REFLECT_DATA
 #define REFLECT_DATA(X)                 (X)
@@ -171,36 +161,30 @@ typedef unsigned long  crc;
 
 #if (REFLECT_REMAINDER == TRUE)
 #undef  REFLECT_REMAINDER
-#define REFLECT_REMAINDER(X)    ((crc) reflect((X), WIDTH))
+#define REFLECT_REMAINDER(X)    ((Xcp_CrcType) reflect((X), WIDTH))
 #else
 #undef  REFLECT_REMAINDER
 #define REFLECT_REMAINDER(X)    (X)
 #endif
 
  #if (REFLECT_DATA == TRUE) || (REFLECT_REMAINDER == TRUE)
-static unsigned long reflect(unsigned long data, unsigned char nBits)
+static uint32_t reflect(uint32_t data, uint8_t nBits)
 {
-        unsigned long  reflection = 0x00000000;
-        unsigned char  bit;
-
+        uint32_t  reflection = 0x00000000;
+        uint8_t  bit;
         /*
          * Reflect the data about the center bit.
          */
-        for (bit = 0; bit < nBits; ++bit)
-        {
+        for (bit = 0; bit < nBits; ++bit) {
                 /*
                  * If the LSB bit is set, set the reflection of it.
                  */
-                if (data & 0x01)
-                {
+                if (data & 0x01) {
                         reflection |= (1 << ((nBits - 1) - bit));
                 }
-
                 data = (data >> 1);
         }
-
         return (reflection);
-
 }
 #endif  // (REFLECT_DATA == TRUE) || (REFLECT_REMAINDER == TRUE)
 
@@ -215,11 +199,11 @@ void dump(void)
     }
 }
 
-crc crcFast(unsigned char const message[], int nBytes)
+Xcp_CrcType crcFast(uint8_t const message[], int nBytes)
 {
-    crc remainder = INITIAL_REMAINDER;
-    unsigned char data;
-    int byte;
+    Xcp_CrcType remainder = INITIAL_REMAINDER;
+    uint8_t data;
+    uint8_t byte;
 
     /*
      * Divide the message by the polynomial, a byte at a time.
@@ -234,5 +218,9 @@ crc crcFast(unsigned char const message[], int nBytes)
      * The final remainder is the CRC.
      */
     return (REFLECT_REMAINDER(remainder) ^ FINAL_XOR_VALUE);
-
 }
+
+#if 0
+
+
+#endif // 0
