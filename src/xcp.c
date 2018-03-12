@@ -47,7 +47,8 @@ typedef struct tagXcp_StateType {
     bool connected;
     bool busy;
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    Xcp_DaqProcessorType daq;
+    Xcp_DaqProcessorType daqProcessor;
+    Xcp_DaqPointerType daqPointer;
 #endif // XCP_ENABLE_DAQ_COMMANDS
     bool programming;
     uint8_t mode;
@@ -650,6 +651,14 @@ void Xcp_Init(void)
     Xcp_State.protection |= XCP_RESOURCE_PGM;
 #endif // XCP_PROTECT_PGM
 
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+    Xcp_State.daqProcessor.running = FALSE;
+    Xcp_State.daqPointer.daqList = 0u;
+    Xcp_State.daqPointer.odt = 0;
+    Xcp_State.daqPointer.odtEntry = 0;
+    Xcp_State.daqPointer.daqEntityNumber = 0;
+#endif // XCP_ENABLE_DAQ_COMMANDS
+
     XcpHw_Init();
     XcpTl_Init();
 }
@@ -963,7 +972,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 
 #if 0
     XCP_VALIDATE_ADRESS
-        Callout der die gültigkeit eines Speicherzugriffs überprüft [addr;length]
+        Callout der die gÃ¼ltigkeit eines Speicherzugriffs Ã¼berprÃ¼ft [addr;length]
 #endif
 
 
@@ -996,12 +1005,29 @@ static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 {
+    Xcp_State.daqPointer.daqList = Xcp_GetWord(pdu, 2);
+    Xcp_State.daqPointer.odt = pdu->data[4];
+    Xcp_State.daqPointer.odtEntry = pdu->data[5];
+    // TODO: Calculate DAQ Entity Number.
+    //Xcp_State.daqPointer.daqEntityNumber = ???();
 
+    // TODO: If the specified list is not available, ERR_OUT_OF_RANGE will be returned.
+
+    DBG_PRINT("SET_DAQ_PTR [%u:%u:%u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
+
+    Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
 }
 
 static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 {
 
+#if 0
+0 BYTE Command Code = 0xE1
+1 BYTE BIT_OFFSET [0..31] Position of bit in 32-bit variable referenced by the address and extension below
+2 BYTE Size of DAQ element [AG] 0<= size <=MAX_ODT_ENTRY_SIZE_x
+3 BYTE Address extension of DAQ element
+4 DWORD Address of DAQ element
+#endif // 0
 }
 
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
