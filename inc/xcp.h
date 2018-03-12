@@ -431,7 +431,7 @@ typedef uint16_t Xcp_CrcType;
 typedef uint32_t Xcp_CrcType;
 #endif // XCP_CHECKSUM_METHOD
 
-Xcp_CrcType Xcp_CalculateCRC(uint8_t const message[], uint16_t length, Xcp_CrcType startValue);
+Xcp_CrcType Xcp_CalculateCRC(uint8_t const message[], uint32_t length, Xcp_CrcType startValue);
 
 
 #endif /* __CXCP_H */

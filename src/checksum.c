@@ -257,11 +257,11 @@ void dump(void)
 }
 #endif // 0
 
-Xcp_CrcType Xcp_CalculateCRC(uint8_t const message[], uint16_t length, Xcp_CrcType startValue)
+Xcp_CrcType Xcp_CalculateCRC(uint8_t const message[], uint32_t length, Xcp_CrcType startValue)
 {
     Xcp_CrcType crc = XCP_CRC_INITIAL_VALUE;
     uint8_t data;
-    uint8_t idx;
+    uint32_t idx;
 
     for (idx = 0; idx < length; ++idx)
     {
