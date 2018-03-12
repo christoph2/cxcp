@@ -256,6 +256,12 @@ typedef struct tagXcp_MtaType {
     uint32_t address;
 } Xcp_MtaType;
 
+typedef struct tagXcp_DaqPointerType {
+    uint16_t daqList;
+    uint8_t odt;
+    uint8_t odtEntry;
+    uint16_t daqEntityNumber;
+} Xcp_DaqPointerType;
 
 typedef struct tagXcp_ODTEntryType {
     Xcp_MtaType mta;
@@ -388,6 +394,14 @@ extern Xcp_PDUType Xcp_PduOut;
 
 
 #include "xcp_config.h"
+
+#if XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16 || XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
+typedef uint16_t Xcp_CrcType;
+#elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32
+typedef uint32_t Xcp_CrcType;
+#endif // XCP_CHECKSUM_METHOD
+
+
 
 
 #endif /* __CXCP_H */
