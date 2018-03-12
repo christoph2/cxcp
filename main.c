@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "xcp.h"
-#include "xcp_tl.h"
 
 #include <stdio.h>
 #include <Windows.h>
@@ -56,10 +55,12 @@ int in_der_arbeitsseite;
 int bss_normal;
 
 void daqTest(void);
+void pagTest(void);
 
 int main()
 {
-    //daqTest();
+    daqTest();
+    pagTest();
 
     print_PE_section_info(GetModuleHandle(NULL));
     Xcp_Init();

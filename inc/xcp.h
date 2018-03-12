@@ -26,13 +26,19 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "xcp_tl.h"
+
+#define XCP_MAX_CTO (0xff)  // TODO: Transport-Layer dependent.
+#define XCP_MAX_DTO (512)
 
 #define XCP_PROTOCOL_VERSION_MAJOR       (1)
 #define XCP_PROTOCOL_VERSION_RELEASE     (0)
+
+#define XCP_TRANSPORT_LAYER_VERSION_MAJOR       (1)
+#define XCP_TRANSPORT_LAYER_VERSION_RELEASE     (0)
 
 #define XCP_DEBUG_BUILD         (1)
 #define XCP_RELEASE_BUILD       (2)
@@ -82,9 +88,6 @@
 #define DBG_PRINT(...)
 #endif // defined(_MSC_VER)
 
-
-
-typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
 
 /*
 ** Global Types.
@@ -239,17 +242,17 @@ typedef enum tagXcp_SlaveAccessType {
 } Xcp_SlaveAccessType;
 
 
+typedef struct tagXcp_PDUType {
+    uint16_t len;
+    uint8_t * data;
+} Xcp_PDUType;
+
+
 typedef struct tagXcp_StationIDType {
     uint16_t len;
-    //const uint8_t name[];
     char const * name;
 } Xcp_StationIDType;
 
-#if 0
-Allocate DAQ Lists
-Allocate ODTs to a DAQ List
-Allocate ODT Entries to an ODT
-#endif // 0
 
 typedef struct tagXcp_MtaType {
     uint8_t ext;
@@ -303,6 +306,7 @@ typedef struct tagXcp_DaqEntityType {
 
 
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
+typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
 
 /*
 ** Global Functions.
@@ -370,6 +374,14 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 #define XCP_DAQ_TIMESTAMP_SIZE_2            (2)
 #define XCP_DAQ_TIMESTAMP_SIZE_4            (4)
 
+/*
+**
+*/
+void Xcp_SendPdu(void);
+uint8_t * Xcp_GetOutPduPtr(void);
+void Xcp_SetPduOutLen(uint16_t len);
+void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
+int XcpTl_Send(uint8_t const * buf, uint16_t len);
 
 /*
 **  Helpers.
@@ -382,6 +394,24 @@ uint32_t Xcp_GetDWord(Xcp_PDUType const * const value, uint8_t offs);
 
 void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value);
 void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value);
+
+/*
+**  Transport Layer Stuff.
+*/
+void XcpTl_Init(void);
+void XcpTl_DeInit(void);
+int XcpTl_FrameAvailable(long sec, long usec);
+void XcpTl_RxHandler(void);
+
+void XcpTl_Task(void);
+
+void XcpTl_SaveConnection(void);
+void XcpTl_ReleaseConnection(void);
+bool XcpTl_VerifyConnection(void);
+
+void XcpTl_FeedReceiver(uint8_t octet);
+
+void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
 
 /*
 **  Hardware dependent stuff.
@@ -401,7 +431,7 @@ typedef uint16_t Xcp_CrcType;
 typedef uint32_t Xcp_CrcType;
 #endif // XCP_CHECKSUM_METHOD
 
-
+Xcp_CrcType Xcp_CalculateCRC(uint8_t const message[], uint16_t length, Xcp_CrcType startValue);
 
 
 #endif /* __CXCP_H */

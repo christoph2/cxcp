@@ -27,7 +27,7 @@
 
 #include "Arduino.h"
 
-#include "xcp_tl.h"
+#include "xcp.h"
 
 #define XCP_COMM_BUFLEN  (MAX(XCP_MAX_CTO, XCP_MAX_DTO))
 

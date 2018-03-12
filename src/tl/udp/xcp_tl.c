@@ -40,7 +40,7 @@
 //#include <tpipv6.h>
 #endif
 
-#include "xcp_tl.h"
+#include "xcp.h"
 
 #pragma comment(lib,"ws2_32.lib") // MSVC
 
