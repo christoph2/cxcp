@@ -309,9 +309,15 @@ typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
 
 /*
-** Global Functions.
+** Global User Functions.
 */
 void Xcp_Init(void);
+void Xcp_MainFunction(void);
+
+
+/*
+** Global Helper Functions.
+*/
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);

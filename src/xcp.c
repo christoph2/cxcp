@@ -235,107 +235,6 @@ static void Xcp_ProgramVerify_Res(Xcp_PDUType const * const pdu);
 #endif // XCP_ENABLE_PGM_COMMANDS
 
 
-static void Xcp_SetMta(Xcp_MtaType mta)
-{
-    Xcp_State.mta = mta;
-}
-
-static Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
-{
-    Xcp_MtaType mta;
-
-    mta.ext = 0;
-    mta.address = (uint32_t)ptr;
-    return mta;
-}
-
-void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
-{
-    if (dst.ext == 0 && src.ext == 0) {
-        DBG_PRINT("LEN: %u\n", len);
-        DBG_PRINT("dst: %08X src: %08x\n", dst.address, src.address);
-        Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
-    } else {
-        // We need assistance...
-    }
-}
-
-
-void Xcp_SendPdu(void)
-{
-    uint16_t len = Xcp_PduOut.len;
-
-    Xcp_PduOut.data[0] = LOBYTE(len);
-    Xcp_PduOut.data[1] = HIBYTE(len);
-    Xcp_PduOut.data[2] = 0;
-    Xcp_PduOut.data[3] = 0;
-
-    //DBG_PRINT("Sending PDU: ");
-    //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
-
-    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
-}
-
-
-uint8_t * Xcp_GetOutPduPtr(void)
-{
-    return &(Xcp_PduOut.data[4]);
-}
-
-void Xcp_SetPduOutLen(uint16_t len)
-{
-    Xcp_PduOut.len = len;
-}
-
-void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
-{
-
-    uint8_t * dataOut = Xcp_GetOutPduPtr();
-
-    Xcp_SetPduOutLen(len);
-
-    /* Controlled fall-through */
-    switch(len) {
-        case 8:
-            dataOut[7] = b7;
-        case 7:
-            dataOut[6] = b6;
-        case 6:
-            dataOut[5] = b5;
-        case 5:
-            dataOut[4] = b4;
-        case 4:
-            dataOut[3] = b3;
-        case 3:
-            dataOut[2] = b2;
-        case 2:
-            dataOut[1] = b1;
-        case 1:
-            dataOut[0] = b0;
-    }
-
-    Xcp_SendPdu();
-}
-
-static void Xcp_Upload(uint8_t len)
-{
-    //uint8_t len = pdu->data[1];
-    uint8_t * dataOut = Xcp_GetOutPduPtr();
-    Xcp_MtaType dst;
-
-// TODO: RangeCheck / Blockmode!!!
-    dataOut[0] = 0xff;
-
-    dst.address = (uint32_t)(dataOut + 1);  // FIX ME!!!
-    dst.ext = 0;
-
-    Xcp_CopyMemory(dst, Xcp_State.mta, len);
-
-    Xcp_State.mta.address += len;   // Advance MTA.
-
-    Xcp_SetPduOutLen(len);
-    Xcp_SendPdu();
-}
 
 /*
 ** Big, fat jump table.
@@ -663,38 +562,113 @@ void Xcp_Init(void)
     XcpTl_Init();
 }
 
-#if 0
-void Xcp_SetDTOValues(Xcp_PDUType * cmoOut, uint8_t type, uint8_t returnCode,
-          uint8_t counter, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4)
+
+void Xcp_MainFunction(void)
 {
-    cmoOut->canID = XCP_MASTER_CANID;
-    cmoOut->dlc = 8;
-    DATA_OUT(0) = type;
-    DATA_OUT(1) = returnCode;
-    DATA_OUT(2) = counter;
-    DATA_OUT(3) = b0;
-    DATA_OUT(4) = b1;
-    DATA_OUT(5) = b2;
-    DATA_OUT(6) = b3;
-    DATA_OUT(7) = b4;
+
+}
+
+static void Xcp_SetMta(Xcp_MtaType mta)
+{
+    Xcp_State.mta = mta;
+}
+
+static Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
+{
+    Xcp_MtaType mta;
+
+    mta.ext = 0;
+    mta.address = (uint32_t)ptr;
+    return mta;
+}
+
+void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
+{
+    if (dst.ext == 0 && src.ext == 0) {
+        DBG_PRINT("LEN: %u\n", len);
+        DBG_PRINT("dst: %08X src: %08x\n", dst.address, src.address);
+        Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
+    } else {
+        // We need assistance...
+    }
 }
 
 
-void Xcp_SetUploadDTO(Xcp_PDUType * cmoOut, uint8_t type, uint8_t returnCode, uint8_t counter)
+void Xcp_SendPdu(void)
 {
-    cmoOut->canID = XCP_MASTER_CANID;
-    cmoOut->dlc = 8;
-    DATA_OUT(0) = type;
-    DATA_OUT(1) = returnCode;
-    DATA_OUT(2) = counter;
-    /* Payload already set. */
+    uint16_t len = Xcp_PduOut.len;
+
+    Xcp_PduOut.data[0] = LOBYTE(len);
+    Xcp_PduOut.data[1] = HIBYTE(len);
+    Xcp_PduOut.data[2] = 0;
+    Xcp_PduOut.data[3] = 0;
+
+    //DBG_PRINT("Sending PDU: ");
+    //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
+
+    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
 }
 
 
-#define Xcp_AcknowledgedCRM(ctr, b0, b1, b2, b3, b4)    Xcp_SetDTOValues(&cmoOut, COMMAND_RETURN_MESSAGE, 0, ctr, b0, b1, b2, b3, b4)
-#define Xcp_AcknowledgedUploadCRM(ctr)                  Xcp_SetUploadDTO(&cmoOut, COMMAND_RETURN_MESSAGE, 0, ctr)
+uint8_t * Xcp_GetOutPduPtr(void)
+{
+    return &(Xcp_PduOut.data[4]);
+}
 
-#endif
+void Xcp_SetPduOutLen(uint16_t len)
+{
+    Xcp_PduOut.len = len;
+}
+
+void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
+{
+
+    uint8_t * dataOut = Xcp_GetOutPduPtr();
+
+    Xcp_SetPduOutLen(len);
+
+    /* Controlled fall-through */
+    switch(len) {
+        case 8:
+            dataOut[7] = b7;
+        case 7:
+            dataOut[6] = b6;
+        case 6:
+            dataOut[5] = b5;
+        case 5:
+            dataOut[4] = b4;
+        case 4:
+            dataOut[3] = b3;
+        case 3:
+            dataOut[2] = b2;
+        case 2:
+            dataOut[1] = b1;
+        case 1:
+            dataOut[0] = b0;
+    }
+
+    Xcp_SendPdu();
+}
+
+static void Xcp_Upload(uint8_t len)
+{
+    //uint8_t len = pdu->data[1];
+    uint8_t * dataOut = Xcp_GetOutPduPtr();
+    Xcp_MtaType dst;
+
+// TODO: RangeCheck / Blockmode!!!
+    dataOut[0] = 0xff;
+
+    dst.address = (uint32_t)(dataOut + 1);  // FIX ME!!!
+    dst.ext = 0;
+
+    Xcp_CopyMemory(dst, Xcp_State.mta, len);
+
+    Xcp_State.mta.address += len;   // Advance MTA.
+
+    Xcp_SetPduOutLen(len);
+    Xcp_SendPdu();
+}
 
 /**
  * Entry point, needs to be "wired" to CAN-Rx interrupt.
@@ -959,12 +933,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT("BUILD_CHECKSUM [%lu]\n", blockSize);
 
-#if 0
-0 BYTE Command Code = 0xF3
-1 BYTE reserved
-2 WORD reserved
-4 DWORD Block size [AG]
-#endif // 0
+    //Xcp_CalculateCRC()
 
 }
 #endif // XCP_ENABLE_BUILD_CHECKSUM
