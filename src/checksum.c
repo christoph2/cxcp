@@ -257,16 +257,33 @@ void dump(void)
 }
 #endif // 0
 
-Xcp_CrcType Xcp_CalculateCRC(uint8_t const message[], uint32_t length, Xcp_CrcType startValue)
+Xcp_CrcType Xcp_CalculateCRC(uint8_t const * dataPtr, uint32_t length, Xcp_CrcType startValue, bool isFirstCall)
 {
-    Xcp_CrcType crc = XCP_CRC_INITIAL_VALUE;
+    Xcp_CrcType crc;
     uint8_t data;
     uint32_t idx;
 
+    if (isFirstCall) {
+        crc = XCP_CRC_INITIAL_VALUE;
+    } else {
+        crc = startValue;
+    }
+
     for (idx = 0; idx < length; ++idx)
     {
-        data = REFLECT_DATA(message[idx]) ^ (crc >> (WIDTH - 8));
+        data = REFLECT_DATA(dataPtr[idx]) ^ (crc >> (WIDTH - 8));
         crc = CRC_TAB[data] ^ (crc << 8);
     }
     return REFLECT_REMAINDER(crc) ^ XCP_CRC_FINAL_XOR_VALUE;
 }
+
+
+#if 0
+
+uint8 Crc_CalculateCRC8( const uint8* Crc_DataPtr, uint32 Crc_Length, uint8 Crc_StartValue8, boolean Crc_IsFirstCall);
+uint8 Crc_CalculateCRC8H2F( const uint8* Crc_DataPtr, uint32 Crc_Length, uint8 Crc_StartValue8H2F, boolean Crc_IsFirstCall );
+uint16 Crc_CalculateCRC16( const uint8* Crc_DataPtr, uint32 Crc_Length, uint16 Crc_StartValue16, boolean Crc_IsFirstCall );
+uint32 Crc_CalculateCRC32( const uint8* Crc_DataPtr, uint32 Crc_Length, uint32 Crc_StartValue32, boolean Crc_IsFirstCall );
+uint32 Crc_CalculateCRC32P4( const uint8* Crc_DataPtr, uint32 Crc_Length, uint32 Crc_StartValue32, boolean Crc_IsFirstCall );
+uint64 Crc_CalculateCRC64( const uint8* Crc_DataPtr, uint32 Crc_Length, uint64 Crc_StartValue64, boolean Crc_IsFirstCall );
+#endif // 0
