@@ -44,11 +44,6 @@
 
 #pragma comment(lib,"ws2_32.lib") // MSVC
 
-#if defined(_MSC_VER)
-#define DBG_PRINT(...)  printf(__VA_ARGS__)
-#else
-#define DBG_PRINT(...)
-#endif
 
 #if !defined(MAX)
 #define MAX(a, b)   (((a) > (b)) ? (a) : (b))
@@ -140,13 +135,13 @@ void XcpTl_Init(void)
     BOOL fAdjustmentDisabled = TRUE;
 
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
-    DBG_PRINT("%ld %ld %ld\n", dwTimeAdjustment, dwTimeIncrement, fAdjustmentDisabled);
+    DBG_PRINT4("%ld %ld %ld\n", dwTimeAdjustment, dwTimeIncrement, fAdjustmentDisabled);
 
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         Win_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
-        //DBG_PRINT("Winsock started!\n");
+        //DBG_PRINT1("Winsock started!\n");
     }
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);  // AF_INET6
@@ -154,7 +149,7 @@ void XcpTl_Init(void)
         Win_ErrorMsg("XcpTl_Init:socket()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
-        //DBG_PRINT("UDP Socket created!\n");
+        //DBG_PRINT1("UDP Socket created!\n");
     }
 
     // IN6ADDR_SETV4MAPPED
@@ -183,7 +178,7 @@ void XcpTl_Init(void)
     }
 
     getsockname(sock, (SOCKADDR *)&server, (int *)sizeof(server));
-    DBG_PRINT("UDP-Server bound to %s:%d\n", inet_ntoa(server.sin_addr), htons(server.sin_port));
+    DBG_PRINT3("UDP-Server bound to %s:%d\n", inet_ntoa(server.sin_addr), htons(server.sin_port));
 
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
@@ -205,9 +200,9 @@ void XcpTl_Task(void)
 void hexdump(unsigned char const * buf, int sz)
 {
     for (int idx = 0; idx < sz; ++idx) {
-        DBG_PRINT("%02X ", buf[idx]);
+        DBG_PRINT2("%02X ", buf[idx]);
     }
-    DBG_PRINT("\n");
+    DBG_PRINT1("\n");
 }
 
 void XcpTl_RxHandler(void)
@@ -229,7 +224,7 @@ void XcpTl_RxHandler(void)
         dlc = (uint16_t)*(buf + 0);
         ctr = (uint16_t)*(buf + 2);
 
-        DBG_PRINT("Received packet from %s:%d [%d] FL: %d\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port), recv_len, dlc);
+        DBG_PRINT4("Received packet from %s:%d [%d]\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port), recv_len);
         hexdump(buf, recv_len);
 
         if (!XcpTl_Connection.connected || (XcpTl_Connection.connected && XcpTl_VerifyConnection())) {
@@ -286,8 +281,8 @@ void XcpTl_SaveConnection(void)
     CopyMemory(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_in));
     XcpTl_Connection.connected = TRUE;
 
-    //DBG_PRINT("CONN %s:%d\n", inet_ntoa(XcpTl_Connection.connectionAddress.sin_addr), ntohs(XcpTl_Connection.connectionAddress.sin_port));
-    //DBG_PRINT("CURR %s:%d\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port));
+    //DBG_PRINT3("CONN %s:%d\n", inet_ntoa(XcpTl_Connection.connectionAddress.sin_addr), ntohs(XcpTl_Connection.connectionAddress.sin_port));
+    //DBG_PRINT3("CURR %s:%d\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port));
 }
 
 void XcpTl_ReleaseConnection(void)

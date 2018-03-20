@@ -250,9 +250,9 @@ void dump(void)
 {
     for (int i = 0; i < 256; ++i) {
         if ((i % 8) == 0 && i > 0) {
-            DBG_PRINT("\n");
+            DBG_PRINT1("\n");
         }
-        DBG_PRINT("0x%04X, ", CRC_TAB[i]);
+        DBG_PRINT2("0x%04X, ", CRC_TAB[i]);
     }
 }
 #endif // 0

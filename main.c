@@ -66,7 +66,7 @@ int main()
     Xcp_Init();
 
     //DBG_PRINT("Starting XCP task...\n");
-    DBG_PRINT("Starting XCP task...\n");
+    DBG_PRINT1("Starting XCP task...\n");
     fflush(stdout);
 //#if 0
     for (;;) {

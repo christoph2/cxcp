@@ -26,10 +26,22 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
-#include <stdbool.h>
 #include <stdlib.h>
+
+#if defined(__CSMC__)
+typedef unsigned char       bool;
+typedef signed char         int8_t;
+typedef unsigned char       uint8_t;
+typedef signed short        int16_t;
+typedef unsigned short      uint16_t;
+typedef signed long         int32_t;
+typedef unsigned long       uint32_t;
+#else
+
+#include <stdbool.h>
 #include <stdint.h>
 
+#endif // defined
 
 #define XCP_MAX_CTO (0xff)  // TODO: Transport-Layer dependent.
 #define XCP_MAX_DTO (512)
@@ -82,7 +94,16 @@
 
 #if defined(_MSC_VER)
 #define INLINE __inline
-#define DBG_PRINT(...)  printf(__VA_ARGS__)
+#define DBG_PRINT1(a)           printf(a)
+#define DBG_PRINT2(a, b)        printf(a, b)
+#define DBG_PRINT3(a, b, c)     printf(a, b, c)
+#define DBG_PRINT4(a, b, c, d)  printf(a, b, c, d)
+#elif defined(__CSMC__)
+#define INLINE
+#define DBG_PRINT1(a)
+#define DBG_PRINT2(a, b)
+#define DBG_PRINT3(a, b, c)
+#define DBG_PRINT4(a, b, c, d)
 #else
 #define INLINE inline
 #define DBG_PRINT(...)
@@ -195,7 +216,7 @@ typedef enum tagXcp_CommandType {
     XCP_PROGRAM_FORMAT          = 0xCB,
     XCP_PROGRAM_NEXT            = 0xCA,
     XCP_PROGRAM_MAX             = 0xC9,
-    XCP_PROGRAM_VERIFY          = 0xC8,
+    XCP_PROGRAM_VERIFY          = 0xC8
 
 } Xcp_CommandType;
 
@@ -221,7 +242,7 @@ typedef enum tagXcp_ReturnType {
                                     //
     ERR_MEMORY_OVERFLOW     = 0x30, // Memory overflow error                                         S2
     ERR_GENERIC             = 0x31, // Generic error.                                                S2
-    ERR_VERIFY              = 0x32, // The slave internal program verify routine detects an error.   S3
+    ERR_VERIFY              = 0x32  // The slave internal program verify routine detects an error.   S3
 } Xcp_ReturnType;
 
 typedef enum tagXcp_DTOType {
@@ -278,7 +299,7 @@ typedef struct tagXcp_ODTType {
 typedef enum tagXcp_DaqDirectionType {
     XCP_DIRECTION_DAQ,
     XCP_DIRECTION_STIM,
-    XCP_DIRECTION_DAQ_STIM,
+    XCP_DIRECTION_DAQ_STIM
 } Xcp_DaqDirectionType;
 
 
@@ -291,7 +312,7 @@ typedef struct tagXcp_DaqListType {
 typedef enum tagXcp_DaqEntityKindType {
     XCP_ENTITY_DAQ_LIST,
     XCP_ENTITY_ODT,
-    XCP_ENTITY_ODT_ENTRY,
+    XCP_ENTITY_ODT_ENTRY
 } Xcp_DaqEntityKindType;
 
 

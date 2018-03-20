@@ -25,7 +25,6 @@
 
 #include "xcp.h"
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -532,7 +531,7 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 
 void Xcp_Init(void)
 {
-    DBG_PRINT("Xcp_Init()\n");
+    DBG_PRINT1("Xcp_Init()\n");
     Xcp_ConnectionState = XCP_DISCONNECTED;
 
     Xcp_MemSet(&Xcp_State, '\x00', sizeof(Xcp_StateType));
@@ -585,8 +584,8 @@ static Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 {
     if (dst.ext == 0 && src.ext == 0) {
-        DBG_PRINT("LEN: %u\n", len);
-        DBG_PRINT("dst: %08X src: %08x\n", dst.address, src.address);
+        DBG_PRINT2("LEN: %u\n", len);
+        DBG_PRINT3("dst: %08X src: %08x\n", dst.address, src.address);
         Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
     } else {
         // We need assistance...
@@ -603,7 +602,7 @@ void Xcp_SendPdu(void)
     Xcp_PduOut.data[2] = 0;
     Xcp_PduOut.data[3] = 0;
 
-    //DBG_PRINT("Sending PDU: ");
+    //DBG_PRINT1("Sending PDU: ");
     //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
 
     XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
@@ -679,11 +678,11 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 {
     uint8_t cmd = pdu->data[0];
 
-    DBG_PRINT("Req: ");
+    DBG_PRINT1("Req: ");
     Xcp_DumpMessageObject(pdu);
 
     if (Xcp_State.connected == TRUE) { // TODO: bool
-        DBG_PRINT("CMD: [%02X]\n", cmd);
+        DBG_PRINT2("CMD: [%02X]\n", cmd);
         Xcp_ServerCommands[0xff - cmd](pdu);   // TODO: range check!!!
     } else {    // not connected.
         if (pdu->data[0] == XCP_CONNECT) {
@@ -719,8 +718,8 @@ Xcp_ConnectionStateType Xcp_GetConnectionState(void)
 
 void Xcp_DumpMessageObject(Xcp_PDUType const * pdu)
 {
-    //DBG_PRINT("LEN: %d CMD: %02X\n", pdu->len, pdu->data[0]);
-    //DBG_PRINT("PTR: %p\n", pdu->data);
+    //DBG_PRINT3("LEN: %d CMD: %02X\n", pdu->len, pdu->data[0]);
+    //DBG_PRINT2("PTR: %p\n", pdu->data);
 #if 0
     DBG_PRINT("%08X  %u  [%02X %02X %02X %02X %02X %02X %02X %02X]\n", cmo->canID, cmo->dlc,
            cmo->data[0], cmo->data[1], cmo->data[2], cmo->data[3], cmo->data[4], cmo->data[5], cmo->data[6], cmo->data[7]
@@ -739,7 +738,7 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 static void Xcp_ErrorResponse(uint8_t errorCode)
 {
     //uint8_t * dataOut = XcpComm_GetPduOutPtr();
-    DBG_PRINT("-> Error %02X: \n", errorCode);
+    DBG_PRINT2("-> Error %02X: \n", errorCode);
 
     Xcp_Send8(2, 0xfe, errorCode, 0, 0, 0, 0, 0, 0);
 #if 0
@@ -753,7 +752,7 @@ static void Xcp_ErrorResponse(uint8_t errorCode)
 
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu)
 {
-    DBG_PRINT("Command not implemented [%02X].\n", pdu->data[0]);
+    DBG_PRINT2("Command not implemented [%02X].\n", pdu->data[0]);
     Xcp_ErrorResponse(ERR_CMD_UNKNOWN);
 }
 
@@ -763,7 +762,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
     uint8_t resource = 0x00;
     uint8_t commModeBasic = 0x00;
 
-    DBG_PRINT("CONNECT: \n");
+    DBG_PRINT1("CONNECT: \n");
 
     if (Xcp_State.connected == FALSE) {
         Xcp_State.connected = TRUE;
@@ -802,7 +801,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 {
-    DBG_PRINT("DISCONNECT: \n");
+    DBG_PRINT1("DISCONNECT: \n");
 
     Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
     XcpTl_ReleaseConnection();
@@ -811,7 +810,7 @@ static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implement!!!
 {
-    DBG_PRINT("GET_STATUS: \n");
+    DBG_PRINT1("GET_STATUS: \n");
 
     Xcp_Send8(6, 0xff,
         0,     // Current session status
@@ -826,7 +825,7 @@ static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implemen
 
 static void Xcp_Synch_Res(Xcp_PDUType const * const pdu)
 {
-    DBG_PRINT("SYNCH: \n");
+    DBG_PRINT1("SYNCH: \n");
 
     Xcp_Send8(2, 0xfe, ERR_CMD_SYNCH, 0, 0, 0, 0, 0, 0);
 }
@@ -837,7 +836,7 @@ static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t commModeOptional = 0;
 
-    DBG_PRINT("GET_COMM_MODE_INFO: \n");
+    DBG_PRINT1("GET_COMM_MODE_INFO: \n");
 
 #if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
     commModeOptional |= XCP_MASTER_BLOCK_MODE;
@@ -871,7 +870,7 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 4 DWORD Length [BYTE]
 #endif
 
-    DBG_PRINT("GET_ID [%u]: \n", idType);
+    DBG_PRINT2("GET_ID [%u]: \n", idType);
 
     Xcp_SetMta(Xcp_GetNonPagedAddress(Xcp_StationID.name));
 
@@ -886,7 +885,7 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
     uint8_t len = pdu->data[1];
 
 // TODO: RangeCheck / Blockmode!!!
-    DBG_PRINT("UPLOAD [%u]\n", len);
+    DBG_PRINT2("UPLOAD [%u]\n", len);
 
     Xcp_Upload(len);
 }
@@ -899,7 +898,7 @@ static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
     uint8_t len = pdu->data[1];
 
 // TODO: RangeCheck / Blockmode!!!
-    DBG_PRINT("SHORT-UPLOAD [%u]\n", len);
+    DBG_PRINT2("SHORT-UPLOAD [%u]\n", len);
     Xcp_State.mta.ext = pdu->data[3];
     Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
     Xcp_Upload(len);
@@ -919,7 +918,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
     Xcp_State.mta.ext = pdu->data[3];
     Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
 
-    DBG_PRINT("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
+    DBG_PRINT3("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
 
     Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -931,7 +930,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 {
     uint32_t blockSize = Xcp_GetDWord(pdu, 4);
 
-    DBG_PRINT("BUILD_CHECKSUM [%lu]\n", blockSize);
+    DBG_PRINT2("BUILD_CHECKSUM [%lu]\n", blockSize);
 
     //Xcp_CalculateCRC()
 
@@ -982,7 +981,7 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 
     // TODO: If the specified list is not available, ERR_OUT_OF_RANGE will be returned.
 
-    DBG_PRINT("SET_DAQ_PTR [%u:%u:%u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
+    DBG_PRINT4("SET_DAQ_PTR [%u:%u:%u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 
     Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -1026,7 +1025,7 @@ static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
     uint32_t timestamp;
     //uint8_t * dataOut = Xcp_GetOutPduPtr();
 
-    DBG_PRINT("GET_DAQ_CLOCK: \n");
+    DBG_PRINT1("GET_DAQ_CLOCK: \n");
 
     timestamp = XcpHw_GetTimerCounter();
 
@@ -1047,7 +1046,7 @@ static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_GET_DAQ_RESOLUTION_INFO == XCP_ON
 static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
 {
-    DBG_PRINT("GET_DAQ_RESOLUTION_INFO: \n");
+    DBG_PRINT1("GET_DAQ_RESOLUTION_INFO: \n");
 
     Xcp_Send8(8, 0xff,
               1,    // Granularity for size of ODT entry (DIRECTION = DAQ)
