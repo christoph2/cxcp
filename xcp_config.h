@@ -40,6 +40,9 @@
 #define XCP_BYTE_ORDER              XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY     XCP_ADDRESS_GRANULARITY_BYTE
 
+#define XCP_MAX_CTO                 (255)
+#define XCP_MAX_DTO                 (1500)
+
 #define XCP_MAX_BS                  (0)
 #define XCP_MIN_ST                  (0)
 #define XCP_QUEUE_SIZE              (0)

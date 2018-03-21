@@ -43,9 +43,6 @@ typedef unsigned long       uint32_t;
 
 #endif // defined
 
-#define XCP_MAX_CTO (0xff)  // TODO: Transport-Layer dependent.
-#define XCP_MAX_DTO (512)
-
 #define XCP_PROTOCOL_VERSION_MAJOR       (1)
 #define XCP_PROTOCOL_VERSION_RELEASE     (0)
 
@@ -344,6 +341,8 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
 void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
+Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
+void Xcp_SetMta(Xcp_MtaType mta);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((w) & 0xff)

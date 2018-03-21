@@ -81,9 +81,6 @@ static const Xcp_StationIDType Xcp_StationID = { sizeof(XCP_STATION_ID), XCP_STA
 /*
 ** Local Function Prototypes.
 */
-static Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
-static void Xcp_SetMta(Xcp_MtaType mta);
-
 static void Xcp_ErrorResponse(uint8_t errorCode);
 
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
@@ -567,12 +564,12 @@ void Xcp_MainFunction(void)
 
 }
 
-static void Xcp_SetMta(Xcp_MtaType mta)
+void Xcp_SetMta(Xcp_MtaType mta)
 {
     Xcp_State.mta = mta;
 }
 
-static Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
+Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 {
     Xcp_MtaType mta;
 
@@ -868,13 +865,28 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 1 BYTE Mode
 2 WORD Reserved
 4 DWORD Length [BYTE]
+---------------------
+0           ASCII text
+1           ASAM-MC2 filename without path and extension
+2           ASAM-MC2 filename with path and extension
+3           URL where the ASAM-MC2 file can be found
+4           ASAM-MC2 file to upload
+128..255    User defined
 #endif
 
     DBG_PRINT2("GET_ID [%u]: \n", idType);
 
-    Xcp_SetMta(Xcp_GetNonPagedAddress(Xcp_StationID.name));
+    if (idType == 1) {
+        Xcp_SetMta(Xcp_GetNonPagedAddress(Xcp_StationID.name));
+        Xcp_Send8(8, 0xff, 0, 0, 0, (uint8_t)Xcp_StationID.len, 0, 0, 0);
+    }
+#if XCP_ENABLE_GET_ID_HOOK == XCP_ON
+    else {
+        Xcp_HookFunction_GetId(idType);
+    }
+#endif // XCP_ENABLE_GET_ID_HOOK
 
-    Xcp_Send8(8, 0xff, 0, 0, 0, (uint8_t)Xcp_StationID.len, 0, 0, 0);
+
 }
 #endif // XCP_ENABLE_GET_ID
 
