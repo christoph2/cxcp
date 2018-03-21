@@ -119,5 +119,10 @@
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE            (1)     /* [0 | 1 | 2] */
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE           (0)     /* [0 | 1 | 2] */
 
+/*
+**  Customization Options.
+*/
+#define XCP_ENABLE_GET_ID_HOOK                      XCP_ON
+
 #endif /* __XCP_CONFIG_H */
 

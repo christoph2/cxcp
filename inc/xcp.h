@@ -441,6 +441,11 @@ void XcpTl_FeedReceiver(uint8_t octet);
 void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
 
 /*
+**  Customization Stuff.
+*/
+bool Xcp_HookFunction_GetId(uint8_t idType);
+
+/*
 **  Hardware dependent stuff.
 */
 void XcpHw_Init(void);
