@@ -208,9 +208,7 @@ void hexdump(unsigned char const * buf, int sz)
 void XcpTl_RxHandler(void)
 {
     int recv_len;
-
     uint16_t dlc;
-    uint16_t ctr;
 
     memset(buf,'\0', XCP_COMM_BUFLEN);
 
@@ -220,14 +218,13 @@ void XcpTl_RxHandler(void)
         Win_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
         fflush(stdout);
     } else if (recv_len > 0) {
-        // TODO: Big-Ehdian!!!
+        // TODO: Big-Endian!!!
         dlc = (uint16_t)*(buf + 0);
-        ctr = (uint16_t)*(buf + 2);
 
         DBG_PRINT4("Received packet from %s:%d [%d]\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port), recv_len);
         hexdump(buf, recv_len);
 
-        if (!XcpTl_Connection.connected || (XcpTl_Connection.connected && XcpTl_VerifyConnection())) {
+        if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
             Xcp_PduIn.len = dlc;
             Xcp_PduIn.data = buf + 4;
             Xcp_DispatchCommand(&Xcp_PduIn);
