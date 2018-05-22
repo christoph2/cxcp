@@ -118,8 +118,8 @@
 /*
 **  Transport-Layser specific Options (may not apply to every Transport).
 */
-#define XCP_TRANSPORT_LAYER_LENGTH_SIZE             (1)     /* [0 | 1 | 2] */
-#define XCP_TRANSPORT_LAYER_COUNTER_SIZE            (1)     /* [0 | 1 | 2] */
+#define XCP_TRANSPORT_LAYER_LENGTH_SIZE             (2)     /* [0 | 1 | 2] */
+#define XCP_TRANSPORT_LAYER_COUNTER_SIZE            (2)     /* [0 | 1 | 2] */
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE           (0)     /* [0 | 1 | 2] */
 
 /*

@@ -49,6 +49,9 @@ typedef struct tagXcp_StateType {
     Xcp_DaqProcessorType daqProcessor;
     Xcp_DaqPointerType daqPointer;
 #endif // XCP_ENABLE_DAQ_COMMANDS
+#if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
+    uint16_t counter;
+#endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
     bool programming;
     uint8_t mode;
     uint8_t protection;
@@ -553,7 +556,9 @@ void Xcp_Init(void)
     Xcp_State.daqPointer.odtEntry = 0;
     Xcp_State.daqPointer.daqEntityNumber = 0;
 #endif // XCP_ENABLE_DAQ_COMMANDS
-
+#if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
+    Xcp_State.counter = 0;
+#endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
     XcpHw_Init();
     XcpTl_Init();
 }
@@ -581,8 +586,8 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 {
     if (dst.ext == 0 && src.ext == 0) {
-        DBG_PRINT2("LEN: %u\n", len);
-        DBG_PRINT3("dst: %08X src: %08x\n", dst.address, src.address);
+//        DBG_PRINT2("LEN: %u\n", len);
+//        DBG_PRINT3("dst: %08X src: %08x\n", dst.address, src.address);
         Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
     } else {
         // We need assistance...
@@ -596,8 +601,11 @@ void Xcp_SendPdu(void)
 
     Xcp_PduOut.data[0] = LOBYTE(len);
     Xcp_PduOut.data[1] = HIBYTE(len);
-    Xcp_PduOut.data[2] = 0;
-    Xcp_PduOut.data[3] = 0;
+#if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
+    Xcp_PduOut.data[2] = LOBYTE(Xcp_State.counter);
+    Xcp_PduOut.data[3] = HIBYTE(Xcp_State.counter);
+    Xcp_State.counter++;
+#endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
 
     //DBG_PRINT1("Sending PDU: ");
     //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
