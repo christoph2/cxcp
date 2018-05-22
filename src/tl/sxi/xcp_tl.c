@@ -40,7 +40,7 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
 
-static uint8_t Xcp_PduOutBuffer[256] = {0};
+static uint8_t Xcp_PduOutBuffer[XCP_COMM_BUFLEN] = {0};
 
 typedef enum tagXcpTl_ReceiverStateType {
     XCP_RCV_IDLE,
@@ -50,7 +50,7 @@ typedef enum tagXcpTl_ReceiverStateType {
 
 
 typedef struct tagXcpTl_ReceiverType {
-    uint8_t Buffer[/*XCP_COMM_BUFLEN*/256];
+    uint8_t Buffer[XCP_COMM_BUFLEN];
     XcpTl_ReceiverStateType State;
     uint16_t Index;
     uint16_t Remaining;
