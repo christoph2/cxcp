@@ -199,7 +199,9 @@ void XcpTl_Task(void)
 
 void hexdump(unsigned char const * buf, int sz)
 {
-    for (int idx = 0; idx < sz; ++idx) {
+    int idx;
+
+    for (idx = 0; idx < sz; ++idx) {
         DBG_PRINT2("%02X ", buf[idx]);
     }
     DBG_PRINT1("\n");
@@ -249,10 +251,11 @@ void XcpTl_TxHandler(void)
 int XcpTl_FrameAvailable(long sec, long usec)
 {
     struct timeval timeout;
+    fd_set fds;
+
     timeout.tv_sec = sec;
     timeout.tv_usec = usec;
 
-    fd_set fds;
     FD_ZERO(&fds);
     FD_SET(sock, &fds);
 

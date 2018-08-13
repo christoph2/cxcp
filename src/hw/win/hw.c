@@ -23,8 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+
 #include <windows.h>
-#include <stdint.h>
+#include <stdlib.h>
 
 #include "xcp.h"
 
@@ -58,6 +61,15 @@ typedef struct tagHwStateType {
 */
 static HwStateType HwState = {0};
 
+void exitFunc(void);
+
+void exitFunc(void)
+{
+    printf("Exiting programm...\n");
+    _CrtDumpMemoryLeaks();
+    Sleep(3000);
+}
+
 /*
 **  Global Functions.
 */
@@ -65,13 +77,17 @@ void XcpHw_Init(void)
 {
     LARGE_INTEGER EndingTime, ElapsedMicroseconds;
 
+    //atexit(exitFunc);
+
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
     printf("Freq: %lu\n", HwState.TicksPerSecond);
 
     QueryPerformanceCounter(&HwState.StartingTime);
 
 // Activity to be timed
-    Sleep(2000);
+    Sleep(1000);
 
     QueryPerformanceCounter(&EndingTime);
     ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - HwState.StartingTime.QuadPart;

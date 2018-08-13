@@ -16,6 +16,7 @@
 // https://stackoverflow.com/questions/4308996/finding-the-address-range-of-the-data-segment
 void print_PE_section_info(HANDLE hModule) // hModule is the handle to a loaded Module (.exe or .dll)
 {
+   int scn;
    // get the location of the module's IMAGE_NT_HEADERS structure
    IMAGE_NT_HEADERS *pNtHdr = ImageNtHeader(hModule);
 
@@ -26,7 +27,7 @@ void print_PE_section_info(HANDLE hModule) // hModule is the handle to a loaded 
    char scnName[sizeof(pSectionHdr->Name) + 1];
    scnName[sizeof(scnName) - 1] = '\0'; // enforce nul-termination for scn names that are the whole length of pSectionHdr->Name[]
 
-   for (int scn = 0; scn < pNtHdr->FileHeader.NumberOfSections; ++scn)
+   for (scn = 0; scn < pNtHdr->FileHeader.NumberOfSections; ++scn)
    {
       // Note: pSectionHdr->Name[] is 8 bytes long. If the scn name is 8 bytes long, ->Name[] will
       // not be nul-terminated. For this reason, copy it to a local buffer that's nul-terminated

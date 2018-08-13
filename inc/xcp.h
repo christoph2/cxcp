@@ -28,7 +28,21 @@
 
 #include <stdlib.h>
 
-#if defined(__CSMC__)
+/* check for C99-Compiler */
+#if defined(__STDC_VERSION__)
+    #if __STDC_VERSION__ >= 199901L
+        #define C99_COMPILER
+    #endif
+#endif
+
+/* check for C1x-Compiler */
+#if defined(__STDC_VERSION__)
+    #if __STDC_VERSION__>= 201112L
+        #define C11_COMPILER
+    #endif
+#endif
+
+#if defined(__CSMC__) || !defined(C99_COMPILER) || !defined(C11_COMPILER)
 typedef unsigned char       bool;
 typedef signed char         int8_t;
 typedef unsigned char       uint8_t;
@@ -36,7 +50,11 @@ typedef signed short        int16_t;
 typedef unsigned short      uint16_t;
 typedef signed long         int32_t;
 typedef unsigned long       uint32_t;
+
+typedef signed long long    int64_t;
+typedef unsigned long long  uint64_t;
 #else
+
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -95,7 +113,7 @@ typedef unsigned long       uint32_t;
 #define DBG_PRINT2(a, b)        printf(a, b)
 #define DBG_PRINT3(a, b, c)     printf(a, b, c)
 #define DBG_PRINT4(a, b, c, d)  printf(a, b, c, d)
-#elif defined(__CSMC__)
+#elif defined(__CSMC__) || defined(__IAR_SYSTEMS_ICC__)
 #define INLINE
 #define DBG_PRINT1(a)
 #define DBG_PRINT2(a, b)
