@@ -26,7 +26,7 @@
 #include "xcp.h"
 
 #include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 
 /*
 ** Private Options.
@@ -1112,7 +1112,7 @@ INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
 INLINE void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value)
 {
     (*(pdu->data + offs)) = value & 0xff;
-    (*(pdu->data + 1 + offs)) = (value & 0xff) >> 8;
+    (*(pdu->data + 1 + offs)) = (value & 0xff00) >> 8;
 }
 
 INLINE void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value)

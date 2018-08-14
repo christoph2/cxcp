@@ -42,8 +42,9 @@
     #endif
 #endif
 
-#if defined(__CSMC__) || !defined(C99_COMPILER) || !defined(C11_COMPILER)
+#if defined(__CSMC__)  || !defined(C99_COMPILER) || !defined(C11_COMPILER)
 typedef unsigned char       bool;
+
 typedef signed char         int8_t;
 typedef unsigned char       uint8_t;
 typedef signed short        int16_t;
