@@ -1102,10 +1102,10 @@ INLINE uint16_t Xcp_GetWord(Xcp_PDUType const * const pdu, uint8_t offs)
 
 INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
 {
-  return (*(pdu->data + offs))        |
-    ((*(pdu->data + 1 + offs)) << 8)  |
-    ((*(pdu->data + 2 + offs)) << 16) |
-    ((*(pdu->data + 3 + offs)) << 24);
+  return (*(pdu->data + offs))            |
+    ((*(pdu->data + 1 + offs)) * 0x100)   |
+    ((*(pdu->data + 2 + offs)) * 0x10000) |
+    ((*(pdu->data + 3 + offs)) * 0x1000000);
 }
 
 
