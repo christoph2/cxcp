@@ -23,7 +23,6 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include <stdint.h>
 #include <stdio.h>
 #include "xcp.h"
 
