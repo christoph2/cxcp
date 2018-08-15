@@ -381,8 +381,14 @@ void Xcp_SetMta(Xcp_MtaType mta);
 #define HIWORD(w)   (((w)  & 0xffff0000) >> 16)
 #endif
 
+#if !defined(MAX)
+#define MAX(l, r) ((l) > (r) ? (l) : (r))
+#endif
 
-//#if 0
+#if !defined(MIN)
+#define MIN(l, r) ((l) < (r) ? (l) : (r))
+#endif
+
 #if !defined(TRUE)
 #define TRUE    (1)
 #endif
@@ -390,7 +396,6 @@ void Xcp_SetMta(Xcp_MtaType mta);
 #if !defined(FALSE)
 #define FALSE   (0)
 #endif
-//#endif
 
 
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
