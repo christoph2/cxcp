@@ -82,31 +82,43 @@ typedef unsigned long long  uint64_t;
 #define XCP_ON_SXI              (5)
 //#define XCP_ON_
 
+#define UINT8(x)    ((uint8_t)(x))
+#define INT8(x)     ((int8_t)(x))
+
+#define UINT16(x)   ((uint16_t)(x))
+#define INT16(x)    ((int16_t)(x))
+
+#define UINT32(x)   ((uint32_t)(x))
+#define INT32(x)    ((int32_t)(x))
+
+#define UINT64(x)   ((uint64_t)(x))
+#define INT64(x)    ((int64_t)(x))
+
 /*
 **  Available Resources.
 */
-#define XCP_RESOURCE_PGM        (16)
-#define XCP_RESOURCE_STIM       (8)
-#define XCP_RESOURCE_DAQ        (4)
-#define XCP_RESOURCE_CAL_PAG    (1)
+#define XCP_RESOURCE_PGM        ((uint8_t)16)
+#define XCP_RESOURCE_STIM       ((uint8_t)8)
+#define XCP_RESOURCE_DAQ        ((uint8_t)4)
+#define XCP_RESOURCE_CAL_PAG    ((uint8_t)1)
 
 
-#define XCP_BYTE_ORDER_INTEL    (0)
-#define XCP_BYTE_ORDER_MOTOROLA (1)
+#define XCP_BYTE_ORDER_INTEL    ((uint8_t)0)
+#define XCP_BYTE_ORDER_MOTOROLA ((uint8_t)1)
 
-#define XCP_SLAVE_BLOCK_MODE    (0x40)
+#define XCP_SLAVE_BLOCK_MODE    ((uint8_t)0x40)
 
-#define XCP_ADDRESS_GRANULARITY_0   (2)
-#define XCP_ADDRESS_GRANULARITY_1   (4)
+#define XCP_ADDRESS_GRANULARITY_0   ((uint8_t)2)
+#define XCP_ADDRESS_GRANULARITY_1   ((uint8_t)4)
 
-#define XCP_ADDRESS_GRANULARITY_BYTE    (0)
+#define XCP_ADDRESS_GRANULARITY_BYTE    ((uint8_t)0)
 #define XCP_ADDRESS_GRANULARITY_WORD    (XCP_ADDRESS_GRANULARITY_0)
 #define XCP_ADDRESS_GRANULARITY_DWORD   (XCP_ADDRESS_GRANULARITY_1)
 
-#define XCP_OPTIONAL_COMM_MODE          (0x80)
+#define XCP_OPTIONAL_COMM_MODE          ((uint8_t)0x80)
 
-#define XCP_MASTER_BLOCK_MODE           (1)
-#define XCP_INTERLEAVED_MODE            (2)
+#define XCP_MASTER_BLOCK_MODE           ((uint8_t)1)
+#define XCP_INTERLEAVED_MODE            ((uint8_t)2)
 
 #if defined(_MSC_VER)
 #define INLINE __inline
@@ -137,128 +149,128 @@ typedef enum tagXcp_CommandType {
     //
     // Mandatory Commands.
     //
-    XCP_CONNECT                 = 0xFF,
-    XCP_DISCONNECT              = 0xFE,
-    XCP_GET_STATUS              = 0xFD,
-    XCP_SYNCH                   = 0xFC,
+    XCP_CONNECT                 = UINT8(0xFF),
+    XCP_DISCONNECT              = UINT8(0xFE),
+    XCP_GET_STATUS              = UINT8(0xFD),
+    XCP_SYNCH                   = UINT8(0xFC),
     //
     // Optional Commands.
     //
-    XCP_GET_COMM_MODE_INFO      = 0xFB,
-    XCP_GET_ID                  = 0xFA,
-    XCP_SET_REQUEST             = 0xF9,
-    XCP_GET_SEED                = 0xF8,
-    XCP_UNLOCK                  = 0xF7,
-    XCP_SET_MTA                 = 0xF6,
-    XCP_UPLOAD                  = 0xF5,
-    XCP_SHORT_UPLOAD            = 0xF4,
-    XCP_BUILD_CHECKSUM          = 0xF3,
+    XCP_GET_COMM_MODE_INFO      = UINT8(0xFB),
+    XCP_GET_ID                  = UINT8(0xFA),
+    XCP_SET_REQUEST             = UINT8(0xF9),
+    XCP_GET_SEED                = UINT8(0xF8),
+    XCP_UNLOCK                  = UINT8(0xF7),
+    XCP_SET_MTA                 = UINT8(0xF6),
+    XCP_UPLOAD                  = UINT8(0xF5),
+    XCP_SHORT_UPLOAD            = UINT8(0xF4),
+    XCP_BUILD_CHECKSUM          = UINT8(0xF3),
 
-    XCP_TRANSPORT_LAYER_CMD     = 0xF2,
-    XCP_USER_CMD                = 0xF1,
+    XCP_TRANSPORT_LAYER_CMD     = UINT8(0xF2),
+    XCP_USER_CMD                = UINT8(0xF1),
 //
 // CAL
 //
     //
     // Mandatory Commands.
     //
-    XCP_DOWNLOAD                = 0xF0,
+    XCP_DOWNLOAD                = UINT8(0xF0),
     //
     // Optional Commands.
     //
-    XCP_DOWNLOAD_NEXT           = 0xEF,
-    XCP_DOWNLOAD_MAX            = 0xEE,
-    XCP_SHORT_DOWNLOAD          = 0xED,
-    XCP_MODIFY_BITS             = 0xEC,
+    XCP_DOWNLOAD_NEXT           = UINT8(0xEF),
+    XCP_DOWNLOAD_MAX            = UINT8(0xEE),
+    XCP_SHORT_DOWNLOAD          = UINT8(0xED),
+    XCP_MODIFY_BITS             = UINT8(0xEC),
 //
 // PAG
 //
     //
     // Mandatory Commands.
     //
-    XCP_SET_CAL_PAGE            = 0xEB,
-    XCP_GET_CAL_PAGE            = 0xEA,
+    XCP_SET_CAL_PAGE            = UINT8(0xEB),
+    XCP_GET_CAL_PAGE            = UINT8(0xEA),
     //
     // Optional Commands.
     //
-    XCP_GET_PAG_PROCESSOR_INFO  = 0xE9,
-    XCP_GET_SEGMENT_INFO        = 0xE8,
-    XCP_GET_PAGE_INFO           = 0xE7,
-    XCP_SET_SEGMENT_MODE        = 0xE6,
-    XCP_GET_SEGMENT_MODE        = 0xE5,
-    XCP_COPY_CAL_PAGE           = 0xE4,
+    XCP_GET_PAG_PROCESSOR_INFO  = UINT8(0xE9),
+    XCP_GET_SEGMENT_INFO        = UINT8(0xE8),
+    XCP_GET_PAGE_INFO           = UINT8(0xE7),
+    XCP_SET_SEGMENT_MODE        = UINT8(0xE6),
+    XCP_GET_SEGMENT_MODE        = UINT8(0xE5),
+    XCP_COPY_CAL_PAGE           = UINT8(0xE4),
 //
 // DAQ
 //
     //
     // Mandatory Commands.
     //
-    XCP_CLEAR_DAQ_LIST          = 0xE3,
-    XCP_SET_DAQ_PTR             = 0xE2,
-    XCP_WRITE_DAQ               = 0xE1,
-    XCP_SET_DAQ_LIST_MODE       = 0xE0,
-    XCP_GET_DAQ_LIST_MODE       = 0xDF,
-    XCP_START_STOP_DAQ_LIST     = 0xDE,
-    XCP_START_STOP_SYNCH        = 0xDD,
+    XCP_CLEAR_DAQ_LIST          = UINT8(0xE3),
+    XCP_SET_DAQ_PTR             = UINT8(0xE2),
+    XCP_WRITE_DAQ               = UINT8(0xE1),
+    XCP_SET_DAQ_LIST_MODE       = UINT8(0xE0),
+    XCP_GET_DAQ_LIST_MODE       = UINT8(0xDF),
+    XCP_START_STOP_DAQ_LIST     = UINT8(0xDE),
+    XCP_START_STOP_SYNCH        = UINT8(0xDD),
     //
     // Optional Commands.
     //
-    XCP_GET_DAQ_CLOCK           = 0xDC,
-    XCP_READ_DAQ                = 0xDB,
-    XCP_GET_DAQ_PROCESSOR_INFO  = 0xDA,
-    XCP_GET_DAQ_RESOLUTION_INFO = 0xD9,
-    XCP_GET_DAQ_LIST_INFO       = 0xD8,
-    XCP_GET_DAQ_EVENT_INFO      = 0xD7,
-    XCP_FREE_DAQ                = 0xD6,
-    XCP_ALLOC_DAQ               = 0xD5,
-    XCP_ALLOC_ODT               = 0xD4,
-    XCP_ALLOC_ODT_ENTRY         = 0xD3,
+    XCP_GET_DAQ_CLOCK           = UINT8(0xDC),
+    XCP_READ_DAQ                = UINT8(0xDB),
+    XCP_GET_DAQ_PROCESSOR_INFO  = UINT8(0xDA),
+    XCP_GET_DAQ_RESOLUTION_INFO = UINT8(0xD9),
+    XCP_GET_DAQ_LIST_INFO       = UINT8(0xD8),
+    XCP_GET_DAQ_EVENT_INFO      = UINT8(0xD7),
+    XCP_FREE_DAQ                = UINT8(0xD6),
+    XCP_ALLOC_DAQ               = UINT8(0xD5),
+    XCP_ALLOC_ODT               = UINT8(0xD4),
+    XCP_ALLOC_ODT_ENTRY         = UINT8(0xD3),
 //
 // PGM
 //
     //
     // Mandatory Commands.
     //
-    XCP_PROGRAM_START           = 0xD2,
-    XCP_PROGRAM_CLEAR           = 0xD1,
-    XCP_PROGRAM                 = 0xD0,
-    XCP_PROGRAM_RESET           = 0xCF,
+    XCP_PROGRAM_START           = UINT8(0xD2),
+    XCP_PROGRAM_CLEAR           = UINT8(0xD1),
+    XCP_PROGRAM                 = UINT8(0xD0),
+    XCP_PROGRAM_RESET           = UINT8(0xCF),
     //
     // Optional Commands.
     //
-    XCP_GET_PGM_PROCESSOR_INFO  = 0xCE,
-    XCP_GET_SECTOR_INFO         = 0xCD,
-    XCP_PROGRAM_PREPARE         = 0xCC,
-    XCP_PROGRAM_FORMAT          = 0xCB,
-    XCP_PROGRAM_NEXT            = 0xCA,
-    XCP_PROGRAM_MAX             = 0xC9,
-    XCP_PROGRAM_VERIFY          = 0xC8
+    XCP_GET_PGM_PROCESSOR_INFO  = UINT8(0xCE),
+    XCP_GET_SECTOR_INFO         = UINT8(0xCD),
+    XCP_PROGRAM_PREPARE         = UINT8(0xCC),
+    XCP_PROGRAM_FORMAT          = UINT8(0xCB),
+    XCP_PROGRAM_NEXT            = UINT8(0xCA),
+    XCP_PROGRAM_MAX             = UINT8(0xC9),
+    XCP_PROGRAM_VERIFY          = UINT8(0xC8)
 
 } Xcp_CommandType;
 
 
 typedef enum tagXcp_ReturnType {
-    ERR_CMD_SYNCH           = 0x00, // Command processor synchronization.                            S0
-                                    //
-    ERR_CMD_BUSY            = 0x10, // Command was not executed.                                     S2
-    ERR_DAQ_ACTIVE          = 0x11, // Command rejected because DAQ is running.                      S2
-    ERR_PGM_ACTIVE          = 0x12, // Command rejected because PGM is running.                      S2
-                                    //
-    ERR_CMD_UNKNOWN         = 0x20, // Unknown command or not implemented optional command.          S2
-    ERR_CMD_SYNTAX          = 0x21, // Command syntax invalid                                        S2
-    ERR_OUT_OF_RANGE        = 0x22, // Command syntax valid but command parameter(s) out of range.   S2
-    ERR_WRITE_PROTECTED     = 0x23, // The memory location is write protected.                       S2
-    ERR_ACCESS_DENIED       = 0x24, // The memory location is not accessible.                        S2
-    ERR_ACCESS_LOCKED       = 0x25, // Access denied, Seed & Key is required                         S2
-    ERR_PAGE_NOT_VALID      = 0x26, // Selected page not available                                   S2
-    ERR_MODE_NOT_VALID      = 0x27, // Selected page mode not available                              S2
-    ERR_SEGMENT_NOT_VALID   = 0x28, // Selected segment not valid                                    S2
-    ERR_SEQUENCE            = 0x29, // Sequence error                                                S2
-    ERR_DAQ_CONFIG          = 0x2A, // DAQ configuration not valid                                   S2
-                                    //
-    ERR_MEMORY_OVERFLOW     = 0x30, // Memory overflow error                                         S2
-    ERR_GENERIC             = 0x31, // Generic error.                                                S2
-    ERR_VERIFY              = 0x32  // The slave internal program verify routine detects an error.   S3
+    ERR_CMD_SYNCH           = UINT8(0x00), // Command processor synchronization.                            S0
+                                           //
+    ERR_CMD_BUSY            = UINT8(0x10), // Command was not executed.                                     S2
+    ERR_DAQ_ACTIVE          = UINT8(0x11), // Command rejected because DAQ is running.                      S2
+    ERR_PGM_ACTIVE          = UINT8(0x12), // Command rejected because PGM is running.                      S2
+                                           //
+    ERR_CMD_UNKNOWN         = UINT8(0x20), // Unknown command or not implemented optional command.          S2
+    ERR_CMD_SYNTAX          = UINT8(0x21), // Command syntax invalid                                        S2
+    ERR_OUT_OF_RANGE        = UINT8(0x22), // Command syntax valid but command parameter(s) out of range.   S2
+    ERR_WRITE_PROTECTED     = UINT8(0x23), // The memory location is write protected.                       S2
+    ERR_ACCESS_DENIED       = UINT8(0x24), // The memory location is not accessible.                        S2
+    ERR_ACCESS_LOCKED       = UINT8(0x25), // Access denied, Seed & Key is required                         S2
+    ERR_PAGE_NOT_VALID      = UINT8(0x26), // Selected page not available                                   S2
+    ERR_MODE_NOT_VALID      = UINT8(0x27), // Selected page mode not available                              S2
+    ERR_SEGMENT_NOT_VALID   = UINT8(0x28), // Selected segment not valid                                    S2
+    ERR_SEQUENCE            = UINT8(0x29), // Sequence error                                                S2
+    ERR_DAQ_CONFIG          = UINT8(0x2A), // DAQ configuration not valid                                   S2
+                                           //
+    ERR_MEMORY_OVERFLOW     = UINT8(0x30),  // Memory overflow error                                         S2
+    ERR_GENERIC             = UINT8(0x31), // Generic error.                                                S2
+    ERR_VERIFY              = UINT8(0x32)  // The slave internal program verify routine detects an error.   S3
 } Xcp_ReturnType;
 
 
@@ -307,7 +319,7 @@ typedef struct tagXcp_PDUType {
 
 typedef struct tagXcp_StationIDType {
     uint16_t len;
-    char const * name;
+    uint8_t const * name;
 } Xcp_StationIDType;
 
 
@@ -373,20 +385,29 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
 void Xcp_SetMta(Xcp_MtaType mta);
 
+/*
+** DAQ Implementation Functions.
+*/
+void Xcp_InitDaq(void);
+void Xcp_FreeDaq(void);
+void Xcp_AllocDaq(uint16_t daqCount);
+void Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
+void Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
+
 #if !defined(LOBYTE)
-#define LOBYTE(w)   ((w) & 0xff)
+#define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
 #endif
 
 #if !defined(HIBYTE)
-#define HIBYTE(w)   (((w)  & 0xff00) >> 8)
+#define HIBYTE(w)   ((uint8_t)(((w)  & (uint16_t)0xff00) >> 8))
 #endif
 
 #if !defined(LOWORD)
-#define LOWORD(w)   ((w) & 0xffff)
+#define LOWORD(w)   ((uint16_t)((w) & (uint16_t)0xffff))
 #endif
 
 #if !defined(HIWORD)
-#define HIWORD(w)   (((w)  & 0xffff0000) >> 16)
+#define HIWORD(w)   ((uint16_t)(((w)  & (uint32_t)0xffff0000) >> 16))
 #endif
 
 #if !defined(MAX)
@@ -441,11 +462,14 @@ void Xcp_SendPdu(void);
 uint8_t * Xcp_GetOutPduPtr(void);
 void Xcp_SetPduOutLen(uint16_t len);
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
-int XcpTl_Send(uint8_t const * buf, uint16_t len);
+void XcpTl_Send(uint8_t const * buf, uint16_t len);
 
 /*
 **  Helpers.
 */
+void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len);
+
+/* Locals!!! */
 void Xcp_MemCopy(void * dst, void * src, uint32_t len);
 void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len);
 
@@ -492,7 +516,7 @@ extern Xcp_PDUType Xcp_PduOut;
 
 #include "xcp_config.h"
 
-#if XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16 || XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
+#if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT)
 typedef uint16_t Xcp_CrcType;
 #elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32
 typedef uint32_t Xcp_CrcType;

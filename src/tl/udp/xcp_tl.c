@@ -266,13 +266,11 @@ int XcpTl_FrameAvailable(long sec, long usec)
     return select(0, &fds, 0, 0, &timeout);
 }
 
-int XcpTl_Send(uint8_t const * buf, uint16_t len)
+void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
     if (sendto(sock, (char const *)buf, len, 0, (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
         Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
-        return 0;
     }
-    return 1;
 }
 
 

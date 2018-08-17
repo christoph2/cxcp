@@ -115,7 +115,7 @@ void XcpTl_FeedReceiver(uint8_t octet)
     }
 }
 
-int XcpTl_Send(uint8_t const * buf, uint16_t len)
+void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
 #if defined(ARDUINO)
     Serial.write(buf, len);

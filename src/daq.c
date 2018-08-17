@@ -57,19 +57,19 @@ typedef enum tagDaq_AllocTransitionType {
 ** Local Variables.
 */
 static const uint8_t Daq_AllocTransitionTable[5][4] = {
-                            /* FREE_DAQ    ALLOC_DAQ      ALLOC_ODT      ALLOC_ODT_ENTRY    */
-/* ALLOC_IDLE*/             {DAQ_ALLOC_OK, DAQ_ALLOC_ERR, DAQ_ALLOC_ERR, DAQ_ALLOC_ERR },
-/* AFTER_FREE_DAQ  */       {DAQ_ALLOC_OK, DAQ_ALLOC_OK , DAQ_ALLOC_ERR, DAQ_ALLOC_ERR },
-/* AFTER_ALLOC_DAQ */       {DAQ_ALLOC_OK, DAQ_ALLOC_OK , DAQ_ALLOC_OK,  DAQ_ALLOC_ERR },
-/* AFTER_ALLOC_ODT */       {DAQ_ALLOC_OK, DAQ_ALLOC_ERR, DAQ_ALLOC_OK,  DAQ_ALLOC_OK  },
-/* AFTER_ALLOC_ODT_ENTRY */ {DAQ_ALLOC_OK, DAQ_ALLOC_ERR, DAQ_ALLOC_ERR, DAQ_ALLOC_OK  },
+                            /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT             ALLOC_ODT_ENTRY    */
+/* ALLOC_IDLE*/             {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
+/* AFTER_FREE_DAQ  */       {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK) , UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
+/* AFTER_ALLOC_DAQ */       {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK) , UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR) },
+/* AFTER_ALLOC_ODT */       {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK)  },
+/* AFTER_ALLOC_ODT_ENTRY */ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)  },
 };
 
 static Daq_AllocStateType Daq_AllocState;
 static Xcp_DaqEntityType daqEntities[NUM_DAQ_ENTITIES];
-static uint16_t daqEntityCount = 0;
-static uint16_t daqListCount = 0;
-static uint16_t daqOdtCount = 0;
+static uint16_t daqEntityCount = UINT16(0);
+static uint16_t daqListCount = UINT16(0);
+static uint16_t daqOdtCount = UINT16(0);
 
 /*
 ** Local Function Prototypes.
@@ -77,26 +77,27 @@ static uint16_t daqOdtCount = 0;
 static Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
 static Xcp_ODTType * Daq_GetOdt(uint8_t daqListNumber, uint8_t odtNumber);
 static Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
+static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition);
 
 /*
-** Local Functions.
+** Global Functions.
 */
-bool Daq_AllocValidTransition(Daq_AllocTransitionype transition)
+static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition)
 {
-    if (Daq_AllocTransitionTable[Daq_AllocState][transition] == DAQ_ALLOC_OK) {
-        return TRUE;
+    if (Daq_AllocTransitionTable[Daq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
+        return (bool)TRUE;
     } else {
-        return FALSE;
+        return (bool)FALSE;
     }
 }
 
-void freeDaq(void)
+void Xcp_FreeDaq(void)
 {
-    daqEntityCount = 0;
-    daqListCount = 0;
-    daqOdtCount = 0;
+    daqEntityCount = UINT16(0);
+    daqListCount = UINT16(0);
+    daqOdtCount = UINT16(0);
 
-    Xcp_MemSet(daqEntities, 0, sizeof(Xcp_DaqEntityType) * NUM_DAQ_ENTITIES);
+    Xcp_MemSet(daqEntities, UINT8(0), UINT32(sizeof(Xcp_DaqEntityType) * UINT16(NUM_DAQ_ENTITIES)));
     //Xcp_DaqEntityType daqEntities[NUM_DAQ_ENTITIES]
 
     if (Daq_AllocValidTransition(XCP_CALL_FREE_DAQ)) {
@@ -106,7 +107,7 @@ void freeDaq(void)
     }
 }
 
-void allocDaq(uint16_t daqCount)
+void Xcp_AllocDaq(uint16_t daqCount)
 {
     uint16_t idx;
 
@@ -121,13 +122,13 @@ void allocDaq(uint16_t daqCount)
     for (idx = daqEntityCount; idx < (daqEntityCount + daqCount); ++idx) {
         daqEntities[idx].kind = XCP_ENTITY_DAQ_LIST;
         daqEntities[idx].entity.daqList.direction = XCP_DIRECTION_DAQ;
-        daqEntities[idx].entity.daqList.numOdts = 0; // idx;
+        daqEntities[idx].entity.daqList.numOdts = UINT8(0);
     }
     daqListCount += daqCount;
     daqEntityCount += daqCount;
 }
 
-void allocOdt(uint16_t daqListNumber, uint8_t odtCount)
+void Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount)
 {
     uint16_t idx;
 
@@ -148,7 +149,7 @@ void allocOdt(uint16_t daqListNumber, uint8_t odtCount)
 }
 
 
-void allocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount)
+void Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount)
 {
     uint16_t idx;
     uint8_t odt;
@@ -169,7 +170,7 @@ void allocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntries
     daqEntityCount += odtEntriesCount;
 }
 
-void Daq_Init(void)
+void Xcp_InitDaq(void)
 {
     Daq_AllocState = XCP_ALLOC_IDLE;
 }

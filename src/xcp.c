@@ -25,16 +25,17 @@
 
 #include "xcp.h"
 
+#if defined(_MSC_VER)
 #include <stdio.h>
-//#include <stdlib.h>
+#endif // defined _MSC_VER
 
 /*
 ** Private Options.
 */
-#define XCP_ENABLE_STD_COMMANDS                     XCP_ON
-#define XCP_ENABLE_INTERLEAVED_MODE                 XCP_OFF
+#define XCP_ENABLE_STD_COMMANDS         XCP_ON
+#define XCP_ENABLE_INTERLEAVED_MODE     XCP_OFF
 
-#define XCP_DRIVER_VERSION  10
+#define XCP_DRIVER_VERSION              (10)
 
 
 /*
@@ -70,13 +71,15 @@ Xcp_PDUType Xcp_PduOut;
 static Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 static Xcp_StateType Xcp_State;
 
-static Xcp_SendCalloutType Xcp_SendCallout = NULL;
-static const Xcp_StationIDType Xcp_StationID = { sizeof(XCP_STATION_ID), XCP_STATION_ID };
+static Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)NULL;
+static const Xcp_StationIDType Xcp_StationID = { (uint16_t)sizeof(XCP_STATION_ID), (uint8_t const *)XCP_STATION_ID };
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
 
 
+#define XCP_POSITIVE_RESPONSE() Xcp_Send8(UINT8(1), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
+#define XCP_ERROR_RESPONSE(ec) Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ec), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 
 #define XCP_COMMAND     (cmoIn->data[0])
 
@@ -244,8 +247,9 @@ static void Xcp_ProgramVerify_Res(Xcp_PDUType const * const pdu);
 /*
 ** Big, fat jump table.
 */
-static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 
+static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
+    //lint -e632      Assignment to strong type 'Xcp_ServerCommandType' considered harmless in this context.
 #if XCP_ENABLE_STD_COMMANDS == XCP_ON
     Xcp_Connect_Res,
     Xcp_Disconnect_Res,
@@ -529,6 +533,7 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
     Xcp_CommandNotImplemented_Res,
     Xcp_CommandNotImplemented_Res,
 #endif
+    //lint +e632
 };
 
 /*
@@ -540,9 +545,9 @@ void Xcp_Init(void)
     DBG_PRINT1("Xcp_Init()\n");
     Xcp_ConnectionState = XCP_DISCONNECTED;
 
-    Xcp_MemSet(&Xcp_State, '\x00', sizeof(Xcp_StateType));
+    Xcp_MemSet(&Xcp_State, UINT8(0), (uint32_t)sizeof(Xcp_StateType));
 
-#if XCP_PROTECT_CAL == XCP_ON || XCP_PROTECT_PAG == XCP_ON
+#if (XCP_PROTECT_CAL == XCP_ON) || (XCP_PROTECT_PAG == XCP_ON)
     Xcp_State.protection |= XCP_RESOURCE_CAL_PAG;
 #endif // XCP_PROTECT_CAL
 #if XCP_PROTECT_DAQ == XCP_ON
@@ -556,11 +561,12 @@ void Xcp_Init(void)
 #endif // XCP_PROTECT_PGM
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    Xcp_State.daqProcessor.running = FALSE;
-    Xcp_State.daqPointer.daqList = 0u;
-    Xcp_State.daqPointer.odt = 0;
-    Xcp_State.daqPointer.odtEntry = 0;
-    Xcp_State.daqPointer.daqEntityNumber = 0;
+    Xcp_InitDaq();
+    Xcp_State.daqProcessor.running = (bool)FALSE;
+    Xcp_State.daqPointer.daqList = (uint16_t)0u;
+    Xcp_State.daqPointer.odt = (uint8_t)0;
+    Xcp_State.daqPointer.odtEntry = (uint8_t)0;
+    Xcp_State.daqPointer.daqEntityNumber = (uint16_t)0;
 #endif // XCP_ENABLE_DAQ_COMMANDS
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
     Xcp_State.counter = 0;
@@ -584,14 +590,14 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 {
     Xcp_MtaType mta;
 
-    mta.ext = 0;
+    mta.ext = (uint8_t)0;
     mta.address = (uint32_t)ptr;
     return mta;
 }
 
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 {
-    if (dst.ext == 0 && src.ext == 0) {
+    if ((dst.ext == (uint8_t)0) && (src.ext == (uint8_t)0)) {
 //        DBG_PRINT2("LEN: %u\n", len);
 //        DBG_PRINT3("dst: %08X src: %08x\n", dst.address, src.address);
         Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
@@ -616,7 +622,7 @@ void Xcp_SendPdu(void)
     //DBG_PRINT1("Sending PDU: ");
     //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
 
-    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + 4);
+    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + (uint16_t)4);
 }
 
 
@@ -635,26 +641,35 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
 
     uint8_t * dataOut = Xcp_GetOutPduPtr();
 
-    Xcp_SetPduOutLen(len);
+    Xcp_SetPduOutLen((uint16_t)len);
 
-    /* Controlled fall-through */
+    /* Controlled fall-through (copy optimization) */
+    /* MISRA 2004 violation Rule 15.2*/
     switch(len) {
         case 8:
             dataOut[7] = b7;
+            //lint -fallthrough
         case 7:
             dataOut[6] = b6;
+            //lint -fallthrough
         case 6:
             dataOut[5] = b5;
+            //lint -fallthrough
         case 5:
             dataOut[4] = b4;
+            //lint -fallthrough
         case 4:
             dataOut[3] = b3;
+            //lint -fallthrough
         case 3:
             dataOut[2] = b2;
+            //lint -fallthrough
         case 2:
             dataOut[1] = b1;
+            //lint -fallthrough
         case 1:
             dataOut[0] = b0;
+            break;
     }
 
     Xcp_SendPdu();
@@ -667,16 +682,16 @@ static void Xcp_Upload(uint8_t len)
     Xcp_MtaType dst;
 
 // TODO: RangeCheck / Blockmode!!!
-    dataOut[0] = 0xff;
+    dataOut[0] = (uint8_t)0xff;
 
     dst.address = (uint32_t)(dataOut + 1);  // FIX ME!!!
-    dst.ext = 0;
+    dst.ext = (uint8_t)0;
 
-    Xcp_CopyMemory(dst, Xcp_State.mta, len);
+    Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)len);
 
-    Xcp_State.mta.address += len;   // Advance MTA.
+    Xcp_State.mta.address += UINT32(len);   // Advance MTA.
 
-    Xcp_SetPduOutLen(len);
+    Xcp_SetPduOutLen(UINT16(len));
     Xcp_SendPdu();
 }
 
@@ -692,11 +707,11 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
     DBG_PRINT1("Req: ");
     Xcp_DumpMessageObject(pdu);
 
-    if (Xcp_State.connected == TRUE) { // TODO: bool
+    if (Xcp_State.connected == (bool)TRUE) {
         DBG_PRINT2("CMD: [%02X]\n", cmd);
-        Xcp_ServerCommands[0xff - cmd](pdu);   // TODO: range check!!!
+        Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);   // TODO: range check!!!
     } else {    // not connected.
-        if (pdu->data[0] == XCP_CONNECT) {
+        if (pdu->data[0] == UINT8(XCP_CONNECT)) {
             Xcp_Connect_Res(pdu);
         } else {
 
@@ -740,7 +755,7 @@ void Xcp_DumpMessageObject(Xcp_PDUType const * pdu)
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 {
-    Xcp_MemCopy(dest, src, count);
+    Xcp_MemCopy(dest, src, UINT32(count));
 }
 
 /*
@@ -751,7 +766,8 @@ static void Xcp_ErrorResponse(uint8_t errorCode)
     //uint8_t * dataOut = XcpComm_GetPduOutPtr();
     DBG_PRINT2("-> Error %02X: \n", errorCode);
 
-    Xcp_Send8(2, 0xfe, errorCode, 0, 0, 0, 0, 0, 0);
+
+    XCP_ERROR_RESPONSE(errorCode);
 #if 0
     Xcp_SetPduOutLen(2);
     dataOut[0] = 0xfe;
@@ -764,19 +780,19 @@ static void Xcp_ErrorResponse(uint8_t errorCode)
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT2("Command not implemented [%02X].\n", pdu->data[0]);
-    Xcp_ErrorResponse(ERR_CMD_UNKNOWN);
+    Xcp_ErrorResponse(UINT8(ERR_CMD_UNKNOWN));
 }
 
 
 static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t resource = 0x00;
-    uint8_t commModeBasic = 0x00;
+    uint8_t resource = UINT8(0x00);
+    uint8_t commModeBasic = UINT8(0x00);
 
     DBG_PRINT1("CONNECT: \n");
 
-    if (Xcp_State.connected == FALSE) {
-        Xcp_State.connected = TRUE;
+    if (Xcp_State.connected == (bool)FALSE) {
+        Xcp_State.connected = (bool)TRUE;
         // TODO: Init stuff
     }
 
@@ -786,7 +802,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     resource |= XCP_RESOURCE_DAQ;
 #endif  // XCP_ENABLE_DAQ_COMMANDS
-#if XCP_ENABLE_CAL_COMMANDS == XCP_ON || XCP_ENABLE_PAG_COMMANDS == XCP_ON
+#if (XCP_ENABLE_CAL_COMMANDS == XCP_ON) || (XCP_ENABLE_PAG_COMMANDS == XCP_ON)
     resource |= XCP_RESOURCE_CAL_PAG;
 #endif
 #if XCP_ENABLE_STIM == XCP_ON
@@ -805,7 +821,10 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 
     XcpTl_SaveConnection();
 
-    Xcp_Send8(8, 0xff, resource, commModeBasic, XCP_MAX_CTO, LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), XCP_PROTOCOL_VERSION_MAJOR, XCP_TRANSPORT_LAYER_VERSION_MAJOR);
+    Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(resource), UINT8(commModeBasic), UINT8(XCP_MAX_CTO),
+        LOBYTE(UINT16(XCP_MAX_DTO)), HIBYTE(UINT16(XCP_MAX_DTO)),
+        UINT8(XCP_PROTOCOL_VERSION_MAJOR), UINT8(XCP_TRANSPORT_LAYER_VERSION_MAJOR)
+    );
     //DBG_PRINT("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
 }
 
@@ -814,7 +833,7 @@ static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT1("DISCONNECT: \n");
 
-    Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+    XCP_POSITIVE_RESPONSE();
     XcpTl_ReleaseConnection();
 }
 
@@ -823,13 +842,13 @@ static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implemen
 {
     DBG_PRINT1("GET_STATUS: \n");
 
-    Xcp_Send8(6, 0xff,
-        0,     // Current session status
+    Xcp_Send8(UINT8(6), UINT8(0xff),
+        UINT8(0),     // Current session status
         Xcp_State.protection,  // Current resource protection status
-        0x00,  // Reserved
-        0,     // Session configuration id
-        0,     // "                      "
-        0, 0
+        UINT8(0x00),  // Reserved
+        UINT8(0),     // Session configuration id
+        UINT8(0),     // "                      "
+        UINT8(0), UINT8(0)
     );
 }
 
@@ -838,14 +857,14 @@ static void Xcp_Synch_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT1("SYNCH: \n");
 
-    Xcp_Send8(2, 0xfe, ERR_CMD_SYNCH, 0, 0, 0, 0, 0, 0);
+    Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ERR_CMD_SYNCH), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
 }
 
 
 #if XCP_ENABLE_GET_COMM_MODE_INFO == XCP_ON
 static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t commModeOptional = 0;
+    uint8_t commModeOptional = UINT8(0);
 
     DBG_PRINT1("GET_COMM_MODE_INFO: \n");
 
@@ -857,14 +876,14 @@ static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
     commModeOptional |= XCP_INTERLEAVED_MODE;
 #endif // XCP_ENABLE_INTERLEAVED_MODE
 
-    Xcp_Send8(8, 0xff,
-        0,     // Reserved
+    Xcp_Send8(UINT8(8), UINT8(0xff),
+        UINT8(0),     // Reserved
         commModeOptional,
-        0,     // Reserved
-        XCP_MAX_BS,
-        XCP_MIN_ST,
-        XCP_QUEUE_SIZE,
-        XCP_DRIVER_VERSION
+        UINT8(0),     // Reserved
+        UINT8(XCP_MAX_BS),
+        UINT8(XCP_MIN_ST),
+        UINT8(XCP_QUEUE_SIZE),
+        UINT8(XCP_DRIVER_VERSION)
     );
 }
 #endif // XCP_ENABLE_GET_COMM_MODE_INFO
@@ -873,7 +892,7 @@ static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_GET_ID == XCP_ON
 static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t idType = Xcp_GetByte(pdu, 1);
+    uint8_t idType = Xcp_GetByte(pdu, UINT8(1));
 
 #if 0
 0 BYTE Packet ID: 0xFF
@@ -891,9 +910,9 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT2("GET_ID [%u]: \n", idType);
 
-    if (idType == 1) {
+    if (idType == UINT8(1)) {
         Xcp_SetMta(Xcp_GetNonPagedAddress(Xcp_StationID.name));
-        Xcp_Send8(8, 0xff, 0, 0, 0, (uint8_t)Xcp_StationID.len, 0, 0, 0);
+        Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(Xcp_StationID.len), UINT8(0), UINT8(0), UINT8(0));
     }
 #if XCP_ENABLE_GET_ID_HOOK == XCP_ON
     else {
@@ -909,7 +928,7 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_UPLOAD == XCP_ON
 static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t len = Xcp_GetByte(pdu, 1);
+    uint8_t len = Xcp_GetByte(pdu, UINT8(1));
 
 // TODO: RangeCheck / Blockmode!!!
     DBG_PRINT2("UPLOAD [%u]\n", len);
@@ -922,12 +941,12 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_SHORT_UPLOAD == XCP_ON
 static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t len = Xcp_GetByte(pdu, 1);
+    uint8_t len = Xcp_GetByte(pdu, UINT8(1));
 
 // TODO: RangeCheck / Blockmode!!!
     DBG_PRINT2("SHORT-UPLOAD [%u]\n", len);
-    Xcp_State.mta.ext = Xcp_GetByte(pdu, 3);
-    Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
+    Xcp_State.mta.ext = Xcp_GetByte(pdu, UINT8(3));
+    Xcp_State.mta.address = Xcp_GetDWord(pdu, UINT8(4));
     Xcp_Upload(len);
 }
 #endif // XCP_ENABLE_SHORT_UPLOAD
@@ -942,12 +961,12 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 3 BYTE Address extension
 4 DWORD Address
 #endif // 0
-    Xcp_State.mta.ext = Xcp_GetByte(pdu, 3);
-    Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
+    Xcp_State.mta.ext = Xcp_GetByte(pdu, UINT8(3));
+    Xcp_State.mta.address = Xcp_GetDWord(pdu, UINT8(4));
 
     DBG_PRINT3("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
 
-    Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+    XCP_POSITIVE_RESPONSE();
 }
 #endif // XCP_ENABLE_SET_MTA
 
@@ -955,7 +974,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON
 static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 {
-    uint32_t blockSize = Xcp_GetDWord(pdu, 4);
+    uint32_t blockSize = Xcp_GetDWord(pdu, UINT8(4));
 
     DBG_PRINT2("BUILD_CHECKSUM [%lu]\n", blockSize);
 
@@ -996,7 +1015,7 @@ static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
 {
     uint16_t daqListNumber;
 
-    daqListNumber = Xcp_GetWord(pdu, 2);
+    daqListNumber = Xcp_GetWord(pdu, UINT8(2));
 
 #if 0
 0  BYTE  Command Code = 0xE3
@@ -1017,9 +1036,9 @@ stopped and all DAQ list states are reset.
 
 static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 {
-    Xcp_State.daqPointer.daqList = Xcp_GetWord(pdu, 2);
-    Xcp_State.daqPointer.odt = Xcp_GetByte(pdu, 4);
-    Xcp_State.daqPointer.odtEntry = Xcp_GetByte(pdu, 5);
+    Xcp_State.daqPointer.daqList = Xcp_GetWord(pdu, UINT8(2));
+    Xcp_State.daqPointer.odt = Xcp_GetByte(pdu, UINT8(4));
+    Xcp_State.daqPointer.odtEntry = Xcp_GetByte(pdu, UINT8(5));
     // TODO: Calculate DAQ Entity Number.
     //Xcp_State.daqPointer.daqEntityNumber = ???();
 
@@ -1027,7 +1046,7 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT4("SET_DAQ_PTR [%u:%u:%u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 
-    Xcp_Send8(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+    XCP_POSITIVE_RESPONSE();
 }
 
 static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
@@ -1073,8 +1092,8 @@ static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 
     timestamp = XcpHw_GetTimerCounter();
 
-    Xcp_Send8(8, 0xff,
-    0, 0, 0,
+    Xcp_Send8(UINT8(8), UINT8(0xff),
+    UINT8(0), UINT8(0), UINT8(0),
     LOBYTE(LOWORD(timestamp)), HIBYTE(LOWORD(timestamp)), LOBYTE(HIWORD(timestamp)), HIBYTE(HIWORD(timestamp))
     );
 #if 0
@@ -1092,14 +1111,14 @@ static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT1("GET_DAQ_RESOLUTION_INFO: \n");
 
-    Xcp_Send8(8, 0xff,
-              1,    // Granularity for size of ODT entry (DIRECTION = DAQ)
-              0,    // Maximum size of ODT entry (DIRECTION = DAQ)
-              1,    // Granularity for size of ODT entry (DIRECTION = STIM)
-              0,    // Maximum size of ODT entry (DIRECTION = STIM)
-              0x34, // Timestamp unit and size
-              1,    // Timestamp ticks per unit (WORD)
-              0
+    Xcp_Send8(UINT8(8), UINT8(0xff),
+      UINT8(1),    // Granularity for size of ODT entry (DIRECTION = DAQ)
+      UINT8(0),    // Maximum size of ODT entry (DIRECTION = DAQ)
+      UINT8(1),    // Granularity for size of ODT entry (DIRECTION = STIM)
+      UINT8(0),    // Maximum size of ODT entry (DIRECTION = STIM)
+      UINT8(0x34), // Timestamp unit and size
+      UINT8(1),    // Timestamp ticks per unit (WORD)
+      UINT8(0)
     );
 #if 0
 0  BYTE                                     Packet ID: 0xFF
