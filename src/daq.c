@@ -199,6 +199,7 @@ static Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumb
     return &daqEntities[num].entity.odtEntry;
 }
 
+#if defined(_WIN32)
 void dumpEntities(void)
 {
     uint16_t idx;
@@ -220,3 +221,5 @@ void dumpEntities(void)
         }
     }
 }
+#endif
+
