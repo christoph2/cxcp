@@ -261,6 +261,26 @@ typedef enum tagXcp_ReturnType {
     ERR_VERIFY              = 0x32  // The slave internal program verify routine detects an error.   S3
 } Xcp_ReturnType;
 
+
+typedef struct tagXcp_MtaType {
+    uint8_t ext;
+    uint32_t address;
+} Xcp_MtaType;
+
+
+typedef struct tagXcp_DaqProcessorType {
+    bool running;
+} Xcp_DaqProcessorType;
+
+
+typedef struct tagXcp_DaqPointerType {
+    uint16_t daqList;
+    uint8_t odt;
+    uint8_t odtEntry;
+    uint16_t daqEntityNumber;
+} Xcp_DaqPointerType;
+
+
 typedef enum tagXcp_DTOType {
     EVENT_MESSAGE           = 254,
     COMMAND_RETURN_MESSAGE  = 255
@@ -290,18 +310,6 @@ typedef struct tagXcp_StationIDType {
     char const * name;
 } Xcp_StationIDType;
 
-
-typedef struct tagXcp_MtaType {
-    uint8_t ext;
-    uint32_t address;
-} Xcp_MtaType;
-
-typedef struct tagXcp_DaqPointerType {
-    uint16_t daqList;
-    uint8_t odt;
-    uint8_t odtEntry;
-    uint16_t daqEntityNumber;
-} Xcp_DaqPointerType;
 
 typedef struct tagXcp_ODTEntryType {
     Xcp_MtaType mta;

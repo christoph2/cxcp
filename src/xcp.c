@@ -37,11 +37,9 @@
 #define XCP_DRIVER_VERSION  10
 
 
-typedef struct tagXcp_DaqProcessorType {
-    bool running;
-} Xcp_DaqProcessorType;
-
-
+/*
+** Local Types.
+*/
 typedef struct tagXcp_StateType {
     bool connected;
     bool busy;
@@ -58,18 +56,26 @@ typedef struct tagXcp_StateType {
     Xcp_MtaType mta;
 } Xcp_StateType;
 
+
+/*
+**  Global Variables.
+*/
 Xcp_PDUType Xcp_PduIn;
 Xcp_PDUType Xcp_PduOut;
 
 
+/*
+** Local Variables.
+*/
 static Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
-void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
-void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
-
 static Xcp_StateType Xcp_State;
 
 static Xcp_SendCalloutType Xcp_SendCallout = NULL;
 static const Xcp_StationIDType Xcp_StationID = { sizeof(XCP_STATION_ID), XCP_STATION_ID };
+
+void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
+void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
+
 
 
 #define XCP_COMMAND     (cmoIn->data[0])
