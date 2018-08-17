@@ -91,8 +91,6 @@ au-misra2.lnt
 //-d__IAR_SYSTEMS_ICC__
 //-d__ICCHCS12__
 
-//-dKOS_MEMORY_MAPPING=STD_ON
-
 -d__STDC__=1
 
 //-i"C:\Programme\IAR Systems\Embedded Workbench Evaluation 4.0\HCS12\inc"
@@ -101,8 +99,8 @@ au-misra2.lnt
 
 //+libh()
 +libclass(ansi)
-lib-w32.lnt     // Win32 API options
-lib-win.lnt     // Windows option
+//lib-w32.lnt     // Win32 API options
+//lib-win.lnt     // Windows option
 //+compiler(search_actively_including_stack) 
 -vf
 
