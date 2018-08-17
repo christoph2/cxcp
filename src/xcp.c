@@ -867,7 +867,8 @@ static void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_GET_ID == XCP_ON
 static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t idType = pdu->data[1];
+    uint8_t idType = Xcp_GetByte(pdu, 1);
+
 #if 0
 0 BYTE Packet ID: 0xFF
 1 BYTE Mode
@@ -902,7 +903,7 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_UPLOAD == XCP_ON
 static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t len = pdu->data[1];
+    uint8_t len = Xcp_GetByte(pdu, 1);
 
 // TODO: RangeCheck / Blockmode!!!
     DBG_PRINT2("UPLOAD [%u]\n", len);
@@ -915,11 +916,11 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_SHORT_UPLOAD == XCP_ON
 static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
 {
-    uint8_t len = pdu->data[1];
+    uint8_t len = Xcp_GetByte(pdu, 1);
 
 // TODO: RangeCheck / Blockmode!!!
     DBG_PRINT2("SHORT-UPLOAD [%u]\n", len);
-    Xcp_State.mta.ext = pdu->data[3];
+    Xcp_State.mta.ext = Xcp_GetByte(pdu, 3);
     Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
     Xcp_Upload(len);
 }
@@ -935,7 +936,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 3 BYTE Address extension
 4 DWORD Address
 #endif // 0
-    Xcp_State.mta.ext = pdu->data[3];
+    Xcp_State.mta.ext = Xcp_GetByte(pdu, 3);
     Xcp_State.mta.address = Xcp_GetDWord(pdu, 4);
 
     DBG_PRINT3("SET_MTA %x::%x\n", Xcp_State.mta.ext, Xcp_State.mta.address);
@@ -987,6 +988,23 @@ static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
 {
+    uint16_t daqListNumber;
+
+    daqListNumber = Xcp_GetWord(pdu, 2);
+
+#if 0
+0  BYTE  Command Code = 0xE3
+1  BYTE  reserved
+2,3  WORD  DAQ_LIST_NUMBER [0,1..MAX_DAQ-1]
+
+    This command can be used for PREDEFINED and for configurable DAQ lists, so the range
+for DAQ_LIST_NUMBER is [0,1,..MAX_DAQ-1].
+If the specified list is not available, ERR_OUT_OF_RANGE will  be returned.
+CLEAR_DAQ_LIST  clears  the  specified  DAQ  list.  For  a  configurable  DAQ  list,  all  ODT
+entries will be reset to address=0, extension=0 and size=0 (if valid : bit_offset = 0xFF). For
+PREDEFINED and configurable DAQ lists, the running Data Transmission on this list will be
+stopped and all DAQ list states are reset.
+#endif // 0
 
 }
 
@@ -994,8 +1012,8 @@ static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
 static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 {
     Xcp_State.daqPointer.daqList = Xcp_GetWord(pdu, 2);
-    Xcp_State.daqPointer.odt = pdu->data[4];
-    Xcp_State.daqPointer.odtEntry = pdu->data[5];
+    Xcp_State.daqPointer.odt = Xcp_GetByte(pdu, 4);
+    Xcp_State.daqPointer.odtEntry = Xcp_GetByte(pdu, 5);
     // TODO: Calculate DAQ Entity Number.
     //Xcp_State.daqPointer.daqEntityNumber = ???();
 
@@ -1093,21 +1111,34 @@ static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
 /*
 **  Helpers.
 */
+INLINE uint8_t Xcp_GetByte(Xcp_PDUType const * const pdu, uint8_t offs)
+{
+  return (*(pdu->data + offs));
+}
+
 INLINE uint16_t Xcp_GetWord(Xcp_PDUType const * const pdu, uint8_t offs)
 {
   return (*(pdu->data + offs))        |
     ((*(pdu->data + 1 + offs)) << 8);
 }
 
-
 INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
 {
-  return (*(pdu->data + offs))            |
-    ((*(pdu->data + 1 + offs)) * 0x100)   |
-    ((*(pdu->data + 2 + offs)) * 0x10000) |
-    ((*(pdu->data + 3 + offs)) * 0x1000000);
+    uint16_t h;
+    uint16_t l;
+
+    l = (*(pdu->data + offs)) | ((*(pdu->data + 1 + offs)) << 8);
+    h = (*(pdu->data + 2 + offs)) | ((*(pdu->data + 3 + offs)) << 8);
+    //l = Xcp_GetWord(pdu, 0);
+    //h = Xcp_GetWord(pdu, 2);
+
+    return (uint32_t)(h * 0x10000 ) + l;
 }
 
+INLINE void Xcp_SetByte(Xcp_PDUType const * const pdu, uint8_t offs, uint8_t value)
+{
+    (*(pdu->data + offs)) = value;
+}
 
 INLINE void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value)
 {
@@ -1123,7 +1154,7 @@ INLINE void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t v
     (*(pdu->data + 3 + offs)) = (value & 0xff000000) >> 24;
 }
 
-void Xcp_MemCopy(void * dst, void * src, uint16_t len)
+void Xcp_MemCopy(void * dst, void * src, uint32_t len)
 {
     uint8_t * pd = (uint8_t *)dst;
     uint8_t * ps = (uint8_t *)src;
@@ -1139,7 +1170,7 @@ void Xcp_MemCopy(void * dst, void * src, uint16_t len)
 }
 
 
-void Xcp_MemSet(void * dest, uint8_t fill_char, uint16_t len)
+void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
 {
     uint8_t * p = (uint8_t *)dest;
 

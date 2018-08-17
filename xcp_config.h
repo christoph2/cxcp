@@ -50,6 +50,7 @@
 #define XCP_DAQ_TIMESTAMP_UNIT      (XCP_DAQ_TIMESTAMP_UNIT_1US)
 #define XCP_DAQ_TIMESTAMP_SIZE      (XCP_DAQ_TIMESTAMP_SIZE_4)
 
+
 /*
 ** Resource Protection.
 */
@@ -125,7 +126,7 @@
 /*
 **  Customization Options.
 */
-#define XCP_ENABLE_GET_ID_HOOK                      XCP_ON
+#define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
 
 #endif /* __XCP_CONFIG_H */
 
