@@ -23,9 +23,9 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include <stdint.h>
-
+#if defined(ARDUINO)
 #include "Arduino.h"
+#endif
 
 #include "xcp.h"
 
@@ -117,7 +117,9 @@ void XcpTl_FeedReceiver(uint8_t octet)
 
 int XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
+#if defined(ARDUINO)
     Serial.write(buf, len);
+#endif
 }
 
 void XcpTl_SaveConnection(void)
