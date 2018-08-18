@@ -334,6 +334,7 @@ typedef struct tagXcp_ODTType {
 } Xcp_ODTType;
 
 typedef enum tagXcp_DaqDirectionType {
+    XCP_DIRECTION_NONE,
     XCP_DIRECTION_DAQ,
     XCP_DIRECTION_STIM,
     XCP_DIRECTION_DAQ_STIM
@@ -348,6 +349,7 @@ typedef struct tagXcp_DaqListType {
 
 
 typedef enum tagXcp_DaqEntityKindType {
+    XCP_ENTITY_UNUSED,
     XCP_ENTITY_DAQ_LIST,
     XCP_ENTITY_ODT,
     XCP_ENTITY_ODT_ENTRY
