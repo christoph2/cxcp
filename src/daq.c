@@ -91,83 +91,89 @@ static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition)
     }
 }
 
-void Xcp_FreeDaq(void)
+Xcp_ReturnType Xcp_FreeDaq(void)
 {
+    Xcp_ReturnType result = ERR_SUCCESS;
+
     daqEntityCount = UINT16(0);
     daqListCount = UINT16(0);
     daqOdtCount = UINT16(0);
 
-    Xcp_MemSet(daqEntities, UINT8(0), UINT32(sizeof(Xcp_DaqEntityType) * UINT16(NUM_DAQ_ENTITIES)));
-    //Xcp_DaqEntityType daqEntities[NUM_DAQ_ENTITIES]
 
     if (Daq_AllocValidTransition(XCP_CALL_FREE_DAQ)) {
+        Xcp_MemSet(daqEntities, UINT8(0), UINT32(sizeof(Xcp_DaqEntityType) * UINT16(NUM_DAQ_ENTITIES)));
         Daq_AllocState = XCP_AFTER_FREE_DAQ;
     } else {
-
+        result = ERR_SEQUENCE;
     }
+    return result;
 }
 
-void Xcp_AllocDaq(uint16_t daqCount)
+Xcp_ReturnType Xcp_AllocDaq(uint16_t daqCount)
 {
     uint16_t idx;
+    Xcp_ReturnType result = ERR_SUCCESS;
 
-    if (Daq_AllocValidTransition(XCP_CALL_ALLOC_DAQ)) {
+    if (!Daq_AllocValidTransition(XCP_CALL_ALLOC_DAQ)) {
+        result = ERR_SEQUENCE;
+        DBG_PRINT1("Xcp_AllocDaq() not allowed.\n");
+    } else {
         Daq_AllocState = XCP_AFTER_ALLOC_DAQ;
-    } else {
-        printf("allocDaq() not allowed.\n");
-        return;
-    }
     // TODO: Overflow check!!!
-
-    for (idx = daqEntityCount; idx < (daqEntityCount + daqCount); ++idx) {
-        daqEntities[idx].kind = XCP_ENTITY_DAQ_LIST;
-        daqEntities[idx].entity.daqList.direction = XCP_DIRECTION_DAQ;
-        daqEntities[idx].entity.daqList.numOdts = UINT8(0);
+        for (idx = daqEntityCount; idx < (daqEntityCount + daqCount); ++idx) {
+            daqEntities[idx].kind = XCP_ENTITY_DAQ_LIST;
+            daqEntities[idx].entity.daqList.direction = XCP_DIRECTION_DAQ;
+            daqEntities[idx].entity.daqList.numOdts = UINT8(0);
+        }
+        daqListCount += daqCount;
+        daqEntityCount += daqCount;
     }
-    daqListCount += daqCount;
-    daqEntityCount += daqCount;
+    return result;
 }
 
-void Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount)
+Xcp_ReturnType Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount)
 {
     uint16_t idx;
+    Xcp_ReturnType result = ERR_SUCCESS;
 
-    if (Daq_AllocValidTransition(XCP_CALL_ALLOC_ODT)) {
-        Daq_AllocState = XCP_AFTER_ALLOC_ODT;
+    if (!Daq_AllocValidTransition(XCP_CALL_ALLOC_ODT)) {
+        result = ERR_SEQUENCE;
+        DBG_PRINT1("Xcp_AllocOdt() not allowed.\n");
     } else {
-        printf("allocOdt() not allowed.\n");
-        return;
+        Daq_AllocState = XCP_AFTER_ALLOC_ODT;
+        for (idx = daqEntityCount; idx < (daqEntityCount + odtCount); ++idx) {
+            daqEntities[idx].kind = XCP_ENTITY_ODT;
+        }
+        daqEntities[daqListNumber].entity.daqList.numOdts += odtCount;
+        daqEntities[daqListNumber].entity.daqList.firstOdt = daqEntityCount;
+        daqOdtCount += odtCount;
+        daqEntityCount += odtCount;
     }
-
-    for (idx = daqEntityCount; idx < (daqEntityCount + odtCount); ++idx) {
-        daqEntities[idx].kind = XCP_ENTITY_ODT;
-    }
-    daqEntities[daqListNumber].entity.daqList.numOdts += odtCount;
-    daqEntities[daqListNumber].entity.daqList.firstOdt = daqEntityCount;
-    daqOdtCount += odtCount;
-    daqEntityCount += odtCount;
+    return result;
 }
 
 
-void Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount)
+Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount)
 {
     uint16_t idx;
     uint8_t odt;
+    Xcp_ReturnType result = ERR_SUCCESS;
 
-    if (Daq_AllocValidTransition(XCP_CALL_ALLOC_ODT_ENTRY)) {
-        Daq_AllocState = XCP_AFTER_ALLOC_ODT_ENTRY;
+    if (!Daq_AllocValidTransition(XCP_CALL_ALLOC_ODT_ENTRY)) {
+        result = ERR_SEQUENCE;
+        DBG_PRINT1("Xcp_AllocOdtEntry() not allowed.\n");
     } else {
-        printf("allocOdtEntry() not allowed.\n");
-        return;
+        result = ERR_SUCCESS;
+        Daq_AllocState = XCP_AFTER_ALLOC_ODT_ENTRY;
+        for (idx = daqEntityCount; idx < (daqEntityCount + odtEntriesCount); ++idx) {
+            daqEntities[idx].kind = XCP_ENTITY_ODT_ENTRY;
+        }
+        odt = daqEntities[daqListNumber].entity.daqList.firstOdt + odtNumber;
+        daqEntities[odt].entity.odt.firstOdtEntry = daqEntityCount;
+        daqEntities[odt].entity.odt.numOdtEntries = odtEntriesCount;
+        daqEntityCount += odtEntriesCount;
     }
-
-    for (idx = daqEntityCount; idx < (daqEntityCount + odtEntriesCount); ++idx) {
-        daqEntities[idx].kind = XCP_ENTITY_ODT_ENTRY;
-    }
-    odt = daqEntities[daqListNumber].entity.daqList.firstOdt + odtNumber;
-    daqEntities[odt].entity.odt.firstOdtEntry = daqEntityCount;
-    daqEntities[odt].entity.odt.numOdtEntries = odtEntriesCount;
-    daqEntityCount += odtEntriesCount;
+    return result;
 }
 
 void Xcp_InitDaq(void)

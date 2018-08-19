@@ -40,8 +40,8 @@
 #define XCP_BYTE_ORDER              XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY     XCP_ADDRESS_GRANULARITY_BYTE
 
-#define XCP_MAX_CTO                 (255)
-#define XCP_MAX_DTO                 (1500)
+#define XCP_MAX_CTO                 (16)  //(255)
+#define XCP_MAX_DTO                 (16)  //(1500)
 
 #define XCP_MAX_BS                  (0)
 #define XCP_MIN_ST                  (0)
@@ -101,10 +101,11 @@
     #define XCP_ENABLE_GET_DAQ_RESOLUTION_INFO      XCP_ON
     #define XCP_ENABLE_GET_DAQ_LIST_INFO            XCP_OFF
     #define XCP_ENABLE_GET_DAQ_EVENT_INFO           XCP_OFF
-    #define XCP_ENABLE_FREE_DAQ                     XCP_OFF
-    #define XCP_ENABLE_ALLOC_DAQ                    XCP_OFF
-    #define XCP_ENABLE_ALLOC_ODT                    XCP_OFF
-    #define XCP_ENABLE_ALLOC_ODT_ENTRY              XCP_OFF
+    #define XCP_ENABLE_FREE_DAQ                     XCP_ON
+    #define XCP_ENABLE_ALLOC_DAQ                    XCP_ON
+    #define XCP_ENABLE_ALLOC_ODT                    XCP_ON
+    #define XCP_ENABLE_ALLOC_ODT_ENTRY              XCP_ON
+    #define XCP_ENABLE_WRITE_DAQ_MULTIPLE           XCP_OFF
 
 #define XCP_ENABLE_PGM_COMMANDS                     XCP_OFF
 
