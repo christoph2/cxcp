@@ -92,8 +92,8 @@ void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
 /*
 ** Local Function Prototypes.
 */
-static void Xcp_ErrorResponse(uint8_t errorCode);
 
+static void Xcp_SendResult(Xcp_ReturnType result);
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
 static void Xcp_Connect_Res(Xcp_PDUType const * const pdu);
 static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu);
@@ -601,18 +601,6 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
     return mta;
 }
 
-void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
-{
-    if ((dst.ext == (uint8_t)0) && (src.ext == (uint8_t)0)) {
-//        DBG_PRINT2("LEN: %u\n", len);
-//        DBG_PRINT3("dst: %08X src: %08x\n", dst.address, src.address);
-        Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
-    } else {
-        // We need assistance...
-    }
-}
-
-
 void Xcp_SendPdu(void)
 {
     uint16_t len = Xcp_PduOut.len;
@@ -626,8 +614,6 @@ void Xcp_SendPdu(void)
 #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
 
     //DBG_PRINT1("Sending PDU: ");
-    //hexdump(Xcp_PduOut.data, Xcp_PduOut.len + 4);
-
     XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + (uint16_t)4);
 }
 
@@ -711,7 +697,7 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
     uint8_t cmd = pdu->data[0];
 
     DBG_PRINT1("Req: ");
-    Xcp_DumpMessageObject(pdu);
+    //Xcp_DumpMessageObject(pdu);
 
     if (Xcp_State.connected == (bool)TRUE) {
         DBG_PRINT2("CMD: [%02X]\n", cmd);
@@ -748,45 +734,15 @@ Xcp_ConnectionStateType Xcp_GetConnectionState(void)
 }
 
 
-void Xcp_DumpMessageObject(Xcp_PDUType const * pdu)
-{
-    //DBG_PRINT3("LEN: %d CMD: %02X\n", pdu->len, pdu->data[0]);
-    //DBG_PRINT2("PTR: %p\n", pdu->data);
-#if 0
-    DBG_PRINT("%08X  %u  [%02X %02X %02X %02X %02X %02X %02X %02X]\n", cmo->canID, cmo->dlc,
-           cmo->data[0], cmo->data[1], cmo->data[2], cmo->data[3], cmo->data[4], cmo->data[5], cmo->data[6], cmo->data[7]
-    );
-#endif
-}
-
-void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
-{
-    Xcp_MemCopy(dest, src, UINT32(count));
-}
-
 /*
+**
 ** Local Functions.
+**
 */
-static void Xcp_ErrorResponse(uint8_t errorCode)
-{
-    //uint8_t * dataOut = XcpComm_GetPduOutPtr();
-    DBG_PRINT2("-> Error %02X: \n", errorCode);
-
-
-    XCP_ERROR_RESPONSE(errorCode);
-#if 0
-    Xcp_SetPduOutLen(2);
-    dataOut[0] = 0xfe;
-    dataOut[1] = errorCode;
-    Xcp_SendPdu();
-#endif
-}
-
-
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT2("Command not implemented [%02X].\n", pdu->data[0]);
-    Xcp_ErrorResponse(UINT8(ERR_CMD_UNKNOWN));
+    XCP_ERROR_RESPONSE(UINT8(ERR_CMD_UNKNOWN));
 }
 
 
@@ -862,7 +818,8 @@ static void Xcp_Synch_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT1("SYNCH: \n");
 
-    Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ERR_CMD_SYNCH), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
+    //Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ERR_CMD_SYNCH), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
+    XCP_ERROR_RESPONSE(ERR_CMD_SYNCH);
 }
 
 
@@ -1057,24 +1014,30 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 {
+    Xcp_ODTEntryType * entry;
+    uint8_t bitOffset = Xcp_GetByte(pdu, 1);
+    uint8_t elemSize  = Xcp_GetByte(pdu, 2);
+    uint8_t adddrExt  = Xcp_GetByte(pdu, 3);
+    uint32_t address  = Xcp_GetDWord(pdu, 4);
 
-#if 0
-0 BYTE Command Code = 0xE1
-1 BYTE BIT_OFFSET [0..31] Position of bit in 32-bit variable referenced by the address and extension below
-2 BYTE Size of DAQ element [AG] 0<= size <=MAX_ODT_ENTRY_SIZE_x
-3 BYTE Address extension of DAQ element
-4 DWORD Address of DAQ element
-#endif // 0
+    entry = Daq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
+
+    entry->length = elemSize;
+    entry->mta.address = address;
+    entry->mta.ext = adddrExt;
+
 }
 
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
+    Xcp_DaqListType * entry;
+    uint8_t mode = Xcp_GetByte(pdu, 1);
+    uint16_t daqListNumber = Xcp_GetWord(pdu, 2);
+    uint16_t eventChannelNumber = Xcp_GetWord(pdu, 4);
+    uint8_t prescaler = Xcp_GetByte(pdu, 6);
+    uint8_t priority = Xcp_GetByte(pdu, 7);
 
-}
-
-static void Xcp_GetDaqListMode_Res(Xcp_PDUType const * const pdu)
-{
-
+    entry = Daq_GetList(daqListNumber);
 }
 
 static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
@@ -1087,6 +1050,12 @@ static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu)
 
 }
 
+static void Xcp_GetDaqListMode_Res(Xcp_PDUType const * const pdu)
+{
+
+}
+
+
 ///
 /// MANY MISSING FUNCTIONS
 ///
@@ -1095,8 +1064,7 @@ static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu)
 static void Xcp_FreeDaq_Res(Xcp_PDUType const * const pdu)
 {
     DBG_PRINT1("FREE_DAQ: \n");
-    Xcp_FreeDaq();
-    XCP_POSITIVE_RESPONSE();
+    Xcp_SendResult(Xcp_FreeDaq());
 }
 #endif  // XCP_ENABLE_FREE_DAQ
 
@@ -1107,8 +1075,7 @@ static void Xcp_AllocDaq_Res(Xcp_PDUType const * const pdu)
 
     daqCount = Xcp_GetWord(pdu, UINT8(2));
     DBG_PRINT2("ALLOC_DAQ [%u] \n", daqCount);
-    Xcp_AllocDaq(daqCount);
-    XCP_POSITIVE_RESPONSE();
+    Xcp_SendResult(Xcp_AllocDaq(daqCount));
 }
 #endif
 
@@ -1121,8 +1088,7 @@ static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu)
     daqListNumber = Xcp_GetWord(pdu, UINT8(2));
     odtCount = Xcp_GetByte(pdu, UINT8(4));
     DBG_PRINT3("ALLOC_ODT [#%u::%u] \n", daqListNumber, odtCount);
-    Xcp_AllocOdt(daqListNumber, odtCount);
-    XCP_POSITIVE_RESPONSE();
+    Xcp_SendResult(Xcp_AllocOdt(daqListNumber, odtCount));
 }
 #endif  // XCP_ENABLE_ALLOC_ODT
 
@@ -1137,8 +1103,7 @@ static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu)
     odtNumber = Xcp_GetByte(pdu, UINT8(4));
     odtEntriesCount = Xcp_GetByte(pdu, UINT8(5));
     DBG_PRINT4("ALLOC_ODT_ENTRY: [#%u:#%u::%u]\n", daqListNumber, odtNumber, odtEntriesCount);
-    Xcp_AllocOdtEntry(daqListNumber, odtNumber, odtEntriesCount);
-    XCP_POSITIVE_RESPONSE();
+    Xcp_SendResult(Xcp_AllocOdtEntry(daqListNumber, odtNumber, odtEntriesCount));
 }
 #endif  // XCP_ENABLE_ALLOC_ODT_ENTRY
 
@@ -1199,6 +1164,44 @@ static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
 /*
 **  Helpers.
 */
+static void Xcp_SendResult(Xcp_ReturnType result)
+{
+    if (result == ERR_SUCCESS) {
+        XCP_POSITIVE_RESPONSE();
+    } else {
+        XCP_ERROR_RESPONSE(UINT8(result));
+    }
+}
+
+#if 0
+void Xcp_DumpMessageObject(Xcp_PDUType const * pdu)
+{
+    //DBG_PRINT3("LEN: %d CMD: %02X\n", pdu->len, pdu->data[0]);
+    //DBG_PRINT2("PTR: %p\n", pdu->data);
+#if 0
+    DBG_PRINT("%08X  %u  [%02X %02X %02X %02X %02X %02X %02X %02X]\n", cmo->canID, cmo->dlc,
+           cmo->data[0], cmo->data[1], cmo->data[2], cmo->data[3], cmo->data[4], cmo->data[5], cmo->data[6], cmo->data[7]
+    );
+#endif
+}
+#endif
+
+void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
+{
+    Xcp_MemCopy(dest, src, UINT32(count));
+}
+
+void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
+{
+    if ((dst.ext == (uint8_t)0) && (src.ext == (uint8_t)0)) {
+//        DBG_PRINT2("LEN: %u\n", len);
+//        DBG_PRINT3("dst: %08X src: %08x\n", dst.address, src.address);
+        Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
+    } else {
+        // We need assistance...
+    }
+}
+
 INLINE uint8_t Xcp_GetByte(Xcp_PDUType const * const pdu, uint8_t offs)
 {
   return (*(pdu->data + offs));

@@ -74,24 +74,13 @@ static uint16_t daqOdtCount = UINT16(0);
 /*
 ** Local Function Prototypes.
 */
-static Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
 static Xcp_ODTType * Daq_GetOdt(uint8_t daqListNumber, uint8_t odtNumber);
-static Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
 static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition);
 void dumpEntities(void);
 
 /*
 ** Global Functions.
 */
-static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition)
-{
-    if (Daq_AllocTransitionTable[Daq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
-        return (bool)TRUE;
-    } else {
-        return (bool)FALSE;
-    }
-}
-
 Xcp_ReturnType Xcp_FreeDaq(void)
 {
     Xcp_ReturnType result = ERR_SUCCESS;
@@ -196,22 +185,7 @@ void Xcp_InitDaq(void)
     Daq_AllocState = XCP_ALLOC_IDLE;
 }
 
-static Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber)
-{
-    return &daqEntities[daqListNumber].entity.daqList;
-}
-
-static Xcp_ODTType * Daq_GetOdt(uint8_t daqListNumber, uint8_t odtNumber)
-{
-    Xcp_DaqListType const * dl;
-    uint8_t num;
-
-    dl = Daq_GetList(daqListNumber);
-    num = dl->firstOdt + odtNumber;
-    return &daqEntities[num].entity.odt;
-}
-
-static Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber)
+Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber)
 {
     Xcp_ODTType * odt;
     uint8_t num;
@@ -219,6 +193,16 @@ static Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumb
     odt = Daq_GetOdt(daqListNumber, odtNumber);
     num = odt->firstOdtEntry + odtEntryNumber;
     return &daqEntities[num].entity.odtEntry;
+}
+
+Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber)
+{
+    return &daqEntities[daqListNumber].entity.daqList;
+}
+
+bool Xcp_DaqConfigurationValid(void)
+{
+    return ((daqEntityCount > UINT16(0)) && (daqListCount > UINT16(0)) &&  (daqOdtCount > UINT16(0)));
 }
 
 #if defined(_WIN32)
@@ -245,3 +229,24 @@ void dumpEntities(void)
 }
 #endif
 
+/*
+** Local Functions.
+*/
+static Xcp_ODTType * Daq_GetOdt(uint8_t daqListNumber, uint8_t odtNumber)
+{
+    Xcp_DaqListType const * dl;
+    uint8_t num;
+
+    dl = Daq_GetList(daqListNumber);
+    num = dl->firstOdt + odtNumber;
+    return &daqEntities[num].entity.odt;
+}
+
+static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition)
+{
+    if (Daq_AllocTransitionTable[Daq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
+        return (bool)TRUE;
+    } else {
+        return (bool)FALSE;
+    }
+}

@@ -120,6 +120,15 @@ typedef unsigned long long  uint64_t;
 #define XCP_MASTER_BLOCK_MODE           ((uint8_t)1)
 #define XCP_INTERLEAVED_MODE            ((uint8_t)2)
 
+/* DAQ List Modes. */
+#define XCP_DAQ_LIST_MODE_SELECTED      ((uint8_t)0x01)
+#define XCP_DAQ_LIST_MODE_STARTED       ((uint8_t)0x02)
+#define XCP_DAQ_LIST_MODE_DIRECTION     ((uint8_t)0x04)
+#define XCP_DAQ_LIST_MODE_TIMESTAMP     ((uint8_t)0x08)
+#define XCP_DAQ_LIST_MODE_PID_OFF       ((uint8_t)0x10)
+#define XCP_DAQ_LIST_MODE_ALTERNATING   ((uint8_t)0x20)
+
+
 #if defined(_MSC_VER)
 #define INLINE __inline
 #define DBG_PRINT1(a)           printf(a)
@@ -357,9 +366,10 @@ typedef enum tagXcp_DaqDirectionType {
 
 
 typedef struct tagXcp_DaqListType {
-    Xcp_DaqDirectionType direction;
+    Xcp_DaqDirectionType direction; // TODO: mode
     uint8_t numOdts;
     uint16_t firstOdt;
+    uint8_t eventChannel;
 } Xcp_DaqListType;
 
 
@@ -410,6 +420,9 @@ Xcp_ReturnType Xcp_FreeDaq(void);
 Xcp_ReturnType Xcp_AllocDaq(uint16_t daqCount);
 Xcp_ReturnType Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
 Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
+Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
+Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
+bool Xcp_DaqConfigurationValid(void);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
