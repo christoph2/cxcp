@@ -25,9 +25,8 @@
 
 #include "xcp.h"
 
-#if defined(_MSC_VER)
 #include <stdio.h>
-#endif // defined _MSC_VER
+//#include <stdlib.h>
 
 /*
 ** Private Options.
@@ -212,6 +211,9 @@ static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu);
 #if XCP_ENABLE_ALLOC_ODT_ENTRY == XCP_ON
 static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu);
 #endif // XCP_ENABLE_ALLOC_ODT_ENTRY
+#if XCP_ENABLE_WRITE_DAQ_MULTIPLE == XCP_ON
+static void Xcp_WriteDaqMultiple_Res(Xcp_PDUType const * const pdu);
+#endif // XCP_ENABLE_WRITE_DAQ_MULTIPLE
 #endif // XCP_ENABLE_DAQ_COMMANDS
 
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
@@ -239,9 +241,8 @@ static void Xcp_ProgramMax_Res(Xcp_PDUType const * const pdu);
 #endif // XCP_ENABLE_PROGRAM_MAX
 #if XCP_ENABLE_PROGRAM_VERIFY == XCP_ON
 static void Xcp_ProgramVerify_Res(Xcp_PDUType const * const pdu);
-#endif
+#endif // XCP_ENABLE_PROGRAM_VERIFY
 #endif // XCP_ENABLE_PGM_COMMANDS
-
 
 
 /*
@@ -533,6 +534,11 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
     Xcp_CommandNotImplemented_Res,
     Xcp_CommandNotImplemented_Res,
 #endif
+#if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_ENABLE_WRITE_DAQ_MULTIPLE == XCP_ON)
+    Xcp_WriteDaqMultiple_Res,
+#else
+    Xcp_CommandNotImplemented_Res,
+#endif
     //lint +e632
 };
 
@@ -822,8 +828,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
     XcpTl_SaveConnection();
 
     Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(resource), UINT8(commModeBasic), UINT8(XCP_MAX_CTO),
-        LOBYTE(UINT16(XCP_MAX_DTO)), HIBYTE(UINT16(XCP_MAX_DTO)),
-        UINT8(XCP_PROTOCOL_VERSION_MAJOR), UINT8(XCP_TRANSPORT_LAYER_VERSION_MAJOR)
+              LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), UINT8(XCP_PROTOCOL_VERSION_MAJOR), UINT8(XCP_TRANSPORT_LAYER_VERSION_MAJOR)
     );
     //DBG_PRINT("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
 }
@@ -1017,6 +1022,7 @@ static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
 
     daqListNumber = Xcp_GetWord(pdu, UINT8(2));
 
+    DBG_PRINT2("CLEAR_DAQ_LIST [%u] \n", daqListNumber);
 #if 0
 0  BYTE  Command Code = 0xE3
 1  BYTE  reserved
@@ -1080,6 +1086,63 @@ static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu)
 {
 
 }
+
+///
+/// MANY MISSING FUNCTIONS
+///
+
+#if XCP_ENABLE_FREE_DAQ == XCP_ON
+static void Xcp_FreeDaq_Res(Xcp_PDUType const * const pdu)
+{
+    DBG_PRINT1("FREE_DAQ: \n");
+    Xcp_FreeDaq();
+    XCP_POSITIVE_RESPONSE();
+}
+#endif  // XCP_ENABLE_FREE_DAQ
+
+#if XCP_ENABLE_ALLOC_DAQ == XCP_ON
+static void Xcp_AllocDaq_Res(Xcp_PDUType const * const pdu)
+{
+    uint16_t daqCount;
+
+    daqCount = Xcp_GetWord(pdu, UINT8(2));
+    DBG_PRINT2("ALLOC_DAQ [%u] \n", daqCount);
+    Xcp_AllocDaq(daqCount);
+    XCP_POSITIVE_RESPONSE();
+}
+#endif
+
+#if XCP_ENABLE_ALLOC_ODT == XCP_ON
+static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu)
+{
+    uint16_t daqListNumber;
+    uint8_t odtCount;
+
+    daqListNumber = Xcp_GetWord(pdu, UINT8(2));
+    odtCount = Xcp_GetByte(pdu, UINT8(4));
+    DBG_PRINT3("ALLOC_ODT [#%u::%u] \n", daqListNumber, odtCount);
+    Xcp_AllocOdt(daqListNumber, odtCount);
+    XCP_POSITIVE_RESPONSE();
+}
+#endif  // XCP_ENABLE_ALLOC_ODT
+
+#if XCP_ENABLE_ALLOC_ODT_ENTRY == XCP_ON
+static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu)
+{
+    uint16_t daqListNumber;
+    uint8_t odtNumber;
+    uint8_t odtEntriesCount;
+
+    daqListNumber = Xcp_GetWord(pdu, UINT8(2));
+    odtNumber = Xcp_GetByte(pdu, UINT8(4));
+    odtEntriesCount = Xcp_GetByte(pdu, UINT8(5));
+    DBG_PRINT4("ALLOC_ODT_ENTRY: [#%u:#%u::%u]\n", daqListNumber, odtNumber, odtEntriesCount);
+    Xcp_AllocOdtEntry(daqListNumber, odtNumber, odtEntriesCount);
+    XCP_POSITIVE_RESPONSE();
+}
+#endif  // XCP_ENABLE_ALLOC_ODT_ENTRY
+
+
 #endif // XCP_ENABLE_DAQ_COMMANDS
 
 #if XCP_ENABLE_GET_DAQ_CLOCK == XCP_ON

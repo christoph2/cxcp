@@ -66,7 +66,7 @@ typedef unsigned long long  uint64_t;
 #define XCP_PROTOCOL_VERSION_RELEASE     (0)
 
 #define XCP_TRANSPORT_LAYER_VERSION_MAJOR       (1)
-#define XCP_TRANSPORT_LAYER_VERSION_RELEASE     (0)
+#define XCP_TRANSPORT_LAYER_VERSION_RELEASE     (1)
 
 #define XCP_DEBUG_BUILD         (1)
 #define XCP_RELEASE_BUILD       (2)
@@ -208,6 +208,7 @@ typedef enum tagXcp_CommandType {
     XCP_CLEAR_DAQ_LIST          = UINT8(0xE3),
     XCP_SET_DAQ_PTR             = UINT8(0xE2),
     XCP_WRITE_DAQ               = UINT8(0xE1),
+    WRITE_DAQ_MULTIPLE          = UINT8(0xC7), // NEW IN 1.1
     XCP_SET_DAQ_LIST_MODE       = UINT8(0xE0),
     XCP_GET_DAQ_LIST_MODE       = UINT8(0xDF),
     XCP_START_STOP_DAQ_LIST     = UINT8(0xDE),
@@ -268,9 +269,15 @@ typedef enum tagXcp_ReturnType {
     ERR_SEQUENCE            = UINT8(0x29), // Sequence error                                                S2
     ERR_DAQ_CONFIG          = UINT8(0x2A), // DAQ configuration not valid                                   S2
                                            //
-    ERR_MEMORY_OVERFLOW     = UINT8(0x30),  // Memory overflow error                                         S2
+    ERR_MEMORY_OVERFLOW     = UINT8(0x30), // Memory overflow error                                         S2
     ERR_GENERIC             = UINT8(0x31), // Generic error.                                                S2
-    ERR_VERIFY              = UINT8(0x32)  // The slave internal program verify routine detects an error.   S3
+    ERR_VERIFY              = UINT8(0x32), // The slave internal program verify routine detects an error.   S3
+
+    // NEW IN 1.1
+    ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33),    // Access to the requested resource is temporary not possible.   S3
+
+    // Internal Success Code - not related to XCP spec.
+    ERR_SUCCESS             = UINT8(0xff)
 } Xcp_ReturnType;
 
 
@@ -279,9 +286,17 @@ typedef struct tagXcp_MtaType {
     uint32_t address;
 } Xcp_MtaType;
 
+typedef enum tagXcp_DaqProcessorStateType {
+    XCP_DAQ_STATE_UNINIT            = 0,
+    XCP_DAQ_STATE_CONFIG_INVALID    = 1,
+    XCP_DAQ_STATE_CONFIG_VALID      = 2,
+    XCP_DAQ_STATE_STOPPED           = 3,
+    XCP_DAQ_STATE_RUNNING           = 4
+} Xcp_DaqProcessorStateType;
 
 typedef struct tagXcp_DaqProcessorType {
-    bool running;
+    bool running;   // TODO: StateEnum; i.e. DAQ_CONFIG_{INVALID, VALID}
+    Xcp_DaqProcessorStateType state;
 } Xcp_DaqProcessorType;
 
 
@@ -330,7 +345,7 @@ typedef struct tagXcp_ODTEntryType {
 
 typedef struct tagXcp_ODTType {
     uint8_t numOdtEntries;
-    uint8_t firstOdtEntry;
+    uint16_t firstOdtEntry;
 } Xcp_ODTType;
 
 typedef enum tagXcp_DaqDirectionType {
@@ -344,7 +359,7 @@ typedef enum tagXcp_DaqDirectionType {
 typedef struct tagXcp_DaqListType {
     Xcp_DaqDirectionType direction;
     uint8_t numOdts;
-    uint8_t firstOdt;
+    uint16_t firstOdt;
 } Xcp_DaqListType;
 
 
@@ -391,10 +406,10 @@ void Xcp_SetMta(Xcp_MtaType mta);
 ** DAQ Implementation Functions.
 */
 void Xcp_InitDaq(void);
-void Xcp_FreeDaq(void);
-void Xcp_AllocDaq(uint16_t daqCount);
-void Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
-void Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
+Xcp_ReturnType Xcp_FreeDaq(void);
+Xcp_ReturnType Xcp_AllocDaq(uint16_t daqCount);
+Xcp_ReturnType Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
+Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
