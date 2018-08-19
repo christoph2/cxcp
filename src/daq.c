@@ -78,6 +78,7 @@ static Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
 static Xcp_ODTType * Daq_GetOdt(uint8_t daqListNumber, uint8_t odtNumber);
 static Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
 static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition);
+void dumpEntities(void);
 
 /*
 ** Global Functions.
@@ -118,15 +119,19 @@ Xcp_ReturnType Xcp_AllocDaq(uint16_t daqCount)
         result = ERR_SEQUENCE;
         DBG_PRINT1("Xcp_AllocDaq() not allowed.\n");
     } else {
-        Daq_AllocState = XCP_AFTER_ALLOC_DAQ;
-    // TODO: Overflow check!!!
-        for (idx = daqEntityCount; idx < (daqEntityCount + daqCount); ++idx) {
-            daqEntities[idx].kind = XCP_ENTITY_DAQ_LIST;
-            daqEntities[idx].entity.daqList.direction = XCP_DIRECTION_DAQ;
-            daqEntities[idx].entity.daqList.numOdts = UINT8(0);
+        if ((daqEntityCount + daqCount) <= UINT16(NUM_DAQ_ENTITIES)) {
+            Daq_AllocState = XCP_AFTER_ALLOC_DAQ;
+            for (idx = daqEntityCount; idx < (daqEntityCount + daqCount); ++idx) {
+                daqEntities[idx].kind = XCP_ENTITY_DAQ_LIST;
+                daqEntities[idx].entity.daqList.direction = XCP_DIRECTION_DAQ;
+                daqEntities[idx].entity.daqList.numOdts = UINT8(0);
+            }
+            daqListCount += daqCount;
+            daqEntityCount += daqCount;
+        } else {
+            result = ERR_MEMORY_OVERFLOW;
+            DBG_PRINT1("Xcp_AllocDaq(): not enough memory.\n");
         }
-        daqListCount += daqCount;
-        daqEntityCount += daqCount;
     }
     return result;
 }
@@ -140,14 +145,20 @@ Xcp_ReturnType Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount)
         result = ERR_SEQUENCE;
         DBG_PRINT1("Xcp_AllocOdt() not allowed.\n");
     } else {
-        Daq_AllocState = XCP_AFTER_ALLOC_ODT;
-        for (idx = daqEntityCount; idx < (daqEntityCount + odtCount); ++idx) {
-            daqEntities[idx].kind = XCP_ENTITY_ODT;
+        if ((daqEntityCount + odtCount) <= UINT16(NUM_DAQ_ENTITIES)) {
+            Daq_AllocState = XCP_AFTER_ALLOC_ODT;
+            for (idx = daqEntityCount; idx < (daqEntityCount + odtCount); ++idx) {
+                daqEntities[idx].kind = XCP_ENTITY_ODT;
+            }
+            daqEntities[daqListNumber].entity.daqList.numOdts += odtCount;
+            daqEntities[daqListNumber].entity.daqList.firstOdt = daqEntityCount;
+            daqOdtCount += odtCount;
+            daqEntityCount += odtCount;
+        } else {
+            result = ERR_MEMORY_OVERFLOW;
+            DBG_PRINT1("Xcp_AllocOdt(): not enough memory.\n");
         }
-        daqEntities[daqListNumber].entity.daqList.numOdts += odtCount;
-        daqEntities[daqListNumber].entity.daqList.firstOdt = daqEntityCount;
-        daqOdtCount += odtCount;
-        daqEntityCount += odtCount;
+
     }
     return result;
 }
@@ -163,15 +174,19 @@ Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint
         result = ERR_SEQUENCE;
         DBG_PRINT1("Xcp_AllocOdtEntry() not allowed.\n");
     } else {
-        result = ERR_SUCCESS;
-        Daq_AllocState = XCP_AFTER_ALLOC_ODT_ENTRY;
-        for (idx = daqEntityCount; idx < (daqEntityCount + odtEntriesCount); ++idx) {
-            daqEntities[idx].kind = XCP_ENTITY_ODT_ENTRY;
+        if ((daqEntityCount + odtEntriesCount) <= UINT16(NUM_DAQ_ENTITIES)) {
+            Daq_AllocState = XCP_AFTER_ALLOC_ODT_ENTRY;
+            for (idx = daqEntityCount; idx < (daqEntityCount + odtEntriesCount); ++idx) {
+                daqEntities[idx].kind = XCP_ENTITY_ODT_ENTRY;
+            }
+            odt = daqEntities[daqListNumber].entity.daqList.firstOdt + odtNumber;
+            daqEntities[odt].entity.odt.firstOdtEntry = daqEntityCount;
+            daqEntities[odt].entity.odt.numOdtEntries = odtEntriesCount;
+            daqEntityCount += odtEntriesCount;
+        } else {
+            result = ERR_MEMORY_OVERFLOW;
+            DBG_PRINT1("Xcp_AllocOdtEntry(): not enough memory.\n");
         }
-        odt = daqEntities[daqListNumber].entity.daqList.firstOdt + odtNumber;
-        daqEntities[odt].entity.odt.firstOdtEntry = daqEntityCount;
-        daqEntities[odt].entity.odt.numOdtEntries = odtEntriesCount;
-        daqEntityCount += odtEntriesCount;
     }
     return result;
 }
