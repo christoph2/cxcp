@@ -26,7 +26,7 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
-#include <stdlib.h>
+//#include <stdlib.h>
 
 /* check for C99-Compiler */
 #if defined(__STDC_VERSION__)
@@ -41,6 +41,27 @@
         #define C11_COMPILER
     #endif
 #endif
+
+#define XCP_PROTOCOL_VERSION_MAJOR       (1)
+#define XCP_PROTOCOL_VERSION_RELEASE     (0)
+
+#define XCP_TRANSPORT_LAYER_VERSION_MAJOR       (1)
+#define XCP_TRANSPORT_LAYER_VERSION_RELEASE     (1)
+
+#define XCP_DEBUG_BUILD         (1)
+#define XCP_RELEASE_BUILD       (2)
+
+#define XCP_ON                  (1)
+#define XCP_OFF                 (0)
+
+#define XCP_ON_CAN              (0)
+#define XCP_ON_CANFD            (1)
+#define XCP_ON_FLEXRAY          (2)
+#define XCP_ON_USB              (3)
+#define XCP_ON_ETHERNET         (4)
+#define XCP_ON_SXI              (5)
+
+#include "xcp_config.h"
 
 #if defined(__CSMC__)  || !defined(C99_COMPILER) || !defined(C11_COMPILER)
 typedef unsigned char       bool;
@@ -62,24 +83,6 @@ typedef unsigned long long  uint64_t;
 
 #endif // defined
 
-#define XCP_PROTOCOL_VERSION_MAJOR       (1)
-#define XCP_PROTOCOL_VERSION_RELEASE     (0)
-
-#define XCP_TRANSPORT_LAYER_VERSION_MAJOR       (1)
-#define XCP_TRANSPORT_LAYER_VERSION_RELEASE     (1)
-
-#define XCP_DEBUG_BUILD         (1)
-#define XCP_RELEASE_BUILD       (2)
-
-#define XCP_ON                  (1)
-#define XCP_OFF                 (0)
-
-#define XCP_ON_CAN              (0)
-#define XCP_ON_CANFD            (1)
-#define XCP_ON_FLEXRAY          (2)
-#define XCP_ON_USB              (3)
-#define XCP_ON_ETHERNET         (4)
-#define XCP_ON_SXI              (5)
 //#define XCP_ON_
 
 #define UINT8(x)    ((uint8_t)(x))
@@ -121,12 +124,12 @@ typedef unsigned long long  uint64_t;
 #define XCP_INTERLEAVED_MODE            ((uint8_t)2)
 
 /* DAQ List Modes. */
-#define XCP_DAQ_LIST_MODE_SELECTED      ((uint8_t)0x01)
-#define XCP_DAQ_LIST_MODE_STARTED       ((uint8_t)0x02)
-#define XCP_DAQ_LIST_MODE_DIRECTION     ((uint8_t)0x04)
-#define XCP_DAQ_LIST_MODE_TIMESTAMP     ((uint8_t)0x08)
-#define XCP_DAQ_LIST_MODE_PID_OFF       ((uint8_t)0x10)
-#define XCP_DAQ_LIST_MODE_ALTERNATING   ((uint8_t)0x20)
+#define XCP_DAQ_LIST_MODE_ALTERNATING   ((uint8_t)0x01)
+#define XCP_DAQ_LIST_MODE_DIRECTION     ((uint8_t)0x02)
+#define XCP_DAQ_LIST_MODE_TIMESTAMP     ((uint8_t)0x10)
+#define XCP_DAQ_LIST_MODE_PID_OFF       ((uint8_t)0x20)
+#define XCP_DAQ_LIST_MODE_SELECTED      ((uint8_t)0x40)
+#define XCP_DAQ_LIST_MODE_STARTED       ((uint8_t)0x80)
 
 
 #if defined(_MSC_VER)
@@ -295,6 +298,14 @@ typedef struct tagXcp_MtaType {
     uint32_t address;
 } Xcp_MtaType;
 
+typedef struct tagXcp_DaqMtaType {
+#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
+    uint8_t ext;
+#endif // XCP_DAQ_ADDR_EXT_SUPPORTED
+    uint32_t address;
+} Xcp_DaqMtaType;
+
+
 typedef enum tagXcp_DaqProcessorStateType {
     XCP_DAQ_STATE_UNINIT            = 0,
     XCP_DAQ_STATE_CONFIG_INVALID    = 1,
@@ -348,7 +359,7 @@ typedef struct tagXcp_StationIDType {
 
 
 typedef struct tagXcp_ODTEntryType {
-    Xcp_MtaType mta;
+    Xcp_DaqMtaType mta;
     uint32_t length;
 } Xcp_ODTEntryType;
 
@@ -366,9 +377,9 @@ typedef enum tagXcp_DaqDirectionType {
 
 
 typedef struct tagXcp_DaqListType {
-    Xcp_DaqDirectionType direction; // TODO: mode
     uint8_t numOdts;
     uint16_t firstOdt;
+    uint8_t mode;
     uint8_t eventChannel;
 } Xcp_DaqListType;
 
@@ -382,7 +393,7 @@ typedef enum tagXcp_DaqEntityKindType {
 
 
 typedef struct tagXcp_DaqEntityType {
-    Xcp_DaqEntityKindType kind;
+    /*Xcp_DaqEntityKindType*/uint8_t kind;
     union {
         Xcp_ODTEntryType odtEntry;
         Xcp_ODTType odt;
@@ -423,6 +434,7 @@ Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint
 Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
 Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
 bool Xcp_DaqConfigurationValid(void);
+void Xcp_DaqMainfunction(void);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
@@ -454,6 +466,14 @@ bool Xcp_DaqConfigurationValid(void);
 
 #if !defined(FALSE)
 #define FALSE   (0)
+#endif
+
+#if !defined(NULL)
+#if defined(__cplusplus)
+#define NULL (0)
+#else
+#define NULL    ((void*)0)
+#endif
 #endif
 
 
@@ -544,7 +564,6 @@ extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
 
 
-#include "xcp_config.h"
 
 #if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT)
 typedef uint16_t Xcp_CrcType;
