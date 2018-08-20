@@ -23,19 +23,22 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#if defined(_WIN32)
 #include <stdio.h>
+#endif // _WIN32
+
 #include "xcp.h"
 
+
 #define NUM_DAQ_ENTITIES    (256)
-#define ODT_BASE            (daqListCount)
-#define ODT_ENTRY_BASE      (daqListCount + daqOdtCount)
+
 
 /*
 ** Local Types.
 */
 typedef enum tagDaq_AllocResultType {
     DAQ_ALLOC_OK,
-    DAQ_ALLOC_ERR,
+    DAQ_ALLOC_ERR
 } Daq_AllocResultType;
 
 typedef enum tagDaq_AllocStateType {
@@ -43,18 +46,23 @@ typedef enum tagDaq_AllocStateType {
     XCP_AFTER_FREE_DAQ,
     XCP_AFTER_ALLOC_DAQ,
     XCP_AFTER_ALLOC_ODT,
-    XCP_AFTER_ALLOC_ODT_ENTRY,
+    XCP_AFTER_ALLOC_ODT_ENTRY
 } Daq_AllocStateType;
 
 typedef enum tagDaq_AllocTransitionType {
     XCP_CALL_FREE_DAQ,
     XCP_CALL_ALLOC_DAQ,
     XCP_CALL_ALLOC_ODT,
-    XCP_CALL_ALLOC_ODT_ENTRY,
+    XCP_CALL_ALLOC_ODT_ENTRY
 } Daq_AllocTransitionype;
 
+typedef enum tagDaq_ListTransitionType {
+    DAQ_LIST_TRANSITION_START,
+    DAQ_LIST_TRANSITION_STOP
+} Daq_ListTransitionType;
+
 /*
-** Local Variables.
+** Local Constants.
 */
 static const uint8_t Daq_AllocTransitionTable[5][4] = {
                             /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT             ALLOC_ODT_ENTRY    */
@@ -65,11 +73,16 @@ static const uint8_t Daq_AllocTransitionTable[5][4] = {
 /* AFTER_ALLOC_ODT_ENTRY */ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)  },
 };
 
+
+/*
+** Local Variables.
+*/
 static Daq_AllocStateType Daq_AllocState;
 static Xcp_DaqEntityType daqEntities[NUM_DAQ_ENTITIES];
 static uint16_t daqEntityCount = UINT16(0);
 static uint16_t daqListCount = UINT16(0);
 static uint16_t daqOdtCount = UINT16(0);
+
 
 /*
 ** Local Function Prototypes.
@@ -77,6 +90,7 @@ static uint16_t daqOdtCount = UINT16(0);
 static Xcp_ODTType * Daq_GetOdt(uint8_t daqListNumber, uint8_t odtNumber);
 static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition);
 void dumpEntities(void);
+
 
 /*
 ** Global Functions.
@@ -112,7 +126,6 @@ Xcp_ReturnType Xcp_AllocDaq(uint16_t daqCount)
             Daq_AllocState = XCP_AFTER_ALLOC_DAQ;
             for (idx = daqEntityCount; idx < (daqEntityCount + daqCount); ++idx) {
                 daqEntities[idx].kind = XCP_ENTITY_DAQ_LIST;
-                daqEntities[idx].entity.daqList.direction = XCP_DIRECTION_DAQ;
                 daqEntities[idx].entity.daqList.numOdts = UINT8(0);
             }
             daqListCount += daqCount;
@@ -151,7 +164,6 @@ Xcp_ReturnType Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount)
     }
     return result;
 }
-
 
 Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount)
 {
@@ -205,6 +217,13 @@ bool Xcp_DaqConfigurationValid(void)
     return ((daqEntityCount > UINT16(0)) && (daqListCount > UINT16(0)) &&  (daqOdtCount > UINT16(0)));
 }
 
+void Xcp_DaqMainfunction(void)
+{
+    // TODO: Check global state for DAQ/STIM running.
+}
+
+
+
 #if defined(_WIN32)
 void dumpEntities(void)
 {
@@ -221,8 +240,8 @@ void dumpEntities(void)
                 printf("ODT: [numOdtEntries: %u firstOdtEntry: %u]\n", entry->entity.odt.numOdtEntries, entry->entity.odt.firstOdtEntry);
                 break;
             case XCP_ENTITY_ODT_ENTRY:
-                printf("ODT-ENTRY: [length: %02u  ext: %02X address: %08X]\n", entry->entity.odtEntry.length,
-                       entry->entity.odtEntry.mta.ext, entry->entity.odtEntry.mta.address);
+                //printf("ODT-ENTRY: [length: %02u  ext: %02X address: %08X]\n", entry->entity.odtEntry.length,
+                //       entry->entity.odtEntry.mta.ext, entry->entity.odtEntry.mta.address);
                 break;
         }
     }
@@ -248,5 +267,28 @@ static bool Daq_AllocValidTransition(Daq_AllocTransitionype transition)
         return (bool)TRUE;
     } else {
         return (bool)FALSE;
+    }
+}
+
+
+static void Daq_TransitLists(Daq_ListTransitionType transition)
+{
+    /*
+     *  The slave has to reset the SELECTED flag in the mode at GET_DAQ_LIST_MODE as soon
+     *  as the related START_STOP_SYNCH or SET_REQUEST have been acknowledged.
+     */
+    uint8_t idx;
+    Xcp_DaqListType * entry;
+
+    for (idx = 0; idx < daqListCount; ++idx) {
+        entry = Daq_GetList(idx);
+        if ((entry->mode & XCP_DAQ_LIST_MODE_SELECTED) == XCP_DAQ_LIST_MODE_SELECTED) {
+            if (transition == DAQ_LIST_TRANSITION_START) {
+                entry->mode |= XCP_DAQ_LIST_MODE_STARTED;
+            } else if (transition == DAQ_LIST_TRANSITION_STOP) {
+                entry->mode &= ~XCP_DAQ_LIST_MODE_STARTED;
+            }
+            entry->mode &= ~XCP_DAQ_LIST_MODE_SELECTED;
+        }
     }
 }
