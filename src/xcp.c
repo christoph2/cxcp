@@ -25,8 +25,9 @@
 
 #include "xcp.h"
 
+#if defined(_MSC_VER)
 #include <stdio.h>
-//#include <stdlib.h>
+#endif // _MSC_VER
 
 /*
 ** Private Options.
@@ -75,7 +76,7 @@ static const Xcp_StationIDType Xcp_StationID = { (uint16_t)sizeof(XCP_STATION_ID
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
-
+static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 
 #define XCP_POSITIVE_RESPONSE() Xcp_Send8(UINT8(1), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 #define XCP_ERROR_RESPONSE(ec) Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ec), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
@@ -584,7 +585,9 @@ void Xcp_Init(void)
 
 void Xcp_MainFunction(void)
 {
-
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+    Xcp_DaqMainfunction();
+#endif // XCP_ENABLE_DAQ_COMMANDS
 }
 
 void Xcp_SetMta(Xcp_MtaType mta)
@@ -1024,9 +1027,12 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 
     entry->length = elemSize;
     entry->mta.address = address;
+#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     entry->mta.ext = adddrExt;
+#endif // XCP_DAQ_ADDR_EXT_SUPPORTED
 
 }
+
 
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
@@ -1038,6 +1044,15 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
     uint8_t priority = Xcp_GetByte(pdu, 7);
 
     entry = Daq_GetList(daqListNumber);
+    entry->eventChannel = eventChannelNumber;
+
+    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_TIMESTAMP);
+    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_ALTERNATING);
+    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_DIRECTION);
+    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_PID_OFF);
+    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_SELECTED);
+    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_STARTED);
+
 }
 
 static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
@@ -1114,22 +1129,14 @@ static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu)
 static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 {
     uint32_t timestamp;
-    //uint8_t * dataOut = Xcp_GetOutPduPtr();
-
-    DBG_PRINT1("GET_DAQ_CLOCK: \n");
 
     timestamp = XcpHw_GetTimerCounter();
+    DBG_PRINT2("GET_DAQ_CLOCK [TS: %lu] \n", timestamp);
 
     Xcp_Send8(UINT8(8), UINT8(0xff),
-    UINT8(0), UINT8(0), UINT8(0),
-    LOBYTE(LOWORD(timestamp)), HIBYTE(LOWORD(timestamp)), LOBYTE(HIWORD(timestamp)), HIBYTE(HIWORD(timestamp))
+        UINT8(0), UINT8(0), UINT8(0),
+        LOBYTE(LOWORD(timestamp)), HIBYTE(LOWORD(timestamp)), LOBYTE(HIWORD(timestamp)), HIBYTE(HIWORD(timestamp))
     );
-#if 0
-0  BYTE  Packet ID: 0xFF
-1  BYTE  reserved
-2  WORD  reserved
-4  DWORD  Receive Timestamp
-#endif // 0
 }
 #endif // XCP_ENABLE_GET_DAQ_CLOCK
 
@@ -1270,4 +1277,14 @@ void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
     while (len--) {
         *p++ = fill_char;
     }
+}
+
+static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag)
+{
+    if ((value & flag) == flag) {
+        result |= flag;
+    } else {
+        result &= ~(flag);
+    }
+    return result;
 }
