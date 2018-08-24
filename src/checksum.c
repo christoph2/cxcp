@@ -23,7 +23,7 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
- // CRC calculation:
+ /** CRC calculation based on code by Michael Barr: **/
  /**********************************************************************
  * Copyright (c) 2000 by Michael Barr.  This software is placed into
  * the public domain and may be used for any purpose.  However, this

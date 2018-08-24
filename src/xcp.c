@@ -1031,8 +1031,14 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
     entry->mta.ext = adddrExt;
 #endif // XCP_DAQ_ADDR_EXT_SUPPORTED
 
-}
+#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+    entry->bitOffset = bitOffset;
+#else
+    // TODO: Errorhandling.
 
+#endif // XCP_DAQ_BIT_OFFSET_SUPPORTED
+
+}
 
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
@@ -1043,6 +1049,31 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
     uint8_t prescaler = Xcp_GetByte(pdu, 6);
     uint8_t priority = Xcp_GetByte(pdu, 7);
 
+#if XCP_ENABLE_STIM  == XCP_OFF
+    if ((mode & XCP_DAQ_LIST_MODE_DIRECTION) == XCP_DAQ_LIST_MODE_DIRECTION) {
+        XCP_ERROR_RESPONSE(ERR_CMD_SYNTAX);
+        return;
+    }
+#endif // XCP_ENABLE_STIM
+#if XCP_DAQ_ALTERNATING_SUPPORTED == XCP_OFF
+    if ((mode & XCP_DAQ_LIST_MODE_ALTERNATING) == XCP_DAQ_LIST_MODE_ALTERNATING) {
+        XCP_ERROR_RESPONSE(ERR_CMD_SYNTAX);
+        return;
+    }
+#endif // XCP_DAQ_ALTERNATING_SUPPORTED
+#if XCP_DAQ_PRIORITIZATION_SUPPORTED == XCP_OFF
+    /* Needs to be 0 */
+    if (priority > 0) {
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+    }
+#endif // XCP_DAQ_PRIORITIZATION_SUPPORTED
+#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_OFF
+    /* Needs to be 1 */
+    if (prescaler > 1) {
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+    }
+#endif // XCP_DAQ_PRESCALER_SUPPORTED
+
     entry = Daq_GetList(daqListNumber);
     entry->eventChannel = eventChannelNumber;
 
@@ -1052,7 +1083,9 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_PID_OFF);
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_SELECTED);
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_STARTED);
-
+#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
+    entry->prescaler = prescaler;
+#endif // XCP_DAQ_PRESCALER_SUPPORTED
 }
 
 static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)

@@ -63,6 +63,11 @@
 
 #include "xcp_config.h"
 
+#if XCP_DAQ_MAX_EVENT_CHANNEL < 1
+    #error XCP_DAQ_MAX_EVENT_CHANNEL must be at least 1
+#endif // XCP_DAQ_MAX_EVENT_CHANNEL
+
+
 #if defined(__CSMC__)  || !defined(C99_COMPILER) || !defined(C11_COMPILER)
 typedef unsigned char       bool;
 
@@ -82,8 +87,6 @@ typedef unsigned long long  uint64_t;
 #include <stdint.h>
 
 #endif // defined
-
-//#define XCP_ON_
 
 #define UINT8(x)    ((uint8_t)(x))
 #define INT8(x)     ((int8_t)(x))
@@ -360,6 +363,9 @@ typedef struct tagXcp_StationIDType {
 
 typedef struct tagXcp_ODTEntryType {
     Xcp_DaqMtaType mta;
+#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+    uint8_t bitOffset;
+#endif // XCP_DAQ_BIT_OFFSET_SUPPORTED
     uint32_t length;
 } Xcp_ODTEntryType;
 
@@ -381,6 +387,10 @@ typedef struct tagXcp_DaqListType {
     uint16_t firstOdt;
     uint8_t mode;
     uint8_t eventChannel;
+#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
+    uint8_t prescaler;
+    uint8_t  counter;
+#endif // XCP_DAQ_PRESCALER_SUPPORTED
 } Xcp_DaqListType;
 
 
@@ -434,7 +444,9 @@ Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint
 Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
 Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
 bool Xcp_DaqConfigurationValid(void);
+bool Xcp_DaqListValid(uint8_t daqListNumber);
 void Xcp_DaqMainfunction(void);
+void Xcp_TriggerDaqEvent(uint8_t eventNumber);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
