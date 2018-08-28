@@ -229,13 +229,50 @@ bool XcpDaq_ValidateConfiguration(void)
 bool XcpDaq_ValidateList(uint8_t daqListNumber)
 {
     XcpDaq_ListType * daqList;
+    XcpDaq_ODTType * odt;
+    bool result = (bool)TRUE;
+    uint8_t numOdts;
+    uint8_t idx;
+
+    if (daqListNumber > (XcpDaq_ListCount - 1)) {
+        result = (bool)FALSE;
+    } else {
+        daqList = XcpDaq_GetList(daqListNumber);
+        numOdts = daqList->numOdts ;
+        if (numOdts == UINT8(0)) {
+            result = (bool)FALSE;
+        } else {
+            result = (bool)FALSE;
+            for (idx = 0; idx < numOdts; ++idx) {
+                odt = XcpDaq_GetOdt(daqListNumber, idx);
+                if (odt->numOdtEntries != UINT8(0)) {
+                    result = (bool)TRUE;
+                    break;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+bool XcpDaq_ValidateOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntry)
+{
+    XcpDaq_ListType * daqList;
+    XcpDaq_ODTType * odt;
     bool result = (bool)TRUE;
 
-    // TODO: Rangecheck!!!
-
-    daqList = XcpDaq_GetList(daqListNumber);
-    if (daqList->numOdts == UINT8(0)) {
+    if (daqListNumber > (XcpDaq_ListCount - 1)) {
         result = (bool)FALSE;
+    } else {
+        daqList = XcpDaq_GetList(daqListNumber);
+        if (odtNumber > (daqList->numOdts -1)) {
+            result = (bool)FALSE;
+        } else {
+            odt = XcpDaq_GetOdt(daqListNumber, odtNumber);
+            if (odtEntry > (odt->numOdtEntries - 1)) {
+                result = (bool)FALSE;
+            }
+        }
     }
     return result;
 }

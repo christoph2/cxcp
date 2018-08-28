@@ -445,6 +445,7 @@ XcpDaq_ListType * XcpDaq_GetList(uint8_t daqListNumber);
 XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
 bool XcpDaq_ValidateConfiguration(void);
 bool XcpDaq_ValidateList(uint8_t daqListNumber);
+bool XcpDaq_ValidateOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntry);
 void XcpDaq_Mainfunction(void);
 void XcpDaq_AddEventChannel(uint16_t daqListNumber, uint16_t eventChannelNumber);
 void XcpDaq_TriggerEvent(uint8_t eventNumber);

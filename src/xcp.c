@@ -636,8 +636,8 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
 
     Xcp_SetPduOutLen((uint16_t)len);
 
-    /* Controlled fall-through (copy optimization) */
-    /* MISRA 2004 violation Rule 15.2*/
+    /* MISRA 2004 violation Rule 15.2               */
+    /* Controlled fall-through (copy optimization)  */
     switch(len) {
         case 8:
             dataOut[7] = b7;
@@ -1010,7 +1010,11 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
     odt = Xcp_GetByte(pdu, UINT8(4));
     odtEntry = Xcp_GetByte(pdu, UINT8(5));
 
-    // TODO: If the specified list is not available, ERR_OUT_OF_RANGE will be returned.
+    if (XcpDaq_ValidateOdtEntry(daqList, odt, odtEntry)) {
+        // If the specified list is not available, ERR_OUT_OF_RANGE will be returned.
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
+    }
 
     Xcp_State.daqPointer.daqList = daqList;
     Xcp_State.daqPointer.odt = odt;
