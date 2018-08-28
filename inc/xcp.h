@@ -444,7 +444,7 @@ Xcp_ReturnType Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
 Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
 Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
 Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
-bool Xcp_DaqConfigurationValid(void);
+bool XcpDaq_ValidateConfiguration(void);
 bool Xcp_DaqListValid(uint8_t daqListNumber);
 void Xcp_DaqMainfunction(void);
 void Xcp_DaqAddEventChannel(uint16_t daqListNumber, uint16_t eventChannelNumber);

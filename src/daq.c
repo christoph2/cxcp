@@ -221,7 +221,7 @@ Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber)
     return &daqEntities[daqListNumber].entity.daqList;
 }
 
-bool Xcp_DaqConfigurationValid(void)
+bool XcpDaq_ValidateConfiguration(void)
 {
     return ((daqEntityCount > UINT16(0)) && (daqListCount > UINT16(0)) &&  (daqOdtCount > UINT16(0)));
 }
