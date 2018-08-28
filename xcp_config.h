@@ -26,47 +26,48 @@
 #if !defined(__XCP_CONFIG_H)
 #define __XCP_CONFIG_H
 
-#define XCP_STATION_ADDRESS         (1)
-#define XCP_STATION_ID              "description_of_test_ecu.a2l"
+#define XCP_STATION_ADDRESS                         (1)
+#define XCP_STATION_ID                              "description_of_test_ecu.a2l"
 
-#define XCP_BUILD_TYPE              XCP_DEBUG_BUILD
+#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
 
-#define XCP_ENABLE_SLAVE_BLOCKMODE  XCP_OFF
-#define XCP_ENABLE_MASTER_BLOCKMODE XCP_OFF
+#define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_OFF
+#define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
 
-#define XCP_ENABLE_STIM             XCP_OFF
+#define XCP_ENABLE_STIM                             XCP_OFF
 
-#define XCP_CHECKSUM_METHOD         XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
-#define XCP_BYTE_ORDER              XCP_BYTE_ORDER_INTEL
-#define XCP_ADDRESS_GRANULARITY     XCP_ADDRESS_GRANULARITY_BYTE
+#define XCP_CHECKSUM_METHOD                         XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
+#define XCP_BYTE_ORDER                              XCP_BYTE_ORDER_INTEL
+#define XCP_ADDRESS_GRANULARITY                     XCP_ADDRESS_GRANULARITY_BYTE
 
-#define XCP_MAX_CTO                 (16)  //(255)
-#define XCP_MAX_DTO                 (16)  //(1500)
+#define XCP_MAX_CTO                                 (16)  //(255)
+#define XCP_MAX_DTO                                 (16)  //(1500)
 
-#define XCP_MAX_BS                  (0)
-#define XCP_MIN_ST                  (0)
-#define XCP_QUEUE_SIZE              (0)
+#define XCP_MAX_BS                                  (0)
+#define XCP_MIN_ST                                  (0)
+#define XCP_QUEUE_SIZE                              (0)
 
-#define XCP_DAQ_TIMESTAMP_UNIT              (XCP_DAQ_TIMESTAMP_UNIT_1US)
-#define XCP_DAQ_TIMESTAMP_SIZE              (XCP_DAQ_TIMESTAMP_SIZE_4)
-#define XCP_DAQ_PRESCALER_SUPPORTED         XCP_ON
-#define XCP_DAQ_ADDR_EXT_SUPPORTED          XCP_OFF
-#define XCP_DAQ_BIT_OFFSET_SUPPORTED        XCP_OFF
-#define XCP_DAQ_PRIORITIZATION_SUPPORTED    XCP_OFF
-#define XCP_DAQ_ALTERNATING_SUPPORTED       XCP_OFF
+#define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
+#define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
+#define XCP_DAQ_PRESCALER_SUPPORTED                 XCP_ON
+#define XCP_DAQ_ADDR_EXT_SUPPORTED                  XCP_OFF
+#define XCP_DAQ_BIT_OFFSET_SUPPORTED                XCP_OFF
+#define XCP_DAQ_PRIORITIZATION_SUPPORTED            XCP_OFF
+#define XCP_DAQ_ALTERNATING_SUPPORTED               XCP_OFF
+#define XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED       XCP_ON
 
-#define XCP_DAQ_MAX_EVENT_CHANNEL           (3)
+#define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
 #define XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  XCP_OFF
 
 
 /*
 ** Resource Protection.
 */
-#define XCP_PROTECT_CAL             XCP_ON
-#define XCP_PROTECT_PAG             XCP_ON
-#define XCP_PROTECT_DAQ             XCP_ON
-#define XCP_PROTECT_STIM            XCP_ON
-#define XCP_PROTECT_PGM             XCP_ON
+#define XCP_PROTECT_CAL                             XCP_ON
+#define XCP_PROTECT_PAG                             XCP_ON
+#define XCP_PROTECT_DAQ                             XCP_ON
+#define XCP_PROTECT_STIM                            XCP_ON
+#define XCP_PROTECT_PGM                             XCP_ON
 
 
 /*
@@ -137,4 +138,3 @@
 #define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
 
 #endif /* __XCP_CONFIG_H */
-

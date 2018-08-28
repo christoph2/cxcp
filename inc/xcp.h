@@ -137,16 +137,18 @@ typedef unsigned long long  uint64_t;
 
 #if defined(_MSC_VER)
 #define INLINE __inline
-#define DBG_PRINT1(a)           printf(a)
-#define DBG_PRINT2(a, b)        printf(a, b)
-#define DBG_PRINT3(a, b, c)     printf(a, b, c)
-#define DBG_PRINT4(a, b, c, d)  printf(a, b, c, d)
+#define DBG_PRINT1(a)               printf(a)
+#define DBG_PRINT2(a, b)            printf(a, b)
+#define DBG_PRINT3(a, b, c)         printf(a, b, c)
+#define DBG_PRINT4(a, b, c, d)      printf(a, b, c, d)
+#define DBG_PRINT5(a, b, c, d, e)   printf(a, b, c, d, e)
 #elif defined(__CSMC__) || defined(__IAR_SYSTEMS_ICC__)
 #define INLINE
 #define DBG_PRINT1(a)
 #define DBG_PRINT2(a, b)
 #define DBG_PRINT3(a, b, c)
 #define DBG_PRINT4(a, b, c, d)
+#define DBG_PRINT5(a, b, c, d, e)
 #else
 #define INLINE inline
 #define DBG_PRINT(...)
@@ -386,7 +388,6 @@ typedef struct tagXcp_DaqListType {
     uint8_t numOdts;
     uint16_t firstOdt;
     uint8_t mode;
-    uint8_t eventChannel;
 #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
     uint8_t prescaler;
     uint8_t  counter;
@@ -446,6 +447,7 @@ Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uin
 bool Xcp_DaqConfigurationValid(void);
 bool Xcp_DaqListValid(uint8_t daqListNumber);
 void Xcp_DaqMainfunction(void);
+void Xcp_DaqAddEventChannel(uint16_t daqListNumber, uint16_t eventChannelNumber);
 void Xcp_TriggerDaqEvent(uint8_t eventNumber);
 
 #if !defined(LOBYTE)

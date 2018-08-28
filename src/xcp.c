@@ -93,6 +93,7 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 /*
 ** Local Function Prototypes.
 */
+static bool Xcp_IsProtected(uint8_t resource);
 
 static void Xcp_SendResult(Xcp_ReturnType result);
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
@@ -546,7 +547,6 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 /*
 **  Global Functions.
 */
-
 void Xcp_Init(void)
 {
     DBG_PRINT1("Xcp_Init()\n");
@@ -1002,13 +1002,15 @@ stopped and all DAQ list states are reset.
 
 static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 {
+    if (Xcp_IsProtected(XCP_RESOURCE_DAQ)) {
+        Xcp_SendResult(ERR_ACCESS_LOCKED);
+        return;
+    }
+    // TODO: If the specified list is not available, ERR_OUT_OF_RANGE will be returned.
+
     Xcp_State.daqPointer.daqList = Xcp_GetWord(pdu, UINT8(2));
     Xcp_State.daqPointer.odt = Xcp_GetByte(pdu, UINT8(4));
     Xcp_State.daqPointer.odtEntry = Xcp_GetByte(pdu, UINT8(5));
-    // TODO: Calculate DAQ Entity Number.
-    //Xcp_State.daqPointer.daqEntityNumber = ???();
-
-    // TODO: If the specified list is not available, ERR_OUT_OF_RANGE will be returned.
 
     DBG_PRINT4("SET_DAQ_PTR [%u:%u:%u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 
@@ -1025,19 +1027,22 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 
     entry = Daq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 
+    DBG_PRINT5("WRITE_DAQ [%u:%u:%u:%u]\n", address, adddrExt, elemSize, bitOffset);
+
+#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+    entry->bitOffset = bitOffset;
+#endif // XCP_DAQ_BIT_OFFSET_SUPPORTED
     entry->length = elemSize;
     entry->mta.address = address;
 #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     entry->mta.ext = adddrExt;
 #endif // XCP_DAQ_ADDR_EXT_SUPPORTED
 
-#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
-    entry->bitOffset = bitOffset;
-#else
-    // TODO: Errorhandling.
+    // Advance ODT entry pointer within  one  and  the same ODT. After writing to the
+    // last ODT entry of an ODT, the value of the DAQ pointer is undefined!
+    Xcp_State.daqPointer.odtEntry += 1;
 
-#endif // XCP_DAQ_BIT_OFFSET_SUPPORTED
-
+    XCP_POSITIVE_RESPONSE();
 }
 
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
@@ -1075,7 +1080,9 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 #endif // XCP_DAQ_PRESCALER_SUPPORTED
 
     entry = Daq_GetList(daqListNumber);
-    entry->eventChannel = eventChannelNumber;
+
+    //entry->eventChannel = eventChannelNumber;
+    Xcp_DaqAddEventChannel(daqListNumber, eventChannelNumber);
 
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_TIMESTAMP);
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_ALTERNATING);
@@ -1163,6 +1170,10 @@ static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 {
     uint32_t timestamp;
 
+#if XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED == XCP_OFF
+
+#endif // XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED
+
     timestamp = XcpHw_GetTimerCounter();
     DBG_PRINT2("GET_DAQ_CLOCK [TS: %lu] \n", timestamp);
 
@@ -1242,6 +1253,32 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
     }
 }
 
+void Xcp_MemCopy(void * dst, void * src, uint32_t len)
+{
+    uint8_t * pd = (uint8_t *)dst;
+    uint8_t * ps = (uint8_t *)src;
+
+//    ASSERT(dst != (void *)NULL);
+//    ASSERT(pd >= ps + len || ps >= pd + len);
+//    ASSERT(len != (uint16_t)0);
+
+    while (len--) {
+        *pd++ = *ps++;
+    }
+
+}
+
+void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
+{
+    uint8_t * p = (uint8_t *)dest;
+
+//    ASSERT(dest != (void *)NULL);
+
+    while (len--) {
+        *p++ = fill_char;
+    }
+}
+
 INLINE uint8_t Xcp_GetByte(Xcp_PDUType const * const pdu, uint8_t offs)
 {
   return (*(pdu->data + offs));
@@ -1285,33 +1322,6 @@ INLINE void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t v
     (*(pdu->data + 3 + offs)) = (value & 0xff000000) >> 24;
 }
 
-void Xcp_MemCopy(void * dst, void * src, uint32_t len)
-{
-    uint8_t * pd = (uint8_t *)dst;
-    uint8_t * ps = (uint8_t *)src;
-
-//    ASSERT(dst != (void *)NULL);
-//    ASSERT(pd >= ps + len || ps >= pd + len);
-//    ASSERT(len != (uint16_t)0);
-
-    while (len--) {
-        *pd++ = *ps++;
-    }
-
-}
-
-
-void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
-{
-    uint8_t * p = (uint8_t *)dest;
-
-//    ASSERT(dest != (void *)NULL);
-
-    while (len--) {
-        *p++ = fill_char;
-    }
-}
-
 static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag)
 {
     if ((value & flag) == flag) {
@@ -1320,4 +1330,9 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag)
         result &= ~(flag);
     }
     return result;
+}
+
+static bool Xcp_IsProtected(uint8_t resource)
+{
+    return ((Xcp_State.protection & resource) == resource);
 }
