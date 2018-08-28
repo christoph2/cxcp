@@ -45,8 +45,8 @@ typedef struct tagXcp_StateType {
     bool connected;
     bool busy;
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    Xcp_DaqProcessorType daqProcessor;
-    Xcp_DaqPointerType daqPointer;
+    XcpDaq_ProcessorType daqProcessor;
+    XcpDaq_PointerType daqPointer;
 #endif // XCP_ENABLE_DAQ_COMMANDS
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
     uint16_t counter;
@@ -567,12 +567,11 @@ void Xcp_Init(void)
 #endif // XCP_PROTECT_PGM
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    Xcp_InitDaq();
+    XcpDaq_Init();
     Xcp_State.daqProcessor.running = (bool)FALSE;
     Xcp_State.daqPointer.daqList = (uint16_t)0u;
     Xcp_State.daqPointer.odt = (uint8_t)0;
     Xcp_State.daqPointer.odtEntry = (uint8_t)0;
-    Xcp_State.daqPointer.daqEntityNumber = (uint16_t)0;
 #endif // XCP_ENABLE_DAQ_COMMANDS
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
     Xcp_State.counter = 0;
@@ -585,7 +584,7 @@ void Xcp_Init(void)
 void Xcp_MainFunction(void)
 {
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    Xcp_DaqMainfunction();
+    XcpDaq_Mainfunction();
 #endif // XCP_ENABLE_DAQ_COMMANDS
 }
 
@@ -1024,14 +1023,14 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 {
-    Xcp_ODTEntryType * entry;
+    XcpDaq_ODTEntryType * entry;
     uint8_t bitOffset = Xcp_GetByte(pdu, 1);
     uint8_t elemSize  = Xcp_GetByte(pdu, 2);
     uint8_t adddrExt  = Xcp_GetByte(pdu, 3);
     uint32_t address  = Xcp_GetDWord(pdu, 4);
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-    entry = Daq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
+    entry = XcpDaq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 
     DBG_PRINT5("WRITE_DAQ [address: 0x%08x ext: 0x%02x size: %u offset: %u]\n", address, adddrExt, elemSize, bitOffset);
 
@@ -1053,7 +1052,7 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
-    Xcp_DaqListType * entry;
+    XcpDaq_ListType * entry;
     uint8_t mode = Xcp_GetByte(pdu, 1);
     uint16_t daqListNumber = Xcp_GetWord(pdu, 2);
     uint16_t eventChannelNumber = Xcp_GetWord(pdu, 4);
@@ -1087,8 +1086,8 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
     }
 #endif // XCP_DAQ_PRESCALER_SUPPORTED
 
-    entry = Daq_GetList(daqListNumber);
-    Xcp_DaqAddEventChannel(daqListNumber, eventChannelNumber);
+    entry = XcpDaq_GetList(daqListNumber);
+    XcpDaq_AddEventChannel(daqListNumber, eventChannelNumber);
 
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_TIMESTAMP);
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_ALTERNATING);
@@ -1134,7 +1133,7 @@ static void Xcp_FreeDaq_Res(Xcp_PDUType const * const pdu)
 {
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
     DBG_PRINT1("FREE_DAQ\n");
-    Xcp_SendResult(Xcp_FreeDaq());
+    Xcp_SendResult(XcpDaq_Free());
 }
 #endif  // XCP_ENABLE_FREE_DAQ
 
@@ -1146,7 +1145,7 @@ static void Xcp_AllocDaq_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
     daqCount = Xcp_GetWord(pdu, UINT8(2));
     DBG_PRINT2("ALLOC_DAQ [count: %u] \n", daqCount);
-    Xcp_SendResult(Xcp_AllocDaq(daqCount));
+    Xcp_SendResult(XcpDaq_Alloc(daqCount));
 }
 #endif
 
@@ -1160,7 +1159,7 @@ static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu)
     daqListNumber = Xcp_GetWord(pdu, UINT8(2));
     odtCount = Xcp_GetByte(pdu, UINT8(4));
     DBG_PRINT3("ALLOC_ODT [list: %u count: %u] \n", daqListNumber, odtCount);
-    Xcp_SendResult(Xcp_AllocOdt(daqListNumber, odtCount));
+    Xcp_SendResult(XcpDaq_AllocOdt(daqListNumber, odtCount));
 }
 #endif  // XCP_ENABLE_ALLOC_ODT
 
@@ -1176,7 +1175,7 @@ static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu)
     odtNumber = Xcp_GetByte(pdu, UINT8(4));
     odtEntriesCount = Xcp_GetByte(pdu, UINT8(5));
     DBG_PRINT4("ALLOC_ODT_ENTRY: [list: %u odt: %u count:%u]\n", daqListNumber, odtNumber, odtEntriesCount);
-    Xcp_SendResult(Xcp_AllocOdtEntry(daqListNumber, odtNumber, odtEntriesCount));
+    Xcp_SendResult(XcpDaq_AllocOdtEntry(daqListNumber, odtNumber, odtEntriesCount));
 }
 #endif  // XCP_ENABLE_ALLOC_ODT_ENTRY
 

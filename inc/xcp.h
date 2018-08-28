@@ -311,26 +311,25 @@ typedef struct tagXcp_DaqMtaType {
 } Xcp_DaqMtaType;
 
 
-typedef enum tagXcp_DaqProcessorStateType {
+typedef enum tagXcpDaq_ProcessorStateType {
     XCP_DAQ_STATE_UNINIT            = 0,
     XCP_DAQ_STATE_CONFIG_INVALID    = 1,
     XCP_DAQ_STATE_CONFIG_VALID      = 2,
     XCP_DAQ_STATE_STOPPED           = 3,
     XCP_DAQ_STATE_RUNNING           = 4
-} Xcp_DaqProcessorStateType;
+} XcpDaq_ProcessorStateType;
 
-typedef struct tagXcp_DaqProcessorType {
+typedef struct tagXcpDaq_ProcessorType {
     bool running;   // TODO: StateEnum; i.e. DAQ_CONFIG_{INVALID, VALID}
-    Xcp_DaqProcessorStateType state;
-} Xcp_DaqProcessorType;
+    XcpDaq_ProcessorStateType state;
+} XcpDaq_ProcessorType;
 
 
-typedef struct tagXcp_DaqPointerType {
+typedef struct tagXcpDaq_PointerType {
     uint16_t daqList;
     uint8_t odt;
     uint8_t odtEntry;
-    uint16_t daqEntityNumber;
-} Xcp_DaqPointerType;
+} XcpDaq_PointerType;
 
 
 typedef enum tagXcp_DTOType {
@@ -363,28 +362,28 @@ typedef struct tagXcp_StationIDType {
 } Xcp_StationIDType;
 
 
-typedef struct tagXcp_ODTEntryType {
+typedef struct tagXcpDaq_ODTEntryType {
     Xcp_DaqMtaType mta;
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
     uint8_t bitOffset;
 #endif // XCP_DAQ_BIT_OFFSET_SUPPORTED
     uint32_t length;
-} Xcp_ODTEntryType;
+} XcpDaq_ODTEntryType;
 
-typedef struct tagXcp_ODTType {
+typedef struct tagXcpDaq_ODTType {
     uint8_t numOdtEntries;
     uint16_t firstOdtEntry;
-} Xcp_ODTType;
+} XcpDaq_ODTType;
 
-typedef enum tagXcp_DaqDirectionType {
+typedef enum tagXcpDaq_DirectionType {
     XCP_DIRECTION_NONE,
     XCP_DIRECTION_DAQ,
     XCP_DIRECTION_STIM,
     XCP_DIRECTION_DAQ_STIM
-} Xcp_DaqDirectionType;
+} XcpDaq_DirectionType;
 
 
-typedef struct tagXcp_DaqListType {
+typedef struct tagXcpDaq_ListType {
     uint8_t numOdts;
     uint16_t firstOdt;
     uint8_t mode;
@@ -392,25 +391,25 @@ typedef struct tagXcp_DaqListType {
     uint8_t prescaler;
     uint8_t  counter;
 #endif // XCP_DAQ_PRESCALER_SUPPORTED
-} Xcp_DaqListType;
+} XcpDaq_ListType;
 
 
-typedef enum tagXcp_DaqEntityKindType {
+typedef enum tagXcpDaq_EntityKindType {
     XCP_ENTITY_UNUSED,
     XCP_ENTITY_DAQ_LIST,
     XCP_ENTITY_ODT,
     XCP_ENTITY_ODT_ENTRY
-} Xcp_DaqEntityKindType;
+} XcpDaq_EntityKindType;
 
 
-typedef struct tagXcp_DaqEntityType {
+typedef struct tagXcpDaq_EntityType {
     /*Xcp_DaqEntityKindType*/uint8_t kind;
     union {
-        Xcp_ODTEntryType odtEntry;
-        Xcp_ODTType odt;
-        Xcp_DaqListType daqList;
+        XcpDaq_ODTEntryType odtEntry;
+        XcpDaq_ODTType odt;
+        XcpDaq_ListType daqList;
     } entity;
-} Xcp_DaqEntityType;
+} XcpDaq_EntityType;
 
 
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
@@ -437,18 +436,18 @@ void Xcp_SetMta(Xcp_MtaType mta);
 /*
 ** DAQ Implementation Functions.
 */
-void Xcp_InitDaq(void);
-Xcp_ReturnType Xcp_FreeDaq(void);
-Xcp_ReturnType Xcp_AllocDaq(uint16_t daqCount);
-Xcp_ReturnType Xcp_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
-Xcp_ReturnType Xcp_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
-Xcp_DaqListType * Daq_GetList(uint8_t daqListNumber);
-Xcp_ODTEntryType * Daq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
+void XcpDaq_Init(void);
+Xcp_ReturnType XcpDaq_Free(void);
+Xcp_ReturnType XcpDaq_Alloc(uint16_t daqCount);
+Xcp_ReturnType XcpDaq_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
+Xcp_ReturnType XcpDaq_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
+XcpDaq_ListType * XcpDaq_GetList(uint8_t daqListNumber);
+XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
 bool XcpDaq_ValidateConfiguration(void);
-bool Xcp_DaqListValid(uint8_t daqListNumber);
-void Xcp_DaqMainfunction(void);
-void Xcp_DaqAddEventChannel(uint16_t daqListNumber, uint16_t eventChannelNumber);
-void Xcp_TriggerDaqEvent(uint8_t eventNumber);
+bool XcpDaq_ValidateList(uint8_t daqListNumber);
+void XcpDaq_Mainfunction(void);
+void XcpDaq_AddEventChannel(uint16_t daqListNumber, uint16_t eventChannelNumber);
+void XcpDaq_TriggerEvent(uint8_t eventNumber);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
