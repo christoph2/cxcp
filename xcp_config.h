@@ -49,7 +49,7 @@
 
 #define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
 #define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
-#define XCP_DAQ_PRESCALER_SUPPORTED                 XCP_ON
+#define XCP_DAQ_PRESCALER_SUPPORTED                 XCP_OFF
 #define XCP_DAQ_ADDR_EXT_SUPPORTED                  XCP_OFF
 #define XCP_DAQ_BIT_OFFSET_SUPPORTED                XCP_OFF
 #define XCP_DAQ_PRIORITIZATION_SUPPORTED            XCP_OFF

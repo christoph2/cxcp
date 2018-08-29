@@ -569,12 +569,12 @@ void Xcp_Init(void)
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
     Xcp_State.daqProcessor.running = (bool)FALSE;
-    Xcp_State.daqPointer.daqList = (uint16_t)0u;
-    Xcp_State.daqPointer.odt = (uint8_t)0;
-    Xcp_State.daqPointer.odtEntry = (uint8_t)0;
+    Xcp_State.daqPointer.daqList = (XcpDaq_ListIntegerType)0;
+    Xcp_State.daqPointer.odt = (XcpDaq_ODTIntegerType)0;
+    Xcp_State.daqPointer.odtEntry = (XcpDaq_ODTEntryIntegerType)0;
 #endif // XCP_ENABLE_DAQ_COMMANDS
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
-    Xcp_State.counter = 0;
+    Xcp_State.counter = (uint16_t)0;
 #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
     XcpHw_Init();
     XcpTl_Init();
@@ -604,7 +604,7 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 
 void Xcp_SendPdu(void)
 {
-    uint16_t len = Xcp_PduOut.len;
+    const uint16_t len = Xcp_PduOut.len;
 
     Xcp_PduOut.data[0] = LOBYTE(len);
     Xcp_PduOut.data[1] = HIBYTE(len);
@@ -695,7 +695,7 @@ static void Xcp_Upload(uint8_t len)
  */
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 {
-    uint8_t cmd = pdu->data[0];
+    const uint8_t cmd = pdu->data[0];
 
     DBG_PRINT1("Req: ");
     //Xcp_DumpMessageObject(pdu);
@@ -976,10 +976,10 @@ static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
 {
-    uint16_t daqListNumber;
+    XcpDaq_ListIntegerType daqListNumber;
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-    daqListNumber = Xcp_GetWord(pdu, UINT8(2));
+    daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
 
     DBG_PRINT2("CLEAR_DAQ_LIST [list: %u] \n", daqListNumber);
 #if 0
@@ -1001,12 +1001,12 @@ stopped and all DAQ list states are reset.
 
 static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 {
-    uint16_t daqList;
-    uint8_t odt;
-    uint8_t odtEntry;
+    XcpDaq_ListIntegerType daqList;
+    XcpDaq_ODTIntegerType odt;
+    XcpDaq_ODTEntryIntegerType odtEntry;
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-    daqList = Xcp_GetWord(pdu, UINT8(2));
+    daqList = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     odt = Xcp_GetByte(pdu, UINT8(4));
     odtEntry = Xcp_GetByte(pdu, UINT8(5));
 
@@ -1028,10 +1028,10 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 {
     XcpDaq_ODTEntryType * entry;
-    uint8_t bitOffset = Xcp_GetByte(pdu, 1);
-    uint8_t elemSize  = Xcp_GetByte(pdu, 2);
-    uint8_t adddrExt  = Xcp_GetByte(pdu, 3);
-    uint32_t address  = Xcp_GetDWord(pdu, 4);
+    const uint8_t bitOffset = Xcp_GetByte(pdu, UINT8(1));
+    const uint8_t elemSize  = Xcp_GetByte(pdu, UINT8(2));
+    const uint8_t adddrExt  = Xcp_GetByte(pdu, UINT8(3));
+    const uint32_t address  = Xcp_GetDWord(pdu, UINT8(4));
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
     entry = XcpDaq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
@@ -1049,7 +1049,7 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 
     // Advance ODT entry pointer within  one  and  the same ODT. After writing to the
     // last ODT entry of an ODT, the value of the DAQ pointer is undefined!
-    Xcp_State.daqPointer.odtEntry += 1;
+    Xcp_State.daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;
 
     XCP_POSITIVE_RESPONSE();
 }
@@ -1057,11 +1057,11 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
     XcpDaq_ListType * entry;
-    uint8_t mode = Xcp_GetByte(pdu, 1);
-    uint16_t daqListNumber = Xcp_GetWord(pdu, 2);
-    uint16_t eventChannelNumber = Xcp_GetWord(pdu, 4);
-    uint8_t prescaler = Xcp_GetByte(pdu, 6);
-    uint8_t priority = Xcp_GetByte(pdu, 7);
+    const uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
+    const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+    const uint16_t eventChannelNumber = Xcp_GetWord(pdu, UINT8(4));
+    const uint8_t prescaler = Xcp_GetByte(pdu, UINT8(6));
+    const uint8_t priority = Xcp_GetByte(pdu, UINT8(7));
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
 
@@ -1079,13 +1079,13 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 #endif // XCP_DAQ_ALTERNATING_SUPPORTED
 #if XCP_DAQ_PRIORITIZATION_SUPPORTED == XCP_OFF
     /* Needs to be 0 */
-    if (priority > 0) {
+    if (priority > UINT8(0)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
     }
 #endif // XCP_DAQ_PRIORITIZATION_SUPPORTED
 #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_OFF
     /* Needs to be 1 */
-    if (prescaler > 1) {
+    if (prescaler > UINT8(1)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
     }
 #endif // XCP_DAQ_PRESCALER_SUPPORTED
@@ -1144,10 +1144,10 @@ static void Xcp_FreeDaq_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_ALLOC_DAQ == XCP_ON
 static void Xcp_AllocDaq_Res(Xcp_PDUType const * const pdu)
 {
-    uint16_t daqCount;
+    XcpDaq_ListIntegerType daqCount;
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-    daqCount = Xcp_GetWord(pdu, UINT8(2));
+    daqCount = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     DBG_PRINT2("ALLOC_DAQ [count: %u] \n", daqCount);
     Xcp_SendResult(XcpDaq_Alloc(daqCount));
 }
@@ -1156,12 +1156,12 @@ static void Xcp_AllocDaq_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_ALLOC_ODT == XCP_ON
 static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu)
 {
-    uint16_t daqListNumber;
-    uint8_t odtCount;
+    XcpDaq_ListIntegerType daqListNumber;
+    XcpDaq_ODTIntegerType odtCount;
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-    daqListNumber = Xcp_GetWord(pdu, UINT8(2));
-    odtCount = Xcp_GetByte(pdu, UINT8(4));
+    daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+    odtCount = (XcpDaq_ODTIntegerType)Xcp_GetByte(pdu, UINT8(4));
     DBG_PRINT3("ALLOC_ODT [list: %u count: %u] \n", daqListNumber, odtCount);
     Xcp_SendResult(XcpDaq_AllocOdt(daqListNumber, odtCount));
 }
@@ -1170,14 +1170,14 @@ static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_ALLOC_ODT_ENTRY == XCP_ON
 static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu)
 {
-    uint16_t daqListNumber;
-    uint8_t odtNumber;
-    uint8_t odtEntriesCount;
+    XcpDaq_ListIntegerType daqListNumber;
+    XcpDaq_ODTIntegerType odtNumber;
+    XcpDaq_ODTEntryIntegerType odtEntriesCount;
 
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-    daqListNumber = Xcp_GetWord(pdu, UINT8(2));
-    odtNumber = Xcp_GetByte(pdu, UINT8(4));
-    odtEntriesCount = Xcp_GetByte(pdu, UINT8(5));
+    daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+    odtNumber = (XcpDaq_ODTIntegerType)Xcp_GetByte(pdu, UINT8(4));
+    odtEntriesCount = (XcpDaq_ODTEntryIntegerType)Xcp_GetByte(pdu, UINT8(5));
     DBG_PRINT4("ALLOC_ODT_ENTRY: [list: %u odt: %u count:%u]\n", daqListNumber, odtNumber, odtEntriesCount);
     Xcp_SendResult(XcpDaq_AllocOdtEntry(daqListNumber, odtNumber, odtEntriesCount));
 }

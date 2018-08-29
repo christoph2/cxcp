@@ -110,7 +110,7 @@ Xcp_ReturnType XcpDaq_Free(void)
     XcpDaq_OdtCount = UINT16(0);
 
 #if XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  == XCP_OFF
-    Xcp_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * XCP_DAQ_MAX_EVENT_CHANNEL));
+    Xcp_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
 #endif // XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED
 
     if (XcpDaq_AllocValidTransition(XCP_CALL_FREE_DAQ)) {
@@ -322,6 +322,8 @@ void XcpDaq_DumpEntities(void)
             case XCP_ENTITY_ODT_ENTRY:
                 //printf("ODT-ENTRY: [length: %02u  ext: %02X address: %08X]\n", entry->entity.odtEntry.length,
                 //       entry->entity.odtEntry.mta.ext, entry->entity.odtEntry.mta.address);
+                break;
+            default:
                 break;
         }
     }

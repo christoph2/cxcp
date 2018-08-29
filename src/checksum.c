@@ -271,8 +271,8 @@ Xcp_CrcType Xcp_CalculateCRC(uint8_t const * dataPtr, uint32_t length, Xcp_CrcTy
 
     for (idx = (uint32_t)0UL; idx < length; ++idx)
     {
-        data = CRC_REFLECT_DATA(dataPtr[idx]) ^ (crc >> (WIDTH - UINT8(8)));
-        crc = CRC_TAB[data] ^ (crc << 8);
+        data = CRC_REFLECT_DATA(dataPtr[idx]) ^ UINT8(crc >> (WIDTH - UINT8(8)));
+        crc = CRC_TAB[data] ^ UINT16(crc << 8);
     }
     return CRC_REFLECT_REMAINDER(crc) ^ XCP_CRC_FINAL_XOR_VALUE;
 }

@@ -248,7 +248,7 @@ void XcpTl_TxHandler(void)
 
 }
 
-int XcpTl_FrameAvailable(long sec, long usec)
+int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 {
     struct timeval timeout;
     fd_set fds;

@@ -554,7 +554,7 @@ void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value);
 */
 void XcpTl_Init(void);
 void XcpTl_DeInit(void);
-int XcpTl_FrameAvailable(long sec, long usec);
+int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec);
 void XcpTl_RxHandler(void);
 
 void XcpTl_Task(void);
