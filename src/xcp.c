@@ -251,7 +251,7 @@ static void Xcp_ProgramVerify_Res(Xcp_PDUType const * const pdu);
 */
 
 static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
-    //lint -e632      Assignment to strong type 'Xcp_ServerCommandType' considered harmless in this context.
+    //lint -save -e632      Assignment to strong type 'Xcp_ServerCommandType' considered harmless in this context.
 #if XCP_ENABLE_STD_COMMANDS == XCP_ON
     Xcp_Connect_Res,
     Xcp_Disconnect_Res,
@@ -540,7 +540,7 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 #else
     Xcp_CommandNotImplemented_Res,
 #endif
-    //lint +e632
+    //lint -restore
 };
 
 /*
@@ -1010,7 +1010,7 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
     odt = Xcp_GetByte(pdu, UINT8(4));
     odtEntry = Xcp_GetByte(pdu, UINT8(5));
 
-    if (XcpDaq_ValidateOdtEntry(daqList, odt, odtEntry)) {
+    if (!XcpDaq_ValidateOdtEntry(daqList, odt, odtEntry)) {
         // If the specified list is not available, ERR_OUT_OF_RANGE will be returned.
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
         return;
