@@ -65,7 +65,7 @@
 */
 #define XCP_PROTECT_CAL                             XCP_ON
 #define XCP_PROTECT_PAG                             XCP_ON
-#define XCP_PROTECT_DAQ                             XCP_ON
+#define XCP_PROTECT_DAQ                             XCP_OFF
 #define XCP_PROTECT_STIM                            XCP_ON
 #define XCP_PROTECT_PGM                             XCP_ON
 
@@ -135,6 +135,11 @@
 /*
 **  Customization Options.
 */
+
 #define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
+
+#define XCP_DAQ_DAQ_LIST_TYPE                       uint8_t
+#define XCP_DAQ_ODT_TYPE                            uint8_t
+#define XCP_DAQ_ODT_ENTRY_TYPE                      uint8_t
 
 #endif /* __XCP_CONFIG_H */

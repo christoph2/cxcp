@@ -159,6 +159,10 @@ typedef unsigned long long  uint64_t;
 ** Global Types.
 */
 
+typedef XCP_DAQ_DAQ_LIST_TYPE XcpDaq_ListIntegerType;
+typedef XCP_DAQ_ODT_TYPE XcpDaq_ODTIntegerType;
+typedef XCP_DAQ_ODT_ENTRY_TYPE XcpDaq_ODTEntryIntegerType;
+
 typedef enum tagXcp_CommandType {
 //
 // STD
@@ -326,9 +330,9 @@ typedef struct tagXcpDaq_ProcessorType {
 
 
 typedef struct tagXcpDaq_PointerType {
-    uint16_t daqList;
-    uint8_t odt;
-    uint8_t odtEntry;
+    XcpDaq_ListIntegerType daqList;
+    XcpDaq_ODTIntegerType odt;
+    XcpDaq_ODTEntryIntegerType odtEntry;
 } XcpDaq_PointerType;
 
 
@@ -371,7 +375,7 @@ typedef struct tagXcpDaq_ODTEntryType {
 } XcpDaq_ODTEntryType;
 
 typedef struct tagXcpDaq_ODTType {
-    uint8_t numOdtEntries;
+    XcpDaq_ODTEntryIntegerType numOdtEntries;
     uint16_t firstOdtEntry;
 } XcpDaq_ODTType;
 
@@ -384,7 +388,7 @@ typedef enum tagXcpDaq_DirectionType {
 
 
 typedef struct tagXcpDaq_ListType {
-    uint8_t numOdts;
+    XcpDaq_ODTIntegerType numOdts;
     uint16_t firstOdt;
     uint8_t mode;
 #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
@@ -438,17 +442,17 @@ void Xcp_SetMta(Xcp_MtaType mta);
 */
 void XcpDaq_Init(void);
 Xcp_ReturnType XcpDaq_Free(void);
-Xcp_ReturnType XcpDaq_Alloc(uint16_t daqCount);
-Xcp_ReturnType XcpDaq_AllocOdt(uint16_t daqListNumber, uint8_t odtCount);
-Xcp_ReturnType XcpDaq_AllocOdtEntry(uint16_t daqListNumber, uint8_t odtNumber, uint8_t odtEntriesCount);
-XcpDaq_ListType * XcpDaq_GetList(uint8_t daqListNumber);
-XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntryNumber);
+Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount);
+Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtCount);
+Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntriesCount);
+XcpDaq_ListType * XcpDaq_GetList(XcpDaq_ListIntegerType daqListNumber);
+XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber);
 bool XcpDaq_ValidateConfiguration(void);
-bool XcpDaq_ValidateList(uint8_t daqListNumber);
-bool XcpDaq_ValidateOdtEntry(uint8_t daqListNumber, uint8_t odtNumber, uint8_t odtEntry);
+bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber);
+bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntry);
 void XcpDaq_Mainfunction(void);
-void XcpDaq_AddEventChannel(uint16_t daqListNumber, uint16_t eventChannelNumber);
-void XcpDaq_TriggerEvent(uint8_t eventNumber);
+void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t eventChannelNumber);
+void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
