@@ -291,6 +291,7 @@ typedef struct tagXcp_ODTEntryType {
 
 typedef struct tagXcp_ODTType {
     uint8_t numOdtEntries;
+    uint8_t firstOdtEntry;
 } Xcp_ODTType;
 
 typedef enum tagXcp_DaqDirectionType {
@@ -303,6 +304,7 @@ typedef enum tagXcp_DaqDirectionType {
 typedef struct tagXcp_DaqListType {
     Xcp_DaqDirectionType direction;
     uint8_t numOdts;
+    uint8_t firstOdt;
 } Xcp_DaqListType;
 
 
