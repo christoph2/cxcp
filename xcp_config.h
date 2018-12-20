@@ -105,7 +105,7 @@
 
     #define XCP_ENABLE_GET_DAQ_CLOCK                XCP_ON
     #define XCP_ENABLE_READ_DAQ                     XCP_OFF
-    #define XCP_ENABLE_GET_DAQ_PROCESSOR_INFO       XCP_OFF
+    #define XCP_ENABLE_GET_DAQ_PROCESSOR_INFO       XCP_ON
     #define XCP_ENABLE_GET_DAQ_RESOLUTION_INFO      XCP_ON
     #define XCP_ENABLE_GET_DAQ_LIST_INFO            XCP_OFF
     #define XCP_ENABLE_GET_DAQ_EVENT_INFO           XCP_OFF
@@ -126,7 +126,7 @@
     #define XCP_ENABLE_PROGRAM_VERIFY               XCP_OFF
 
 /*
-**  Transport-Layser specific Options (may not apply to every Transport).
+**  Transport-Layer specific Options (may not apply to every Transport).
 */
 #define XCP_TRANSPORT_LAYER_LENGTH_SIZE             (2)     /* [0 | 1 | 2] */
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE            (2)     /* [0 | 1 | 2] */
@@ -138,8 +138,27 @@
 
 #define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
 
-#define XCP_DAQ_DAQ_LIST_TYPE                       uint8_t
+#define XCP_DAQ_LIST_TYPE                           uint8_t
 #define XCP_DAQ_ODT_TYPE                            uint8_t
 #define XCP_DAQ_ODT_ENTRY_TYPE                      uint8_t
+
+/*
+**  Platform dependent Options.
+*/
+#define XCP_ENTER_CRITICAL()
+#define XCP_LEAVE_CRITICAL()
+#define XCP_TL_ENTER_CRITICAL()
+#define XCP_TL_LEAVE_CRITICAL()
+#define XCP_DAQ_ENTER_CRITICAL()
+#define XCP_DAQ_LEAVE_CRITICAL()
+#define XCP_STIM_ENTER_CRITICAL()
+#define XCP_STIM_LEAVE_CRITICAL()
+#define XCP_PGM_ENTER_CRITICAL()
+#define XCP_PGM_LEAVE_CRITICAL()
+#define XCP_CAL_ENTER_CRITICAL()
+#define XCP_CAL_LEAVE_CRITICAL()
+#define XCP_PAG_ENTER_CRITICAL()
+#define XCP_PAG_LEAVE_CRITICAL()
+
 
 #endif /* __XCP_CONFIG_H */

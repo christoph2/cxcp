@@ -26,21 +26,7 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
-//#include <stdlib.h>
-
-/* check for C99-Compiler */
-#if defined(__STDC_VERSION__)
-    #if __STDC_VERSION__ >= 199901L
-        #define C99_COMPILER
-    #endif
-#endif
-
-/* check for C1x-Compiler */
-#if defined(__STDC_VERSION__)
-    #if __STDC_VERSION__>= 201112L
-        #define C11_COMPILER
-    #endif
-#endif
+#include "xcp_types.h"
 
 #define XCP_PROTOCOL_VERSION_MAJOR       (1)
 #define XCP_PROTOCOL_VERSION_RELEASE     (0)
@@ -67,38 +53,6 @@
     #error XCP_DAQ_MAX_EVENT_CHANNEL must be at least 1
 #endif // XCP_DAQ_MAX_EVENT_CHANNEL
 
-
-#if defined(__CSMC__)  || !defined(C99_COMPILER) || !defined(C11_COMPILER)
-typedef unsigned char       bool;
-
-typedef signed char         int8_t;
-typedef unsigned char       uint8_t;
-typedef signed short        int16_t;
-typedef unsigned short      uint16_t;
-typedef signed long         int32_t;
-typedef unsigned long       uint32_t;
-
-typedef signed long long    int64_t;
-typedef unsigned long long  uint64_t;
-#else
-
-
-#include <stdbool.h>
-#include <stdint.h>
-
-#endif // defined
-
-#define UINT8(x)    ((uint8_t)(x))
-#define INT8(x)     ((int8_t)(x))
-
-#define UINT16(x)   ((uint16_t)(x))
-#define INT16(x)    ((int16_t)(x))
-
-#define UINT32(x)   ((uint32_t)(x))
-#define INT32(x)    ((int32_t)(x))
-
-#define UINT64(x)   ((uint64_t)(x))
-#define INT64(x)    ((int64_t)(x))
 
 /*
 **  Available Resources.
@@ -134,14 +88,25 @@ typedef unsigned long long  uint64_t;
 #define XCP_DAQ_LIST_MODE_SELECTED      ((uint8_t)0x40)
 #define XCP_DAQ_LIST_MODE_STARTED       ((uint8_t)0x80)
 
+/* DAQ Properties */
+#define XCP_DAQ_PROP_OVERLOAD_EVENT          ((uint8_t)0x80)
+#define XCP_DAQ_PROP_OVERLOAD_MSB            ((uint8_t)0x40)
+#define XCP_DAQ_PROP_PID_OFF_SUPPORTED       ((uint8_t)0x20)
+#define XCP_DAQ_PROP_TIMESTAMP_SUPPORTED     ((uint8_t)0x10)
+#define XCP_DAQ_PROP_BIT_STIM_SUPPORTED      ((uint8_t)0x08)
+#define XCP_DAQ_PROP_RESUME_SUPPORTED        ((uint8_t)0x04)
+#define XCP_DAQ_PROP_PRESCALER_SUPPORTED     ((uint8_t)0x02)
+#define XCP_DAQ_PROP_DAQ_CONFIG_TYPE         ((uint8_t)0x01)
+
 
 #if defined(_MSC_VER)
 #define INLINE __inline
-#define DBG_PRINT1(a)               printf(a)
-#define DBG_PRINT2(a, b)            printf(a, b)
-#define DBG_PRINT3(a, b, c)         printf(a, b, c)
-#define DBG_PRINT4(a, b, c, d)      printf(a, b, c, d)
-#define DBG_PRINT5(a, b, c, d, e)   printf(a, b, c, d, e)
+#define DBG_PRINT1(a)                   printf(a)
+#define DBG_PRINT2(a, b)                printf(a, b)
+#define DBG_PRINT3(a, b, c)             printf(a, b, c)
+#define DBG_PRINT4(a, b, c, d)          printf(a, b, c, d)
+#define DBG_PRINT5(a, b, c, d, e)       printf(a, b, c, d, e)
+#define DBG_PRINT6(a, b, c, d, e, f)    printf(a, b, c, d, e, f)
 #elif defined(__CSMC__) || defined(__IAR_SYSTEMS_ICC__)
 #define INLINE
 #define DBG_PRINT1(a)
@@ -149,6 +114,7 @@ typedef unsigned long long  uint64_t;
 #define DBG_PRINT3(a, b, c)
 #define DBG_PRINT4(a, b, c, d)
 #define DBG_PRINT5(a, b, c, d, e)
+#define DBG_PRINT6(a, b, c, d, e, f)
 #else
 #define INLINE inline
 #define DBG_PRINT(...)
@@ -159,7 +125,7 @@ typedef unsigned long long  uint64_t;
 ** Global Types.
 */
 
-typedef XCP_DAQ_DAQ_LIST_TYPE XcpDaq_ListIntegerType;
+typedef XCP_DAQ_LIST_TYPE XcpDaq_ListIntegerType;
 typedef XCP_DAQ_ODT_TYPE XcpDaq_ODTIntegerType;
 typedef XCP_DAQ_ODT_ENTRY_TYPE XcpDaq_ODTEntryIntegerType;
 
@@ -307,12 +273,12 @@ typedef struct tagXcp_MtaType {
     uint32_t address;
 } Xcp_MtaType;
 
-typedef struct tagXcp_DaqMtaType {
+typedef struct tagXcpDaq_MtaType {
 #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     uint8_t ext;
 #endif // XCP_DAQ_ADDR_EXT_SUPPORTED
     uint32_t address;
-} Xcp_DaqMtaType;
+} XcpDaq_MtaType;
 
 
 typedef enum tagXcpDaq_ProcessorStateType {
@@ -324,7 +290,6 @@ typedef enum tagXcpDaq_ProcessorStateType {
 } XcpDaq_ProcessorStateType;
 
 typedef struct tagXcpDaq_ProcessorType {
-    bool running;   // TODO: StateEnum; i.e. DAQ_CONFIG_{INVALID, VALID}
     XcpDaq_ProcessorStateType state;
 } XcpDaq_ProcessorType;
 
@@ -367,7 +332,7 @@ typedef struct tagXcp_StationIDType {
 
 
 typedef struct tagXcpDaq_ODTEntryType {
-    Xcp_DaqMtaType mta;
+    XcpDaq_MtaType mta;
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
     uint8_t bitOffset;
 #endif // XCP_DAQ_BIT_OFFSET_SUPPORTED
@@ -416,6 +381,19 @@ typedef struct tagXcpDaq_EntityType {
 } XcpDaq_EntityType;
 
 
+typedef struct tagXcpDaq_EventType {
+    uint8_t const * name;
+/*
+1  BYTE  DAQ_EVENT_PROPERTIES           Specific properties for this event channel
+2  BYTE  MAX_DAQ_LIST [0,1,2,..255]     maximum number of DAQ lists in this event channel
+3  BYTE  EVENT_CHANNEL_NAME_LENGTH      in bytes 0 – If not available
+4  BYTE  EVENT_CHANNEL_TIME_CYCLE       0 – Not cyclic
+5  BYTE  EVENT_CHANNEL_TIME_UNIT        don’t care if Event channel time cycle = 0
+6  BYTE  EVENT_CHANNEL_PRIORITY         (FF highest)
+*/
+} XcpDaq_EventType;
+
+
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
 
@@ -453,6 +431,8 @@ bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTInt
 void XcpDaq_Mainfunction(void);
 void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t eventChannelNumber);
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
+void XcpDaq_GetProperties(uint8_t * properties);
+XcpDaq_ListIntegerType XcpDaq_GetListCount(void);
 
 #if !defined(LOBYTE)
 #define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
@@ -494,6 +474,9 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
 #endif
 #endif
 
+#if !defined(UNREFERENCED_PARAMETER)
+#define UNREFERENCED_PARAMETER(x)   (x) = (x)   /*lint  -esym( 714, x ) */
+#endif // UNREFERENCED_PARAMETER
 
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)
@@ -536,10 +519,6 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len);
 **  Helpers.
 */
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len);
-
-/* Locals!!! */
-void Xcp_MemCopy(void * dst, void * src, uint32_t len);
-void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len);
 
 uint8_t Xcp_GetByte(Xcp_PDUType const * const value, uint8_t offs);
 uint16_t Xcp_GetWord(Xcp_PDUType const * const value, uint8_t offs);
