@@ -51,6 +51,7 @@ void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
     }
 }
 
+#if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
 void Xcp_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
 {
     uint32_t  mod;
@@ -87,3 +88,4 @@ void Xcp_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
         pos--;
     }
 }
+#endif
