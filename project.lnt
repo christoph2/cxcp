@@ -15,6 +15,8 @@ au-misra2.lnt
 
 //-function(exit, ASSERT)
 
+//-w2 	// Inhibit all informational messages (Nur fuer den Anfang!!!).
+
 -zero(99)
 -passes(2)
 -restore_at_end
@@ -22,7 +24,6 @@ au-misra2.lnt
 
 -t4	// tabsize = four spaces.
 
--w2 	// Inhibit all informational messages (Nur fuer den Anfang!!!).
 
 -e129
 //-esym(e129,__intrinisic)
@@ -46,13 +47,14 @@ au-misra2.lnt
 +e777	// Testing floats for equality
 +e795	// Conceivable disvision by 0
 +e801	// Use of goto is deprecated
++e818	// Pointer parameter 'Symbol' (Location) could be declared ptr to const
 +e825	// Control flows into case/default
 +e832	// Parameter '___' not explicitly declared, int assumed
 +e766	// Header file not used in module.
 +e936	// old-style function definition for function '___'
 +e944	// ___argument for operator '___' always evaluates to ___
 -e950	// Non-ANSI reserved word or construct: '___'
-+e952	// Parameter '___' (___) could be declared const
+-e952	// Parameter '___' (___) could be declared const
 +e953	// variable should declared as consts.
 +e954	// Pointer variable '___' (___) could be declared as pointing to c
 +e957	// Function '___' defined without a prototype in scope
@@ -69,8 +71,7 @@ au-misra2.lnt
 -strong(A)
 -b
 
--strong(B, _Bool, boolean)
-//-strong(B, boolean)
+-strong(B, _Bool, bool, boolean)
 
 // Slickedit
 -"format=%(%f %l:%C %)error %n: (%t -- %m)"     //  Messages will contain
@@ -92,7 +93,6 @@ au-misra2.lnt
 //-d__ICCHCS12__
 
 -d__STDC__=1
-
 //-i"C:\Programme\IAR Systems\Embedded Workbench Evaluation 4.0\HCS12\inc"
 //+libdir("C:\Programme\IAR Systems\Embedded Workbench Evaluation 4.0\HCS12\inc")
 -i".\inc;.\src\tl\udp;."
