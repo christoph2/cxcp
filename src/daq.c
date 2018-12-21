@@ -28,6 +28,7 @@
 #endif // _WIN32
 
 #include "xcp.h"
+#include "xcp_util.h"
 
 
 #define NUM_DAQ_ENTITIES    (256)
@@ -95,6 +96,7 @@ static uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 */
 static XcpDaq_ODTType * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber);
 static bool XcpDaq_AllocValidTransition(XcpDaq_AllocTransitionype transition);
+static XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
 void XcpDaq_DumpEntities(void);
 
 
@@ -231,23 +233,23 @@ bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber)
 {
     XcpDaq_ListType const * daqList;
     XcpDaq_ODTType const * odt;
-    bool result = (bool)TRUE;
+    bool result = (bool)XCP_TRUE;
     XcpDaq_ODTIntegerType numOdts;
     uint8_t idx;
 
     if (daqListNumber > (XcpDaq_ListCount - UINT16(1))) {
-        result = (bool)FALSE;
+        result = (bool)XCP_FALSE;
     } else {
         daqList = XcpDaq_GetList(daqListNumber);
         numOdts = daqList->numOdts ;
         if (numOdts == UINT8(0)) {
-            result = (bool)FALSE;
+            result = (bool)XCP_FALSE;
         } else {
-            result = (bool)FALSE;
+            result = (bool)XCP_FALSE;
             for (idx = UINT8(0); idx < numOdts; ++idx) {
                 odt = XcpDaq_GetOdt(daqListNumber, idx);
                 if (odt->numOdtEntries != UINT8(0)) {
-                    result = (bool)TRUE;
+                    result = (bool)XCP_TRUE;
                     break;
                 }
             }
@@ -260,18 +262,18 @@ bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTInt
 {
     XcpDaq_ListType const * daqList;
     XcpDaq_ODTType const * odt;
-    bool result = (bool)TRUE;
+    bool result = (bool)XCP_TRUE;
 
     if (daqListNumber > (XcpDaq_ListCount - UINT16(1))) {
-        result = (bool)FALSE;
+        result = (bool)XCP_FALSE;
     } else {
         daqList = XcpDaq_GetList(daqListNumber);
         if (odtNumber > (daqList->numOdts - (XcpDaq_ODTIntegerType)1)) {
-            result = (bool)FALSE;
+            result = (bool)XCP_FALSE;
         } else {
             odt = XcpDaq_GetOdt(daqListNumber, odtNumber);
             if (odtEntry > (odt->numOdtEntries - (XcpDaq_ODTEntryIntegerType)1)) {
-                result = (bool)FALSE;
+                result = (bool)XCP_FALSE;
             }
         }
     }
@@ -304,6 +306,12 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
 }
 
 
+XcpDaq_ListIntegerType XcpDaq_GetListCount(void)
+{
+    return XcpDaq_GetDynamicListCount();    // TODO: Add predefined and static lists!
+}
+
+
 #if defined(_WIN32)
 void XcpDaq_DumpEntities(void)
 {
@@ -330,6 +338,42 @@ void XcpDaq_DumpEntities(void)
 }
 #endif
 
+
+
+void XcpDaq_GetProperties(uint8_t * properties)
+{
+#if 0
+XCP_DAQ_PROP_OVERLOAD_EVENT
+XCP_DAQ_PROP_OVERLOAD_MSB
+XCP_DAQ_PROP_PID_OFF_SUPPORTED
+XCP_DAQ_PROP_TIMESTAMP_SUPPORTED
+XCP_DAQ_PROP_BIT_STIM_SUPPORTED
+XCP_DAQ_PROP_RESUME_SUPPORTED
+XCP_DAQ_PROP_PRESCALER_SUPPORTED
+XCP_DAQ_PROP_DAQ_CONFIG_TYPE
+#endif // 0
+    *properties = UINT8(0);
+#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
+    *properties |= XCP_DAQ_PROP_PRESCALER_SUPPORTED;
+#endif // XCP_DAQ_PRESCALER_SUPPORTED
+
+#if 0
+DAQ_CONFIG_TYPE  0 = static DAQ list configuration
+    1 = dynamic DAQ list configuration
+PRESCALER_SUPPORTED  0 = Prescaler not supported
+    1 = prescaler supported
+RESUME_SUPPORTED  0 = DAQ lists can not be set to RESUME mode.
+    1 = DAQ lists can be set to RESUME mode.
+BIT_STIM_SUPPORTED  0 = bitwise data stimulation not supported
+    1 = bitwise data stimulation supported
+TIMESTAMP_SUPPORTED  0 = time stamped mode not supported
+    1 = time stamped mode supported
+PID_OFF_SUPPORTED  0 = Identification Field can not be switched off
+    1 = Identification Field may be switched off
+
+#endif
+}
+
 /*
 ** Local Functions.
 */
@@ -346,9 +390,9 @@ static XcpDaq_ODTType * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpD
 static bool XcpDaq_AllocValidTransition(XcpDaq_AllocTransitionype transition)
 {
     if (XcpDaq_AllocTransitionTable[XcpDaq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
-        return (bool)TRUE;
+        return (bool)XCP_TRUE;
     } else {
-        return (bool)FALSE;
+        return (bool)XCP_FALSE;
     }
 }
 
@@ -375,6 +419,11 @@ static void Daq_TransitLists(XcpDaq_ListTransitionType transition)
             entry->mode &= UINT8(~XCP_DAQ_LIST_MODE_SELECTED);
         }
     }
+}
+
+static XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void)
+{
+    return (XcpDaq_ListIntegerType)XcpDaq_ListCount;
 }
 
 #if 0

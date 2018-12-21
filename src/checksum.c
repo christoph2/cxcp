@@ -52,8 +52,8 @@
 #define XCP_CRC_POLYNOMIAL      ((uint16_t)0x8005)
 #define XCP_CRC_INITIAL_VALUE   ((uint16_t)0x0000)
 #define XCP_CRC_FINAL_XOR_VALUE ((uint16_t)0x0000)
-#define REFLECT_DATA            TRUE
-#define REFLECT_REMAINDER       TRUE
+#define REFLECT_DATA            XCP_TRUE
+#define REFLECT_REMAINDER       XCP_TRUE
 #define CHECK_VALUE             ((uint16_t)0xBB3D)
 
 static const uint16_t CRC_TAB[] = {
@@ -97,8 +97,8 @@ static const uint16_t CRC_TAB[] = {
 #define XCP_CRC_POLYNOMIAL      ((uint16_t)0x1021)
 #define XCP_CRC_INITIAL_VALUE   ((uint16_t)0xFFFF)
 #define XCP_CRC_FINAL_XOR_VALUE ((uint16_t)0x0000)
-#define REFLECT_DATA            FALSE
-#define REFLECT_REMAINDER       FALSE
+#define REFLECT_DATA            XCP_FALSE
+#define REFLECT_REMAINDER       XCP_FALSE
 #define CHECK_VALUE             ((uint16_t)0x29B1)
 
 static const uint16_t CRC_TAB[] = {
@@ -142,8 +142,8 @@ static const uint16_t CRC_TAB[] = {
 #define XCP_CRC_POLYNOMIAL      ((uint32_t)0x04C11DB7)
 #define XCP_CRC_INITIAL_VALUE   ((uint32_t)0xFFFFFFFF)
 #define XCP_CRC_FINAL_XOR_VALUE ((uint32_t)0xFFFFFFFF)
-#define REFLECT_DATA            TRUE
-#define REFLECT_REMAINDER       TRUE
+#define REFLECT_DATA            XCP_TRUE
+#define REFLECT_REMAINDER       XCP_TRUE
 #define CHECK_VALUE             ((uint32_t)0xCBF43926)
 
 static const uint32_t CRC_TAB[] = {
@@ -207,7 +207,7 @@ static const uint32_t CRC_TAB[] = {
 #define WIDTH    ((uint16_t)(8U * sizeof(Xcp_CrcType)))
 #define TOPBIT   (1 << (WIDTH - 1))
 
-#if (REFLECT_DATA == TRUE)
+#if (REFLECT_DATA == XCP_TRUE)
 //#undef  REFLECT_DATA
 #define CRC_REFLECT_DATA(X)         ((uint8_t) reflect((X), 8))
 #else
@@ -215,7 +215,7 @@ static const uint32_t CRC_TAB[] = {
 #define CRC_REFLECT_DATA(X)         (X)
 #endif
 
-#if (REFLECT_REMAINDER == TRUE)
+#if (REFLECT_REMAINDER == XCP_TRUE)
 //#undef  REFLECT_REMAINDER
 #define CRC_REFLECT_REMAINDER(X)    ((Xcp_CrcType) reflect((X), WIDTH))
 #else
@@ -223,7 +223,7 @@ static const uint32_t CRC_TAB[] = {
 #define CRC_REFLECT_REMAINDER(X)    (X)
 #endif
 
- #if (REFLECT_DATA == TRUE) || (REFLECT_REMAINDER == TRUE)
+ #if (REFLECT_DATA == XCP_TRUE) || (REFLECT_REMAINDER == XCP_TRUE)
 static uint32_t reflect(uint32_t data, uint8_t nBits)
 {
         uint32_t  reflection = 0x00000000;

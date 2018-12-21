@@ -45,11 +45,11 @@
 #pragma comment(lib,"ws2_32.lib") // MSVC
 
 
-#if !defined(MAX)
-#define MAX(a, b)   (((a) > (b)) ? (a) : (b))
+#if !defined(XCP_MAX)
+#define XCP_MAX(a, b)   (((a) > (b)) ? (a) : (b))
 #endif
 
-#define XCP_COMM_BUFLEN  (MAX(XCP_MAX_CTO, XCP_MAX_DTO))
+#define XCP_COMM_BUFLEN  (XCP_MAX(XCP_MAX_CTO, XCP_MAX_DTO))
 #define XCP_COMM_PORT    (5555)
 
 typedef struct tagXcpTl_ConnectionType {
@@ -83,10 +83,10 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
 void Win_ErrorMsg(char * const fun, DWORD errorCode)
 {
     //LPWSTR buffer = NULL;
-    char * buffer = NULL;
+    char * buffer = XCP_NULL;
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &buffer, 0, NULL);
-    if (buffer != NULL) {
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, XCP_NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &buffer, 0, XCP_NULL);
+    if (buffer != XCP_NULL) {
         fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
         LocalFree((HLOCAL)buffer);
     } else {
@@ -100,14 +100,14 @@ static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
     const char enable = 1;
 
     if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
-        return FALSE;
+        return XCP_FALSE;
     }
 #else
     if (setsockopt(sock, SOL_SOCKET, option, &(const char){1}, sizeof(int)) < 0) {
-        return FALSE;
+        return XCP_FALSE;
     }
 #endif
-    return TRUE;
+    return XCP_TRUE;
 }
 
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
@@ -116,14 +116,14 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
     const char enable = 0;
 
     if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
-        return FALSE;
+        return XCP_FALSE;
     }
 #else
     if (setsockopt(sock, SOL_SOCKET, option, &(const char){0}, sizeof(int)) < 0) {
-        return FALSE;
+        return XCP_FALSE;
     }
 #endif
-    return TRUE;
+    return XCP_TRUE;
 }
 
 
@@ -132,7 +132,7 @@ void XcpTl_Init(void)
     WSADATA wsa;
 
     DWORD dwTimeAdjustment = 0, dwTimeIncrement = 0, dwClockTick;
-    BOOL fAdjustmentDisabled = TRUE;
+    BOOL fAdjustmentDisabled = XCP_TRUE;
 
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     DBG_PRINT4("%ld %ld %ld\n", dwTimeAdjustment, dwTimeIncrement, fAdjustmentDisabled);
@@ -223,8 +223,8 @@ void XcpTl_RxHandler(void)
         // TODO: Big-Endian!!!
         dlc = (uint16_t)*(buf + 0);
 
-        DBG_PRINT4("Received packet from %s:%d [%d]\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port), recv_len);
-        hexdump(buf, recv_len);
+//        DBG_PRINT4("Received packet from %s:%d [%d]\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port), recv_len);
+//        hexdump(buf, recv_len);
 
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
             Xcp_PduIn.len = dlc;
@@ -277,7 +277,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
 void XcpTl_SaveConnection(void)
 {
     CopyMemory(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_in));
-    XcpTl_Connection.connected = TRUE;
+    XcpTl_Connection.connected = XCP_TRUE;
 
     //DBG_PRINT3("CONN %s:%d\n", inet_ntoa(XcpTl_Connection.connectionAddress.sin_addr), ntohs(XcpTl_Connection.connectionAddress.sin_port));
     //DBG_PRINT3("CURR %s:%d\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port));

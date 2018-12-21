@@ -27,6 +27,7 @@
 #define __CXCP_H
 
 #include "xcp_types.h"
+#include "xcp_macros.h"
 
 #define XCP_PROTOCOL_VERSION_MAJOR       (1)
 #define XCP_PROTOCOL_VERSION_RELEASE     (0)
@@ -434,49 +435,6 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
 void XcpDaq_GetProperties(uint8_t * properties);
 XcpDaq_ListIntegerType XcpDaq_GetListCount(void);
 
-#if !defined(LOBYTE)
-#define LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
-#endif
-
-#if !defined(HIBYTE)
-#define HIBYTE(w)   ((uint8_t)(((w)  & (uint16_t)0xff00) >> 8))
-#endif
-
-#if !defined(LOWORD)
-#define LOWORD(w)   ((uint16_t)((w) & (uint16_t)0xffff))
-#endif
-
-#if !defined(HIWORD)
-#define HIWORD(w)   ((uint16_t)(((w)  & (uint32_t)0xffff0000) >> 16))
-#endif
-
-#if !defined(MAX)
-#define MAX(l, r) ((l) > (r) ? (l) : (r))
-#endif
-
-#if !defined(MIN)
-#define MIN(l, r) ((l) < (r) ? (l) : (r))
-#endif
-
-#if !defined(TRUE)
-#define TRUE    (1)
-#endif
-
-#if !defined(FALSE)
-#define FALSE   (0)
-#endif
-
-#if !defined(NULL)
-#if defined(__cplusplus)
-#define NULL (0)
-#else
-#define NULL    ((void*)0)
-#endif
-#endif
-
-#if !defined(UNREFERENCED_PARAMETER)
-#define UNREFERENCED_PARAMETER(x)   (x) = (x)   /*lint  -esym( 714, x ) */
-#endif // UNREFERENCED_PARAMETER
 
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)

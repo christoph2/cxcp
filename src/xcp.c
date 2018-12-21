@@ -24,6 +24,7 @@
  */
 
 #include "xcp.h"
+#include "xcp_util.h"
 
 #if defined(_MSC_VER)
 #include <stdio.h>
@@ -71,7 +72,7 @@ Xcp_PDUType Xcp_PduOut;
 static Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 static Xcp_StateType Xcp_State;
 
-static Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)NULL;
+static Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)XCP_NULL;
 static const Xcp_StationIDType Xcp_StationID = { (uint16_t)sizeof(XCP_STATION_ID), (uint8_t const *)XCP_STATION_ID };
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
@@ -568,7 +569,7 @@ void Xcp_Init(void)
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
-    Xcp_State.daqProcessor.running = (bool)FALSE;
+    Xcp_State.daqProcessor.state = XCP_DAQ_STATE_STOPPED;
     Xcp_State.daqPointer.daqList = (XcpDaq_ListIntegerType)0;
     Xcp_State.daqPointer.odt = (XcpDaq_ODTIntegerType)0;
     Xcp_State.daqPointer.odtEntry = (XcpDaq_ODTEntryIntegerType)0;
@@ -606,11 +607,11 @@ void Xcp_SendPdu(void)
 {
     const uint16_t len = Xcp_PduOut.len;
 
-    Xcp_PduOut.data[0] = LOBYTE(len);
-    Xcp_PduOut.data[1] = HIBYTE(len);
+    Xcp_PduOut.data[0] = XCP_LOBYTE(len);
+    Xcp_PduOut.data[1] = XCP_HIBYTE(len);
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
-    Xcp_PduOut.data[2] = LOBYTE(Xcp_State.counter);
-    Xcp_PduOut.data[3] = HIBYTE(Xcp_State.counter);
+    Xcp_PduOut.data[2] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_PduOut.data[3] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
 
@@ -697,11 +698,11 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 {
     const uint8_t cmd = pdu->data[0];
 
-    DBG_PRINT1("Req: ");
+    DBG_PRINT1("<- ");
     //Xcp_DumpMessageObject(pdu);
 
-    if (Xcp_State.connected == (bool)TRUE) {
-        DBG_PRINT2("CMD: [%02X]\n", cmd);
+    if (Xcp_State.connected == (bool)XCP_TRUE) {
+        //DBG_PRINT2("CMD: [%02X]\n", cmd);
         Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);   // TODO: range check!!!
     } else {    // not connected.
         if (pdu->data[0] == UINT8(XCP_CONNECT)) {
@@ -754,8 +755,8 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT1("CONNECT\n");
 
-    if (Xcp_State.connected == (bool)FALSE) {
-        Xcp_State.connected = (bool)TRUE;
+    if (Xcp_State.connected == (bool)XCP_FALSE) {
+        Xcp_State.connected = (bool)XCP_TRUE;
         // TODO: Init stuff
     }
 
@@ -785,7 +786,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
     XcpTl_SaveConnection();
 
     Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(resource), UINT8(commModeBasic), UINT8(XCP_MAX_CTO),
-              LOBYTE(XCP_MAX_DTO), HIBYTE(XCP_MAX_DTO), UINT8(XCP_PROTOCOL_VERSION_MAJOR), UINT8(XCP_TRANSPORT_LAYER_VERSION_MAJOR)
+              XCP_LOBYTE(XCP_MAX_DTO), XCP_HIBYTE(XCP_MAX_DTO), UINT8(XCP_PROTOCOL_VERSION_MAJOR), UINT8(XCP_TRANSPORT_LAYER_VERSION_MAJOR)
     );
     //DBG_PRINT("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO));
 }
@@ -981,7 +982,7 @@ static void Xcp_ClearDaqList_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
     daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
 
-    DBG_PRINT2("CLEAR_DAQ_LIST [list: %u] \n", daqListNumber);
+    DBG_PRINT2("CLEAR_DAQ_LIST [daq: %u] \n", daqListNumber);
 #if 0
 0  BYTE  Command Code = 0xE3
 1  BYTE  reserved
@@ -1020,7 +1021,7 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
     Xcp_State.daqPointer.odt = odt;
     Xcp_State.daqPointer.odtEntry = odtEntry;
 
-    DBG_PRINT4("SET_DAQ_PTR [list: %u odt: %u entry: %u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
+    DBG_PRINT4("SET_DAQ_PTR [daq: %u odt: %u odtEntry: %u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 
     XCP_POSITIVE_RESPONSE();
 }
@@ -1063,6 +1064,9 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
     const uint8_t prescaler = Xcp_GetByte(pdu, UINT8(6));
     const uint8_t priority = Xcp_GetByte(pdu, UINT8(7));
 
+    DBG_PRINT6("SET_DAQ_LIST_MODE [mode: 0x%02x daq: %03u event: %03u prescaler: %03u priority: %03u]\n",
+        mode, daqListNumber, eventChannelNumber, prescaler, priority
+    );
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
 
 #if XCP_ENABLE_STIM  == XCP_OFF
@@ -1108,25 +1112,81 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
 {
-    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+    const uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
+    const uint8_t daqListNumber = Xcp_GetWord(pdu, UINT8(2));
+#if 0
+1  BYTE  Mode
+    00 = stop
+    01 = start
+    02 = select
+2  WORD  DAQ_LIST_NUMBER [0,1,..MAX_DAQ-1]
+#endif // 0
 
+    DBG_PRINT3("START_STOP_DAQ_LIST [mode: 0x%02x daq: %03u]\n", mode, daqListNumber);
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+#if 0
+Positive Response:
+
+Position  Type  Description
+0  BYTE  Packet ID: 0xFF
+1  BYTE  FIRST_PID
+#endif // 0
     XCP_POSITIVE_RESPONSE();
 }
 
 static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu)
 {
-    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+    const uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
 
+    DBG_PRINT2("START_STOP_SYNCH [mode: 0x%02x]\n", mode);
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
     XCP_POSITIVE_RESPONSE();
 }
 
 static void Xcp_GetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
+    DBG_PRINT1("GET_DAQ_LIST_MODE\n");
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-
     XCP_POSITIVE_RESPONSE();
 }
 
+
+#if XCP_ENABLE_GET_DAQ_PROCESSOR_INFO == XCP_ON
+static void Xcp_GetDaqProcessorInfo_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t properties;
+    XcpDaq_ListIntegerType listCount;
+
+    DBG_PRINT1("GET_DAQ_PROCESSOR_INFO\n");
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    XcpDaq_GetProperties(&properties);
+    listCount = XcpDaq_GetListCount();
+
+
+    #if 0
+    0  BYTE  Packet ID: 0xFF
+    1  BYTE  DAQ_PROPERTIES     General properties of DAQ lists
+    2  WORD  MAX_DAQ            Total number of available DAQ lists
+    4  WORD  MAX_EVENT_CHANNEL  Total number of available event channels
+
+    6  BYTE  MIN_DAQ            Total number of predefined DAQ lists
+    7  BYTE  DAQ_KEY_BYTE
+    #endif // 0
+    Xcp_Send8(UINT8(8), UINT8(0xff),
+        properties,
+        XCP_LOBYTE(listCount),
+        XCP_HIBYTE(listCount),
+        XCP_LOBYTE(UINT16(XCP_DAQ_MAX_EVENT_CHANNEL)),
+        XCP_HIBYTE(UINT16(XCP_DAQ_MAX_EVENT_CHANNEL)),
+
+        UINT8(0),
+        UINT8(0)
+    );
+
+
+}
+#endif // XCP_ENABLE_GET_DAQ_PROCESSOR_INFO
 
 ///
 /// MANY MISSING FUNCTIONS
@@ -1162,7 +1222,7 @@ static void Xcp_AllocOdt_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
     daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     odtCount = (XcpDaq_ODTIntegerType)Xcp_GetByte(pdu, UINT8(4));
-    DBG_PRINT3("ALLOC_ODT [list: %u count: %u] \n", daqListNumber, odtCount);
+    DBG_PRINT3("ALLOC_ODT [daq: %u count: %u] \n", daqListNumber, odtCount);
     Xcp_SendResult(XcpDaq_AllocOdt(daqListNumber, odtCount));
 }
 #endif  // XCP_ENABLE_ALLOC_ODT
@@ -1178,7 +1238,7 @@ static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu)
     daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     odtNumber = (XcpDaq_ODTIntegerType)Xcp_GetByte(pdu, UINT8(4));
     odtEntriesCount = (XcpDaq_ODTEntryIntegerType)Xcp_GetByte(pdu, UINT8(5));
-    DBG_PRINT4("ALLOC_ODT_ENTRY: [list: %u odt: %u count:%u]\n", daqListNumber, odtNumber, odtEntriesCount);
+    DBG_PRINT4("ALLOC_ODT_ENTRY: [daq: %u odt: %u count: %u]\n", daqListNumber, odtNumber, odtEntriesCount);
     Xcp_SendResult(XcpDaq_AllocOdtEntry(daqListNumber, odtNumber, odtEntriesCount));
 }
 #endif  // XCP_ENABLE_ALLOC_ODT_ENTRY
@@ -1200,7 +1260,7 @@ static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 
     Xcp_Send8(UINT8(8), UINT8(0xff),
         UINT8(0), UINT8(0), UINT8(0),
-        LOBYTE(LOWORD(timestamp)), HIBYTE(LOWORD(timestamp)), LOBYTE(HIWORD(timestamp)), HIBYTE(HIWORD(timestamp))
+        XCP_LOBYTE(XCP_LOWORD(timestamp)), XCP_HIBYTE(XCP_LOWORD(timestamp)), XCP_LOBYTE(XCP_HIWORD(timestamp)), XCP_HIBYTE(XCP_HIWORD(timestamp))
     );
 }
 #endif // XCP_ENABLE_GET_DAQ_CLOCK
@@ -1272,32 +1332,6 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
         Xcp_MemCopy((void*)dst.address, (void*)src.address, len);
     } else {
         // We need assistance...
-    }
-}
-
-void Xcp_MemCopy(void * dst, void * src, uint32_t len)
-{
-    uint8_t * pd = (uint8_t *)dst;
-    uint8_t * ps = (uint8_t *)src;
-
-//    ASSERT(dst != (void *)NULL);
-//    ASSERT(pd >= ps + len || ps >= pd + len);
-//    ASSERT(len != (uint16_t)0);
-
-    while (len--) {
-        *pd++ = *ps++;
-    }
-
-}
-
-void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
-{
-    uint8_t * p = (uint8_t *)dest;
-
-//    ASSERT(dest != (void *)NULL);
-
-    while (len--) {
-        *p++ = fill_char;
     }
 }
 
