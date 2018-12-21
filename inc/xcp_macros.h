@@ -24,7 +24,7 @@
  */
 
  /********************************************//**
-  * \brief Common function like macros.
+  * \brief Common macros and function like macros.
   *
   * All prefixed with **XCP_** to prevent collisions
   * esp. with Windows.h

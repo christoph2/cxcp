@@ -29,13 +29,16 @@
 
 #include "xcp.h"
 
-#define XCP_COMM_BUFLEN  ((MAX(XCP_MAX_CTO, XCP_MAX_DTO)) + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE)
+#define XCP_COMM_BUFLEN  ((XCP_MAX(XCP_MAX_CTO, XCP_MAX_DTO)) + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE)
 
 #define XCP_SXI_MAKEWORD(buf, offs)  (*(buf+offs)) | (( *(buf+offs+1) << 8))
 
-void ping(void);
 
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
+
+void XcpTl_SignalTimeout(void);
+
+static void XcpTl_ResetSM(void);
 
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
@@ -64,13 +67,26 @@ static XcpTl_ReceiverType XcpTl_Receiver;
 
 void XcpTl_Init(void)
 {
+    XcpTl_ResetSM();
+
+    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+}
+
+/********************************************//**
+ * \brief Initialize, i.e. reset receiver state
+ *        Machine
+ *
+ * \param void
+ * \return void
+ *
+ ***********************************************/
+static void XcpTl_ResetSM(void)
+{
     XcpTl_Receiver.State = XCP_RCV_IDLE;
     XcpTl_Receiver.Index = 0u;
     XcpTl_Receiver.Dlc = 0u;
     XcpTl_Receiver.Ctr = 0u;
     XcpTl_Receiver.Remaining = 0u;
-
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
 }
 
 
@@ -80,10 +96,18 @@ void XcpTl_RxHandler(void)
 }
 
 
-//  DLC   CTR   PAYLOAD
-// [02 00 00 00 fa 01]
+void XcpTl_SignalTimeout(void)
+{
+    XCP_TL_ENTER_CRITICAL();
+    XcpTl_ResetSM();
+    XCP_TL_LEAVE_CRITICAL();
+}
+
+
 void XcpTl_FeedReceiver(uint8_t octet)
 {
+    XCP_TL_ENTER_CRITICAL();
+
     XcpTl_Receiver.Buffer[XcpTl_Receiver.Index] = octet;
 
     if (XcpTl_Receiver.State == XCP_RCV_IDLE) {
@@ -101,10 +125,8 @@ void XcpTl_FeedReceiver(uint8_t octet)
         XcpTl_Receiver.Remaining--;
         if (XcpTl_Receiver.Remaining == 0u) {
 
-            XcpTl_Receiver.State = XCP_RCV_IDLE;
-            XcpTl_Receiver.Index = 0u;
+            XcpTl_ResetSM();
 
-            // TODO: ACTION!!!
             Xcp_PduIn.len = XcpTl_Receiver.Dlc;
             Xcp_PduIn.data = XcpTl_Receiver.Buffer + 4;
             Xcp_DispatchCommand(&Xcp_PduIn);
@@ -113,13 +135,25 @@ void XcpTl_FeedReceiver(uint8_t octet)
     if (XcpTl_Receiver.State != XCP_RCV_IDLE) {
         XcpTl_Receiver.Index++;
     }
+    XCP_TL_LEAVE_CRITICAL();
 }
+
+#include <stdio.h>
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
 #if defined(ARDUINO)
     Serial.write(buf, len);
 #endif
+    uint8_t ch[6];
+    uint16_t idx;
+
+    for (idx = 0; idx < len; ++idx) {
+        Utl_Itoa((uint32_t)buf[idx], 16, (uint8_t*)ch);
+        fputs(ch, stdout);
+        fputs(" ", stdout);
+    }
+    fputs("\n", stdout);
 }
 
 void XcpTl_SaveConnection(void)
@@ -132,13 +166,4 @@ void XcpTl_ReleaseConnection(void)
 
 }
 
-#if 0
-void ping(void)
-{
-    Serial.write((uint8_t)0x08);
-    Serial.write((uint8_t)0x00);
-    Serial.write((uint8_t)0x00);
-    Serial.write((uint8_t)0x00);
-    Serial.print("SEND_XY");
-}
-#endif
+
