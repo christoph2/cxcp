@@ -32,8 +32,24 @@
   *
   ***********************************************/
 
+/** @file Os_Evt.h
+ *  @brief Functions related to event handling.
+ *
+ *
+ *
+ *  @author Christoph Schueler (cpu12.gems@googlemail.com)
+ */
+
 #if !defined(__XCP_MACROS_H)
 #define __XCP_MACROS_H
+
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+extern "C"
+{
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
 
 
 #if !defined(XCP_LOBYTE)
@@ -78,6 +94,14 @@
 
 #if !defined(XCP_UNREFERENCED_PARAMETER)
 #define XCP_UNREFERENCED_PARAMETER(x)   (x) = (x)   /*lint  -esym( 714, x ) */
-#endif // UNREFERENCED_PARAMETER
+#endif
+
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+}
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
+
 
 #endif /* __XCP_MACROS_H */

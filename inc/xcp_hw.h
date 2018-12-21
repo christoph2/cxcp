@@ -26,9 +26,23 @@
 #if !defined(__XCP_HW_H)
 #define __XCP_HW_H
 
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+extern "C"
+{
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
+
 
 #include <stdint.h>
 #include <stdbool.h>
+
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+}
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
 
 
 #endif // __XCP_HW_H

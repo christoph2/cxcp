@@ -26,10 +26,26 @@
 #if !defined(__XCP_UTIL_H)
 #define __XCP_UTIL_H
 
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+extern "C"
+{
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
+
+
 #include "xcp_types.h"
 
 void Xcp_MemCopy(void * dst, void * src, uint32_t len);
 void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len);
 void Xcp_Itoa(uint32_t value, uint8_t base, uint8_t * buf);
+
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+}
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
 
 #endif /* __XCP_UTIL_H */

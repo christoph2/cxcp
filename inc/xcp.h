@@ -50,6 +50,14 @@
 
 #include "xcp_config.h"
 
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+extern "C"
+{
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
+
+
 #if XCP_DAQ_MAX_EVENT_CHANNEL < 1
     #error XCP_DAQ_MAX_EVENT_CHANNEL must be at least 1
 #endif // XCP_DAQ_MAX_EVENT_CHANNEL
@@ -528,5 +536,11 @@ typedef uint32_t Xcp_CrcType;
 
 Xcp_CrcType Xcp_CalculateCRC(uint8_t const * message, uint32_t length, Xcp_CrcType startValue, bool isFirstCall);
 
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+}
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
 
 #endif /* __CXCP_H */

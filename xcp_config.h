@@ -31,6 +31,8 @@
 
 #define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
 
+#define XCP_EXTERN_C_GUARDS                         XCP_OFF
+
 #define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_OFF
 #define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
 

@@ -26,6 +26,15 @@
 #if !defined(__XCP_TYPES_H)
 #define __XCP_TYPES_H
 
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+extern "C"
+{
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
+
+
 /* check for C99-Compiler */
 #if defined(__STDC_VERSION__)
     #if __STDC_VERSION__ >= 199901L
@@ -72,6 +81,13 @@ typedef unsigned long long  uint64_t;
 
 #define UINT64(x)   ((uint64_t)(x))
 #define INT64(x)    ((int64_t)(x))
+
+
+#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if defined(__cplusplus)
+}
+#endif  /* __cplusplus */
+#endif /* XCP_EXTERN_C_GUARDS */
 
 
 #endif /* __XCP_TYPES_H */
