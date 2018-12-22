@@ -939,11 +939,25 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 {
     uint32_t blockSize = Xcp_GetDWord(pdu, UINT8(4));
+    Xcp_CrcType checksum;
+    uint8_t * ptr;
 
     DBG_PRINT2("BUILD_CHECKSUM [blocksize: %lu]\n", blockSize);
 
-    //Xcp_CalculateCRC()
+    ptr = (uint8_t *)Xcp_State.mta.address;
+    // The MTA will be post-incremented by the block size.
+    checksum = Xcp_CalculateCRC(ptr, blockSize, (Xcp_CrcType)0, XCP_TRUE);
+    printf("Checksum: 0x%X [%p %p]\n", checksum, ptr, Xcp_State.mta.address);
 
+    Xcp_Send8(UINT8(8), UINT8(0xff),
+        XCP_CHECKSUM_METHOD,
+        UINT8(0),
+        UINT8(0),
+        XCP_LOBYTE(XCP_LOWORD(checksum)),
+        XCP_HIBYTE(XCP_LOWORD(checksum)),
+        XCP_LOBYTE(XCP_HIWORD(checksum)),
+        XCP_HIBYTE(XCP_HIWORD(checksum))
+    );
 }
 #endif // XCP_ENABLE_BUILD_CHECKSUM
 
