@@ -83,7 +83,7 @@ void XcpHw_Init(void)
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
-    printf("Freq: %lu\n", HwState.TicksPerSecond);
+    printf("QueryPerformanceFrequency [TicksPerSecond: %lu]\n", HwState.TicksPerSecond);
 
     QueryPerformanceCounter(&HwState.StartingTime);
 
@@ -92,8 +92,8 @@ void XcpHw_Init(void)
 
     QueryPerformanceCounter(&EndingTime);
     ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - HwState.StartingTime.QuadPart;
-    printf("ETA: %f\n", (float)ElapsedMicroseconds.QuadPart / (float)HwState.TicksPerSecond.QuadPart);
-    printf("Eta/new: %u\n", XcpHw_GetTimerCounter());
+    printf("ETA: %f Secs\n", (float)ElapsedMicroseconds.QuadPart / (float)HwState.TicksPerSecond.QuadPart);
+    printf("XcpHw_GetTimerCounter ticks: %u\n", XcpHw_GetTimerCounter());
 //////
 //////
 //////

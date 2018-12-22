@@ -23,7 +23,12 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+
 #include "xcp_util.h"
+
+#if defined(_MSC_VER)
+#include <stdio.h>
+#endif // _MSC_VER
 
 void Xcp_MemCopy(void * dst, void * src, uint32_t len)
 {
@@ -52,6 +57,16 @@ void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
 }
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
+void Xcp_Hexdump(uint8_t const * buf, uint16_t sz)
+{
+    uint16_t idx;
+
+    for (idx = UINT16(0); idx < sz; ++idx) {
+        printf("%02X ", buf[idx]);
+    }
+    printf("\n");
+}
+
 void Xcp_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
 {
     uint32_t  mod;
