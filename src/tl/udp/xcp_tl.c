@@ -258,9 +258,10 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
+#if 0
     printf("LEN: %u\t\t", len);
     Xcp_Hexdump(buf, len);
-
+#endif // 0
     if (sendto(sock, (char const *)buf, len, 0, (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
         Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
     }
