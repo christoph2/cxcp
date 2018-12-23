@@ -197,16 +197,6 @@ void XcpTl_Task(void)
     }
 }
 
-void hexdump(unsigned char const * buf, int sz)
-{
-    int idx;
-
-    for (idx = 0; idx < sz; ++idx) {
-        DBG_PRINT2("%02X ", buf[idx]);
-    }
-    DBG_PRINT1("\n");
-}
-
 void XcpTl_RxHandler(void)
 {
     int recv_len;
@@ -268,6 +258,9 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
+    printf("LEN: %u\t\t", len);
+    Xcp_Hexdump(buf, len);
+
     if (sendto(sock, (char const *)buf, len, 0, (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
         Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
     }
