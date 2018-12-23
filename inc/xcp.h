@@ -398,7 +398,6 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
-void Xcp_DumpMessageObject(Xcp_PDUType const * pdu);
 Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
 void Xcp_SetMta(Xcp_MtaType mta);
 
