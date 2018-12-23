@@ -23,19 +23,12 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
- /********************************************//**
-  * \brief Common macros and function like macros.
-  *
-  * All prefixed with **XCP_** to prevent collisions
-  * esp. with Windows.h
-  *
-  *
-  ***********************************************/
 
-/** @file Os_Evt.h
- *  @brief Functions related to event handling.
+/** @file xcp_macros.h
+ *  @brief Common macros and function like macros.
  *
- *
+ * All prefixed with **XCP_** to prevent collisions
+ * esp. with Windows.h
  *
  *  @author Christoph Schueler (cpu12.gems@googlemail.com)
  */
