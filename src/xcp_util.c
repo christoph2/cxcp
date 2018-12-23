@@ -25,6 +25,7 @@
 
 
 #include "xcp_util.h"
+#include "xcp_macros.h"
 
 #if defined(_MSC_VER)
 #include <stdio.h>
@@ -62,9 +63,9 @@ void Xcp_Hexdump(uint8_t const * buf, uint16_t sz)
     uint16_t idx;
 
     for (idx = UINT16(0); idx < sz; ++idx) {
-        printf("%02X ", buf[idx]);
+        DBG_PRINT2("%02X ", buf[idx]);
     }
-    printf("\n");
+    DBG_PRINT1("\n");
 }
 
 void Xcp_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
