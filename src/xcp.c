@@ -699,7 +699,6 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
     const uint8_t cmd = pdu->data[0];
 
     DBG_PRINT1("<- ");
-    //Xcp_DumpMessageObject(pdu);
 
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         //DBG_PRINT2("CMD: [%02X]\n", cmd);
@@ -894,8 +893,11 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t len = Xcp_GetByte(pdu, UINT8(1));
 
-// TODO: RangeCheck / Blockmode!!!
+// TODO: Blockmode!!!
     DBG_PRINT2("UPLOAD [len: %u]\n", len);
+    if (len > UINT8(XCP_MAX_CTO - 1)) {
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+    }
 
     Xcp_Upload(len);
 }
@@ -907,8 +909,12 @@ static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t len = Xcp_GetByte(pdu, UINT8(1));
 
-// TODO: RangeCheck / Blockmode!!!
+// TODO: Blockmode!!!
     DBG_PRINT2("SHORT-UPLOAD [len: %u]\n", len);
+    if (len > UINT8(XCP_MAX_CTO - 1)) {
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+    }
+
     Xcp_State.mta.ext = Xcp_GetByte(pdu, UINT8(3));
     Xcp_State.mta.address = Xcp_GetDWord(pdu, UINT8(4));
     Xcp_Upload(len);
@@ -947,7 +953,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
     ptr = (uint8_t *)Xcp_State.mta.address;
     // The MTA will be post-incremented by the block size.
     checksum = Xcp_CalculateCRC(ptr, blockSize, (Xcp_CrcType)0, XCP_TRUE);
-    printf("Checksum: 0x%X [%p %p]\n", checksum, ptr, Xcp_State.mta.address);
+    //printf("Checksum: 0x%X [%p %p]\n", checksum, ptr, Xcp_State.mta.address);
 
     Xcp_Send8(UINT8(8), UINT8(0xff),
         XCP_CHECKSUM_METHOD,
