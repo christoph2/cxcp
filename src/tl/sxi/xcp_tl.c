@@ -28,6 +28,7 @@
 #endif
 
 #include "xcp.h"
+#include "xcp_util.h"
 
 #define XCP_COMM_BUFLEN  ((XCP_MAX(XCP_MAX_CTO, XCP_MAX_DTO)) + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE)
 
@@ -149,7 +150,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     uint16_t idx;
 
     for (idx = 0; idx < len; ++idx) {
-        Utl_Itoa((uint32_t)buf[idx], 16, (uint8_t*)ch);
+        Xcp_Itoa((uint32_t)buf[idx], 16, (uint8_t*)ch);
         fputs(ch, stdout);
         fputs(" ", stdout);
     }
@@ -165,5 +166,4 @@ void XcpTl_ReleaseConnection(void)
 {
 
 }
-
 
