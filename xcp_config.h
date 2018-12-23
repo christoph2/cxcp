@@ -39,6 +39,7 @@
 #define XCP_ENABLE_STIM                             XCP_OFF
 
 #define XCP_CHECKSUM_METHOD                         XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
+#define XCP_CHECKSUM_CHUNK_SIZE                     (128)
 #define XCP_BYTE_ORDER                              XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY                     XCP_ADDRESS_GRANULARITY_BYTE
 
