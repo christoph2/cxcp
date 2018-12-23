@@ -244,19 +244,6 @@ static uint32_t reflect(uint32_t data, uint8_t nBits)
 }
 #endif  // (REFLECT_DATA == TRUE) || (REFLECT_REMAINDER == TRUE)
 
-
-#if 0
-void dump(void)
-{
-    for (int i = 0; i < 256; ++i) {
-        if ((i % 8) == 0 && i > 0) {
-            DBG_PRINT1("\n");
-        }
-        DBG_PRINT2("0x%04X, ", CRC_TAB[i]);
-    }
-}
-#endif // 0
-
 Xcp_CrcType Xcp_CalculateCRC(uint8_t const * dataPtr, uint32_t length, Xcp_CrcType startValue, bool isFirstCall)
 {
     Xcp_CrcType crc;
