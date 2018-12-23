@@ -675,7 +675,7 @@ static void Xcp_Upload(uint8_t len)
     uint8_t * dataOut = Xcp_GetOutPduPtr();
     Xcp_MtaType dst;
 
-// TODO: RangeCheck / Blockmode!!!
+// TODO: Blockmode!!!
     dataOut[0] = (uint8_t)0xff;
 
     dst.address = (uint32_t)(dataOut + 1);  // FIX ME!!!
@@ -685,7 +685,7 @@ static void Xcp_Upload(uint8_t len)
 
     Xcp_State.mta.address += UINT32(len);   // Advance MTA.
 
-    Xcp_SetPduOutLen(UINT16(len));
+    Xcp_SetPduOutLen(UINT16(len + 1));
     Xcp_SendPdu();
 }
 
