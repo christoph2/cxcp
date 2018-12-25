@@ -34,6 +34,25 @@
 #include "xcp.h"
 
 
+/*
+** Local Types
+*/
+typedef enum tagXcp_ChecksumJobStateType {
+    XCP_CHECKSUM_STATE_IDLE,
+    XCP_CHECKSUM_STATE_RUNNING_INITIAL,
+    XCP_CHECKSUM_STATE_RUNNING_REMAINING,
+    XCP_CHECKSUM_STATE_RUNNING_FINAL
+} Xcp_ChecksumJobStateType;
+
+
+typedef struct tagXcp_ChecksumJobType {
+    Xcp_ChecksumJobStateType state;
+    Xcp_MtaType mta;
+    uint32_t size;
+    Xcp_CrcType interimChecksum;
+} Xcp_ChecksumJobType;
+
+
 #if XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_11
 
 #elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_12
@@ -208,18 +227,14 @@ static const uint32_t CRC_TAB[] = {
 #define TOPBIT   (1 << (WIDTH - 1))
 
 #if (REFLECT_DATA == XCP_TRUE)
-//#undef  REFLECT_DATA
 #define CRC_REFLECT_DATA(X)         ((uint8_t) reflect((X), 8))
 #else
-//#undef  REFLECT_DATA
 #define CRC_REFLECT_DATA(X)         (X)
 #endif
 
 #if (REFLECT_REMAINDER == XCP_TRUE)
-//#undef  REFLECT_REMAINDER
 #define CRC_REFLECT_REMAINDER(X)    ((Xcp_CrcType) reflect((X), WIDTH))
 #else
-//#undef  REFLECT_REMAINDER
 #define CRC_REFLECT_REMAINDER(X)    (X)
 #endif
 
@@ -264,3 +279,67 @@ Xcp_CrcType Xcp_CalculateCRC(uint8_t const * dataPtr, uint32_t length, Xcp_CrcTy
     return CRC_REFLECT_REMAINDER(crc) ^ XCP_CRC_FINAL_XOR_VALUE;
 }
 
+
+#if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON && XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON
+static Xcp_ChecksumJobType Xcp_ChecksumJob;
+
+void Xcp_ChecksumInit(void)
+{
+    Xcp_ChecksumJob.mta.address = UINT32(0ul);
+    Xcp_ChecksumJob.mta.ext = UINT8(0);
+    Xcp_ChecksumJob.interimChecksum = (Xcp_CrcType)0ul;
+    Xcp_ChecksumJob.size = UINT32(0ul);
+    Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_IDLE;
+}
+
+static uint32_t counter = 0ul;
+
+void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size)
+{
+    XCP_ENTER_CRITICAL();
+    if (Xcp_ChecksumJob.state != XCP_CHECKSUM_STATE_IDLE) {
+        return;
+    }
+    Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_INITIAL;
+    printf("S-Address: %p Size: %u\n", ptr, size);
+    Xcp_ChecksumJob.mta.address = (uint32_t)ptr;
+    Xcp_ChecksumJob.size = size;
+    XCP_ENTER_CRITICAL();
+}
+
+/** @brief Do lengthy checksum/CRC calculations in the background.
+ *
+ *
+ */
+void Xcp_ChecksumMainfunction(void)
+{
+    if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_IDLE) {
+        return;
+    } else if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_RUNNING_INITIAL) {
+         Xcp_ChecksumJob.interimChecksum = Xcp_CalculateCRC(
+            (uint8_t const *)Xcp_ChecksumJob.mta.address, XCP_CHECKSUM_CHUNK_SIZE, (Xcp_CrcType)0, XCP_TRUE
+         );
+        Xcp_ChecksumJob.size -= XCP_CHECKSUM_CHUNK_SIZE;
+        Xcp_ChecksumJob.mta.address += XCP_CHECKSUM_CHUNK_SIZE;
+         Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_REMAINING;
+    } else if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_RUNNING_REMAINING) {
+        Xcp_ChecksumJob.interimChecksum = Xcp_CalculateCRC(
+            (uint8_t const *)Xcp_ChecksumJob.mta.address, XCP_CHECKSUM_CHUNK_SIZE, Xcp_ChecksumJob.interimChecksum, XCP_FALSE
+        );
+        //printf("N-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum);
+        Xcp_ChecksumJob.size -= XCP_CHECKSUM_CHUNK_SIZE;
+        Xcp_ChecksumJob.mta.address += XCP_CHECKSUM_CHUNK_SIZE;
+        if (Xcp_ChecksumJob.size <= XCP_CHECKSUM_CHUNK_SIZE) {
+            Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_FINAL;
+        }
+    }  else if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_RUNNING_FINAL) {
+        //printf("F-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum);
+        Xcp_ChecksumJob.interimChecksum = Xcp_CalculateCRC(
+            (uint8_t const *)Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum, XCP_FALSE
+        );
+        //printf("FINAL-VALUE %x\n", Xcp_ChecksumJob.interimChecksum);
+        Xcp_SendChecksumResponse(Xcp_ChecksumJob.interimChecksum);
+        Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_IDLE;
+    }
+}
+#endif // XCP_ENABLE_BUILD_CHECKSUM

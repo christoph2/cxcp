@@ -97,6 +97,7 @@ static bool Xcp_IsProtected(uint8_t resource);
 
 static void Xcp_SendResult(Xcp_ReturnType result);
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
+
 static void Xcp_Connect_Res(Xcp_PDUType const * const pdu);
 static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu);
 static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu);
@@ -579,6 +580,10 @@ void Xcp_Init(void)
 #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
     XcpHw_Init();
     XcpTl_Init();
+
+#if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON && XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON
+    Xcp_ChecksumInit();
+#endif // XCP_ENABLE_BUILD_CHECKSUM
 }
 
 
@@ -587,6 +592,10 @@ void Xcp_MainFunction(void)
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Mainfunction();
 #endif // XCP_ENABLE_DAQ_COMMANDS
+
+#if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON && XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON
+    Xcp_ChecksumMainfunction();
+#endif // XCP_ENABLE_BUILD_CHECKSUM && XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON
 }
 
 void Xcp_SetMta(Xcp_MtaType mta)
@@ -942,19 +951,8 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 
 
 #if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON
-static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
+void Xcp_SendChecksumResponse(Xcp_CrcType checksum)
 {
-    uint32_t blockSize = Xcp_GetDWord(pdu, UINT8(4));
-    Xcp_CrcType checksum;
-    uint8_t * ptr;
-
-    DBG_PRINT2("BUILD_CHECKSUM [blocksize: %lu]\n", blockSize);
-
-    ptr = (uint8_t *)Xcp_State.mta.address;
-    // The MTA will be post-incremented by the block size.
-    checksum = Xcp_CalculateCRC(ptr, blockSize, (Xcp_CrcType)0, XCP_TRUE);
-    //printf("Checksum: 0x%X [%p %p]\n", checksum, ptr, Xcp_State.mta.address);
-
     Xcp_Send8(UINT8(8), UINT8(0xff),
         XCP_CHECKSUM_METHOD,
         UINT8(0),
@@ -964,6 +962,32 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
         XCP_LOBYTE(XCP_HIWORD(checksum)),
         XCP_HIBYTE(XCP_HIWORD(checksum))
     );
+}
+
+
+static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
+{
+    uint32_t blockSize = Xcp_GetDWord(pdu, UINT8(4));
+    Xcp_CrcType checksum;
+    uint8_t const * ptr;
+
+    DBG_PRINT2("BUILD_CHECKSUM [blocksize: %lu]\n", blockSize);
+
+    ptr = (uint8_t const *)Xcp_State.mta.address;
+    // The MTA will be post-incremented by the block size.
+
+#if XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_OFF
+    checksum = Xcp_CalculateCRC(ptr, blockSize, (Xcp_CrcType)0, XCP_TRUE);
+    Xcp_SendChecksumResponse(checksum);
+#else
+    if (blockSize <= UINT32(XCP_CHECKSUM_CHUNK_SIZE)) {
+        checksum = Xcp_CalculateCRC(ptr, blockSize, (Xcp_CrcType)0, XCP_TRUE);
+        Xcp_SendChecksumResponse(checksum);
+    } else {
+        Xcp_StartChecksumCalculation(ptr, blockSize);
+    }
+#endif // XCP_CHECKSUM_CHUNKED_CALCULATION
+
 }
 #endif // XCP_ENABLE_BUILD_CHECKSUM
 

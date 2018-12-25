@@ -456,7 +456,6 @@ void Xcp_SendPdu(void);
 uint8_t * Xcp_GetOutPduPtr(void);
 void Xcp_SetPduOutLen(uint16_t len);
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
-void XcpTl_Send(uint8_t const * buf, uint16_t len);
 
 /*
 **  Helpers.
@@ -478,15 +477,12 @@ void XcpTl_Init(void);
 void XcpTl_DeInit(void);
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec);
 void XcpTl_RxHandler(void);
-
-void XcpTl_Task(void);
-
+void XcpTl_Send(uint8_t const * buf, uint16_t len);
+void XcpTl_MainFunction(void);
 void XcpTl_SaveConnection(void);
 void XcpTl_ReleaseConnection(void);
 bool XcpTl_VerifyConnection(void);
-
 void XcpTl_FeedReceiver(uint8_t octet);
-
 void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
 
 /*
@@ -511,8 +507,11 @@ typedef uint16_t Xcp_CrcType;
 typedef uint32_t Xcp_CrcType;
 #endif // XCP_CHECKSUM_METHOD
 
+void Xcp_ChecksumInit(void);
 Xcp_CrcType Xcp_CalculateCRC(uint8_t const * message, uint32_t length, Xcp_CrcType startValue, bool isFirstCall);
-
+void Xcp_ChecksumMainfunction(void);
+void Xcp_SendChecksumResponse(Xcp_CrcType checksum);
+void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size);
 
 #if XCP_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
