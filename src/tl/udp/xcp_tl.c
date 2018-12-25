@@ -190,7 +190,7 @@ void XcpTl_DeInit(void)
     WSACleanup();
 }
 
-void XcpTl_Task(void)
+void XcpTl_MainFunction(void)
 {
     if (XcpTl_FrameAvailable(0, 1000) > 0) {
         XcpTl_RxHandler();
