@@ -23,13 +23,28 @@ void pagTest(void);
 
 static Xcp_HwMapFileType a2lFile;
 
-static const char FNAME[] = "C:\\Users\\Public\\Documents\\Vector CANape 15\\Examples\\XCPDemo\\XCPsim.a2l";
+static const char FNAME[] = "f:\\Users\\Public\\Documents\\Vector CANape 15\\Examples\\XCPDemo\\XCPsim.a2l";
 
 
 void XcpOnCan_Init(void);
 
+#define SIZE    (4096)
+uint8_t puffer[SIZE];
+
+void XcpHw_Mainfunction(bool * finished);
+
+// TortoiseGit 1.7.6.0
+
 int main()
 {
+    uint16_t idx;
+    bool finished;
+
+    for (idx = 0; idx < SIZE; ++idx) {
+        puffer[idx] = '0' + (idx % 10);
+        //printf("%c ", puffer[idx]);
+    }
+
     pagTest();
 
     //XcpOnCan_Init();
@@ -40,8 +55,17 @@ int main()
     DBG_PRINT1("Starting XCP task...\n");
     fflush(stdout);
 
+
     for (;;) {
-        XcpTl_Task();
+        Xcp_MainFunction();
+        XcpTl_MainFunction();
+        //Xcp
+//#if 0
+        XcpHw_Mainfunction(&finished);
+        if (finished) {
+            break;
+        }
+//#endif
     }
 
     XcpTl_DeInit();
@@ -55,8 +79,8 @@ bool Xcp_HookFunction_GetId(uint8_t idType)
 {
     if (idType == 4) {
         Xcp_SetMta(Xcp_GetNonPagedAddress(a2lFile.view.mappingAddress));
-        Xcp_Send8(8, 0xff, 0, 0, 0, LOBYTE(LOWORD(a2lFile.size)), HIBYTE(LOWORD(a2lFile.size)), LOBYTE(HIWORD(a2lFile.size)), HIBYTE(HIWORD(a2lFile.size)));
-        return TRUE;
+        Xcp_Send8(8, 0xff, 0, 0, 0, XCP_LOBYTE(XCP_LOWORD(a2lFile.size)), XCP_HIBYTE(XCP_LOWORD(a2lFile.size)), XCP_LOBYTE(XCP_HIWORD(a2lFile.size)), XCP_HIBYTE(XCP_HIWORD(a2lFile.size)));
+        return XCP_TRUE;
     }
-    return FALSE;
+    return XCP_FALSE;
 }
