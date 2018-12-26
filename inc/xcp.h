@@ -400,6 +400,8 @@ Xcp_ConnectionStateType Xcp_GetConnectionState(void);
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
 Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
 void Xcp_SetMta(Xcp_MtaType mta);
+void Xcp_SetBusy(bool enable);
+bool Xcp_IsBusy(void);
 
 /*
 ** DAQ Implementation Functions.

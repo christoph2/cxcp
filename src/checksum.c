@@ -297,14 +297,16 @@ static uint32_t counter = 0ul;
 void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size)
 {
     XCP_ENTER_CRITICAL();
-    if (Xcp_ChecksumJob.state != XCP_CHECKSUM_STATE_IDLE) {
+    if ((Xcp_ChecksumJob.state != XCP_CHECKSUM_STATE_IDLE) || Xcp_IsBusy()) {
+        XCP_LEAVE_CRITICAL();
         return;
     }
+    Xcp_SetBusy(XCP_TRUE);
     Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_INITIAL;
     printf("S-Address: %p Size: %u\n", ptr, size);
     Xcp_ChecksumJob.mta.address = (uint32_t)ptr;
     Xcp_ChecksumJob.size = size;
-    XCP_ENTER_CRITICAL();
+    XCP_LEAVE_CRITICAL();
 }
 
 /** @brief Do lengthy checksum/CRC calculations in the background.
@@ -338,6 +340,7 @@ void Xcp_ChecksumMainfunction(void)
             (uint8_t const *)Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum, XCP_FALSE
         );
         //printf("FINAL-VALUE %x\n", Xcp_ChecksumJob.interimChecksum);
+        Xcp_SetBusy(XCP_FALSE);
         Xcp_SendChecksumResponse(Xcp_ChecksumJob.interimChecksum);
         Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_IDLE;
     }

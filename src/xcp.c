@@ -80,7 +80,8 @@ void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
 static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 
 #define XCP_POSITIVE_RESPONSE() Xcp_Send8(UINT8(1), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
-#define XCP_ERROR_RESPONSE(ec) Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ec), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
+#define XCP_ERROR_RESPONSE(ec)  Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ec), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
+#define XCP_BUSY_RESPONSE()     XCP_ERROR_RESPONSE(ERR_CMD_BUSY)
 
 #define XCP_ASSERT_UNLOCKED(r)                          \
     do {                                                \
@@ -554,7 +555,7 @@ void Xcp_Init(void)
     Xcp_ConnectionState = XCP_DISCONNECTED;
 
     Xcp_MemSet(&Xcp_State, UINT8(0), (uint32_t)sizeof(Xcp_StateType));
-
+    Xcp_State.busy = XCP_FALSE;
 #if (XCP_PROTECT_CAL == XCP_ON) || (XCP_PROTECT_PAG == XCP_ON)
     Xcp_State.protection |= XCP_RESOURCE_CAL_PAG;
 #endif // XCP_PROTECT_CAL
@@ -711,7 +712,11 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         //DBG_PRINT2("CMD: [%02X]\n", cmd);
-        Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);   // TODO: range check!!!
+        if (Xcp_IsBusy()) {
+            XCP_BUSY_RESPONSE();
+        } else {
+            Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);
+        }
     } else {    // not connected.
         if (pdu->data[0] == UINT8(XCP_CONNECT)) {
             Xcp_Connect_Res(pdu);
@@ -1436,3 +1441,16 @@ static bool Xcp_IsProtected(uint8_t resource)
 {
     return ((Xcp_State.protection & resource) == resource);
 }
+
+void Xcp_SetBusy(bool enable)
+{
+    XCP_ENTER_CRITICAL();
+    Xcp_State.busy = enable;
+    XCP_LEAVE_CRITICAL();
+}
+
+bool Xcp_IsBusy(void)
+{
+    return Xcp_State.busy;
+}
+
