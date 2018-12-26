@@ -416,7 +416,7 @@ XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, X
 bool XcpDaq_ValidateConfiguration(void);
 bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber);
 bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntry);
-void XcpDaq_Mainfunction(void);
+void XcpDaq_MainFunction(void);
 void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t eventChannelNumber);
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
 void XcpDaq_GetProperties(uint8_t * properties);
@@ -511,7 +511,7 @@ typedef uint32_t Xcp_CrcType;
 
 void Xcp_ChecksumInit(void);
 Xcp_CrcType Xcp_CalculateCRC(uint8_t const * message, uint32_t length, Xcp_CrcType startValue, bool isFirstCall);
-void Xcp_ChecksumMainfunction(void);
+void Xcp_ChecksumMainFunction(void);
 void Xcp_SendChecksumResponse(Xcp_CrcType checksum);
 void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size);
 

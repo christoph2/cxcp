@@ -313,7 +313,7 @@ void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size)
  *
  *
  */
-void Xcp_ChecksumMainfunction(void)
+void Xcp_ChecksumMainFunction(void)
 {
     if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_IDLE) {
         return;

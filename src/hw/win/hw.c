@@ -177,7 +177,7 @@ void Win_Error(char * const function, DWORD errorCode)
 }
 #endif
 
-void XcpHw_Mainfunction(bool * finished)
+void XcpHw_MainFunction(bool * finished)
 {
     HANDLE hStdin;
     DWORD cNumRead, fdwMode, idx;

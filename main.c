@@ -31,7 +31,7 @@ void XcpOnCan_Init(void);
 #define SIZE    (4096)
 uint8_t puffer[SIZE];
 
-void XcpHw_Mainfunction(bool * finished);
+void XcpHw_MainFunction(bool * finished);
 
 // TortoiseGit 1.7.6.0
 
@@ -61,7 +61,7 @@ int main()
         XcpTl_MainFunction();
         //Xcp
 //#if 0
-        XcpHw_Mainfunction(&finished);
+        XcpHw_MainFunction(&finished);
         if (finished) {
             break;
         }

@@ -591,11 +591,11 @@ void Xcp_Init(void)
 void Xcp_MainFunction(void)
 {
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    XcpDaq_Mainfunction();
+    XcpDaq_MainFunction();
 #endif // XCP_ENABLE_DAQ_COMMANDS
 
 #if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON && XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON
-    Xcp_ChecksumMainfunction();
+    Xcp_ChecksumMainFunction();
 #endif // XCP_ENABLE_BUILD_CHECKSUM && XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON
 }
 

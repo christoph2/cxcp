@@ -280,7 +280,7 @@ bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTInt
     return result;
 }
 
-void XcpDaq_Mainfunction(void)
+void XcpDaq_MainFunction(void)
 {
     // TODO: Check global state for DAQ/STIM running.
 }
