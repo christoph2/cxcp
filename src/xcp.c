@@ -1,7 +1,7 @@
 /*
  * pySART - Simplified AUTOSAR-Toolkit for Python.
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -82,6 +82,8 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 #define XCP_POSITIVE_RESPONSE() Xcp_Send8(UINT8(1), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 #define XCP_ERROR_RESPONSE(ec)  Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ec), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 #define XCP_BUSY_RESPONSE()     XCP_ERROR_RESPONSE(ERR_CMD_BUSY)
+
+
 
 #define XCP_ASSERT_UNLOCKED(r)                          \
     do {                                                \
@@ -911,6 +913,7 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT2("UPLOAD [len: %u]\n", len);
     if (len > UINT8(XCP_MAX_CTO - 1)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
     }
 
     Xcp_Upload(len);
@@ -927,6 +930,7 @@ static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT2("SHORT-UPLOAD [len: %u]\n", len);
     if (len > UINT8(XCP_MAX_CTO - 1)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
     }
 
     Xcp_State.mta.ext = Xcp_GetByte(pdu, UINT8(3));
@@ -956,7 +960,7 @@ static void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 
 
 #if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON
-void Xcp_SendChecksumResponse(Xcp_CrcType checksum)
+void Xcp_SendChecksumPositiveResponse(Xcp_ChecksumType checksum)
 {
     Xcp_Send8(UINT8(8), UINT8(0xff),
         XCP_CHECKSUM_METHOD,
@@ -969,25 +973,46 @@ void Xcp_SendChecksumResponse(Xcp_CrcType checksum)
     );
 }
 
+void Xcp_SendChecksumOutOfRangeResponse(void)
+{
+    Xcp_Send8(UINT8(8), UINT8(0xfe),
+        ERR_OUT_OF_RANGE,
+        UINT8(0),
+        UINT8(0),
+        XCP_LOBYTE(XCP_LOWORD(XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE)),
+        XCP_HIBYTE(XCP_LOWORD(XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE)),
+        XCP_LOBYTE(XCP_HIWORD(XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE)),
+        XCP_HIBYTE(XCP_HIWORD(XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE))
+    );
+}
+
 
 static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
 {
     uint32_t blockSize = Xcp_GetDWord(pdu, UINT8(4));
-    Xcp_CrcType checksum;
+    Xcp_ChecksumType checksum;
     uint8_t const * ptr;
 
     DBG_PRINT2("BUILD_CHECKSUM [blocksize: %lu]\n", blockSize);
+
+#if XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE > 0
+    /* We need to range check. */
+    if (blockSize > UINT32(XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE)) {
+        Xcp_SendChecksumOutOfRangeResponse();
+        return;
+    }
+#endif
 
     ptr = (uint8_t const *)Xcp_State.mta.address;
     // The MTA will be post-incremented by the block size.
 
 #if XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_OFF
-    checksum = Xcp_CalculateCRC(ptr, blockSize, (Xcp_CrcType)0, XCP_TRUE);
-    Xcp_SendChecksumResponse(checksum);
+    checksum = Xcp_CalculateChecksum(ptr, blockSize, (Xcp_ChecksumType)0, XCP_TRUE);
+    Xcp_SendChecksumPositiveResponse(checksum);
 #else
     if (blockSize <= UINT32(XCP_CHECKSUM_CHUNK_SIZE)) {
-        checksum = Xcp_CalculateCRC(ptr, blockSize, (Xcp_CrcType)0, XCP_TRUE);
-        Xcp_SendChecksumResponse(checksum);
+        checksum = Xcp_CalculateChecksum(ptr, blockSize, (Xcp_ChecksumType)0, XCP_TRUE);
+        Xcp_SendChecksumPositiveResponse(checksum);
     } else {
         Xcp_StartChecksumCalculation(ptr, blockSize);
     }
@@ -1134,12 +1159,14 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
     /* Needs to be 0 */
     if (priority > UINT8(0)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
     }
 #endif // XCP_DAQ_PRIORITIZATION_SUPPORTED
 #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_OFF
     /* Needs to be 1 */
     if (prescaler > UINT8(1)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
     }
 #endif // XCP_DAQ_PRESCALER_SUPPORTED
 

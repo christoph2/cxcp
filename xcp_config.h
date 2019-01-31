@@ -38,9 +38,11 @@
 
 #define XCP_ENABLE_STIM                             XCP_OFF
 
-#define XCP_CHECKSUM_METHOD                         XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
+#define XCP_CHECKSUM_METHOD                         XCP_CHECKSUM_METHOD_XCP_ADD_44 // XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
 #define XCP_CHECKSUM_CHUNKED_CALCULATION            XCP_ON
-#define XCP_CHECKSUM_CHUNK_SIZE                     (512)
+#define XCP_CHECKSUM_CHUNK_SIZE                     (64)
+#define XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE             (0)     /* 0 ==> unlimited */
+
 #define XCP_BYTE_ORDER                              XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY                     XCP_ADDRESS_GRANULARITY_BYTE
 

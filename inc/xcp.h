@@ -1,7 +1,7 @@
 /*
  * pySART - Simplified AUTOSAR-Toolkit for Python.
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -502,17 +502,24 @@ extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
 
 
-
 #if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT)
-typedef uint16_t Xcp_CrcType;
+typedef uint16_t Xcp_ChecksumType;
 #elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32
-typedef uint32_t Xcp_CrcType;
+typedef uint32_t Xcp_ChecksumType;
+#elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_11
+typedef uint8_t Xcp_ChecksumType;
+#elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_12) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_22)
+typedef uint16_t Xcp_ChecksumType;
+#elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_14) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_24) || \
+      (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_44)
+typedef uint32_t Xcp_ChecksumType;
 #endif // XCP_CHECKSUM_METHOD
 
 void Xcp_ChecksumInit(void);
-Xcp_CrcType Xcp_CalculateCRC(uint8_t const * message, uint32_t length, Xcp_CrcType startValue, bool isFirstCall);
+Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const * ptr, uint32_t length, Xcp_ChecksumType startValue, bool isFirstCall);
 void Xcp_ChecksumMainFunction(void);
-void Xcp_SendChecksumResponse(Xcp_CrcType checksum);
+void Xcp_SendChecksumPositiveResponse(Xcp_ChecksumType checksum);
+void Xcp_SendChecksumOutOfRangeResponse(void);
 void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size);
 
 #if XCP_EXTERN_C_GUARDS == XCP_ON

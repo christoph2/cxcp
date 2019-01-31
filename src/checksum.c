@@ -1,7 +1,7 @@
 /*
  * pySART - Simplified AUTOSAR-Toolkit for Python.
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -49,7 +49,7 @@ typedef struct tagXcp_ChecksumJobType {
     Xcp_ChecksumJobStateType state;
     Xcp_MtaType mta;
     uint32_t size;
-    Xcp_CrcType interimChecksum;
+    Xcp_ChecksumType interimChecksum;
 } Xcp_ChecksumJobType;
 
 
@@ -223,7 +223,7 @@ static const uint32_t CRC_TAB[] = {
 
 #endif // XCP_CHECKSUM_METHOD
 
-#define WIDTH    ((uint16_t)(8U * sizeof(Xcp_CrcType)))
+#define WIDTH    ((uint16_t)(8U * sizeof(Xcp_ChecksumType)))
 #define TOPBIT   (1 << (WIDTH - 1))
 
 #if (REFLECT_DATA == XCP_TRUE)
@@ -233,7 +233,7 @@ static const uint32_t CRC_TAB[] = {
 #endif
 
 #if (REFLECT_REMAINDER == XCP_TRUE)
-#define CRC_REFLECT_REMAINDER(X)    ((Xcp_CrcType) reflect((X), WIDTH))
+#define CRC_REFLECT_REMAINDER(X)    ((Xcp_ChecksumType) reflect((X), WIDTH))
 #else
 #define CRC_REFLECT_REMAINDER(X)    (X)
 #endif
@@ -259,24 +259,70 @@ static uint32_t reflect(uint32_t data, uint8_t nBits)
 }
 #endif  // (REFLECT_DATA == TRUE) || (REFLECT_REMAINDER == TRUE)
 
-Xcp_CrcType Xcp_CalculateCRC(uint8_t const * dataPtr, uint32_t length, Xcp_CrcType startValue, bool isFirstCall)
+
+/*
+0x04    XCP_ADD_22      Add WORD into a WORD checksum, ignore overflows, blocksize must be modulo 2
+0x05    XCP_ADD_24      Add WORD into a DWORD checksum, ignore overflows, blocksize must be modulo 2
+0x06    XCP_ADD_44      Add DWORD into  DWORD, ignore overflows, blocksize must be modulo 4
+*/
+
+Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const * ptr, uint32_t length, Xcp_ChecksumType startValue, bool isFirstCall)
 {
-    Xcp_CrcType crc;
-    uint8_t data;
+    Xcp_ChecksumType result;
     uint32_t idx;
+#if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT) || \
+    (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32)
+    uint8_t data;
 
     if (isFirstCall) {
-        crc = XCP_CRC_INITIAL_VALUE;
+        result = XCP_CRC_INITIAL_VALUE;
     } else {
-        crc = startValue;
+        result = startValue;
     }
 
     for (idx = (uint32_t)0UL; idx < length; ++idx)
     {
-        data = CRC_REFLECT_DATA(dataPtr[idx]) ^ UINT8(crc >> (WIDTH - UINT8(8)));
-        crc = CRC_TAB[data] ^ UINT16(crc << 8);
+        data = CRC_REFLECT_DATA(ptr[idx]) ^ UINT8(result >> (WIDTH - UINT8(8)));
+        result = CRC_TAB[data] ^ UINT16(result << 8);
     }
-    return CRC_REFLECT_REMAINDER(crc) ^ XCP_CRC_FINAL_XOR_VALUE;
+    return CRC_REFLECT_REMAINDER(result) ^ XCP_CRC_FINAL_XOR_VALUE;
+#elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_11) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_12) || \
+      (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_14)
+    if (isFirstCall) {
+        result = (Xcp_ChecksumType)0;
+    } else {
+        result = startValue;
+    }
+
+    for (idx = (uint32_t)0UL; idx < length; ++idx) {
+        result += ptr[idx];
+    }
+
+    return result;
+#elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_22) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_24) || \
+      (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_44)
+
+#if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_22) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_24)
+    uint16_t const * data = (uint16_t const *)ptr;  /* Undefined behaviour -  See note above */
+
+    length >>= 1;
+#else
+    uint32_t const * data = (uint32_t const *)ptr;  /* Undefined behaviour -  See note above */
+
+    length >>= 2;
+#endif  /* XCP_CHECKSUM_METHOD */
+    if (isFirstCall) {
+        result = (Xcp_ChecksumType)0;
+    } else {
+        result = startValue;
+    }
+
+    for (idx = (uint32_t)0UL; idx < length; ++idx) {
+        result += data[idx];
+    }
+
+    return result;
+#endif /* XCP_CHECKSUM_METHOD */
 }
 
 
@@ -287,7 +333,7 @@ void Xcp_ChecksumInit(void)
 {
     Xcp_ChecksumJob.mta.address = UINT32(0ul);
     Xcp_ChecksumJob.mta.ext = UINT8(0);
-    Xcp_ChecksumJob.interimChecksum = (Xcp_CrcType)0ul;
+    Xcp_ChecksumJob.interimChecksum = (Xcp_ChecksumType)0ul;
     Xcp_ChecksumJob.size = UINT32(0ul);
     Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_IDLE;
 }
@@ -318,14 +364,14 @@ void Xcp_ChecksumMainFunction(void)
     if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_IDLE) {
         return;
     } else if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_RUNNING_INITIAL) {
-         Xcp_ChecksumJob.interimChecksum = Xcp_CalculateCRC(
-            (uint8_t const *)Xcp_ChecksumJob.mta.address, XCP_CHECKSUM_CHUNK_SIZE, (Xcp_CrcType)0, XCP_TRUE
+         Xcp_ChecksumJob.interimChecksum = Xcp_CalculateChecksum(
+            (uint8_t const *)Xcp_ChecksumJob.mta.address, XCP_CHECKSUM_CHUNK_SIZE, (Xcp_ChecksumType)0, XCP_TRUE
          );
         Xcp_ChecksumJob.size -= XCP_CHECKSUM_CHUNK_SIZE;
         Xcp_ChecksumJob.mta.address += XCP_CHECKSUM_CHUNK_SIZE;
          Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_REMAINING;
     } else if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_RUNNING_REMAINING) {
-        Xcp_ChecksumJob.interimChecksum = Xcp_CalculateCRC(
+        Xcp_ChecksumJob.interimChecksum = Xcp_CalculateChecksum(
             (uint8_t const *)Xcp_ChecksumJob.mta.address, XCP_CHECKSUM_CHUNK_SIZE, Xcp_ChecksumJob.interimChecksum, XCP_FALSE
         );
         //printf("N-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum);
@@ -336,12 +382,12 @@ void Xcp_ChecksumMainFunction(void)
         }
     }  else if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_RUNNING_FINAL) {
         //printf("F-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum);
-        Xcp_ChecksumJob.interimChecksum = Xcp_CalculateCRC(
+        Xcp_ChecksumJob.interimChecksum = Xcp_CalculateChecksum(
             (uint8_t const *)Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum, XCP_FALSE
         );
         //printf("FINAL-VALUE %x\n", Xcp_ChecksumJob.interimChecksum);
         Xcp_SetBusy(XCP_FALSE);
-        Xcp_SendChecksumResponse(Xcp_ChecksumJob.interimChecksum);
+        Xcp_SendChecksumPositiveResponse(Xcp_ChecksumJob.interimChecksum);
         Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_IDLE;
     }
 }
