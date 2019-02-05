@@ -42,21 +42,7 @@
 /*
 ** Local Types.
 */
-typedef struct tagXcp_StateType {
-    bool connected;
-    bool busy;
-#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    XcpDaq_ProcessorType daqProcessor;
-    XcpDaq_PointerType daqPointer;
-#endif // XCP_ENABLE_DAQ_COMMANDS
-#if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
-    uint16_t counter;
-#endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
-    bool programming;
-    uint8_t mode;
-    uint8_t protection;
-    Xcp_MtaType mta;
-} Xcp_StateType;
+
 
 
 /*
@@ -1481,3 +1467,7 @@ bool Xcp_IsBusy(void)
     return Xcp_State.busy;
 }
 
+Xcp_StateType const * Xcp_GetState(void)
+{
+    return &Xcp_State;
+}
