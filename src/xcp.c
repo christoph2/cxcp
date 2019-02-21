@@ -889,6 +889,10 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
     else {
         Xcp_HookFunction_GetId(idType);
     }
+#else
+    else {
+        XCP_ERROR_RESPONSE(ERR_CMD_SYNTAX);
+    }
 #endif // XCP_ENABLE_GET_ID_HOOK
 
 
