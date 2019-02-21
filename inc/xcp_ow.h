@@ -32,6 +32,8 @@
 /*
 **  Global Types.
 */
+
+
 typedef struct tagXcp_HwFileViewType {
     HANDLE mappingHandle;
     void * mappingAddress;

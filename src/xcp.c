@@ -1,5 +1,5 @@
 /*
- * pySART - Simplified AUTOSAR-Toolkit for Python.
+ * BlueParrot XCP
  *
  * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
@@ -65,10 +65,12 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
 static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 
+/*
+** Local Macros.
+*/
 #define XCP_POSITIVE_RESPONSE() Xcp_Send8(UINT8(1), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 #define XCP_ERROR_RESPONSE(ec)  Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ec), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 #define XCP_BUSY_RESPONSE()     XCP_ERROR_RESPONSE(ERR_CMD_BUSY)
-
 
 
 #define XCP_ASSERT_UNLOCKED(r)                          \
@@ -78,6 +80,10 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
             return;                                     \
         }                                               \
     } while (0)
+
+#define STOP_ALL        UINT8(0x00)
+#define START_SELECTED  UINT8(0x01)
+#define STOP_SELECTED   UINT8(0x02)
 
 /*
 ** Local Function Prototypes.
@@ -1135,6 +1141,9 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
         return;
     }
 #endif // XCP_ENABLE_STIM
+/*
+The master is not allowed to set the ALTERNATING flag and the TIMESTAMP flag at the same time.
+*/
 #if XCP_DAQ_ALTERNATING_SUPPORTED == XCP_OFF
     if ((mode & XCP_DAQ_LIST_MODE_ALTERNATING) == XCP_DAQ_LIST_MODE_ALTERNATING) {
         XCP_ERROR_RESPONSE(ERR_CMD_SYNTAX);
@@ -1174,8 +1183,9 @@ static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
 {
+    XcpDaq_ListType * entry;
     const uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
-    const uint8_t daqListNumber = Xcp_GetWord(pdu, UINT8(2));
+    const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
 #if 0
 1  BYTE  Mode
     00 = stop
@@ -1186,6 +1196,20 @@ static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT3("START_STOP_DAQ_LIST [mode: 0x%02x daq: %03u]\n", mode, daqListNumber);
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+    entry = XcpDaq_GetList(daqListNumber);
+
+    if (mode == 0) {
+
+    } else if (mode == 1) {
+
+    } else if (mode == 2) {
+        entry->mode = XCP_DAQ_LIST_MODE_SELECTED;
+    } else {
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
+    }
+
+
 #if 0
 Positive Response:
 
@@ -1202,6 +1226,19 @@ static void Xcp_StartStopSynch_Res(Xcp_PDUType const * const pdu)
 
     DBG_PRINT2("START_STOP_SYNCH [mode: 0x%02x]\n", mode);
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    if (mode == START_SELECTED) {
+        XcpDaq_StartSelectedLists();
+        XcpDaq_SetProcessorState(XCP_DAQ_STATE_RUNNING);
+    } else if (mode == STOP_ALL) {
+        XcpDaq_StopAllLists();
+        XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
+    } else if (mode == STOP_SELECTED) {
+        XcpDaq_StopSelectedLists();
+    } else {
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
+    }
     XCP_POSITIVE_RESPONSE();
 }
 

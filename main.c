@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "xcp_ow.h"
+#include "xcp.h"
+#include "flsemu.h"
 
 
 // For demo purpopses, create an extra constant data section whose name is exactly 8 bytes long (the max)
@@ -19,13 +20,6 @@ int in_der_arbeitsseite;
 #pragma bss_seg(pop/*, stack1*/)
 int bss_normal;
 
-void pagTest(void);
-
-static Xcp_HwMapFileType a2lFile;
-
-static const char FNAME[] = "f:\\Users\\Public\\Documents\\Vector CANape 15\\Examples\\XCPDemo\\XCPsim.a2l";
-
-
 void XcpOnCan_Init(void);
 
 #define SIZE    (4096)
@@ -33,48 +27,82 @@ uint8_t puffer[SIZE];
 
 void XcpHw_MainFunction(bool * finished);
 
-// TortoiseGit 1.7.6.0
+void AppTask(void);
+
+#define FLS_SECTOR_SIZE (256)
+//#define FLS_PAGE_SIZE   (4 * 1024)
+
+#define FLS_PAGE_ADDR           ((uint16_t)0x8000U)
+#define FLS_PAGE_SIZE           ((uint32_t)0x10000U)  /* NB: MUST MATCH system allocation granularity!!! */
+
+
+static FlsEmu_SegmentType S12D512_PagedFlash = {
+    "XCPSIM_Flash",
+    FLSEMU_KB(512),
+    2,
+    FLS_SECTOR_SIZE,
+    FLS_PAGE_SIZE,
+    4,
+    0x8000,
+};
+
+static FlsEmu_SegmentType S12D512_EEPROM = {
+    "XCPSIM_EEPROM",
+    FLSEMU_KB(4),
+    2,
+    4,
+    FLSEMU_KB(4),
+    1,
+    0x4000,
+};
+
+
+static FlsEmu_SegmentType const * segments[] = {
+    &S12D512_PagedFlash,
+    &S12D512_EEPROM,
+};
+
+static const FlsEmu_ConfigType FlsEmu_Config = {
+    2,
+    segments,
+};
+
 
 int main()
 {
-    uint16_t idx;
     bool finished;
 
-    for (idx = 0; idx < SIZE; ++idx) {
-        puffer[idx] = '0' + (idx % 10);
-        //printf("%c ", puffer[idx]);
-    }
-
-    pagTest();
-
     //XcpOnCan_Init();
+    //XcpOw_MapFileOpen(FNAME, &a2lFile);
 
-    XcpOw_MapFileOpen(FNAME, &a2lFile);
+    FlsEmu_Init(&FlsEmu_Config);
+    FlsEmu_ErasePage(&S12D512_PagedFlash, 3);
 
     Xcp_Init();
     DBG_PRINT1("Starting XCP task...\n");
     fflush(stdout);
 
-
     for (;;) {
         Xcp_MainFunction();
         XcpTl_MainFunction();
-        //Xcp
-//#if 0
+
         XcpHw_MainFunction(&finished);
         if (finished) {
             break;
         }
-//#endif
+        AppTask();
+        XcpDaq_MainFunction();
     }
+
+    FlsEmu_DeInit();
 
     XcpTl_DeInit();
 
-    XcpOw_MapFileClose(&a2lFile);
     return 0;
 }
 
 
+#if 0
 bool Xcp_HookFunction_GetId(uint8_t idType)
 {
     if (idType == 4) {
@@ -83,4 +111,43 @@ bool Xcp_HookFunction_GetId(uint8_t idType)
         return XCP_TRUE;
     }
     return XCP_FALSE;
+}
+#endif // 0
+
+typedef struct {
+    uint8_t value;
+    bool down;
+} triangle_type;
+
+triangle_type triangle = {0};
+
+
+void AppTask(void)
+{
+    static uint32_t currentTS = 0UL;
+    static uint32_t previousTS = 0UL;
+    static uint16_t ticker = 0;
+
+    currentTS = XcpHw_GetTimerCounter() / 1000;
+    if (currentTS >= (previousTS + 10)) {
+        //printf("T [%u::%lu]\n", currentTS, XcpHw_GetTimerCounter() / 1000);
+
+        if ((ticker % 3) == 0) {
+            if (triangle.down) {
+                triangle.value--;
+                if (triangle.value == 0) {
+                    triangle.down = XCP_FALSE;
+                }
+            } else {
+                triangle.value++;
+                if (triangle.value >= 75) {
+                    triangle.down = XCP_TRUE;
+                }
+            }
+            //printf("\t\t\tTRI [%u]\n", triangle.value);
+            XcpDaq_TriggerEvent(1);
+        }
+        ticker++;
+        previousTS =  XcpHw_GetTimerCounter() / 1000;
+    }
 }

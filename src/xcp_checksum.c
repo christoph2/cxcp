@@ -1,5 +1,5 @@
 /*
- * pySART - Simplified AUTOSAR-Toolkit for Python.
+ * BlueParrot XCP
  *
  * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>

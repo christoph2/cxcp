@@ -1,5 +1,5 @@
 /*
- * pySART - Simplified AUTOSAR-Toolkit for Python.
+ * BlueParrot XCP
  *
  * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
@@ -30,6 +30,16 @@
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 //#include <windows.h>
+
+#if 0
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#ifndef IPPROTO_IPV6
+#include <tpipv6.h> // For IPv6 Tech Preview.
+#endif
+#endif
+
 #include <Mstcpip.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +61,11 @@
 
 #define XCP_COMM_BUFLEN  (XCP_MAX(XCP_MAX_CTO, XCP_MAX_DTO))
 #define XCP_COMM_PORT    (5555)
+
+#define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
+#define DEFAULT_SOCKTYPE   SOCK_STREAM // TCP
+#define DEFAULT_PORT       "5001" // Arbitrary, albiet a historical test port
+
 
 typedef struct tagXcpTl_ConnectionType {
     struct sockaddr_in connectionAddress;
@@ -130,7 +145,12 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 void XcpTl_Init(void)
 {
     WSADATA wsa;
-
+    ADDRINFO Hints, *AddrInfo, *AI;
+    char *Address = NULL;
+    int Family = PF_INET;
+    int SocketType = SOCK_DGRAM;
+    char *Port = DEFAULT_PORT;
+    int ret;
     DWORD dwTimeAdjustment = 0, dwTimeIncrement = 0, dwClockTick;
     BOOL fAdjustmentDisabled = XCP_TRUE;
 
@@ -141,12 +161,29 @@ void XcpTl_Init(void)
         Win_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
-        //DBG_PRINT1("Winsock started!\n");
+
     }
+
+///////////////////////////////
+    memset(&Hints, 0, sizeof(Hints));
+    Hints.ai_family = Family;
+    Hints.ai_socktype = SocketType;
+    Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
+    ret = getaddrinfo(Address, Port, &Hints, &AddrInfo);
+    if (ret != 0) {
+        Win_ErrorMsg("XcpTl_Init::getaddrinfo", WSAGetLastError());
+        WSACleanup();
+        return -1;
+    }
+
+
+    freeaddrinfo(AddrInfo);
+///////////////////////////////
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);  // AF_INET6
     if (sock == INVALID_SOCKET) {
         Win_ErrorMsg("XcpTl_Init:socket()", WSAGetLastError());
+        WSACleanup();
         exit(EXIT_FAILURE);
     } else {
         //DBG_PRINT1("UDP Socket created!\n");

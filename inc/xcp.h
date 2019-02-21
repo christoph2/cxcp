@@ -1,5 +1,5 @@
 /*
- * pySART - Simplified AUTOSAR-Toolkit for Python.
+ * BlueParrot XCP
  *
  * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
@@ -435,7 +435,10 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
 void XcpDaq_GetProperties(uint8_t * properties);
 XcpDaq_ListIntegerType XcpDaq_GetListCount(void);
-
+void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state);
+void XcpDaq_StartSelectedLists(void);
+void XcpDaq_StopSelectedLists(void);
+void XcpDaq_StopAllLists(void);
 
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)
