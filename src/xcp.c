@@ -550,18 +550,24 @@ void Xcp_Init(void)
 
     Xcp_MemSet(&Xcp_State, UINT8(0), (uint32_t)sizeof(Xcp_StateType));
     Xcp_State.busy = XCP_FALSE;
+
+#if XCP_ENABLE_RESOURCE_PROTECTION  == XCP_ON
+    Xcp_State.resourceProtection = UINT8(0);
+    Xcp_State.seedRequested = UINT8(0);
 #if (XCP_PROTECT_CAL == XCP_ON) || (XCP_PROTECT_PAG == XCP_ON)
-    Xcp_State.protection |= XCP_RESOURCE_CAL_PAG;
+    Xcp_State.resourceProtection |= XCP_RESOURCE_CAL_PAG;
 #endif // XCP_PROTECT_CAL
 #if XCP_PROTECT_DAQ == XCP_ON
-    Xcp_State.protection |= XCP_RESOURCE_DAQ;
+    Xcp_State.resourceProtection |= XCP_RESOURCE_DAQ;
 #endif // XCP_PROTECT_DAQ
 #if XCP_PROTECT_STIM == XCP_ON
-    Xcp_State.protection |= XCP_RESOURCE_STIM;
+    Xcp_State.resourceProtection |= XCP_RESOURCE_STIM;
 #endif // XCP_PROTECT_STIM
 #if XCP_PROTECT_PGM == XCP_ON
-    Xcp_State.protection |= XCP_RESOURCE_PGM;
+    Xcp_State.resourceProtection |= XCP_RESOURCE_PGM;
 #endif // XCP_PROTECT_PGM
+#endif // XCP_ENABLE_RESOURCE_PROTECTION
+
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
@@ -680,7 +686,7 @@ static void Xcp_Upload(uint8_t len)
     Xcp_MtaType dst;
 
 // TODO: Blockmode!!!
-    dataOut[0] = (uint8_t)0xff;
+    dataOut[0] = (uint8_t)ERR_SUCCESS;
 
     dst.address = (uint32_t)(dataOut + 1);  // FIX ME!!!
     dst.ext = (uint8_t)0;
@@ -804,6 +810,7 @@ static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT1("DISCONNECT\n");
 
     XCP_POSITIVE_RESPONSE();
+    // TODO: Reset status stuff, like resource protection!
     XcpTl_ReleaseConnection();
 }
 
@@ -814,7 +821,11 @@ static void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)   // TODO: Implemen
 
     Xcp_Send8(UINT8(6), UINT8(0xff),
         UINT8(0),     // Current session status
-        Xcp_State.protection,  // Current resource protection status
+#if XCP_ENABLE_RESOURCE_PROTECTION == XCP_ON
+        Xcp_State.resourceProtection,  // Current resource protection status
+#else
+        UINT8(0x00),  // Everything is unprotected.
+#endif // XCP_ENABLE_RESOURCE_PROTECTION
         UINT8(0x00),  // Reserved
         UINT8(0),     // Session configuration id
         UINT8(0),     // "                      "
@@ -891,13 +902,110 @@ static void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
     }
 #else
     else {
-        XCP_ERROR_RESPONSE(ERR_CMD_SYNTAX);
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
     }
 #endif // XCP_ENABLE_GET_ID_HOOK
 
 
 }
 #endif // XCP_ENABLE_GET_ID
+
+
+#if XCP_ENABLE_GET_SEED == XCP_ON
+static void Xcp_GetSeed_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
+    uint8_t resource = Xcp_GetByte(pdu, UINT8(2));
+    Xcp_1DArrayType seed;
+    uint8_t length;
+    uint8_t * dataOut = Xcp_GetOutPduPtr();
+
+    DBG_PRINT3("GET_SEED [mode: %02x resource: %02x]\n", mode, resource);
+
+    switch (resource) {
+        case XCP_RESOURCE_PGM:
+#if XCP_ENABLE_PGM_COMMANDS == XCP_OFF
+            XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+            return;
+#else
+            break;
+#endif // XCP_ENABLE_PGM_COMMANDS
+        case XCP_RESOURCE_STIM:
+#if XCP_ENABLE_STIM == XCP_OFF
+            XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+            return;
+#else
+            break;
+#endif // XCP_ENABLE_STIM
+        case XCP_RESOURCE_DAQ:
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_OFF
+            XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+            return;
+#else
+            break;
+#endif // XCP_ENABLE_DAQ_COMMANDS
+        case XCP_RESOURCE_CAL_PAG:
+#if (XCP_ENABLE_CAL_COMMANDS == XCP_OFF) && (XCP_ENABLE_PAG_COMMANDS == XCP_OFF)
+            XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+            return;
+#else
+            break;
+#endif // XCP_ENABLE_CAL_COMMANDS
+        default:
+            XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+            return;
+    }
+
+    if (Xcp_IsProtected(resource)) {
+        Xcp_HookFunction_GetSeed(resource, &seed);  /* User supplied callout. */
+        length = XCP_MIN(XCP_MAX_CTO - 2, seed.length);
+        Xcp_MemCopy(dataOut + 2, seed.data, (uint32_t)length);
+    } else {
+        // Resource already unlocked.
+        length = UINT8(0);
+    }
+    Xcp_State.seedRequested |= resource;
+    dataOut[0] = ERR_SUCCESS;
+    dataOut[1] = length;
+    //Xcp_PduOut.len = length + 1;
+    Xcp_SetPduOutLen(UINT16(length + 2));
+    Xcp_SendPdu();
+}
+#endif // XCP_ENABLE_GET_SEED
+
+
+#if XCP_ENABLE_UNLOCK == XCP_ON
+static void Xcp_Unlock_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t length = Xcp_GetByte(pdu, UINT8(1));
+    Xcp_1DArrayType key;
+
+    DBG_PRINT2("UNLOCK [length %u]\n", length);
+
+    if (Xcp_State.seedRequested == UINT8(0)) {
+        XCP_ERROR_RESPONSE(ERR_SEQUENCE);
+        return;
+    }
+
+    key.length = length;
+    key.data = pdu->data + 2;
+
+    if (Xcp_HookFunction_Unlock(Xcp_State.seedRequested, &key)) {
+        printf("YES, UNLOCK!!!\n");
+        Xcp_State.resourceProtection &= ~(Xcp_State.seedRequested); // OK, unlock.
+        Xcp_Send8(UINT8(2), UINT8(0xff),
+            Xcp_State.resourceProtection,  // Current resource protection status
+            UINT8(0), UINT8(0), UINT8(0),
+            UINT8(0), UINT8(0), UINT8(0)
+        );
+
+    } else {
+        XCP_ERROR_RESPONSE(ERR_ACCESS_LOCKED);
+        // TODO: goto disconnected state.
+    }
+    Xcp_State.seedRequested = 0x00;
+}
+#endif // XCP_ENABLE_UNLOCK
 
 
 #if XCP_ENABLE_UPLOAD == XCP_ON
@@ -1491,10 +1599,12 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag)
     return result;
 }
 
+#if XCP_ENABLE_RESOURCE_PROTECTION == XCP_ON
 static bool Xcp_IsProtected(uint8_t resource)
 {
-    return ((Xcp_State.protection & resource) == resource);
+    return ((Xcp_State.resourceProtection & resource) == resource);
 }
+#endif // XCP_ENABLE_RESOURCE_PROTECTION
 
 void Xcp_SetBusy(bool enable)
 {

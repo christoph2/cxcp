@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "xcp.h"
+#include "xcp_util.h"
 #include "flsemu.h"
 
 
@@ -67,16 +68,25 @@ static const FlsEmu_ConfigType FlsEmu_Config = {
     segments,
 };
 
-
 int main()
 {
     bool finished;
+    uint8_t * ptr;
+    //int * ptr;
 
     //XcpOnCan_Init();
     //XcpOw_MapFileOpen(FNAME, &a2lFile);
 
     FlsEmu_Init(&FlsEmu_Config);
-    FlsEmu_ErasePage(&S12D512_PagedFlash, 3);
+    //FlsEmu_ErasePage(0, 3);
+
+    ptr = FlsEmu_BasePointer(0);
+    printf("PTR %p\n", ptr);
+    printf("PTR2 %p\n", ptr + 0x200);
+    FlsEmu_SelectPage(0, 4);
+    FillMemory(ptr + 0x200, 0x80, 0x55);
+
+    //FillMemory(ptr + 0x800, 0x80, 0xff);
 
     Xcp_Init();
     DBG_PRINT1("Starting XCP task...\n");
@@ -99,6 +109,27 @@ int main()
     XcpTl_DeInit();
 
     return 0;
+}
+
+
+bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
+{
+    static const uint8_t seed[] = {0x11, 0x22, 0x33, 0x44};
+    result->length = 4;
+    result->data = (uint8_t*)&seed;
+
+    return XCP_TRUE;
+}
+
+
+bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
+{
+    static const uint8_t secret[] = {0x55, 0x66, 0x77, 0x88};
+
+//    printf("\tKEY [%u]: ", key->length);
+//    Xcp_Hexdump(key->data, key->length);
+
+    return Xcp_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
 }
 
 

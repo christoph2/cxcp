@@ -57,6 +57,18 @@ extern "C"
 #endif  /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
 
+/*
+** Some configuration checks.
+*/
+#if (XCP_ENABLE_GET_SEED == XCP_ON) && (XCP_ENABLE_UNLOCK == XCP_ON)
+    #define XCP_ENABLE_RESOURCE_PROTECTION  (XCP_ON)
+#elif (XCP_ENABLE_GET_SEED == XCP_OFF) && (XCP_ENABLE_UNLOCK == XCP_OFF)
+    #define XCP_ENABLE_RESOURCE_PROTECTION  (XCP_OFF)
+#elif (XCP_ENABLE_GET_SEED == XCP_ON) && (XCP_ENABLE_UNLOCK == XCP_OFF)
+    #error GET_SEED requires UNLOCK
+#elif (XCP_ENABLE_GET_SEED == XCP_OFF) && (XCP_ENABLE_UNLOCK == XCP_ON)
+    #error UNLOCK requires GET_SEED
+#endif
 
 #if XCP_DAQ_MAX_EVENT_CHANNEL < 1
     #error XCP_DAQ_MAX_EVENT_CHANNEL must be at least 1
@@ -298,7 +310,10 @@ typedef struct tagXcp_StateType {
 #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
     bool programming;
     uint8_t mode;
-    uint8_t protection;
+#if XCP_ENABLE_RESOURCE_PROTECTION  == XCP_ON
+    uint8_t resourceProtection;
+    uint8_t seedRequested;
+#endif // XCP_ENABLE_RESOURCE_PROTECTION
     Xcp_MtaType mta;
 } Xcp_StateType;
 
@@ -397,6 +412,11 @@ typedef struct tagXcpDaq_EventType {
 
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
+
+typedef struct tagXcp_1DArrayType {
+    uint8_t length;
+    uint8_t * data;
+} Xcp_1DArrayType;
 
 /*
 ** Global User Functions.
@@ -508,6 +528,8 @@ void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
 **  Customization Stuff.
 */
 bool Xcp_HookFunction_GetId(uint8_t idType);
+bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result);
+bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key);
 
 /*
 **  Hardware dependent stuff.

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -71,7 +71,7 @@
 */
 #define XCP_PROTECT_CAL                             XCP_ON
 #define XCP_PROTECT_PAG                             XCP_ON
-#define XCP_PROTECT_DAQ                             XCP_OFF
+#define XCP_PROTECT_DAQ                             XCP_ON
 #define XCP_PROTECT_STIM                            XCP_ON
 #define XCP_PROTECT_PGM                             XCP_ON
 
@@ -82,8 +82,8 @@
     #define XCP_ENABLE_GET_COMM_MODE_INFO           XCP_ON
     #define XCP_ENABLE_GET_ID                       XCP_ON
     #define XCP_ENABLE_SET_REQUEST                  XCP_OFF
-    #define XCP_ENABLE_GET_SEED                     XCP_OFF
-    #define XCP_ENABLE_UNLOCK                       XCP_OFF
+    #define XCP_ENABLE_GET_SEED                     XCP_ON
+    #define XCP_ENABLE_UNLOCK                       XCP_ON
     #define XCP_ENABLE_SET_MTA                      XCP_ON
     #define XCP_ENABLE_UPLOAD                       XCP_ON
     #define XCP_ENABLE_SHORT_UPLOAD                 XCP_ON
