@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -110,6 +110,8 @@ extern "C"
 #define INLINE inline
 #define DBG_PRINT(...)
 #endif // defined(_MSC_VER)
+
+#define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))
 
 
 #if XCP_EXTERN_C_GUARDS == XCP_ON
