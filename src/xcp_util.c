@@ -57,6 +57,19 @@ void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
     }
 }
 
+bool Xcp_MemCmp(void * lhs, void * rhs, uint32_t len)
+{
+    uint8_t * pl = (uint8_t *)lhs;
+    uint8_t * pr = (uint8_t *)rhs;
+
+    if (len == UINT32(0)) {
+        return XCP_FALSE;
+    }
+    while ((*pl++ == *pr++) && (--len != UINT32(0))) {
+    }
+    return (bool)(len == UINT32(0));
+}
+
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
 void Xcp_Hexdump(uint8_t const * buf, uint16_t sz)
 {
