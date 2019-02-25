@@ -512,6 +512,8 @@ void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value);
 /*
 **  Transport Layer Stuff.
 */
+#define XCP_COMM_BUFLEN  ((XCP_MAX(XCP_MAX_CTO, XCP_MAX_DTO)) + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE)
+
 void XcpTl_Init(void);
 void XcpTl_DeInit(void);
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec);

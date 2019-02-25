@@ -59,7 +59,6 @@
 #define XCP_MAX(a, b)   (((a) > (b)) ? (a) : (b))
 #endif
 
-#define XCP_COMM_BUFLEN  (XCP_MAX(XCP_MAX_CTO, XCP_MAX_DTO))
 #define XCP_COMM_PORT    (5555)
 
 #define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6

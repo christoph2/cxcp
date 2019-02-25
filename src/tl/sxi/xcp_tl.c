@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -30,7 +30,6 @@
 #include "xcp.h"
 #include "xcp_util.h"
 
-#define XCP_COMM_BUFLEN  ((XCP_MAX(XCP_MAX_CTO, XCP_MAX_DTO)) + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE)
 
 #define XCP_SXI_MAKEWORD(buf, offs)  (*(buf+offs)) | (( *(buf+offs+1) << 8))
 
