@@ -1194,6 +1194,26 @@ static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
 #endif // XCP_ENABLE_SHORT_DOWNLOAD
 
 
+#if XCP_ENABLE_MODIFY_BITS == XCP_ON
+static void Xcp_ModifyBits_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t shiftValue = Xcp_GetByte(pdu, UINT8(1));
+    uint16_t andMask = Xcp_GetWord(pdu, UINT8(2));
+    uint16_t xorMask = Xcp_GetWord(pdu, UINT8(4));
+    uint32_t * vp;
+
+    DBG_PRINT4("MODIFY-BITS [shiftValue: 0x%02X andMask: 0x%04x ext: xorMask: 0x%04x]\n", shiftValue, andMask, xorMask);
+
+    vp = (uint32_t*)Xcp_State.mta.address;
+    *vp = ((*vp) & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue))) ) ^((uint32_t)(xorMask << shiftValue)));
+
+    printf("ModifyBits-after: [0x%0x08] %u\n", Xcp_State.mta.address, *vp);
+
+    XCP_POSITIVE_RESPONSE();
+}
+#endif // XCP_ENABLE_MODIFY_BITS
+
+
 #endif // XCP_ENABLE_CAL_COMMANDS
 
 
