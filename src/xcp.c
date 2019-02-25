@@ -967,7 +967,6 @@ static void Xcp_GetSeed_Res(Xcp_PDUType const * const pdu)
     Xcp_State.seedRequested |= resource;
     dataOut[0] = ERR_SUCCESS;
     dataOut[1] = length;
-    //Xcp_PduOut.len = length + 1;
     Xcp_SetPduOutLen(UINT16(length + 2));
     Xcp_SendPdu();
 }
@@ -990,11 +989,11 @@ static void Xcp_Unlock_Res(Xcp_PDUType const * const pdu)
     key.length = length;
     key.data = pdu->data + 2;
 
-    if (Xcp_HookFunction_Unlock(Xcp_State.seedRequested, &key)) {
+    if (Xcp_HookFunction_Unlock(Xcp_State.seedRequested, &key)) {   /* User supplied callout. */
         printf("YES, UNLOCK!!!\n");
-        Xcp_State.resourceProtection &= ~(Xcp_State.seedRequested); // OK, unlock.
+        Xcp_State.resourceProtection &= ~(Xcp_State.seedRequested); /* OK, unlock. */
         Xcp_Send8(UINT8(2), UINT8(0xff),
-            Xcp_State.resourceProtection,  // Current resource protection status
+            Xcp_State.resourceProtection,  /* Current resource protection status. */
             UINT8(0), UINT8(0), UINT8(0),
             UINT8(0), UINT8(0), UINT8(0)
         );
@@ -1146,6 +1145,57 @@ static void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu)
 
 }
 #endif // XCP_ENABLE_USER_CMD
+
+
+/*
+**
+**  CAL Commands.
+**
+*/
+#if XCP_ENABLE_CAL_COMMANDS == XCP_ON
+static void Xcp_Download_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t len = Xcp_GetByte(pdu, UINT8(1));
+
+// TODO: Blockmode!!!
+    DBG_PRINT2("DOWNLOAD [len: %u]\n", len);
+
+    //Xcp_CopyMemory(Xcp_State.mta, pdu->data + 2, (uint32_t)len);
+    Xcp_MemCopy(Xcp_State.mta.address, pdu->data + 2, (uint32_t)len);
+
+    Xcp_State.mta.address += UINT32(len);
+
+    XCP_POSITIVE_RESPONSE();
+}
+
+#if XCP_ENABLE_SHORT_DOWNLOAD == XCP_ON
+static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t len = Xcp_GetByte(pdu, UINT8(1));
+    uint8_t addrExt = Xcp_GetByte(pdu, UINT8(3));
+    uint32_t address = Xcp_GetDWord(pdu, UINT8(4));
+    Xcp_MtaType dst;
+
+    DBG_PRINT4("SHORT-DOWNLOAD [len: %u address: 0x%08x ext: 0x%02x]\n", len, address, addrExt);
+    if (len > (XCP_MAX_CTO - UINT8(8))) {
+        XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
+        return;
+    }
+
+    //Xcp_Hexdump(pdu->data + 8, len);
+
+    dst.address = address;
+    dst.ext = addrExt;
+    Xcp_MemCopy(dst.address, pdu->data + 8, (uint32_t)len);
+    Xcp_State.mta.address += UINT32(len);
+
+    XCP_POSITIVE_RESPONSE();
+}
+#endif // XCP_ENABLE_SHORT_DOWNLOAD
+
+
+#endif // XCP_ENABLE_CAL_COMMANDS
+
 
 /*
 **

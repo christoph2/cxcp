@@ -91,11 +91,11 @@
     #define XCP_ENABLE_TRANSPORT_LAYER_CMD          XCP_OFF /* TODO: TL dependend include file! */
     #define XCP_ENABLE_USER_CMD                     XCP_OFF
 
-#define XCP_ENABLE_CAL_COMMANDS                     XCP_OFF
+#define XCP_ENABLE_CAL_COMMANDS                     XCP_ON
 
     #define XCP_ENABLE_DOWNLOAD_NEXT                XCP_OFF
     #define XCP_ENABLE_DOWNLOAD_MAX                 XCP_OFF
-    #define XCP_ENABLE_SHORT_DOWNLOAD               XCP_OFF
+    #define XCP_ENABLE_SHORT_DOWNLOAD               XCP_ON
     #define XCP_ENABLE_MODIFY_BITS                  XCP_OFF
 
 #define XCP_ENABLE_PAG_COMMANDS                     XCP_OFF
