@@ -17,7 +17,7 @@ const char const_string1[] = "This string is allocated in a special const data s
 
 #pragma bss_seg(push, /*stack1,*/ ".arbeitsseite")
 int in_der_arbeitsseite;
-
+uint8_t calram[255];
 #pragma bss_seg(pop/*, stack1*/)
 int bss_normal;
 
@@ -132,6 +132,11 @@ bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
     return Xcp_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
 }
 
+
+bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, Xcp_MemoryAccessType access, bool programming)
+{
+    return XCP_TRUE;
+}
 
 #if 0
 bool Xcp_HookFunction_GetId(uint8_t idType)

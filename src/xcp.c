@@ -68,10 +68,13 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 /*
 ** Local Macros.
 */
+#define STOP_ALL        UINT8(0x00)
+#define START_SELECTED  UINT8(0x01)
+#define STOP_SELECTED   UINT8(0x02)
+
 #define XCP_POSITIVE_RESPONSE() Xcp_Send8(UINT8(1), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 #define XCP_ERROR_RESPONSE(ec)  Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(ec), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0))
 #define XCP_BUSY_RESPONSE()     XCP_ERROR_RESPONSE(ERR_CMD_BUSY)
-
 
 #define XCP_ASSERT_UNLOCKED(r)                          \
     do {                                                \
@@ -81,9 +84,18 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
         }                                               \
     } while (0)
 
-#define STOP_ALL        UINT8(0x00)
-#define START_SELECTED  UINT8(0x01)
-#define STOP_SELECTED   UINT8(0x02)
+#if XCP_ENABLE_CHECK_MEMORY_ACCESS == XCP_ON
+#define XCP_CHECK_MEMORY_ACCESS(m, a, p)                                \
+    do {                                                                \
+            if (!Xcp_HookFunction_CheckMemoryAccess((m), (a), (p))) {   \
+            Xcp_SendResult(ERR_ACCESS_DENIED);                          \
+            return;                                                     \
+        }                                                               \
+    } while (0)
+#else
+#define XCP_CHECK_MEMORY_ACCESS(mta, access)
+#endif XCP_ENABLE_CHECK_MEMORY_ACCESS
+
 
 /*
 ** Local Function Prototypes.
@@ -1014,6 +1026,7 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
 
 // TODO: Blockmode!!!
     DBG_PRINT2("UPLOAD [len: %u]\n", len);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_READ, XCP_FALSE);
     if (len > UINT8(XCP_MAX_CTO - 1)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
         return;
@@ -1031,6 +1044,7 @@ static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
 
 // TODO: Blockmode!!!
     DBG_PRINT2("SHORT-UPLOAD [len: %u]\n", len);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_READ, XCP_FALSE);
     if (len > UINT8(XCP_MAX_CTO - 1)) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
         return;
@@ -1097,7 +1111,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
     uint8_t const * ptr;
 
     DBG_PRINT2("BUILD_CHECKSUM [blocksize: %lu]\n", blockSize);
-
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_READ, XCP_FALSE);
 #if XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE > 0
     /* We need to range check. */
     if (blockSize > UINT32(XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE)) {
@@ -1159,7 +1173,7 @@ static void Xcp_Download_Res(Xcp_PDUType const * const pdu)
 
 // TODO: Blockmode!!!
     DBG_PRINT2("DOWNLOAD [len: %u]\n", len);
-
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
     //Xcp_CopyMemory(Xcp_State.mta, pdu->data + 2, (uint32_t)len);
     Xcp_MemCopy(Xcp_State.mta.address, pdu->data + 2, (uint32_t)len);
 
@@ -1177,6 +1191,9 @@ static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
     Xcp_MtaType dst;
 
     DBG_PRINT4("SHORT-DOWNLOAD [len: %u address: 0x%08x ext: 0x%02x]\n", len, address, addrExt);
+    dst.address = address;
+    dst.ext = addrExt;
+    XCP_CHECK_MEMORY_ACCESS(dst, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
     if (len > (XCP_MAX_CTO - UINT8(8))) {
         XCP_ERROR_RESPONSE(ERR_OUT_OF_RANGE);
         return;
@@ -1184,8 +1201,6 @@ static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
 
     //Xcp_Hexdump(pdu->data + 8, len);
 
-    dst.address = address;
-    dst.ext = addrExt;
     Xcp_MemCopy(dst.address, pdu->data + 8, (uint32_t)len);
     Xcp_State.mta.address += UINT32(len);
 
@@ -1203,7 +1218,7 @@ static void Xcp_ModifyBits_Res(Xcp_PDUType const * const pdu)
     uint32_t * vp;
 
     DBG_PRINT4("MODIFY-BITS [shiftValue: 0x%02X andMask: 0x%04x ext: xorMask: 0x%04x]\n", shiftValue, andMask, xorMask);
-
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
     vp = (uint32_t*)Xcp_State.mta.address;
     *vp = ((*vp) & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue))) ) ^((uint32_t)(xorMask << shiftValue)));
 

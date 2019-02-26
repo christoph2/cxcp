@@ -397,6 +397,12 @@ typedef struct tagXcpDaq_EntityType {
 } XcpDaq_EntityType;
 
 
+typedef enum tagXcp_MemoryAccessType {
+    XCP_MEM_ACCESS_READ,
+    XCP_MEM_ACCESS_WRITE,
+} Xcp_MemoryAccessType;
+
+
 typedef struct tagXcpDaq_EventType {
     uint8_t const * name;
 /*
@@ -532,6 +538,8 @@ void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
 bool Xcp_HookFunction_GetId(uint8_t idType);
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result);
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key);
+
+bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, Xcp_MemoryAccessType access, bool programming);
 
 /*
 **  Hardware dependent stuff.

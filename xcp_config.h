@@ -141,6 +141,8 @@
 /*
 **  Customization Options.
 */
+#define XCP_ENABLE_ADDRESS_MAPPER                   XCP_ON
+#define XCP_ENABLE_CHECK_MEMORY_ACCESS              XCP_ON
 
 #define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
 
