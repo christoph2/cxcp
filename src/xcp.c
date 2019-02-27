@@ -102,6 +102,7 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 */
 static bool Xcp_IsProtected(uint8_t resource);
 static void Xcp_DefaultResourceProtection(void);
+static void Xcp_Disconnect(void);
 static void Xcp_SendResult(Xcp_ReturnType result);
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
 
@@ -583,7 +584,6 @@ void Xcp_Init(void)
 #endif // XCP_ENABLE_BUILD_CHECKSUM
 }
 
-
 static void Xcp_DefaultResourceProtection(void)
 {
 #if XCP_ENABLE_RESOURCE_PROTECTION  == XCP_ON
@@ -602,6 +602,15 @@ static void Xcp_DefaultResourceProtection(void)
     Xcp_State.resourceProtection |= XCP_RESOURCE_PGM;
 #endif // XCP_PROTECT_PGM
 #endif // XCP_ENABLE_RESOURCE_PROTECTION
+}
+
+
+static void Xcp_Disconnect(void)
+{
+    XcpTl_ReleaseConnection();
+    Xcp_DefaultResourceProtection();
+    XcpDaq_StopAllLists();
+    XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
 }
 
 
@@ -827,8 +836,7 @@ static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT1("DISCONNECT\n");
 
     XCP_POSITIVE_RESPONSE();
-    // TODO: Reset status stuff, like resource protection!
-    XcpTl_ReleaseConnection();
+    Xcp_Disconnect();
 }
 
 
@@ -1017,7 +1025,7 @@ static void Xcp_Unlock_Res(Xcp_PDUType const * const pdu)
 
     } else {
         XCP_ERROR_RESPONSE(ERR_ACCESS_LOCKED);
-        // TODO: goto disconnected state.
+        Xcp_Disconnect();
     }
     Xcp_State.seedRequested = 0x00;
 }
