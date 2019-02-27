@@ -101,7 +101,7 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 ** Local Function Prototypes.
 */
 static bool Xcp_IsProtected(uint8_t resource);
-
+static void Xcp_DefaultResourceProtection(void);
 static void Xcp_SendResult(Xcp_ReturnType result);
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
 
@@ -563,23 +563,7 @@ void Xcp_Init(void)
     Xcp_MemSet(&Xcp_State, UINT8(0), (uint32_t)sizeof(Xcp_StateType));
     Xcp_State.busy = XCP_FALSE;
 
-#if XCP_ENABLE_RESOURCE_PROTECTION  == XCP_ON
-    Xcp_State.resourceProtection = UINT8(0);
-    Xcp_State.seedRequested = UINT8(0);
-#if (XCP_PROTECT_CAL == XCP_ON) || (XCP_PROTECT_PAG == XCP_ON)
-    Xcp_State.resourceProtection |= XCP_RESOURCE_CAL_PAG;
-#endif // XCP_PROTECT_CAL
-#if XCP_PROTECT_DAQ == XCP_ON
-    Xcp_State.resourceProtection |= XCP_RESOURCE_DAQ;
-#endif // XCP_PROTECT_DAQ
-#if XCP_PROTECT_STIM == XCP_ON
-    Xcp_State.resourceProtection |= XCP_RESOURCE_STIM;
-#endif // XCP_PROTECT_STIM
-#if XCP_PROTECT_PGM == XCP_ON
-    Xcp_State.resourceProtection |= XCP_RESOURCE_PGM;
-#endif // XCP_PROTECT_PGM
-#endif // XCP_ENABLE_RESOURCE_PROTECTION
-
+    Xcp_DefaultResourceProtection();
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
@@ -597,6 +581,27 @@ void Xcp_Init(void)
 #if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON && XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON
     Xcp_ChecksumInit();
 #endif // XCP_ENABLE_BUILD_CHECKSUM
+}
+
+
+static void Xcp_DefaultResourceProtection(void)
+{
+#if XCP_ENABLE_RESOURCE_PROTECTION  == XCP_ON
+    Xcp_State.resourceProtection = UINT8(0);
+    Xcp_State.seedRequested = UINT8(0);
+#if (XCP_PROTECT_CAL == XCP_ON) || (XCP_PROTECT_PAG == XCP_ON)
+    Xcp_State.resourceProtection |= XCP_RESOURCE_CAL_PAG;
+#endif // XCP_PROTECT_CAL
+#if XCP_PROTECT_DAQ == XCP_ON
+    Xcp_State.resourceProtection |= XCP_RESOURCE_DAQ;
+#endif // XCP_PROTECT_DAQ
+#if XCP_PROTECT_STIM == XCP_ON
+    Xcp_State.resourceProtection |= XCP_RESOURCE_STIM;
+#endif // XCP_PROTECT_STIM
+#if XCP_PROTECT_PGM == XCP_ON
+    Xcp_State.resourceProtection |= XCP_RESOURCE_PGM;
+#endif // XCP_PROTECT_PGM
+#endif // XCP_ENABLE_RESOURCE_PROTECTION
 }
 
 
