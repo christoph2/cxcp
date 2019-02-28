@@ -122,9 +122,8 @@ void FlsEmu_DeInit(void)
 
 static void FlsEmu_OpenCreate(uint8_t segmentIdx)
 {
-    int pos;
     DWORD error;
-    char * pdest;
+    int length;
     char adm[1024];
     char rom[1024];
     FlsEmu_SegmentType * segment;
@@ -140,21 +139,15 @@ static void FlsEmu_OpenCreate(uint8_t segmentIdx)
 
     segment->persistentArray = (PersistentArrayType *)malloc(sizeof(PersistentArrayType));
     segment->currentPage = 0x00;
-
-    pdest = strchr(segment->name, L'.');
-    if (pdest != NULL) {
-        pos = (pdest - segment->name + 1);
-
-        strncpy_s((char *)adm, _countof(adm), (char *)segment->name, pos);
-        strcat_s(adm, _countof(adm), "adm");
-    } else {
-        strncpy_s((char *)adm, _countof(adm), (char *)segment->name, lstrlen(segment->name));
-        strcat_s(adm, _countof(adm), ".adm");
-
-        strncpy_s((char *)rom, _countof(rom), (char *)segment->name, lstrlen(segment->name));
-        strcat_s((char *)rom, _countof(rom), ".rom");
-        printf("ROM-Name: %s\n", rom);
-    }
+    length = strlen(segment->name);
+    strncpy((char *)adm, (char *)segment->name, length);
+    adm[length] = '\x00';
+    strcat((char *)adm, ".adm");
+    //printf("ADM [%u]:%s\n", strlen(segment->name), adm);
+    strncpy((char *)rom, (char *)segment->name, length);
+    rom[length] = '\x00';
+    strcat((char *)rom, ".rom");
+    //printf("ROM-Name: %s\n", rom);
 
     result = FlsEmu_OpenCreatePersitentArray(rom, segment->memSize, segment->persistentArray);
     if (result == OPEN_ERROR) {
