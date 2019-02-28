@@ -29,8 +29,13 @@
 #define __FLSEMU_H
 
 #include <Windows.h>
-#include "xcp.h"
 
+#if STANDALONE_DLL == 1
+#include <stdint.h>
+#include <stdbool.h>
+#else
+#include "xcp.h"
+#endif
 
 
 /*
