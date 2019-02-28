@@ -90,7 +90,7 @@ extern "C"
 #endif
 
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 #define INLINE __inline
 #define DBG_PRINT1(a)                   printf(a)
 #define DBG_PRINT2(a, b)                printf(a, b)
@@ -98,7 +98,7 @@ extern "C"
 #define DBG_PRINT4(a, b, c, d)          printf(a, b, c, d)
 #define DBG_PRINT5(a, b, c, d, e)       printf(a, b, c, d, e)
 #define DBG_PRINT6(a, b, c, d, e, f)    printf(a, b, c, d, e, f)
-#elif defined(__CSMC__) || defined(__IAR_SYSTEMS_ICC__)
+#else
 #define INLINE
 #define DBG_PRINT1(a)
 #define DBG_PRINT2(a, b)
@@ -106,9 +106,6 @@ extern "C"
 #define DBG_PRINT4(a, b, c, d)
 #define DBG_PRINT5(a, b, c, d, e)
 #define DBG_PRINT6(a, b, c, d, e, f)
-#else
-#define INLINE inline
-#define DBG_PRINT(...)
 #endif // defined(_MSC_VER)
 
 #define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))
