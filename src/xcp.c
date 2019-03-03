@@ -94,7 +94,7 @@ static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
     } while (0)
 #else
 #define XCP_CHECK_MEMORY_ACCESS(mta, access)
-#endif XCP_ENABLE_CHECK_MEMORY_ACCESS
+#endif /* XCP_ENABLE_CHECK_MEMORY_ACCESS */
 
 
 /*
@@ -1015,7 +1015,6 @@ static void Xcp_Unlock_Res(Xcp_PDUType const * const pdu)
     key.data = pdu->data + 2;
 
     if (Xcp_HookFunction_Unlock(Xcp_State.seedRequested, &key)) {   /* User supplied callout. */
-        printf("YES, UNLOCK!!!\n");
         Xcp_State.resourceProtection &= ~(Xcp_State.seedRequested); /* OK, unlock. */
         Xcp_Send8(UINT8(2), UINT8(0xff),
             Xcp_State.resourceProtection,  /* Current resource protection status. */
@@ -1233,9 +1232,7 @@ static void Xcp_ModifyBits_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT4("MODIFY-BITS [shiftValue: 0x%02X andMask: 0x%04x ext: xorMask: 0x%04x]\n", shiftValue, andMask, xorMask);
     XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
     vp = (uint32_t*)Xcp_State.mta.address;
-    *vp = ((*vp) & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue))) ) ^((uint32_t)(xorMask << shiftValue)));
-
-    printf("ModifyBits-after: [0x%0x08] %u\n", Xcp_State.mta.address, *vp);
+    *vp = ((*vp) & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue)))) ^ ((uint32_t)(xorMask << shiftValue)));
 
     XCP_POSITIVE_RESPONSE();
 }
@@ -1635,6 +1632,7 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 {
+    // TODO: AddressMapper!!!
     if ((dst.ext == (uint8_t)0) && (src.ext == (uint8_t)0)) {
 //        DBG_PRINT2("LEN: %u\n", len);
 //        DBG_PRINT3("dst: %08X src: %08x\n", dst.address, src.address);

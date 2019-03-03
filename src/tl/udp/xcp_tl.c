@@ -101,7 +101,7 @@ void Win_ErrorMsg(char * const fun, DWORD errorCode)
 
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, XCP_NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &buffer, 0, XCP_NULL);
     if (buffer != XCP_NULL) {
-        fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
+        fprintf(stderr, "[%s] failed with: [%I32d] %s", fun, errorCode, buffer);
         LocalFree((HLOCAL)buffer);
     } else {
         //DBG_PRINT("FormatMessage failed!\n");
@@ -150,7 +150,7 @@ void XcpTl_Init(void)
     int SocketType = SOCK_DGRAM;
     char *Port = DEFAULT_PORT;
     int ret;
-    DWORD dwTimeAdjustment = 0, dwTimeIncrement = 0, dwClockTick;
+    DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
 
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
@@ -172,7 +172,7 @@ void XcpTl_Init(void)
     if (ret != 0) {
         Win_ErrorMsg("XcpTl_Init::getaddrinfo", WSAGetLastError());
         WSACleanup();
-        return -1;
+        return;
     }
 
 
@@ -240,7 +240,7 @@ void XcpTl_RxHandler(void)
 
     memset(buf,'\0', XCP_COMM_BUFLEN);
 
-    recv_len = recvfrom(sock, buf, XCP_COMM_BUFLEN, 0, (struct sockaddr *)&XcpTl_Connection.currentAddress, &addrSize);
+    recv_len = recvfrom(sock, (char*)buf, XCP_COMM_BUFLEN, 0, (struct sockaddr *)&XcpTl_Connection.currentAddress, &addrSize);
     if (recv_len == SOCKET_ERROR)
     {
         Win_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());

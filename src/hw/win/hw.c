@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -207,7 +207,7 @@ void XcpHw_MainFunction(bool * finished)
             switch(irInBuf[idx].EventType) {
                     case KEY_EVENT:
                         key = irInBuf[idx].Event.KeyEvent;
-                        printf("KeyEvent: %x %x %x %u\n", key.wVirtualKeyCode, key.wVirtualScanCode, key.dwControlKeyState, key.bKeyDown);
+//                        printf("KeyEvent: %x %x %x %u\n", key.wVirtualKeyCode, key.wVirtualScanCode, key.dwControlKeyState, key.bKeyDown);
                         if (key.bKeyDown) {
                             if (key.wVirtualKeyCode == VK_ESCAPE) {
                                 *finished = XCP_TRUE;

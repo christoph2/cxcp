@@ -349,7 +349,7 @@ void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size)
     }
     Xcp_SetBusy(XCP_TRUE);
     Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_INITIAL;
-    printf("S-Address: %p Size: %u\n", ptr, size);
+    //printf("S-Address: %p Size: %u\n", ptr, size);
     Xcp_ChecksumJob.mta.address = (uint32_t)ptr;
     Xcp_ChecksumJob.size = size;
     XCP_LEAVE_CRITICAL();
