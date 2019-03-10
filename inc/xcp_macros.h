@@ -90,7 +90,7 @@ extern "C"
 #endif
 
 
-#if defined(_MSC_VER) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
+#if defined(_WIN32) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 #define INLINE __inline
 #define DBG_PRINT1(a)                   printf(a)
 #define DBG_PRINT2(a, b)                printf(a, b)
@@ -119,3 +119,4 @@ extern "C"
 
 
 #endif /* __XCP_MACROS_H */
+
