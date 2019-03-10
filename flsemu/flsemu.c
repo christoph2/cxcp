@@ -73,7 +73,7 @@ static void FlsEmu_Close(uint8_t segmentIdx);
 static void FlsEmu_CloseFileView(Xcp_HwFileViewType * fileView);
 static void FlsEmu_ClosePersitentArray(PersistentArrayType const * persistentArray);
 static bool FlsEmu_MapView(FlsEmu_SegmentType * config, uint32_t offset, uint32_t length);
-static void FlsEmu_SelectBlock(uint8_t segmentIdx, uint8_t block);
+//static void FlsEmu_SelectBlock(uint8_t segmentIdx, uint8_t block);
 static DWORD GetPageSize(void);
 static DWORD GetAllocationGranularity(void);
 static void MemoryInfo(void * address);
@@ -103,7 +103,7 @@ void FlsEmu_Init(FlsEmu_ConfigType const * config)
     FlsEmu_Config = config;
     FlsEmu_ModuleState = FLSEMU_INIT;
     for (idx = 0; idx < FlsEmu_Config->numSegments; ++idx) {
-        printf("FlsEmu_Init-SEG-NAME: %s\n", FlsEmu_Config->segments[idx]->name);
+        //printf("FlsEmu_Init-SEG-NAME: %s\n", FlsEmu_Config->segments[idx]->name);
         FlsEmu_OpenCreate(idx);
     }
 
@@ -114,7 +114,7 @@ void FlsEmu_DeInit(void)
     uint8_t idx;
 
     for (idx = 0; idx < FlsEmu_Config->numSegments; ++idx) {
-        printf("UNLOAD-SEG-NAME: %s\n", FlsEmu_Config->segments[idx]->name);
+        //printf("UNLOAD-SEG-NAME: %s\n", FlsEmu_Config->segments[idx]->name);
         FlsEmu_Close(idx);
     }
     FlsEmu_ModuleState = FLSEMU_UNINIT;
@@ -122,7 +122,6 @@ void FlsEmu_DeInit(void)
 
 static void FlsEmu_OpenCreate(uint8_t segmentIdx)
 {
-    DWORD error;
     int length;
     char adm[1024];
     char rom[1024];
@@ -135,32 +134,25 @@ static void FlsEmu_OpenCreate(uint8_t segmentIdx)
         return;
     }
     segment = FlsEmu_Config->segments[segmentIdx];
-    printf("\tFlsEmu_OpenCreate-SEG-NAME: %s\n", segment->name);
-
     segment->persistentArray = (PersistentArrayType *)malloc(sizeof(PersistentArrayType));
     segment->currentPage = 0x00;
     length = strlen(segment->name);
     strncpy((char *)adm, (char *)segment->name, length);
     adm[length] = '\x00';
     strcat((char *)adm, ".adm");
-    //printf("ADM [%u]:%s\n", strlen(segment->name), adm);
     strncpy((char *)rom, (char *)segment->name, length);
     rom[length] = '\x00';
     strcat((char *)rom, ".rom");
-    //printf("ROM-Name: %s\n", rom);
 
     result = FlsEmu_OpenCreatePersitentArray(rom, segment->memSize, segment->persistentArray);
     if (result == OPEN_ERROR) {
-        error = GetLastError();
-        //printErrorMessage("CreatePersitentArray", error);
+
     } else if (result == NEW_FILE) {
         FillMemory(segment->persistentArray->mappingAddress, segment->memSize, ERASED_VALUE);
     }
 
     result = FlsEmu_OpenCreatePersitentArray(adm, sizeof(FlsEmu_SegmentType) + (segment->memSize * sizeof(uint32_t)), &temp);
     if (result == OPEN_ERROR) {
-        error = GetLastError();
-        //printErrorMessage("CreatePersitentArray", error);
     } else if (result == NEW_FILE) {
         CopyMemory(temp.mappingAddress, segment, sizeof(FlsEmu_SegmentType));
         SecureZeroMemory((uint8_t *)temp.mappingAddress + sizeof(FlsEmu_SegmentType), sizeof(uint32_t));
@@ -194,12 +186,10 @@ static void FlsEmu_Close(uint8_t segmentIdx)
  */
 static bool FlsEmu_Flush(uint8_t segmentIdx)
 {
-    DWORD error;
     MEMORY_BASIC_INFORMATION  info;
     FlsEmu_SegmentType const * segment;
 
     FLSEMU_ASSERT_INITIALIZED();
-    // TODO: range check idx!
 
     if (!VALIDATE_SEGMENT_IDX(segmentIdx)) {
         return FALSE;
@@ -207,20 +197,17 @@ static bool FlsEmu_Flush(uint8_t segmentIdx)
     segment = FlsEmu_Config->segments[segmentIdx];
 
     if (VirtualQuery(segment->persistentArray->mappingAddress, &info, sizeof(MEMORY_BASIC_INFORMATION)) == 0) {
-        error = GetLastError();
-        //printErrorMessage("VirtualQuery", error);
+        Win_ErrorMsg("FlsEmu_Flush::VirtualQuery()", GetLastError());
         return FALSE;
     }
 
     if (!FlushViewOfFile(segment->persistentArray->mappingAddress, info.RegionSize)) {
-        error = GetLastError();
-        //printErrorMessage("FlushViewOfFile", error);
+        Win_ErrorMsg("FlsEmu_Flush::FlushViewOfFile()", GetLastError());
         return FALSE;
     }
 
     if (!FlushFileBuffers(segment->persistentArray->fileHandle)) {
-        error = GetLastError();
-        //printErrorMessage("FlushFileBuffers", error);
+        Win_ErrorMsg("FlsEmu_Flush::FlushFileBuffers()", GetLastError());
         return FALSE;
     }
 
@@ -259,6 +246,7 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
     }
 }
 
+#if 0
 static void FlsEmu_SelectBlock(uint8_t segmentIdx, uint8_t block)
 {
     uint32_t offset, blockSize;
@@ -276,6 +264,7 @@ static void FlsEmu_SelectBlock(uint8_t segmentIdx, uint8_t block)
 
     }
 }
+#endif
 
 void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address)
 {
@@ -363,20 +352,6 @@ void XcpOw_MapFileClose(Xcp_HwMapFileType const * mf)
     CloseHandle(mf->view.mappingHandle);
     CloseHandle(mf->handle);
 }
-
-static bool FlsEmu_Open(FlsEmu_SegmentType * config, char const * name)
-{
-    char target[256];
-
-    //strncpy((char *)target, _countof(target), (char *)name, 0);
-    strncpy((char *)target, (char *)name, _countof(target));
-    strcat_s(target, _countof(target), ".adm");
-    printf("AFTER: %s\n", target);
-
-    printf("FE? :%u\n", FileExits(target));
-
-    return TRUE;
-}
 #endif  // 0
 
 
@@ -392,16 +367,14 @@ static bool FlsEmu_MapView(FlsEmu_SegmentType * config, uint32_t offset, uint32_
 
     error = UnmapViewOfFile(config->persistentArray->mappingAddress);
     if (error == 0UL) {
-        error = GetLastError();
-        //printErrorMessage("FlsEmu_MapView", error);
+        Win_ErrorMsg("FlsEmu_MapView::MapViewOfFile()", GetLastError());
         CloseHandle(config->persistentArray->mappingHandle);
         return FALSE;
     }
 
     config->persistentArray->mappingAddress = (void *)MapViewOfFile(config->persistentArray->mappingHandle, FILE_MAP_ALL_ACCESS, 0, offset, length);
     if (config->persistentArray->mappingAddress == NULL) {
-        error = GetLastError();
-        //printErrorMessage("FlsEmu_MapView", error);
+        Win_ErrorMsg("FlsEmu_MapView::MapViewOfFile()", GetLastError());
         CloseHandle(config->persistentArray->mappingHandle);
         return FALSE;
     }
@@ -474,12 +447,14 @@ static DWORD GetAllocationGranularity(void)
     return info.dwAllocationGranularity;
 }
 
+#if 0
 static bool FileExits(char * const name)
 {
     DWORD attribs = GetFileAttributes(name);
 
     return (attribs != INVALID_FILE_ATTRIBUTES) && !(attribs & FILE_ATTRIBUTE_DIRECTORY);
 }
+#endif // 0
 
 /** @brief Open or create a file.
  *
@@ -496,7 +471,9 @@ static HANDLE OpenCreateFile(char const * fileName, bool create)
     handle = CreateFile(fileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
         (LPSECURITY_ATTRIBUTES)NULL, dispoition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, (HANDLE)NULL
     );
-    //GetFileNameFromHandle(handle);
+    if (handle == INVALID_HANDLE_VALUE) {
+        Win_ErrorMsg("OpenCreateFile::CreateFile()", GetLastError());
+    }
 
     return handle;
 }
@@ -511,6 +488,7 @@ static bool CreateFileView(HANDLE handle, DWORD length, Xcp_HwFileViewType * fil
     /* TODO: Refactor to function; s. FlsEmu_MapView() */
     fileView->mappingAddress = (void *)MapViewOfFile(fileView->mappingHandle, FILE_MAP_ALL_ACCESS, 0, 0, length);
     if (fileView->mappingAddress == NULL) {
+        Win_ErrorMsg("CreateFileView::MapViewOfFile()", GetLastError());
         CloseHandle(fileView->mappingHandle);
         return FALSE;
     }

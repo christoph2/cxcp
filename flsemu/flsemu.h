@@ -97,7 +97,7 @@ typedef struct tagFlsEmu_SegmentType {
 
 typedef struct tagFlsEmu_ConfigType {
     uint8_t numSegments;
-    FlsEmu_SegmentType const ** segments;
+    FlsEmu_SegmentType /*const*/ ** segments;
 } FlsEmu_ConfigType;
 
 /*
