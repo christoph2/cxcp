@@ -141,7 +141,7 @@ uint32_t XcpHw_GetTimerCounter(void)
 #endif // XCP_DAQ_TIMESTAMP_SIZE
 }
 
-#if 0
+
 void Win_ErrorMsg(char * const fun, DWORD errorCode)
 {
     //LPWSTR buffer = NULL;
@@ -156,6 +156,7 @@ void Win_ErrorMsg(char * const fun, DWORD errorCode)
     }
 }
 
+#if 0
 void Win_Error(char * const function, DWORD errorCode)
 {
     char * szBuf;

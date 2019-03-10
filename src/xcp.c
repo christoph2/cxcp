@@ -558,7 +558,6 @@ static const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 */
 void Xcp_Init(void)
 {
-    DBG_PRINT1("Xcp_Init()\n");
     Xcp_ConnectionState = XCP_DISCONNECTED;
 
     Xcp_MemSet(&Xcp_State, UINT8(0), (uint32_t)sizeof(Xcp_StateType));
