@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -62,21 +62,23 @@
 #define XCP_COMM_PORT    (5555)
 
 #define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
-#define DEFAULT_SOCKTYPE   SOCK_STREAM // TCP
-#define DEFAULT_PORT       "5001" // Arbitrary, albiet a historical test port
+#define DEFAULT_SOCKTYPE   SOCK_STREAM //
+#define DEFAULT_PORT       "5555"
 
 
 typedef struct tagXcpTl_ConnectionType {
-    struct sockaddr_in connectionAddress;
-    struct sockaddr_in currentAddress;
+    /*struct sockaddr_in*/ SOCKADDR_STORAGE connectionAddress;
+    /*struct sockaddr_in*/ SOCKADDR_STORAGE currentAddress;
+    SOCKET boundSocket;
+    SOCKET connectedSocket;
     bool connected;
  } XcpTl_ConnectionType;
 
 
-static SOCKET sock = INVALID_SOCKET;
-struct sockaddr_in server = {0};
+int SocketType = SOCK_STREAM;  /* SOCK_DGRAM */
+
 unsigned char buf[XCP_COMM_BUFLEN];
-int addrSize = sizeof(struct sockaddr_in);
+int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
@@ -93,20 +95,6 @@ extern Xcp_PDUType Xcp_PduOut;
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
 
-
-void Win_ErrorMsg(char * const fun, DWORD errorCode)
-{
-    //LPWSTR buffer = NULL;
-    char * buffer = XCP_NULL;
-
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, XCP_NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &buffer, 0, XCP_NULL);
-    if (buffer != XCP_NULL) {
-        fprintf(stderr, "[%s] failed with: [%I32d] %s", fun, errorCode, buffer);
-        LocalFree((HLOCAL)buffer);
-    } else {
-        //DBG_PRINT("FormatMessage failed!\n");
-    }
-}
 
 static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
 {
@@ -147,9 +135,12 @@ void XcpTl_Init(void)
     ADDRINFO Hints, *AddrInfo, *AI;
     char *Address = NULL;
     int Family = PF_INET;
-    int SocketType = SOCK_DGRAM;
     char *Port = DEFAULT_PORT;
+    SOCKET serverSockets[FD_SETSIZE];
+    int boundSocketNum = -1;
+    int numSockets;
     int ret;
+    int idx;
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
 
@@ -162,23 +153,56 @@ void XcpTl_Init(void)
     } else {
 
     }
-
-///////////////////////////////
+    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+    ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     memset(&Hints, 0, sizeof(Hints));
     Hints.ai_family = Family;
     Hints.ai_socktype = SocketType;
     Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
     ret = getaddrinfo(Address, Port, &Hints, &AddrInfo);
     if (ret != 0) {
-        Win_ErrorMsg("XcpTl_Init::getaddrinfo", WSAGetLastError());
+        Win_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
         WSACleanup();
         return;
     }
-
-
+    for (idx = 0, AI = AddrInfo; AI != NULL; AI = AI->ai_next, ++idx) {
+        if (idx == FD_SETSIZE) {
+            printf("getaddrinfo returned more addresses than we could use.\n");
+            break;
+        }
+        if ((AI->ai_family != PF_INET) && (AI->ai_family != PF_INET6)) {
+            continue;
+        }
+        serverSockets[idx] = socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol);
+        if (serverSockets[idx] == INVALID_SOCKET){
+            Win_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
+            continue;
+        }
+        if (bind(serverSockets[idx], AI->ai_addr, AI->ai_addrlen) == SOCKET_ERROR) {
+            Win_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
+            continue;
+        }
+        if (SocketType == SOCK_STREAM) {
+            if (listen(serverSockets[idx], 1) == SOCKET_ERROR) {
+                Win_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());
+                continue;
+            }
+        }
+        printf("Listening [%u] on port %s, protocol %s, protocol family %s\n",
+               idx, Port, (SocketType == SOCK_STREAM) ? "TCP" : "UDP",
+               (AI->ai_family == PF_INET) ? "PF_INET" : "PF_INET6");
+        boundSocketNum = idx;
+        XcpTl_Connection.boundSocket = serverSockets[boundSocketNum];
+        break;  /* NOTE: this is certainly not the best solution. */
+    }
     freeaddrinfo(AddrInfo);
-///////////////////////////////
-
+    if (boundSocketNum == -1) {
+        fprintf(stderr, "Fatal error: unable to serve on any address.\n");
+        WSACleanup();
+        return;
+    }
+    numSockets = idx;
+#if 0
     sock = socket(AF_INET, SOCK_DGRAM, 0);  // AF_INET6
     if (sock == INVALID_SOCKET) {
         Win_ErrorMsg("XcpTl_Init:socket()", WSAGetLastError());
@@ -187,10 +211,11 @@ void XcpTl_Init(void)
     } else {
         //DBG_PRINT1("UDP Socket created!\n");
     }
+#endif // 0
 
     // IN6ADDR_SETV4MAPPED
 
-    if (!Xcp_EnableSocketOption(sock, SO_REUSEADDR)) {
+    if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
 
@@ -199,11 +224,12 @@ void XcpTl_Init(void)
 
 
 #ifdef SO_REUSEPORT
-    if (!Xcp_EnableSocketOption(sock, SO_REUSEPORT)) {
+    if (!Xcp_EnableSocketOption(boundSocket, SO_REUSEPORT)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEPORT)", WSAGetLastError());
     }
 #endif
 
+#if 0
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(XCP_COMM_PORT);
@@ -215,21 +241,26 @@ void XcpTl_Init(void)
 
     getsockname(sock, (SOCKADDR *)&server, (int *)sizeof(server));
     DBG_PRINT3("UDP-Server bound to %s:%d\n", inet_ntoa(server.sin_addr), htons(server.sin_port));
-
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
-    ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
+#endif // 0
 }
 
 void XcpTl_DeInit(void)
 {
-    closesocket(sock);
+    closesocket(XcpTl_Connection.boundSocket);
     WSACleanup();
 }
 
 void XcpTl_MainFunction(void)
 {
+    static uint32_t cnt = 0;
+
     if (XcpTl_FrameAvailable(0, 1000) > 0) {
+        //printf("\tFrameAvailable!!!\n");
         XcpTl_RxHandler();
+    }
+    cnt++;
+    if ((cnt % 1000) == 0) {
+        printf("Bound socket: %d\n", XcpTl_Connection.boundSocket);
     }
 }
 
@@ -237,34 +268,68 @@ void XcpTl_RxHandler(void)
 {
     int recv_len;
     uint16_t dlc;
+    int FromLen;
+    SOCKADDR_STORAGE From;
+    char Hostname[NI_MAXHOST];
 
     memset(buf,'\0', XCP_COMM_BUFLEN);
 
-    recv_len = recvfrom(sock, (char*)buf, XCP_COMM_BUFLEN, 0, (struct sockaddr *)&XcpTl_Connection.currentAddress, &addrSize);
-    if (recv_len == SOCKET_ERROR)
-    {
-        Win_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
-        fflush(stdout);
-    } else if (recv_len > 0) {
+    if (SocketType == SOCK_STREAM) {
+        if (!XcpTl_Connection.connected) {
+            FromLen = sizeof(From);
+            XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, &FromLen);
+            if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
+                Win_ErrorMsg("XcpTl_RxHandler::accept()", WSAGetLastError());
+                //WSACleanup();
+                exit(1);
+                return;
+            }
+            if (getnameinfo((LPSOCKADDR)&From, FromLen, Hostname, sizeof(Hostname), NULL, 0, NI_NUMERICHOST) != 0) {
+                strcpy(Hostname, "<unknown>");
+            }
+            printf("\nAccepted connection from %s\n", Hostname);
+        }
+        //////////////////
+        recv_len = recv(XcpTl_Connection.connectedSocket, (char*)buf, XCP_COMM_BUFLEN, 0);
+        if (recv_len == SOCKET_ERROR) {
+            Win_ErrorMsg("XcpTl_RxHandler::recv()", WSAGetLastError());
+            closesocket(XcpTl_Connection.connectedSocket);
+            return;
+        }
+        if (recv_len == 0) {
+            printf("Client closed connection\n");
+            closesocket(XcpTl_Connection.connectedSocket);
+            return;
+        }
+        //printf("Received %d bytes from client: ", recv_len);
+        //Xcp_Hexdump(buf, recv_len);
+        //////////////////
+    } else {
+        recv_len = recvfrom(XcpTl_Connection.boundSocket, (char*)buf, XCP_COMM_BUFLEN, 0,
+            (LPSOCKADDR)&XcpTl_Connection.currentAddress, &addrSize
+        );
+        if (recv_len == SOCKET_ERROR)
+        {
+            Win_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
+            fflush(stdout);
+        }
+        printf("Received %d bytes from client: ", recv_len);
+        Xcp_Hexdump(buf, recv_len);
+    }
+    if (recv_len > 0) {
         // TODO: Big-Endian!!!
         dlc = (uint16_t)*(buf + 0);
-
-//        DBG_PRINT4("Received packet from %s:%d [%d]\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port), recv_len);
-//        hexdump(buf, recv_len);
-
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
             Xcp_PduIn.len = dlc;
             Xcp_PduIn.data = buf + 4;
             Xcp_DispatchCommand(&Xcp_PduIn);
         }
-
         if (recv_len < 5) {
             fprintf(stdout, "Error: frame to short: %d\n", recv_len);
         } else {
 
         }
         fflush(stdout);
-
     }
 }
 
@@ -278,28 +343,49 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 {
     struct timeval timeout;
     fd_set fds;
+    int16_t res;
 
     timeout.tv_sec = sec;
     timeout.tv_usec = usec;
 
     FD_ZERO(&fds);
-    FD_SET(sock, &fds);
+    FD_SET(XcpTl_Connection.boundSocket, &fds);
+
 
     // Return value:
     // -1: error occurred
     // 0: timed out
     // > 0: data ready to be read
-    return select(0, &fds, 0, 0, &timeout);
+
+    if (SocketType == SOCK_STREAM) {
+        return 1;
+    } else if (SocketType == SOCK_DGRAM) {
+        res = select(0, &fds, 0, 0, &timeout);
+        if (res == SOCKET_ERROR) {
+            Win_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
+        }
+        return res;
+    }
 }
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
-#if 0
-    printf("LEN: %u\t\t", len);
-    Xcp_Hexdump(buf, len);
-#endif // 0
-    if (sendto(sock, (char const *)buf, len, 0, (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
-        Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
+    //printf("Sending... ");
+    //Xcp_Hexdump(buf, len);
+
+    if (SocketType == SOCK_DGRAM) {
+        printf(" DGRAM\n");
+        if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
+            (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
+            Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
+        }
+    } else if (SocketType == SOCK_STREAM) {
+        //printf(" STREAM\n");
+        if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
+            Win_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
+            closesocket(XcpTl_Connection.connectedSocket);
+        }
+        //printf("After send.\n");
     }
 }
 
@@ -308,9 +394,6 @@ void XcpTl_SaveConnection(void)
 {
     CopyMemory(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_in));
     XcpTl_Connection.connected = XCP_TRUE;
-
-    //DBG_PRINT3("CONN %s:%d\n", inet_ntoa(XcpTl_Connection.connectionAddress.sin_addr), ntohs(XcpTl_Connection.connectionAddress.sin_port));
-    //DBG_PRINT3("CURR %s:%d\n", inet_ntoa(XcpTl_Connection.currentAddress.sin_addr), ntohs(XcpTl_Connection.currentAddress.sin_port));
 }
 
 void XcpTl_ReleaseConnection(void)
@@ -323,4 +406,3 @@ bool XcpTl_VerifyConnection(void)
 {
     return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_in)) == 0;
 }
-
