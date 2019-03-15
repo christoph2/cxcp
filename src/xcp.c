@@ -59,7 +59,7 @@ static Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 static Xcp_StateType Xcp_State;
 
 static Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)XCP_NULL;
-static const Xcp_StationIDType Xcp_StationID = { (uint16_t)sizeof(XCP_STATION_ID), (uint8_t const *)XCP_STATION_ID };
+static const Xcp_StationIDType Xcp_StationID = { UINT16(sizeof(XCP_STATION_ID) - UINT16(1)), (uint8_t const *)XCP_STATION_ID };
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
