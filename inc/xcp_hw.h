@@ -37,6 +37,7 @@ extern "C"
 #include <stdint.h>
 #include <stdbool.h>
 
+void Win_ErrorMsg(char * const function, uint32_t errorCode);
 
 #if XCP_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
