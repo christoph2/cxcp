@@ -24,7 +24,6 @@
  */
 
 #include "xcp.h"
-#include "xcp_util.h"
 
 #if defined(_MSC_VER)
 #include <stdio.h>
