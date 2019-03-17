@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -34,10 +34,17 @@ extern "C"
 #endif /* XCP_EXTERN_C_GUARDS */
 
 
-#include <stdint.h>
-#include <stdbool.h>
+//#include <stdint.h>
+//#include <stdbool.h>
 
-void Win_ErrorMsg(char * const function, uint32_t errorCode);
+typedef struct tagXcpHw_OptionsType {
+    bool ipv6;
+    bool tcp;
+} XcpHw_OptionsType;
+
+void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options);
+
+void Win_ErrorMsg(char * const function, unsigned errorCode);
 
 #if XCP_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)

@@ -31,6 +31,7 @@
 #include <stdio.h>
 
 #include "xcp.h"
+#include "xcp_hw.h"
 
 /*
 **  Local Types.
@@ -64,44 +65,22 @@ static HwStateType HwState = {0};
 
 void exitFunc(void);
 
-void Win_ErrorMsg(char * const function, DWORD errorCode);
 
 void exitFunc(void)
 {
-    printf("Exiting programm...\n");
+    printf("Exiting %s...\n", __argv[0]);
     _CrtDumpMemoryLeaks();
-    Sleep(3000);
 }
+
 
 /*
 **  Global Functions.
 */
 void XcpHw_Init(void)
 {
-    LARGE_INTEGER EndingTime, ElapsedMicroseconds;
-
     atexit(exitFunc);
-
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
-    printf("QueryPerformanceFrequency [TicksPerSecond: %lu]\n", HwState.TicksPerSecond);
-
-    QueryPerformanceCounter(&HwState.StartingTime);
-
-// Activity to be timed
-    Sleep(1000);
-
-    QueryPerformanceCounter(&EndingTime);
-    ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - HwState.StartingTime.QuadPart;
-    printf("ETA: %f Secs\n", (float)ElapsedMicroseconds.QuadPart / (float)HwState.TicksPerSecond.QuadPart);
-    printf("XcpHw_GetTimerCounter ticks: %u\n", XcpHw_GetTimerCounter());
-//////
-//////
-//////
-
-    ElapsedMicroseconds.QuadPart *= 1000000;
-    ElapsedMicroseconds.QuadPart /= HwState.TicksPerSecond.QuadPart;
 }
 
 uint32_t XcpHw_GetTimerCounter(void)
@@ -142,7 +121,7 @@ uint32_t XcpHw_GetTimerCounter(void)
 }
 
 
-void Win_ErrorMsg(char * const fun, DWORD errorCode)
+void Win_ErrorMsg(char * const fun, unsigned errorCode)
 {
     //LPWSTR buffer = NULL;
     char * buffer = XCP_NULL;
@@ -156,27 +135,6 @@ void Win_ErrorMsg(char * const fun, DWORD errorCode)
     }
 }
 
-#if 0
-void Win_Error(char * const function, DWORD errorCode)
-{
-    char * szBuf;
-    LPWSTR  lpMsgBuf;
-    WORD len, idx;
-
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, errorCode,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
-
-    len = lstrlen(lpMsgBuf) + 1;
-    szBuf = (char *)_alloca((len * sizeof(lpMsgBuf[0])));
-    for (idx = 0; idx < len; ++idx) {
-        szBuf[idx] = lpMsgBuf[idx];
-    }
-    printf("%s failed with error %d: %s", function, errorCode, szBuf);
-
-    _freea(szBuf);
-    LocalFree(lpMsgBuf);
-}
-#endif
 
 void XcpHw_MainFunction(bool * finished)
 {
@@ -228,3 +186,39 @@ void XcpHw_MainFunction(bool * finished)
     }
 }
 
+
+void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options)
+{
+    int idx;
+    char * arg;
+
+    options->ipv6 = XCP_FALSE;
+    options->tcp = XCP_TRUE;
+
+    if (__argc >= 2) {
+        for(idx = 1; idx < __argc; ++idx) {
+            arg = __argv[idx];
+            if ((arg[0] != '/') && (arg[0] != '-')) {
+                continue;
+            }
+            switch (arg[1]) {
+                case '4':
+                    options->ipv6 = XCP_FALSE;
+                    break;
+                case '6':
+                    options->ipv6 = XCP_TRUE;
+                    break;
+                case 'u':
+                    options->tcp = XCP_FALSE;
+                    break;
+                case 't':
+                    options->tcp = XCP_TRUE;
+                    break;
+                case 'h':
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
