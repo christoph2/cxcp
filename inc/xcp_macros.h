@@ -45,6 +45,10 @@ extern "C"
 #endif /* XCP_EXTERN_C_GUARDS */
 
 
+#if defined(_WIN32) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
+#include <stdio.h>
+#endif // defined(_WIN32)
+
 #if !defined(XCP_LOBYTE)
 #define XCP_LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
 #endif
