@@ -33,8 +33,11 @@
 
 
 #include "xcp.h"
+#include "xcp_hw.h"
 
+#if !defined(__GNUC__)
 #pragma comment(lib,"ws2_32.lib") // MSVC only.
+#endif
 
 
 #define XCP_COMM_PORT    (5555)
@@ -43,6 +46,8 @@
 #define DEFAULT_SOCKTYPE   SOCK_STREAM //
 #define DEFAULT_PORT       "5555"
 
+void Win_ErrorMsg(char * const function, unsigned errorCode);
+
 
 typedef struct tagXcpTl_ConnectionType {
     SOCKADDR_STORAGE connectionAddress;
@@ -50,21 +55,22 @@ typedef struct tagXcpTl_ConnectionType {
     SOCKET boundSocket;
     SOCKET connectedSocket;
     bool connected;
+    int socketType;
  } XcpTl_ConnectionType;
 
-
-int SocketType = SOCK_STREAM;  /* SOCK_DGRAM */
 
 unsigned char buf[XCP_COMM_BUFLEN];
 int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
+static XcpHw_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 
 
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
+
 
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
@@ -89,6 +95,7 @@ static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
     return XCP_TRUE;
 }
 
+
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
@@ -111,7 +118,6 @@ void XcpTl_Init(void)
     WSADATA wsa;
     ADDRINFO Hints, *AddrInfo, *AI;
     char *Address = NULL;
-    int Family = PF_INET;
     char *Port = DEFAULT_PORT;
     SOCKET serverSockets[FD_SETSIZE];
     int boundSocketNum = -1;
@@ -121,20 +127,19 @@ void XcpTl_Init(void)
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
 
+    ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
+    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+    memset(&Hints, 0, sizeof(Hints));
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
-    DBG_PRINT4("%ld %ld %ld\n", dwTimeAdjustment, dwTimeIncrement, fAdjustmentDisabled);
-
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         Win_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
 
     }
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
-    ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
-    memset(&Hints, 0, sizeof(Hints));
-    Hints.ai_family = Family;
-    Hints.ai_socktype = SocketType;
+    XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
+    Hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;
+    Hints.ai_socktype = XcpTl_Connection.socketType;
     Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
     ret = getaddrinfo(Address, Port, &Hints, &AddrInfo);
     if (ret != 0) {
@@ -159,15 +164,14 @@ void XcpTl_Init(void)
             Win_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
             continue;
         }
-        if (SocketType == SOCK_STREAM) {
+        if (XcpTl_Connection.socketType == SOCK_STREAM) {
             if (listen(serverSockets[idx], 1) == SOCKET_ERROR) {
                 Win_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());
                 continue;
             }
         }
-        DBG_PRINT5("Listening [%u] on port %s, protocol %s, protocol family %s\n",
-               idx, Port, (SocketType == SOCK_STREAM) ? "TCP" : "UDP",
-               (AI->ai_family == PF_INET) ? "PF_INET" : "PF_INET6");
+        DBG_PRINT4("Listening on port %s / %s [%s]\n", Port, (XcpTl_Connection.socketType == SOCK_STREAM) ? "TCP" : "UDP",
+               (AI->ai_family == PF_INET) ? "IPv4" : "IPv6");
         boundSocketNum = idx;
         XcpTl_Connection.boundSocket = serverSockets[boundSocketNum];
         break;  /* Grab first address. */
@@ -189,11 +193,13 @@ void XcpTl_Init(void)
 #endif
 }
 
+
 void XcpTl_DeInit(void)
 {
     closesocket(XcpTl_Connection.boundSocket);
     WSACleanup();
 }
+
 
 void XcpTl_MainFunction(void)
 {
@@ -201,6 +207,7 @@ void XcpTl_MainFunction(void)
         XcpTl_RxHandler();
     }
 }
+
 
 void XcpTl_RxHandler(void)
 {
@@ -212,7 +219,7 @@ void XcpTl_RxHandler(void)
 
     memset(buf,'\0', XCP_COMM_BUFLEN);
 
-    if (SocketType == SOCK_STREAM) {
+    if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (!XcpTl_Connection.connected) {
             FromLen = sizeof(From);
             XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, &FromLen);
@@ -248,9 +255,10 @@ void XcpTl_RxHandler(void)
         {
             Win_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
             fflush(stdout);
+            exit(1);
         }
-        printf("Received %d bytes from client: ", recv_len);
-        Xcp_Hexdump(buf, recv_len);
+        //printf("Received %d bytes from client: ", recv_len);
+        //Xcp_Hexdump(buf, recv_len);
     }
     if (recv_len > 0) {
         // TODO: Big-Endian!!!
@@ -275,6 +283,7 @@ void XcpTl_TxHandler(void)
 
 }
 
+
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 {
     struct timeval timeout;
@@ -292,8 +301,7 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
     // -1: error occurred
     // 0: timed out
     // > 0: data ready to be read
-
-    if (((SocketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (SocketType == SOCK_DGRAM)) {
+    if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
         res = select(0, &fds, 0, 0, &timeout);
         if (res == SOCKET_ERROR) {
             Win_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
@@ -304,14 +312,15 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
     }
 }
 
+
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
-    if (SocketType == SOCK_DGRAM) {
+    if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
             (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
             Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         }
-    } else if (SocketType == SOCK_STREAM) {
+    } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
             Win_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
             closesocket(XcpTl_Connection.connectedSocket);
@@ -326,6 +335,7 @@ void XcpTl_SaveConnection(void)
     XcpTl_Connection.connected = XCP_TRUE;
 }
 
+
 void XcpTl_ReleaseConnection(void)
 {
     DBG_PRINT1("XcpTl_ReleaseConnection()\n");
@@ -336,4 +346,9 @@ void XcpTl_ReleaseConnection(void)
 bool XcpTl_VerifyConnection(void)
 {
     return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_in)) == 0;
+}
+
+void XcpTl_SetOptions(XcpHw_OptionsType const * options)
+{
+    Xcp_Options = *options;
 }
