@@ -27,6 +27,7 @@
 #include <crtdbg.h>
 
 #include <windows.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -63,12 +64,18 @@ typedef struct tagHwStateType {
 */
 static HwStateType HwState = {0};
 
+
+static void DisplayHelp(void);
+static void SystemInformation(void);
+
+void FlsEmu_Info(void);
+
 void exitFunc(void);
 
 
 void exitFunc(void)
 {
-    printf("Exiting %s...\n", __argv[0]);
+    //printf("Exiting %s...\n", __argv[0]);
     _CrtDumpMemoryLeaks();
 }
 
@@ -175,6 +182,14 @@ void XcpHw_MainFunction(bool * finished)
                             if (key.wVirtualKeyCode == VK_F9) {
 //                                printf("\tF9\n");
                             }
+                            switch (tolower(key.uChar.AsciiChar)) {
+                                case 'h':
+                                    DisplayHelp();
+                                    break;
+                                case 'i':
+                                    SystemInformation();
+                                    break;
+                            }
                         }
                         break;
                     default:
@@ -222,3 +237,20 @@ void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options)
         }
     }
 }
+
+static void DisplayHelp(void)
+{
+    printf("\nh\tshow this help message\n");
+    printf("<ESC>\texit %s\n", __argv[0]);
+    printf("i\tsystem information\n");
+}
+
+static void SystemInformation(void)
+{
+    printf("\nSystem-Information\n");
+    printf("------------------\n");
+    printf("MAX_CTO: %d  MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
+
+    FlsEmu_Info();
+}
+
