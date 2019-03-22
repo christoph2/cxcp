@@ -19,21 +19,75 @@ Optional Services
 
 Enable/disable optional XCP service categories/services. These options are rather self-explanatory.
 
+Optional Standard Services
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    .. c:macro:: XCP_ENABLE_GET_COMM_MODE_INFO
+    .. c:macro:: XCP_ENABLE_GET_ID
+    .. c:macro:: XCP_ENABLE_SET_REQUEST
+    .. c:macro:: XCP_ENABLE_GET_SEED
+    .. c:macro:: XCP_ENABLE_UNLOCK
+    .. c:macro:: XCP_ENABLE_SET_MTA
+    .. c:macro:: XCP_ENABLE_UPLOAD
+    .. c:macro:: XCP_ENABLE_SHORT_UPLOAD
+    .. c:macro:: XCP_ENABLE_BUILD_CHECKSUM
+    .. c:macro:: XCP_ENABLE_TRANSPORT_LAYER_CMD
+    .. c:macro:: XCP_ENABLE_USER_CMD
+
+
 .. c:macro:: XCP_ENABLE_CAL_COMMANDS
 
-   x
+Optional Calibration Services
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   .. c:macro:: XCP_ENABLE_DOWNLOAD_NEXT
+   .. c:macro:: XCP_ENABLE_DOWNLOAD_MAX
+   .. c:macro:: XCP_ENABLE_SHORT_DOWNLOAD
+   .. c:macro:: XCP_ENABLE_MODIFY_BITS
 
 .. c:macro:: XCP_ENABLE_PAG_COMMANDS
 
-   y
+Optional Paging Services
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+    .. c:macro:: XCP_ENABLE_GET_PAG_PROCESSOR_INFO
+    .. c:macro:: XCP_ENABLE_GET_SEGMENT_INFO
+    .. c:macro:: XCP_ENABLE_GET_PAGE_INFO
+    .. c:macro:: XCP_ENABLE_SET_SEGMENT_MODE
+    .. c:macro:: XCP_ENABLE_GET_SEGMENT_MODE
+    .. c:macro:: XCP_ENABLE_COPY_CAL_PAGE
+
 
 .. c:macro:: XCP_ENABLE_DAQ_COMMANDS
 
-   z
+Optional DAQ Services
+^^^^^^^^^^^^^^^^^^^^^
+
+    .. c:macro:: XCP_ENABLE_GET_DAQ_CLOCK
+    .. c:macro:: XCP_ENABLE_READ_DAQ
+    .. c:macro:: XCP_ENABLE_GET_DAQ_PROCESSOR_INFO
+    .. c:macro:: XCP_ENABLE_GET_DAQ_RESOLUTION_INFO
+    .. c:macro:: XCP_ENABLE_GET_DAQ_LIST_INFO
+    .. c:macro:: XCP_ENABLE_GET_DAQ_EVENT_INFO
+    .. c:macro:: XCP_ENABLE_FREE_DAQ
+    .. c:macro:: XCP_ENABLE_ALLOC_DAQ
+    .. c:macro:: XCP_ENABLE_ALLOC_ODT
+    .. c:macro:: XCP_ENABLE_ALLOC_ODT_ENTRY
+    .. c:macro:: XCP_ENABLE_WRITE_DAQ_MULTIPLE
+
 
 .. c:macro:: XCP_ENABLE_PGM_COMMANDS
 
-   j
+Optional Programming Services
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    .. c:macro:: XCP_ENABLE_GET_PGM_PROCESSOR_INFO
+    .. c:macro:: XCP_ENABLE_GET_SECTOR_INFO
+    .. c:macro:: XCP_ENABLE_PROGRAM_PREPARE
+    .. c:macro:: XCP_ENABLE_PROGRAM_FORMAT
+    .. c:macro:: XCP_ENABLE_PROGRAM_NEXT
+    .. c:macro:: XCP_ENABLE_PROGRAM_MAX
+    .. c:macro:: XCP_ENABLE_PROGRAM_VERIFY
 
 Transport-Layer specific options
 --------------------------------
