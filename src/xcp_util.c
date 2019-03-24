@@ -57,10 +57,10 @@ void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
     }
 }
 
-bool Xcp_MemCmp(void * lhs, void * rhs, uint32_t len)
+bool Xcp_MemCmp(void const * lhs, void const * rhs, uint32_t len)
 {
-    uint8_t * pl = (uint8_t *)lhs;
-    uint8_t * pr = (uint8_t *)rhs;
+    uint8_t const * pl = (uint8_t *)lhs;
+    uint8_t const * pr = (uint8_t *)rhs;
 
     if (len == UINT32(0)) {
         return XCP_FALSE;
