@@ -89,6 +89,8 @@ extern "C"
 #endif
 #endif
 
+#define XCP_CAN_EXT_IDENTIFIER  (0x80000000)
+
 #if !defined(XCP_UNREFERENCED_PARAMETER)
 #define XCP_UNREFERENCED_PARAMETER(x)   (x) = (x)   /*lint  -esym( 714, x ) */
 #endif

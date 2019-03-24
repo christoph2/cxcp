@@ -46,6 +46,8 @@
 #define XCP_BYTE_ORDER                              XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY                     XCP_ADDRESS_GRANULARITY_BYTE
 
+#define XCP_ENFORCE_CAN_RESTRICTIONS				XCP_OFF
+
 #define XCP_MAX_CTO                                 (16)  //(255)
 #define XCP_MAX_DTO                                 (16)  //(1500)
 
@@ -77,7 +79,7 @@
 
 
 /*
-**  Enable optional Commands.
+**  Optional Services.
 */
     #define XCP_ENABLE_GET_COMM_MODE_INFO           XCP_ON
     #define XCP_ENABLE_GET_ID                       XCP_ON
@@ -138,6 +140,15 @@
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE            (2)     /* [0 | 1 | 2] */
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE           (0)     /* [0 | 1 | 2] */
 
+#define XCP_ON_CAN_INBOUND_IDENTIFIER				(0x101 | XCP_CAN_EXT_IDENTIFIER)
+#define XCP_ON_CAN_OUTBOUND_IDENTIFIER				(0x102 | XCP_CAN_EXT_IDENTIFIER)
+#define XCP_ON_CAN_FREQ								(canBITRATE_250K)
+#define XCP_ON_CAN_BTQ								(16)
+#define XCP_ON_CAN_TSEG1							(14)
+#define XCP_ON_CAN_TSEG2							(2)
+#define XCP_ON_CAN_SJW								(2)
+#define XCP_ON_CAN_NOSAMP							(1)
+
 /*
 **  Customization Options.
 */
@@ -151,7 +162,7 @@
 #define XCP_DAQ_ODT_ENTRY_TYPE                      uint8_t
 
 /*
-**  Platform dependent Options.
+**  Platform specific Options.
 */
 #define XCP_ENTER_CRITICAL()
 #define XCP_LEAVE_CRITICAL()
