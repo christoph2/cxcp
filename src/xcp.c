@@ -1120,7 +1120,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
     Xcp_ChecksumType checksum;
     uint8_t const * ptr;
 
-    DBG_PRINT2("BUILD_CHECKSUM [blocksize: %lu]\n", blockSize);
+    DBG_PRINT2("BUILD_CHECKSUM [blocksize: %u]\n", blockSize);
     XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_READ, XCP_FALSE);
 #if XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE > 0
     /* We need to range check. */
@@ -1185,7 +1185,7 @@ static void Xcp_Download_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT2("DOWNLOAD [len: %u]\n", len);
     XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
     //Xcp_CopyMemory(Xcp_State.mta, pdu->data + 2, (uint32_t)len);
-    Xcp_MemCopy(Xcp_State.mta.address, pdu->data + 2, (uint32_t)len);
+    Xcp_MemCopy((void*)Xcp_State.mta.address, pdu->data + 2, (uint32_t)len);
 
     Xcp_State.mta.address += UINT32(len);
 
@@ -1211,7 +1211,7 @@ static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
 
     //Xcp_Hexdump(pdu->data + 8, len);
 
-    Xcp_MemCopy(dst.address, pdu->data + 8, (uint32_t)len);
+    Xcp_MemCopy((void*)dst.address, pdu->data + 8, (uint32_t)len);
     Xcp_State.mta.address += UINT32(len);
 
     XCP_POSITIVE_RESPONSE();
@@ -1560,7 +1560,7 @@ static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 #endif // XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED
 
     timestamp = XcpHw_GetTimerCounter();
-    DBG_PRINT2("GET_DAQ_CLOCK [timestamp: %lu]\n", timestamp);
+    DBG_PRINT2("GET_DAQ_CLOCK [timestamp: %u]\n", timestamp);
 
     Xcp_Send8(UINT8(8), UINT8(0xff),
         UINT8(0), UINT8(0), UINT8(0),
