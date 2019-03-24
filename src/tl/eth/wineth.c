@@ -170,8 +170,6 @@ void XcpTl_Init(void)
                 continue;
             }
         }
-        DBG_PRINT4("Listening on port %s / %s [%s]\n", Port, (XcpTl_Connection.socketType == SOCK_STREAM) ? "TCP" : "UDP",
-               (AI->ai_family == PF_INET) ? "IPv4" : "IPv6");
         boundSocketNum = idx;
         XcpTl_Connection.boundSocket = serverSockets[boundSocketNum];
         break;  /* Grab first address. */
@@ -215,9 +213,9 @@ void XcpTl_RxHandler(void)
     uint16_t dlc;
     int FromLen;
     SOCKADDR_STORAGE From;
-    char Hostname[NI_MAXHOST];
+    char hostname[NI_MAXHOST];
 
-    memset(buf,'\0', XCP_COMM_BUFLEN);
+    ZeroMemory(buf,XCP_COMM_BUFLEN);
 
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (!XcpTl_Connection.connected) {
@@ -229,10 +227,12 @@ void XcpTl_RxHandler(void)
                 exit(1);
                 return;
             }
-            if (getnameinfo((LPSOCKADDR)&From, FromLen, Hostname, sizeof(Hostname), NULL, 0, NI_NUMERICHOST) != 0) {
-                strcpy(Hostname, "<unknown>");
+            if (getnameinfo((LPSOCKADDR)&From, FromLen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) != 0) {
+                strcpy(hostname, "<unknown>");
+                //Win_ErrorMsg("XcpTl_RxHandler::getnameinfo()", WSAGetLastError());
             }
-            DBG_PRINT2("\nAccepted connection from %s\n", Hostname);
+            DBG_PRINT2("\nAccepted connection from %s\n", hostname);
+
         }
         recv_len = recv(XcpTl_Connection.connectedSocket, (char*)buf, XCP_COMM_BUFLEN, 0);
         if (recv_len == SOCKET_ERROR) {
@@ -317,7 +317,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
-            (struct sockaddr*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
+            (SOCKADDR_STORAGE*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
             Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
@@ -331,24 +331,30 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
 
 void XcpTl_SaveConnection(void)
 {
-    CopyMemory(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_in));
+    CopyMemory(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE));
     XcpTl_Connection.connected = XCP_TRUE;
 }
 
 
 void XcpTl_ReleaseConnection(void)
 {
-    DBG_PRINT1("XcpTl_ReleaseConnection()\n");
     XcpTl_Connection.connected = XCP_FALSE;
 }
 
 
 bool XcpTl_VerifyConnection(void)
 {
-    return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_in)) == 0;
+    return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
 }
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options)
 {
     Xcp_Options = *options;
 }
+
+void XcpTl_DisplayInfo(void)
+{
+	printf("\nXCPonEth -- Listening on port %s / %s [%s]\n", DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4");
+	fflush(stdout);
+}
+
