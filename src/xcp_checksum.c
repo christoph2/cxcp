@@ -338,7 +338,6 @@ void Xcp_ChecksumInit(void)
     Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_IDLE;
 }
 
-static uint32_t counter = 0ul;
 
 void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size)
 {
