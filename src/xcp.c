@@ -831,7 +831,7 @@ static void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_Disconnect_Res(Xcp_PDUType const * const pdu)
 {
-    DBG_PRINT1("DISCONNECT\n");
+    DBG_PRINT1("DISCONNECT\n\n");
 
     XCP_POSITIVE_RESPONSE();
     Xcp_Disconnect();

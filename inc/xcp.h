@@ -71,10 +71,32 @@ extern "C"
     #error UNLOCK requires GET_SEED
 #endif
 
-#if XCP_DAQ_MAX_EVENT_CHANNEL < 1
+#if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_MAX_EVENT_CHANNEL < 1)
     #error XCP_DAQ_MAX_EVENT_CHANNEL must be at least 1
 #endif // XCP_DAQ_MAX_EVENT_CHANNEL
 
+#if XCP_ENFORCE_CAN_RESTRICTIONS == XCP_ON
+#if XCP_MAX_CTO != 8
+#error XCP_MAX_CTO must be set to 8
+#endif // XCP_MAX_CTO
+
+#if XCP_MAX_DTO != 8
+#error XCP_MAX_DTO must be set to 8
+#endif // XCP_MAX_DTO
+
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE  != 0
+#error XCP_TRANSPORT_LAYER_LENGTH_SIZE must be set to 0
+#endif  // XCP_TRANSPORT_LAYER_LENGTH_SIZE
+
+#if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
+#error XCP_TRANSPORT_LAYER_COUNTER_SIZE must be set to 0
+#endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
+
+#if XCP_TRANSPORT_LAYER_CHECKSUM_SIZE!= 0
+#error XCP_TRANSPORT_LAYER_CHECKSUM_SIZE must be set to 0
+#endif // XCP_TRANSPORT_LAYER_CHECKSUM_SIZE
+
+#endif // XCP_ENFORCE_CAN_RESTRICTIONS
 
 /*
 **  Available Resources.
@@ -125,9 +147,11 @@ extern "C"
 ** Global Types.
 */
 
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 typedef XCP_DAQ_LIST_TYPE XcpDaq_ListIntegerType;
 typedef XCP_DAQ_ODT_TYPE XcpDaq_ODTIntegerType;
 typedef XCP_DAQ_ODT_ENTRY_TYPE XcpDaq_ODTEntryIntegerType;
+#endif // XCP_ENABLE_DAQ_COMMANDS
 
 typedef enum tagXcp_CommandType {
 //
@@ -273,6 +297,7 @@ typedef struct tagXcp_MtaType {
     uint32_t address;
 } Xcp_MtaType;
 
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 typedef struct tagXcpDaq_MtaType {
 #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     uint8_t ext;
@@ -298,6 +323,7 @@ typedef struct tagXcpDaq_PointerType {
     XcpDaq_ODTIntegerType odt;
     XcpDaq_ODTEntryIntegerType odtEntry;
 } XcpDaq_PointerType;
+#endif // XCP_ENABLE_DAQ_COMMANDS
 
 typedef struct tagXcp_StateType {
     bool connected;
@@ -348,6 +374,7 @@ typedef struct tagXcp_StationIDType {
 } Xcp_StationIDType;
 
 
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 typedef struct tagXcpDaq_ODTEntryType {
     XcpDaq_MtaType mta;
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
@@ -396,13 +423,7 @@ typedef struct tagXcpDaq_EntityType {
         XcpDaq_ListType daqList;
     } entity;
 } XcpDaq_EntityType;
-
-
-typedef enum tagXcp_MemoryAccessType {
-    XCP_MEM_ACCESS_READ,
-    XCP_MEM_ACCESS_WRITE,
-} Xcp_MemoryAccessType;
-
+
 
 typedef struct tagXcpDaq_EventType {
     uint8_t const * name;
@@ -415,7 +436,13 @@ typedef struct tagXcpDaq_EventType {
 6  BYTE  EVENT_CHANNEL_PRIORITY         (FF highest)
 */
 } XcpDaq_EventType;
+#endif // XCP_ENABLE_DAQ_COMMANDS
 
+
+typedef enum tagXcp_MemoryAccessType {
+    XCP_MEM_ACCESS_READ,
+    XCP_MEM_ACCESS_WRITE,
+} Xcp_MemoryAccessType;
 
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
@@ -444,9 +471,11 @@ void Xcp_SetBusy(bool enable);
 bool Xcp_IsBusy(void);
 Xcp_StateType const * Xcp_GetState(void);
 
+
 /*
 ** DAQ Implementation Functions.
 */
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 void XcpDaq_Init(void);
 Xcp_ReturnType XcpDaq_Free(void);
 Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount);
@@ -466,6 +495,7 @@ void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state);
 void XcpDaq_StartSelectedLists(void);
 void XcpDaq_StopSelectedLists(void);
 void XcpDaq_StopAllLists(void);
+#endif // XCP_ENABLE_DAQ_COMMANDS
 
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)
@@ -532,6 +562,7 @@ void XcpTl_ReleaseConnection(void);
 bool XcpTl_VerifyConnection(void);
 void XcpTl_FeedReceiver(uint8_t octet);
 void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
+void XcpTl_DisplayInfo(void);
 
 /*
 **  Customization Stuff.
