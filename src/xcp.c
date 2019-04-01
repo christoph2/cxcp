@@ -639,24 +639,35 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 
 void Xcp_SendPdu(void)
 {
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE != 0
     const uint16_t len = Xcp_PduOut.len;
+#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
 
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
+    Xcp_PduOut.data[0] = XCP_LOBYTE(len);
+#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
     Xcp_PduOut.data[0] = XCP_LOBYTE(len);
     Xcp_PduOut.data[1] = XCP_HIBYTE(len);
-#if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
-    Xcp_PduOut.data[2] = XCP_LOBYTE(Xcp_State.counter);
-    Xcp_PduOut.data[3] = XCP_HIBYTE(Xcp_State.counter);
+#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
+
+#if XCP_TRANSPORT_LAYER_COUNTER_SIZE == 1
+    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_State.counter++;
+#elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
+    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
 
     //DBG_PRINT1("Sending PDU: ");
-    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + (uint16_t)4);
+    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+    // XCP_TRANSPORT_LAYER_BUFFER_OFFSET
 }
 
 
 uint8_t * Xcp_GetOutPduPtr(void)
 {
-    return &(Xcp_PduOut.data[4]);
+    return &(Xcp_PduOut.data[XCP_TRANSPORT_LAYER_BUFFER_OFFSET]);
 }
 
 void Xcp_SetPduOutLen(uint16_t len)
@@ -668,6 +679,10 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
 {
 
     uint8_t * dataOut = Xcp_GetOutPduPtr();
+
+#if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
+    len = XCP_MAX_CTO;
+#endif // XCP_ON_CAN_MAX_DLC_REQUIRED
 
     Xcp_SetPduOutLen((uint16_t)len);
 
@@ -718,8 +733,11 @@ static void Xcp_Upload(uint8_t len)
     Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)len);
 
     Xcp_State.mta.address += UINT32(len);   // Advance MTA.
-
+#if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
+    Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+#else
     Xcp_SetPduOutLen(UINT16(len + 1));
+#endif // XCP_ON_CAN_MAX_DLC_REQUIRED
     Xcp_SendPdu();
 }
 
@@ -990,7 +1008,11 @@ static void Xcp_GetSeed_Res(Xcp_PDUType const * const pdu)
     Xcp_State.seedRequested |= resource;
     dataOut[0] = ERR_SUCCESS;
     dataOut[1] = length;
+#if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
+    Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+#else
     Xcp_SetPduOutLen(UINT16(length + 2));
+#endif // XCP_ON_CAN_MAX_DLC_REQUIRED
     Xcp_SendPdu();
 }
 #endif // XCP_ENABLE_GET_SEED
