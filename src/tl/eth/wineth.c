@@ -206,6 +206,13 @@ void XcpTl_MainFunction(void)
     }
 }
 
+void *get_in_addr(struct sockaddr *sa)
+{
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*)sa)->sin_addr);
+	}
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
 
 void XcpTl_RxHandler(void)
 {
@@ -227,10 +234,12 @@ void XcpTl_RxHandler(void)
                 exit(1);
                 return;
             }
-            if (getnameinfo((LPSOCKADDR)&From, FromLen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) != 0) {
-                strcpy(hostname, "<unknown>");
-                //Win_ErrorMsg("XcpTl_RxHandler::getnameinfo()", WSAGetLastError());
-            }
+//			inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
+//			printf("server: got connection from %s\n", s);
+//            if (getnameinfo(&From, FromLen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) != 0) {
+//                strcpy(hostname, "<unknown>");
+//                //Win_ErrorMsg("XcpTl_RxHandler::getnameinfo()", WSAGetLastError());
+//            }
             DBG_PRINT2("\nAccepted connection from %s\n", hostname);
 
         }
@@ -261,11 +270,15 @@ void XcpTl_RxHandler(void)
         //Xcp_Hexdump(buf, recv_len);
     }
     if (recv_len > 0) {
-        // TODO: Big-Endian!!!
-        dlc = (uint16_t)*(buf + 0);
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
+		dlc = (uint16_t)buf[0];
+#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
+		dlc = MAKEWORD(buf[0], buf[1]);
+        //dlc = (uint16_t)*(buf + 0);
+#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
             Xcp_PduIn.len = dlc;
-            Xcp_PduIn.data = buf + 4;
+            Xcp_PduIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
             Xcp_DispatchCommand(&Xcp_PduIn);
         }
         if (recv_len < 5) {
@@ -295,7 +308,6 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 
     FD_ZERO(&fds);
     FD_SET(XcpTl_Connection.boundSocket, &fds);
-
 
     // Return value:
     // -1: error occurred

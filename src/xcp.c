@@ -1024,7 +1024,7 @@ static void Xcp_Unlock_Res(Xcp_PDUType const * const pdu)
     uint8_t length = Xcp_GetByte(pdu, UINT8(1));
     Xcp_1DArrayType key;
 
-    DBG_PRINT2("UNLOCK [length %u]\n", length);
+    DBG_PRINT2("UNLOCK [length: %u]\n", length);
 
     if (Xcp_State.seedRequested == UINT8(0)) {
         XCP_ERROR_RESPONSE(ERR_SEQUENCE);
