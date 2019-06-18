@@ -41,7 +41,6 @@ release = '1.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
-    #'sphinx.ext.boost',
 #    'sphinx.ext.todo'
 ]
 
