@@ -157,6 +157,13 @@ extern "C"
 
 
 /*
+**  XCPonCAN specific function-like macros.
+*/
+#define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i)    (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
+#define XCP_ON_CAN_STRIP_IDENTIFIER(i)          ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
+
+
+/*
 ** Global Types.
 */
 
