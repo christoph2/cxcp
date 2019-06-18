@@ -659,9 +659,7 @@ void Xcp_SendPdu(void)
     Xcp_State.counter++;
 #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
 
-    //DBG_PRINT1("Sending PDU: ");
     XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
-    // XCP_TRANSPORT_LAYER_BUFFER_OFFSET
 }
 
 
