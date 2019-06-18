@@ -40,6 +40,7 @@ static FlsEmu_SegmentType S12D512_PagedFlash = {
     4,
     0x8000,
     XCP_NULL,
+    0,
 };
 
 static FlsEmu_SegmentType S12D512_EEPROM = {
@@ -51,6 +52,7 @@ static FlsEmu_SegmentType S12D512_EEPROM = {
     1,
     0x4000,
     XCP_NULL,
+    0,
 };
 
 
@@ -61,9 +63,10 @@ static FlsEmu_SegmentType const * segments[] = {
 
 static const FlsEmu_ConfigType FlsEmu_Config = {
     2,
-    segments,
+    (FlsEmu_SegmentType**)segments,
 };
 
+#if 0
 void memimnfo(void * ptr)
 {
     /*
@@ -83,7 +86,7 @@ void memimnfo(void * ptr)
                info.AllocationProtect, info.Protect, info.Type);
     }
 }
-
+#endif
 
 
 

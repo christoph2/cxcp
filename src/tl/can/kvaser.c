@@ -34,9 +34,10 @@
 #define KV_MAX_DLC     ((uint16_t)8)   /* TODO: depends on classic or FD. */
 
 
+#if 0
 static const uint8_t GET_SLAVE_ID_ECHO[] = {UINT8(0x58), UINT8(0x43), UINT8(0x50)};
 static const uint8_t GET_SLAVE_ID_INVERSE_ECHO[] = {UINT8(0xA7), UINT8(0xBC), UINT8(0xAF)};
-
+#endif
 
 typedef struct tagXcpTl_ConnectionType {
     int virtualChannel;
@@ -143,7 +144,7 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
             } else if (status & canSTAT_ERROR_ACTIVE) {
                 /** Kv_Info("Error-Active"); */
             } else {
-                printf("BusOn/BusOff %d\n", status);  // ???
+                printf("BusOn/BusOff %lu\n", status);  // ???
             }
             break;
         default:
@@ -203,16 +204,17 @@ void XcpTl_DeInit(void)
     //Kv_Check("canClose", stat);
 }
 
-
+#if 0
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 {
     return 1;
 }
+#endif
 
 
 static uint16_t XcpTl_SetDLC(uint16_t len)
 {
-    static const FD_DLCS[] = {12, 16, 20, 24, 32, 48, 64};
+    static const uint16_t FD_DLCS[] = {12, 16, 20, 24, 32, 48, 64};
     uint8_t idx;
 
     if (len <= 8) {
@@ -272,7 +274,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     id = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
     ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
     flag = ext ? canMSG_EXT : canMSG_STD;
-    stat = canWrite(XcpTl_Connection.handle, id, buf, len, flag);
+    stat = canWrite(XcpTl_Connection.handle, id, (void*)buf, len, flag);
     //printf("Send Handle %d %x %d %d %d\n", XcpTl_Connection.handle, id, ext, flag, len);
     Kv_Check("canWrite", stat);
 }
@@ -336,7 +338,9 @@ void XcpTl_DisplayInfo(void)
 
     ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER);
     stat = canGetChannelData(XcpTl_Connection.handle, canCHANNELDATA_CHAN_NO_ON_CARD, &num, sizeof(num));
+    Kv_Check("canGetChannelData", stat);
     stat = canGetChannelData(XcpTl_Connection.handle, canCHANNELDATA_DEVDESCR_ASCII, &name, sizeof(name));
+    Kv_Check("canGetChannelData", stat);
     printf("\nXCPonCAN -- %s (channel %d), listening on 0x%X [%s]\n", name, num,
         XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
     );
