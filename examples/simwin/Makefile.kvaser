@@ -1,7 +1,7 @@
 vpath %.c ../../src
 
 PROGRAMS = xcp_sim_kvaser
-
+KV_BASE_DIR = f:/kvaser/Canlib
 xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/win/hw.c tl/can/kvaser.c main.c ../flsemu/flsemu.c
 xcp_sim_OBJS = $(xcp_sim_SRC:%.c=%.o)
 
@@ -11,11 +11,19 @@ xcp_sim_TARGET=xcp_sim_kvaser
 INCLUDE= -I . -I ../../inc -I ../../flsemu
 CPPFLAGS += $(INCLUDE)
 CPPFLAGS += -DKVASER_CAN
-CFLAGS += -m32 -g -O0 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -fprofile-arcs -ftest-coverage --coverage -ffunction-sections
+CFLAGS += -m32 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -ffunction-sections
 LDFLAGS= -lws2_32 -Wl,-Map=xcp_sim.map -Wl,--cref -Wl,-gc-sections
+ifeq ($(PROFILE),1)
+CFLAGS += -fprofile-arcs -ftest-coverage --coverage
+endif
+ifeq ($(DEBUG),1)
+CFLAGS += -g -O0
+else
+CFLAGS += -O3
+endif
 
-INCLUDE+=-I f:/kvaser/Canlib/INC
-LDFLAGS+=-L F:/Kvaser/Canlib/Lib/MS -l canlib32
+INCLUDE+=-I $(KV_BASE_DIR)/INC
+LDFLAGS+=-L $(KV_BASE_DIR)/Lib/MS -l canlib32
 
 all: $(PROGRAMS)
 
