@@ -113,11 +113,11 @@ Xcp_ReturnType XcpDaq_Free(void)
     XcpDaq_OdtCount = UINT16(0);
 
 #if XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  == XCP_OFF
-    Xcp_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
+    XcpUtl_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
 #endif // XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED
 
     if (XcpDaq_AllocValidateTransition(XCP_CALL_FREE_DAQ)) {
-        Xcp_MemSet(XcpDaq_Entities, UINT8(0), UINT32(sizeof(XcpDaq_EntityType) * UINT16(NUM_DAQ_ENTITIES)));
+        XcpUtl_MemSet(XcpDaq_Entities, UINT8(0), UINT32(sizeof(XcpDaq_EntityType) * UINT16(NUM_DAQ_ENTITIES)));
         XcpDaq_AllocState = XCP_AFTER_FREE_DAQ;
     } else {
         result = ERR_SEQUENCE;
@@ -346,6 +346,42 @@ void XcpDaq_DumpEntities(void)
                 break;
         }
     }
+}
+
+void XcpDaq_Info(void)
+{
+    Xcp_StateType const * Xcp_State;
+
+    XCP_DAQ_ENTER_CRITICAL();
+    Xcp_State = Xcp_GetState();
+    XCP_DAQ_LEAVE_CRITICAL();
+
+    printf("DAQ\n---\n");
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+    printf("Processor state       : ");
+    switch (Xcp_State->daqProcessor.state) {
+        case XCP_DAQ_STATE_UNINIT:
+            printf("Uninitialized");
+            break;
+        case XCP_DAQ_STATE_CONFIG_INVALID:
+            printf("Configuration invalid");
+            break;
+        case XCP_DAQ_STATE_CONFIG_VALID:
+            printf("Configuration valid");
+            break;
+        case XCP_DAQ_STATE_STOPPED:
+            printf("Stopped");
+            break;
+        case XCP_DAQ_STATE_RUNNING:
+            printf("Running");
+            break;
+    }
+    printf("\n");
+    XcpDaq_DumpEntities();
+    printf("Allocated DAQ entities: %d of %d\n", XcpDaq_EntityCount, NUM_DAQ_ENTITIES);
+#else
+    printf("\tfunctionality not supported.\n");
+#endif
 }
 #endif
 
