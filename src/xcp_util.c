@@ -31,14 +31,14 @@
 #include <stdio.h>
 #endif // _MSC_VER
 
-void Xcp_MemCopy(void * dst, void * src, uint32_t len)
+void XcpUtl_MemCopy(void * dst, void * src, uint32_t len)
 {
     uint8_t * pd = (uint8_t *)dst;
     uint8_t * ps = (uint8_t *)src;
 
-//    ASSERT(dst != (void *)NULL);
-//    ASSERT(pd >= ps + len || ps >= pd + len);
-//    ASSERT(len != (uint16_t)0);
+/*    ASSERT(dst != (void *)NULL); */
+/*    ASSERT(pd >= ps + len || ps >= pd + len); */
+/*    ASSERT(len != (uint16_t)0); */
 
     while (len--) {
         *pd++ = *ps++;
@@ -46,18 +46,18 @@ void Xcp_MemCopy(void * dst, void * src, uint32_t len)
 
 }
 
-void Xcp_MemSet(void * dest, uint8_t fill_char, uint32_t len)
+void XcpUtl_MemSet(void * dest, uint8_t fill_char, uint32_t len)
 {
     uint8_t * p = (uint8_t *)dest;
 
-//    ASSERT(dest != (void *)NULL);
+/*    ASSERT(dest != (void *)NULL); */
 
     while (len--) {
         *p++ = fill_char;
     }
 }
 
-bool Xcp_MemCmp(void const * lhs, void const * rhs, uint32_t len)
+bool XcpUtl_MemCmp(void const * lhs, void const * rhs, uint32_t len)
 {
     uint8_t const * pl = (uint8_t *)lhs;
     uint8_t const * pr = (uint8_t *)rhs;
@@ -71,7 +71,7 @@ bool Xcp_MemCmp(void const * lhs, void const * rhs, uint32_t len)
 }
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-void Xcp_Hexdump(uint8_t const * buf, uint16_t sz)
+void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz)
 {
     uint16_t idx;
 
@@ -81,13 +81,13 @@ void Xcp_Hexdump(uint8_t const * buf, uint16_t sz)
     DBG_PRINT1("\n");
 }
 
-void Xcp_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
+void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
 {
     uint32_t  mod;
     uint8_t   pos = (uint8_t)0x00, swap_pos = (uint8_t)0x00;
     uint8_t   ch;
 
-    //ASSERT(buf != (void *)NULL);
+    /* ASSERT(buf != (void *)NULL); */
     if (((int32_t)value) < 0L && base == (uint8_t)10) {
         value      = (uint32_t)((int32_t)value * -1L);
         buf[0]     = '-';
