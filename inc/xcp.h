@@ -63,7 +63,7 @@ extern "C"
 */
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
     #define XCP_ENFORCE_CAN_RESTRICTIONS    XCP_ON
-#endif // XCP_TRANSPORT_LAYER
+#endif /* XCP_TRANSPORT_LAYER */
 
 #if (XCP_ENABLE_GET_SEED == XCP_ON) && (XCP_ENABLE_UNLOCK == XCP_ON)
     #define XCP_ENABLE_RESOURCE_PROTECTION  (XCP_ON)
@@ -77,29 +77,29 @@ extern "C"
 
 #if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_MAX_EVENT_CHANNEL < 1)
     #error XCP_DAQ_MAX_EVENT_CHANNEL must be at least 1
-#endif // XCP_DAQ_MAX_EVENT_CHANNEL
+#endif /* XCP_DAQ_MAX_EVENT_CHANNEL */
 
 #if XCP_ENFORCE_CAN_RESTRICTIONS == XCP_ON
     #if XCP_MAX_CTO != 8
         #error XCP_MAX_CTO must be set to 8
-    #endif // XCP_MAX_CTO
+    #endif /* XCP_MAX_CTO */
     #if XCP_MAX_DTO != 8
         #error XCP_MAX_DTO must be set to 8
-    #endif // XCP_MAX_DTO
+    #endif /* XCP_MAX_DTO */
     #if XCP_TRANSPORT_LAYER_LENGTH_SIZE  != 0
         #error XCP_TRANSPORT_LAYER_LENGTH_SIZE must be set to 0
-    #endif  // XCP_TRANSPORT_LAYER_LENGTH_SIZE
+    #endif  /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
     #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
         #error XCP_TRANSPORT_LAYER_COUNTER_SIZE must be set to 0
-    #endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
+    #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
     #if XCP_TRANSPORT_LAYER_CHECKSUM_SIZE!= 0
         #error XCP_TRANSPORT_LAYER_CHECKSUM_SIZE must be set to 0
-    #endif // XCP_TRANSPORT_LAYER_CHECKSUM_SIZE
+    #endif /* XCP_TRANSPORT_LAYER_CHECKSUM_SIZE */
 #else
     #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
         #error XCP_ON_CAN_MAX_DLC_REQUIRED only applies to XCP_ON_CAN
-    #endif // XCP_ON_CAN_MAX_DLC_REQUIRED
-#endif // XCP_ENFORCE_CAN_RESTRICTIONS
+    #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
+#endif /* XCP_ENFORCE_CAN_RESTRICTIONS */
 
 #if (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0) && (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 1) && (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 2)
     #error XCP_TRANSPORT_LAYER_COUNTER_SIZE must be 0, 1, or 2
@@ -171,22 +171,22 @@ extern "C"
 typedef XCP_DAQ_LIST_TYPE XcpDaq_ListIntegerType;
 typedef XCP_DAQ_ODT_TYPE XcpDaq_ODTIntegerType;
 typedef XCP_DAQ_ODT_ENTRY_TYPE XcpDaq_ODTEntryIntegerType;
-#endif // XCP_ENABLE_DAQ_COMMANDS
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 typedef enum tagXcp_CommandType {
-//
-// STD
-//
-    //
-    // Mandatory Commands.
-    //
+/*
+** STD
+*/
+    /*
+    ** Mandatory Commands.
+    */
     XCP_CONNECT                 = UINT8(0xFF),
     XCP_DISCONNECT              = UINT8(0xFE),
     XCP_GET_STATUS              = UINT8(0xFD),
     XCP_SYNCH                   = UINT8(0xFC),
-    //
-    // Optional Commands.
-    //
+    /*
+    ** Optional Commands.
+    */
     XCP_GET_COMM_MODE_INFO      = UINT8(0xFB),
     XCP_GET_ID                  = UINT8(0xFA),
     XCP_SET_REQUEST             = UINT8(0xF9),
@@ -199,54 +199,54 @@ typedef enum tagXcp_CommandType {
 
     XCP_TRANSPORT_LAYER_CMD     = UINT8(0xF2),
     XCP_USER_CMD                = UINT8(0xF1),
-//
-// CAL
-//
-    //
-    // Mandatory Commands.
-    //
+/*
+** CAL
+*/
+    /*
+    ** Mandatory Commands.
+    */
     XCP_DOWNLOAD                = UINT8(0xF0),
-    //
-    // Optional Commands.
-    //
+    /*
+    ** Optional Commands.
+    */
     XCP_DOWNLOAD_NEXT           = UINT8(0xEF),
     XCP_DOWNLOAD_MAX            = UINT8(0xEE),
     XCP_SHORT_DOWNLOAD          = UINT8(0xED),
     XCP_MODIFY_BITS             = UINT8(0xEC),
-//
-// PAG
-//
-    //
-    // Mandatory Commands.
-    //
+/*
+** PAG
+*/
+    /*
+    ** Mandatory Commands.
+    */
     XCP_SET_CAL_PAGE            = UINT8(0xEB),
     XCP_GET_CAL_PAGE            = UINT8(0xEA),
-    //
-    // Optional Commands.
-    //
+    /*
+    ** Optional Commands.
+    */
     XCP_GET_PAG_PROCESSOR_INFO  = UINT8(0xE9),
     XCP_GET_SEGMENT_INFO        = UINT8(0xE8),
     XCP_GET_PAGE_INFO           = UINT8(0xE7),
     XCP_SET_SEGMENT_MODE        = UINT8(0xE6),
     XCP_GET_SEGMENT_MODE        = UINT8(0xE5),
     XCP_COPY_CAL_PAGE           = UINT8(0xE4),
-//
-// DAQ
-//
-    //
-    // Mandatory Commands.
-    //
+/*
+** DAQ
+*/
+    /*
+    ** Mandatory Commands.
+    */
     XCP_CLEAR_DAQ_LIST          = UINT8(0xE3),
     XCP_SET_DAQ_PTR             = UINT8(0xE2),
     XCP_WRITE_DAQ               = UINT8(0xE1),
-    WRITE_DAQ_MULTIPLE          = UINT8(0xC7), // NEW IN 1.1
+    WRITE_DAQ_MULTIPLE          = UINT8(0xC7), /* NEW IN 1.1 */
     XCP_SET_DAQ_LIST_MODE       = UINT8(0xE0),
     XCP_GET_DAQ_LIST_MODE       = UINT8(0xDF),
     XCP_START_STOP_DAQ_LIST     = UINT8(0xDE),
     XCP_START_STOP_SYNCH        = UINT8(0xDD),
-    //
-    // Optional Commands.
-    //
+    /*
+    ** Optional Commands.
+    */
     XCP_GET_DAQ_CLOCK           = UINT8(0xDC),
     XCP_READ_DAQ                = UINT8(0xDB),
     XCP_GET_DAQ_PROCESSOR_INFO  = UINT8(0xDA),
@@ -257,19 +257,19 @@ typedef enum tagXcp_CommandType {
     XCP_ALLOC_DAQ               = UINT8(0xD5),
     XCP_ALLOC_ODT               = UINT8(0xD4),
     XCP_ALLOC_ODT_ENTRY         = UINT8(0xD3),
-//
-// PGM
-//
-    //
-    // Mandatory Commands.
-    //
+/*
+** PGM
+*/
+    /*
+    ** Mandatory Commands.
+    */
     XCP_PROGRAM_START           = UINT8(0xD2),
     XCP_PROGRAM_CLEAR           = UINT8(0xD1),
     XCP_PROGRAM                 = UINT8(0xD0),
     XCP_PROGRAM_RESET           = UINT8(0xCF),
-    //
-    // Optional Commands.
-    //
+    /*
+    ** Optional Commands.
+    */
     XCP_GET_PGM_PROCESSOR_INFO  = UINT8(0xCE),
     XCP_GET_SECTOR_INFO         = UINT8(0xCD),
     XCP_PROGRAM_PREPARE         = UINT8(0xCC),
@@ -282,32 +282,32 @@ typedef enum tagXcp_CommandType {
 
 
 typedef enum tagXcp_ReturnType {
-    ERR_CMD_SYNCH           = UINT8(0x00), // Command processor synchronization.                            S0
-                                           //
-    ERR_CMD_BUSY            = UINT8(0x10), // Command was not executed.                                     S2
-    ERR_DAQ_ACTIVE          = UINT8(0x11), // Command rejected because DAQ is running.                      S2
-    ERR_PGM_ACTIVE          = UINT8(0x12), // Command rejected because PGM is running.                      S2
-                                           //
-    ERR_CMD_UNKNOWN         = UINT8(0x20), // Unknown command or not implemented optional command.          S2
-    ERR_CMD_SYNTAX          = UINT8(0x21), // Command syntax invalid                                        S2
-    ERR_OUT_OF_RANGE        = UINT8(0x22), // Command syntax valid but command parameter(s) out of range.   S2
-    ERR_WRITE_PROTECTED     = UINT8(0x23), // The memory location is write protected.                       S2
-    ERR_ACCESS_DENIED       = UINT8(0x24), // The memory location is not accessible.                        S2
-    ERR_ACCESS_LOCKED       = UINT8(0x25), // Access denied, Seed & Key is required                         S2
-    ERR_PAGE_NOT_VALID      = UINT8(0x26), // Selected page not available                                   S2
-    ERR_MODE_NOT_VALID      = UINT8(0x27), // Selected page mode not available                              S2
-    ERR_SEGMENT_NOT_VALID   = UINT8(0x28), // Selected segment not valid                                    S2
-    ERR_SEQUENCE            = UINT8(0x29), // Sequence error                                                S2
-    ERR_DAQ_CONFIG          = UINT8(0x2A), // DAQ configuration not valid                                   S2
-                                           //
-    ERR_MEMORY_OVERFLOW     = UINT8(0x30), // Memory overflow error                                         S2
-    ERR_GENERIC             = UINT8(0x31), // Generic error.                                                S2
-    ERR_VERIFY              = UINT8(0x32), // The slave internal program verify routine detects an error.   S3
+    ERR_CMD_SYNCH           = UINT8(0x00), /* Command processor synchronization.                            S0 */
 
-    // NEW IN 1.1
-    ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33),    // Access to the requested resource is temporary not possible.   S3
+    ERR_CMD_BUSY            = UINT8(0x10), /* Command was not executed.                                     S2 */
+    ERR_DAQ_ACTIVE          = UINT8(0x11), /* Command rejected because DAQ is running.                      S2 */
+    ERR_PGM_ACTIVE          = UINT8(0x12), /* Command rejected because PGM is running.                      S2 */
 
-    // Internal Success Code - not related to XCP spec.
+    ERR_CMD_UNKNOWN         = UINT8(0x20), /* Unknown command or not implemented optional command.          S2 */
+    ERR_CMD_SYNTAX          = UINT8(0x21), /* Command syntax invalid                                        S2 */
+    ERR_OUT_OF_RANGE        = UINT8(0x22), /* Command syntax valid but command parameter(s) out of range.   S2 */
+    ERR_WRITE_PROTECTED     = UINT8(0x23), /* The memory location is write protected.                       S2 */
+    ERR_ACCESS_DENIED       = UINT8(0x24), /* The memory location is not accessible.                        S2 */
+    ERR_ACCESS_LOCKED       = UINT8(0x25), /* Access denied, Seed & Key is required                         S2 */
+    ERR_PAGE_NOT_VALID      = UINT8(0x26), /* Selected page not available                                   S2 */
+    ERR_MODE_NOT_VALID      = UINT8(0x27), /* Selected page mode not available                              S2 */
+    ERR_SEGMENT_NOT_VALID   = UINT8(0x28), /* Selected segment not valid                                    S2 */
+    ERR_SEQUENCE            = UINT8(0x29), /* Sequence error                                                S2 */
+    ERR_DAQ_CONFIG          = UINT8(0x2A), /* DAQ configuration not valid                                   S2 */
+
+    ERR_MEMORY_OVERFLOW     = UINT8(0x30), /* Memory overflow error                                         S2 */
+    ERR_GENERIC             = UINT8(0x31), /* Generic error.                                                S2 */
+    ERR_VERIFY              = UINT8(0x32), /* The slave internal program verify routine detects an error.   S3 */
+
+    /* NEW IN 1.1 */
+    ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33),    /* Access to the requested resource is temporary not possible.   S3 */
+
+    /* Internal Success Code - not related to XCP spec. */
     ERR_SUCCESS             = UINT8(0xff)
 } Xcp_ReturnType;
 
@@ -321,7 +321,7 @@ typedef struct tagXcp_MtaType {
 typedef struct tagXcpDaq_MtaType {
 #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     uint8_t ext;
-#endif // XCP_DAQ_ADDR_EXT_SUPPORTED
+#endif /* XCP_DAQ_ADDR_EXT_SUPPORTED */
     uint32_t address;
 } XcpDaq_MtaType;
 
@@ -343,7 +343,7 @@ typedef struct tagXcpDaq_PointerType {
     XcpDaq_ODTIntegerType odt;
     XcpDaq_ODTEntryIntegerType odtEntry;
 } XcpDaq_PointerType;
-#endif // XCP_ENABLE_DAQ_COMMANDS
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 typedef struct tagXcp_StateType {
     bool connected;
@@ -351,16 +351,16 @@ typedef struct tagXcp_StateType {
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_ProcessorType daqProcessor;
     XcpDaq_PointerType daqPointer;
-#endif // XCP_ENABLE_DAQ_COMMANDS
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
     uint16_t counter;
-#endif // XCP_TRANSPORT_LAYER_COUNTER_SIZE
+#endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
     bool programming;
     uint8_t mode;
 #if XCP_ENABLE_RESOURCE_PROTECTION  == XCP_ON
     uint8_t resourceProtection;
     uint8_t seedRequested;
-#endif // XCP_ENABLE_RESOURCE_PROTECTION
+#endif /* XCP_ENABLE_RESOURCE_PROTECTION */
     Xcp_MtaType mta;
 } Xcp_StateType;
 
@@ -399,7 +399,7 @@ typedef struct tagXcpDaq_ODTEntryType {
     XcpDaq_MtaType mta;
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
     uint8_t bitOffset;
-#endif // XCP_DAQ_BIT_OFFSET_SUPPORTED
+#endif /* XCP_DAQ_BIT_OFFSET_SUPPORTED */
     uint32_t length;
 } XcpDaq_ODTEntryType;
 
@@ -423,7 +423,7 @@ typedef struct tagXcpDaq_ListType {
 #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
     uint8_t prescaler;
     uint8_t  counter;
-#endif // XCP_DAQ_PRESCALER_SUPPORTED
+#endif /* XCP_DAQ_PRESCALER_SUPPORTED */
 } XcpDaq_ListType;
 
 
@@ -443,7 +443,8 @@ typedef struct tagXcpDaq_EntityType {
         XcpDaq_ListType daqList;
     } entity;
 } XcpDaq_EntityType;
-
+
+
 
 typedef struct tagXcpDaq_EventType {
     uint8_t const * name;
@@ -456,13 +457,20 @@ typedef struct tagXcpDaq_EventType {
 6  BYTE  EVENT_CHANNEL_PRIORITY         (FF highest)
 */
 } XcpDaq_EventType;
-#endif // XCP_ENABLE_DAQ_COMMANDS
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 
 typedef enum tagXcp_MemoryAccessType {
     XCP_MEM_ACCESS_READ,
-    XCP_MEM_ACCESS_WRITE,
+    XCP_MEM_ACCESS_WRITE
 } Xcp_MemoryAccessType;
+
+typedef enum tagXcp_MemoryMappingResultType {
+    XCP_MEMORY_MAPPED,
+    XCP_MEMORY_NOT_MAPPED,
+    XCP_MEMORY_ADDRESS_INVALID
+} Xcp_MemoryMappingResultType;
+
 
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
@@ -489,7 +497,7 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
 void Xcp_SetMta(Xcp_MtaType mta);
 void Xcp_SetBusy(bool enable);
 bool Xcp_IsBusy(void);
-Xcp_StateType const * Xcp_GetState(void);
+Xcp_StateType * Xcp_GetState(void);
 
 
 /*
@@ -515,7 +523,8 @@ void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state);
 void XcpDaq_StartSelectedLists(void);
 void XcpDaq_StopSelectedLists(void);
 void XcpDaq_StopAllLists(void);
-#endif // XCP_ENABLE_DAQ_COMMANDS
+bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType * firstPID);
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)
@@ -592,6 +601,7 @@ bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result);
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key);
 
 bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, Xcp_MemoryAccessType access, bool programming);
+Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xcp_MtaType const * src);
 
 /*
 **  Hardware dependent stuff.
@@ -614,7 +624,7 @@ typedef uint16_t Xcp_ChecksumType;
 #elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_14) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_24) || \
       (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_44)
 typedef uint32_t Xcp_ChecksumType;
-#endif // XCP_CHECKSUM_METHOD
+#endif /* XCP_CHECKSUM_METHOD */
 
 void Xcp_ChecksumInit(void);
 Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const * ptr, uint32_t length, Xcp_ChecksumType startValue, bool isFirstCall);

@@ -70,7 +70,7 @@
 */
 #define XCP_PROTECT_CAL                             XCP_ON
 #define XCP_PROTECT_PAG                             XCP_ON
-#define XCP_PROTECT_DAQ                             XCP_ON
+#define XCP_PROTECT_DAQ                             XCP_OFF
 #define XCP_PROTECT_STIM                            XCP_ON
 #define XCP_PROTECT_PGM                             XCP_ON
 
@@ -171,6 +171,7 @@
 */
 #define XCP_ENABLE_ADDRESS_MAPPER                   XCP_ON
 #define XCP_ENABLE_CHECK_MEMORY_ACCESS              XCP_ON
+#define XCP_REPLACE_STD_COPY_MEMORY                 XCP_OFF
 
 #define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
 

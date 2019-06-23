@@ -93,21 +93,15 @@ void memimnfo(void * ptr)
 int main(void)
 {
     bool finished;
-    uint8_t * ptr;
     XcpHw_OptionsType options;
 
     XcpHw_GetCommandLineOptions(&options);
     XcpTl_SetOptions(&options);
 
-
     FlsEmu_Init(&FlsEmu_Config);
 
-    FlsEmu_ErasePage(0, 3);
-    ptr = FlsEmu_BasePointer(0);
-    FillMemory(ptr + 0x180, 0x80, 0xaa);
-
     Xcp_Init();
-	XcpTl_DisplayInfo();
+    XcpTl_DisplayInfo();
 
     for (;;) {
         Xcp_MainFunction();
@@ -146,13 +140,18 @@ bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
 //    printf("\tKEY [%u]: ", key->length);
 //    Xcp_Hexdump(key->data, key->length);
 
-    return Xcp_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
+    return XcpUtl_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
 }
 
 
 bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, Xcp_MemoryAccessType access, bool programming)
 {
     return XCP_TRUE;
+}
+
+Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
+{
+    return FlsEmu_MemoryMapper(dst, src);
 }
 
 #if 0

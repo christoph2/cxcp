@@ -509,10 +509,35 @@ static void FlsEmu_CloseFileView(Xcp_HwFileViewType * fileView)
     CloseHandle(fileView->mappingHandle);
 }
 
+Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType * const src)
+{
+    uint8_t idx;
+    uint16_t numPages;
+    uint8_t * ptr;
+    FlsEmu_SegmentType * segment;
 
+    /* printf("addr: %x ext: %d\n", src->address, src->ext); */
+
+    for (idx = 0; idx < FlsEmu_Config->numSegments; ++idx) {
+        ptr = FlsEmu_BasePointer(idx);
+        segment = FlsEmu_Config->segments[idx];
+        numPages = (uint16_t)(segment->memSize / segment->pageSize);
+        /* printf("BASE: %x END: %x SIZE: %x # %d\n", segment->baseAddress, (segment->baseAddress + segment->pageSize), segment->memSize, numPages); */
+        if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
+            dst->address = (ptr - segment->baseAddress) + src->address;
+            dst->ext = src->ext;
+            /* printf("MAPPED: addr: %x ext: %d TO: %x:%d\n", src->address, src->ext, dst->address, dst->ext); */
+            return XCP_MEMORY_MAPPED;
+        }
+    }
+    /* printf("NOT Mapped: addr: %x ext: %d\n", src->address, src->ext); */
+    return XCP_MEMORY_NOT_MAPPED;
+}
+
+#if defined(_WIN32)
 void FlsEmu_Info(void)
 {
-    int idx;
+    uint8_t idx;
     uint8_t * ptr;
     FlsEmu_SegmentType * segment;
 
@@ -527,3 +552,4 @@ void FlsEmu_Info(void)
     printf("\n");
 
 }
+#endif

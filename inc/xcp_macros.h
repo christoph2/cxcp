@@ -47,7 +47,7 @@ extern "C"
 
 #if defined(_WIN32) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 #include <stdio.h>
-#endif // defined(_WIN32)
+#endif /* defined(_WIN32) */
 
 #if !defined(XCP_LOBYTE)
 #define XCP_LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
@@ -112,7 +112,7 @@ extern "C"
 #define DBG_PRINT4(a, b, c, d)
 #define DBG_PRINT5(a, b, c, d, e)
 #define DBG_PRINT6(a, b, c, d, e, f)
-#endif // defined(_MSC_VER)
+#endif /* defined(_MSC_VER) */
 
 #define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))
 
