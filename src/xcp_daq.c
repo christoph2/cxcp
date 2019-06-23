@@ -25,7 +25,7 @@
 
 #if defined(_WIN32)
 #include <stdio.h>
-#endif // _WIN32
+#endif /* _WIN32 */
 
 #include "xcp.h"
 #include "xcp_util.h"
@@ -88,7 +88,7 @@ static uint16_t XcpDaq_OdtCount = UINT16(0);
 static uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 #else
     #error XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED option currently not supported
-#endif // XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED
+#endif /* XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED */
 
 
 /*
@@ -97,7 +97,7 @@ static uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 static XcpDaq_ODTType * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber);
 static bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition);
 static XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
-void XcpDaq_DumpEntities(void);
+void XcpDaq_PrintDAQDetails(void);
 static void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition);
 
 
@@ -114,7 +114,7 @@ Xcp_ReturnType XcpDaq_Free(void)
 
 #if XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  == XCP_OFF
     XcpUtl_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
-#endif // XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED
+#endif /* XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED */
 
     if (XcpDaq_AllocValidateTransition(XCP_CALL_FREE_DAQ)) {
         XcpUtl_MemSet(XcpDaq_Entities, UINT8(0), UINT32(sizeof(XcpDaq_EntityType) * UINT16(NUM_DAQ_ENTITIES)));
@@ -214,7 +214,7 @@ XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, X
     XcpDaq_ODTType const * odt;
     XcpDaq_ODTIntegerType idx;
 
-    // TODO: Range checking.
+    /* TODO: Range checking. */
     odt = XcpDaq_GetOdt(daqListNumber, odtNumber);
     idx = (XcpDaq_ODTIntegerType)(odt->firstOdtEntry + UINT16(odtEntryNumber));
     return &XcpDaq_Entities[idx].entity.odtEntry;
@@ -291,8 +291,8 @@ void XcpDaq_MainFunction(void)
     XCP_DAQ_LEAVE_CRITICAL();
 
     if (Xcp_State->daqProcessor.state == XCP_DAQ_STATE_RUNNING) {
-        listCount = XcpDaq_GetDynamicListCount();   // // Check global state for DAQ/STIM running.
-        //printf("%u Active DAQ lists.\n", listCount);
+        listCount = XcpDaq_GetDynamicListCount();   /* Check global state for DAQ/STIM running. */
+        /* printf("%u Active DAQ lists.\n", listCount); */
     }
 }
 
@@ -300,7 +300,7 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
 {
 #if XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  == XCP_OFF
     XcpDaq_ListForEvent[eventChannelNumber] = daqListNumber;
-#endif // XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED
+#endif /* XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED */
 }
 
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
@@ -313,39 +313,71 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
 
 #if XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  == XCP_OFF
     daqList = XcpDaq_ListForEvent[eventChannelNumber];
-#endif // XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED
+#endif /* XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED */
 }
 
 
 XcpDaq_ListIntegerType XcpDaq_GetListCount(void)
 {
-    return XcpDaq_GetDynamicListCount();    // TODO: Add predefined and static lists!
+    return XcpDaq_GetDynamicListCount();    /* TODO: Add predefined and static lists! */
 }
 
 
 #if defined(_WIN32)
-void XcpDaq_DumpEntities(void)
+void XcpDaq_PrintDAQDetails(void)
 {
-    uint16_t idx;
-    XcpDaq_EntityType const * entry;
+    XcpDaq_ListIntegerType listIdx;
+    XcpDaq_ODTIntegerType odtIdx;
+    XcpDaq_ODTEntryIntegerType odtEntriyIdx;
+    XcpDaq_ListType * list;
+    XcpDaq_ODTType * odt;
+    XcpDaq_ODTEntryType * entry;
+    uint8_t mode;
+    uint32_t total;
+    XcpDaq_ODTIntegerType firstPid;
 
-    for (idx = UINT16(0); idx < XcpDaq_EntityCount; ++idx) {
-        entry = &XcpDaq_Entities[idx];
-        switch (entry->kind) {
-            case XCP_ENTITY_DAQ_LIST:
-                printf("DAQ-LIST [numOdts: %u firstODT: %u]\n", entry->entity.daqList.numOdts, entry->entity.daqList.firstOdt);
-                break;
-            case XCP_ENTITY_ODT:
-                printf("ODT: [numOdtEntries: %u firstOdtEntry: %u]\n", entry->entity.odt.numOdtEntries, entry->entity.odt.firstOdtEntry);
-                break;
-            case XCP_ENTITY_ODT_ENTRY:
-                //printf("ODT-ENTRY: [length: %02u  ext: %02X address: %08X]\n", entry->entity.odtEntry.length,
-                //       entry->entity.odtEntry.mta.ext, entry->entity.odtEntry.mta.address);
-                break;
-            default:
-                break;
+    printf("\nDAQ configuration\n");
+    printf("-----------------\n");
+    for (listIdx = (XcpDaq_ListIntegerType)0; listIdx < XcpDaq_ListCount; ++listIdx) {
+        list = XcpDaq_GetList(listIdx);
+        mode = list->mode;
+        total = UINT16(0);
+        XcpDaq_GetFirstPid(listIdx, &firstPid);
+        printf("DAQ-List #%d [dynamic] firstPid: %d mode: ", listIdx, firstPid);
+        if (mode & XCP_DAQ_LIST_MODE_DIRECTION) {
+            printf("STIM ");
+        } else {
+            printf("DAQ ");
         }
+        if (mode & XCP_DAQ_LIST_MODE_SELECTED) {
+            printf("SELECTED ");
+        }
+        if (mode & XCP_DAQ_LIST_MODE_STARTED) {
+            printf("STARTED ");
+        }
+        if (mode & XCP_DAQ_LIST_MODE_ALTERNATING) {
+            printf("ALTERNATING ");
+        }
+        if (mode & XCP_DAQ_LIST_MODE_PID_OFF) {
+            printf("PID_OFF ");
+        }
+        if (mode & XCP_DAQ_LIST_MODE_TIMESTAMP) {
+            printf("TIMESTAMP ");
+        }
+        printf("\n");
+        for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < list->numOdts; ++odtIdx) {
+            odt = XcpDaq_GetOdt(listIdx, odtIdx);
+            printf("    ODT #%d\n", odtIdx);
+            for (odtEntriyIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntriyIdx < odt->numOdtEntries; ++odtEntriyIdx) {
+                entry = XcpDaq_GetOdtEntry(listIdx, odtIdx, odtEntriyIdx);
+                printf("        Entry #%d [0x%08x] %d Byte(s)\n", odtEntriyIdx, entry->mta.address, entry->length);
+                total += entry->length;
+            }
+        }
+        printf("                          -------------\n");
+        printf("                          %-5d Byte(s)\n", total);
     }
+    printf("-------------------------------------------------------------------------------\n");
 }
 
 void XcpDaq_Info(void)
@@ -377,8 +409,8 @@ void XcpDaq_Info(void)
             break;
     }
     printf("\n");
-    XcpDaq_DumpEntities();
     printf("Allocated DAQ entities: %d of %d\n", XcpDaq_EntityCount, NUM_DAQ_ENTITIES);
+
 #else
     printf("\tfunctionality not supported.\n");
 #endif
@@ -398,11 +430,11 @@ XCP_DAQ_PROP_BIT_STIM_SUPPORTED
 XCP_DAQ_PROP_RESUME_SUPPORTED
 XCP_DAQ_PROP_PRESCALER_SUPPORTED
 XCP_DAQ_PROP_DAQ_CONFIG_TYPE
-#endif // 0
+#endif /* 0 */
     *properties = UINT8(0);
 #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
     *properties |= XCP_DAQ_PROP_PRESCALER_SUPPORTED;
-#endif // XCP_DAQ_PRESCALER_SUPPORTED
+#endif /*XCP_DAQ_PRESCALER_SUPPORTED */
 
 #if 0
 DAQ_CONFIG_TYPE  0 = static DAQ list configuration
@@ -485,10 +517,10 @@ static void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition)
         if ((entry->mode & XCP_DAQ_LIST_MODE_SELECTED) == XCP_DAQ_LIST_MODE_SELECTED) {
             if (transition == DAQ_LIST_TRANSITION_START) {
                 entry->mode |= XCP_DAQ_LIST_MODE_STARTED;
-                printf("Started DAQ list #%u\n", idx);
+                /* printf("Started DAQ list #%u\n", idx); */
             } else if (transition == DAQ_LIST_TRANSITION_STOP) {
                 entry->mode &= UINT8(~XCP_DAQ_LIST_MODE_STARTED);
-                printf("Stopped DAQ list #%u\n", idx);
+                /* printf("Stopped DAQ list #%u\n", idx); */
             } else {
                 /* Do nothing (to keep MISRA happy). */
             }
@@ -506,18 +538,21 @@ static XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void)
     return (XcpDaq_ListIntegerType)XcpDaq_ListCount;
 }
 
-#if 0
-1.1.1.3  OBJECT DESCRIPTION TABLE (ODT)
+bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType * firstPID)
+{
+    XcpDaq_ListIntegerType listIdx;
+    XcpDaq_ListType const * daqList;
+    bool result = (bool)XCP_TRUE;
+    XcpDaq_ODTIntegerType tmp = (XcpDaq_ODTIntegerType)0;
 
-ODT entries are grouped in ODTs.
-If DAQ lists are configured statically, MAX_ODT_ENTRIES specifies the maximum number of ODT
-entries in each ODT of this DAQ list.
-If DAQ lists are configured dynamically, MAX_ODT_ENTRIES is not fixed and will be 0.
-
-
-For every ODT the numbering of the ODT entries through ODT_ENTRY_NUMBER restarts from 0
-
-ODT_ENTRY_NUMBER [0,1,..MAX_ODT_ENTRIES(DAQ list)-1]
-
-
-#endif // 0
+    if (daqListNumber > (XcpDaq_ListCount - UINT16(1))) {
+        result = (bool)XCP_FALSE;
+    } else {
+        for (listIdx = UINT16(0); listIdx < daqListNumber; ++listIdx) {
+            daqList = XcpDaq_GetList(listIdx);
+            tmp += daqList->numOdts;
+        }
+    }
+    *firstPID = tmp;
+    return result;
+}

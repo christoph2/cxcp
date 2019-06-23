@@ -221,7 +221,7 @@ static const uint32_t CRC_TAB[] = {
 };
 
 
-#endif // XCP_CHECKSUM_METHOD
+#endif /* XCP_CHECKSUM_METHOD */
 
 #define WIDTH    ((uint16_t)(8U * sizeof(Xcp_ChecksumType)))
 #define TOPBIT   (1 << (WIDTH - 1))
@@ -257,14 +257,8 @@ static uint32_t reflect(uint32_t data, uint8_t nBits)
         }
         return reflection;
 }
-#endif  // (REFLECT_DATA == TRUE) || (REFLECT_REMAINDER == TRUE)
+#endif  /* (REFLECT_DATA == TRUE) || (REFLECT_REMAINDER == TRUE) */
 
-
-/*
-0x04    XCP_ADD_22      Add WORD into a WORD checksum, ignore overflows, blocksize must be modulo 2
-0x05    XCP_ADD_24      Add WORD into a DWORD checksum, ignore overflows, blocksize must be modulo 2
-0x06    XCP_ADD_44      Add DWORD into  DWORD, ignore overflows, blocksize must be modulo 4
-*/
 
 Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const * ptr, uint32_t length, Xcp_ChecksumType startValue, bool isFirstCall)
 {
@@ -348,7 +342,7 @@ void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size)
     }
     Xcp_SetBusy(XCP_TRUE);
     Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_INITIAL;
-    //printf("S-Address: %p Size: %u\n", ptr, size);
+    /* printf("S-Address: %p Size: %u\n", ptr, size); */
     Xcp_ChecksumJob.mta.address = (uint32_t)ptr;
     Xcp_ChecksumJob.size = size;
     XCP_LEAVE_CRITICAL();
@@ -373,21 +367,21 @@ void Xcp_ChecksumMainFunction(void)
         Xcp_ChecksumJob.interimChecksum = Xcp_CalculateChecksum(
             (uint8_t const *)Xcp_ChecksumJob.mta.address, XCP_CHECKSUM_CHUNK_SIZE, Xcp_ChecksumJob.interimChecksum, XCP_FALSE
         );
-        //printf("N-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum);
+        /* printf("N-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum); */
         Xcp_ChecksumJob.size -= XCP_CHECKSUM_CHUNK_SIZE;
         Xcp_ChecksumJob.mta.address += XCP_CHECKSUM_CHUNK_SIZE;
         if (Xcp_ChecksumJob.size <= XCP_CHECKSUM_CHUNK_SIZE) {
             Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_RUNNING_FINAL;
         }
     }  else if (Xcp_ChecksumJob.state == XCP_CHECKSUM_STATE_RUNNING_FINAL) {
-        //printf("F-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum);
+        /* printf("F-Address: %x Size: %u CS: %x\n", Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum); */
         Xcp_ChecksumJob.interimChecksum = Xcp_CalculateChecksum(
             (uint8_t const *)Xcp_ChecksumJob.mta.address, Xcp_ChecksumJob.size, Xcp_ChecksumJob.interimChecksum, XCP_FALSE
         );
-        //printf("FINAL-VALUE %x\n", Xcp_ChecksumJob.interimChecksum);
+        /* printf("FINAL-VALUE %x\n", Xcp_ChecksumJob.interimChecksum); */
         Xcp_SetBusy(XCP_FALSE);
         Xcp_SendChecksumPositiveResponse(Xcp_ChecksumJob.interimChecksum);
         Xcp_ChecksumJob.state = XCP_CHECKSUM_STATE_IDLE;
     }
 }
-#endif // XCP_ENABLE_BUILD_CHECKSUM
+#endif /* XCP_ENABLE_BUILD_CHECKSUM */

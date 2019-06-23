@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -60,15 +60,17 @@ typedef unsigned short      uint16_t;
 typedef signed long         int32_t;
 typedef unsigned long       uint32_t;
 
+#if 0
 typedef signed long long    int64_t;
 typedef unsigned long long  uint64_t;
+#endif
 #else
 
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#endif // defined
+#endif
 
 #define UINT8(x)    ((uint8_t)(x))
 #define INT8(x)     ((int8_t)(x))

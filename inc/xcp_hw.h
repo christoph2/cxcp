@@ -34,9 +34,6 @@ extern "C"
 #endif /* XCP_EXTERN_C_GUARDS */
 
 
-//#include <stdint.h>
-//#include <stdbool.h>
-
 typedef struct tagXcpHw_OptionsType {
     bool ipv6;
     bool tcp;
@@ -53,4 +50,4 @@ void Win_ErrorMsg(char * const function, unsigned errorCode);
 #endif /* XCP_EXTERN_C_GUARDS */
 
 
-#endif // __XCP_HW_H
+#endif /* __XCP_HW_H */
