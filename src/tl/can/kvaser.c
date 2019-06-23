@@ -54,7 +54,7 @@ static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 static uint16_t XcpTl_SetDLC(uint16_t len);
 static void XcpTl_SetCANFilter(void);
 static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent);
-
+static bool XcpTl_MatchingAddress(uint32_t id0, uint32_t id1, uint16_t flag);
 
 void Kv_Error(const char * msg)
 {
@@ -77,6 +77,20 @@ void Kv_Check(char* id, canStatus stat)
         sprintf(msg_buf, "%s: failed, stat=%d (%s)\n", id, (int)stat, err_buf);
         Kv_Error(msg_buf);
     }
+}
+
+    
+static bool XcpTl_MatchingAddress(uint32_t id0, uint32_t id1, uint16_t flag)
+{
+    uint16_t ext0;
+    uint16_t ext1;
+    uint32_t identifier;
+
+    ext0 = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(id0);
+    identifier = XCP_ON_CAN_STRIP_IDENTIFIER(id0);
+    ext1 = (flag == canMSG_EXT) ? 1 : 0;
+
+    return (identifier == id1) && (ext0 == ext1);
 }
 
 
@@ -108,11 +122,12 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
             }
 #endif
             if (dlc > 0) {
-                if (XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER) == id) {
+                if (XcpTl_MatchingAddress(XCP_ON_CAN_INBOUND_IDENTIFIER, id, flag)) {
                     Xcp_PduIn.len = dlc;
                     Xcp_PduIn.data = msg + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
                     Xcp_DispatchCommand(&Xcp_PduIn);
-                } else {
+                } else if (XcpTl_MatchingAddress(XCP_ON_CAN_BROADCAST_IDENTIFIER, id, flag)) {
+                    printf("BROADCAST request!!!\n");
                 }
             }
 #if 0
