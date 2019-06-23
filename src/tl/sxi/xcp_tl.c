@@ -48,7 +48,7 @@ static uint8_t Xcp_PduOutBuffer[XCP_COMM_BUFLEN] = {0};
 typedef enum tagXcpTl_ReceiverStateType {
     XCP_RCV_IDLE,
     XCP_RCV_UNTIL_LENGTH,
-    XCP_RCV_REMAINING,
+    XCP_RCV_REMAINING
 } XcpTl_ReceiverStateType;
 
 
@@ -57,8 +57,8 @@ typedef struct tagXcpTl_ReceiverType {
     XcpTl_ReceiverStateType State;
     uint16_t Index;
     uint16_t Remaining;
-    uint16_t Dlc;   // TODO: config!!!
-    uint16_t Ctr;   // TODO: config!!!
+    uint16_t Dlc;   /* TODO: config!!! */
+    uint16_t Ctr;   /* TODO: config!!! */
 } XcpTl_ReceiverType;
 
 
@@ -71,6 +71,18 @@ void XcpTl_Init(void)
 
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
 }
+
+void XcpTl_DeInit(void)
+{
+
+}
+
+
+void XcpTl_MainFunction(void)
+{
+
+}
+
 
 /********************************************//**
  * \brief Initialize, i.e. reset receiver state
@@ -149,11 +161,11 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     uint16_t idx;
 
     for (idx = 0; idx < len; ++idx) {
-        Xcp_Itoa((uint32_t)buf[idx], 16, (uint8_t*)ch);
-        fputs(ch, stdout);
-        fputs(" ", stdout);
+        XcpUtl_Itoa((uint32_t)buf[idx], 16, (uint8_t*)ch);
+        /* fputs(ch, stdout); */
+        /* fputs(" ", stdout); */
     }
-    fputs("\n", stdout);
+    /* fputs("\n", stdout); */
 }
 
 void XcpTl_SaveConnection(void)
