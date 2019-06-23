@@ -121,7 +121,6 @@ void XcpTl_Init(void)
     char *Port = DEFAULT_PORT;
     SOCKET serverSockets[FD_SETSIZE];
     int boundSocketNum = -1;
-    int numSockets;
     int ret;
     int idx;
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
@@ -180,7 +179,6 @@ void XcpTl_Init(void)
         WSACleanup();
         return;
     }
-    numSockets = idx;
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
@@ -366,7 +364,8 @@ void XcpTl_SetOptions(XcpHw_OptionsType const * options)
 
 void XcpTl_DisplayInfo(void)
 {
-	printf("\nXCPonEth -- Listening on port %s / %s [%s]\n", DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4");
-	fflush(stdout);
+    printf("\nXCPonEth -- Listening on port %s / %s [%s]\n", DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4");
+    printf("Press h for help.\n");
+    fflush(stdout);
 }
 

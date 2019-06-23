@@ -69,6 +69,8 @@ static void DisplayHelp(void);
 static void SystemInformation(void);
 
 void FlsEmu_Info(void);
+void XcpDaq_Info(void);
+void XcpDaq_PrintDAQDetails();
 
 void exitFunc(void);
 
@@ -183,11 +185,17 @@ void XcpHw_MainFunction(bool * finished)
 //                                printf("\tF9\n");
                             }
                             switch (tolower(key.uChar.AsciiChar)) {
+                                case 'q':
+                                    *finished = XCP_TRUE;
+                                    break;
                                 case 'h':
                                     DisplayHelp();
                                     break;
                                 case 'i':
                                     SystemInformation();
+                                    break;
+                                case 'd':
+                                    XcpDaq_PrintDAQDetails();
                                     break;
                             }
                         }
@@ -240,9 +248,11 @@ void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options)
 
 static void DisplayHelp(void)
 {
-    printf("\nh\tshow this help message\n");
-    printf("<ESC>\texit %s\n", __argv[0]);
-    printf("i\tsystem information\n");
+    printf("\nh\t\tshow this help message\n");
+    printf("<ESC> or q\texit %s\n", __argv[0]);
+    printf("i\t\tsystem information\n");
+    printf("d\t\tDAQ configuration\n");
+    /* printf("d\t\tReset connection\n"); */
 }
 
 static void SystemInformation(void)
@@ -252,5 +262,7 @@ static void SystemInformation(void)
     printf("MAX_CTO: %d  MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
 
     FlsEmu_Info();
+    XcpDaq_Info();
+    printf("-------------------------------------------------------------------------------\n");
 }
 
