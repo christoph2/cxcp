@@ -27,12 +27,14 @@
 #define __XCP_CONFIG_H
 
 
-#define XCP_STATION_ADDRESS                         (1)
-#define XCP_STATION_ID                              "description_of_test_ecu.a2l"
+/*
+**  General Options.
+*/
+#define XCP_STATION_ID                              "description_of_test_ecu"
 
 #define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
 
-#define XCP_EXTERN_C_GUARDS                         XCP_OFF
+#define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
 #define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_OFF
 #define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
@@ -52,6 +54,22 @@
 #define XCP_MIN_ST                                  (0)
 #define XCP_QUEUE_SIZE                              (0)
 
+
+/*
+** Resource Protection.
+*/
+#define XCP_PROTECT_CAL                             XCP_ON
+#define XCP_PROTECT_PAG                             XCP_ON
+#define XCP_PROTECT_DAQ                             XCP_OFF
+#define XCP_PROTECT_STIM                            XCP_ON
+#define XCP_PROTECT_PGM                             XCP_OFF
+
+/*
+**  DAQ Settings.
+*/
+#define XCP_DAQ_ENABLE_DYNAMIC_LISTS                XCP_ON
+#define XCP_DAQ_ENABLE_STATIC_LISTS                 XCP_OFF
+#define XCP_DAQ_ENABLE_PREDEFINED_LISTS             XCP_ON
 #define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
 #define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
 #define XCP_DAQ_PRESCALER_SUPPORTED                 XCP_OFF
@@ -64,15 +82,19 @@
 #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
 #define XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  XCP_OFF
 
+#define XCP_DAQ_LIST_TYPE                           uint8_t
+#define XCP_DAQ_ODT_TYPE                            uint8_t
+#define XCP_DAQ_ODT_ENTRY_TYPE                      uint8_t
+
 
 /*
-** Resource Protection.
+**  PGM Settings.
 */
-#define XCP_PROTECT_CAL                             XCP_ON
-#define XCP_PROTECT_PAG                             XCP_ON
-#define XCP_PROTECT_DAQ                             XCP_OFF
-#define XCP_PROTECT_STIM                            XCP_ON
-#define XCP_PROTECT_PGM                             XCP_ON
+#define XCP_MAX_BS_PGM                              (0)
+#define XCP_MIN_ST_PGM                              (0)
+
+#define XCP_MAX_SECTOR_PGM                          UINT8(32)
+#define XCP_PGM_PROPERIES                           XCP_PGM_ABSOLUTE_MODE
 
 
 /*
@@ -120,11 +142,11 @@
     #define XCP_ENABLE_ALLOC_ODT_ENTRY              XCP_ON
     #define XCP_ENABLE_WRITE_DAQ_MULTIPLE           XCP_OFF
 
-#define XCP_ENABLE_PGM_COMMANDS                     XCP_OFF
+#define XCP_ENABLE_PGM_COMMANDS                     XCP_ON
 
-    #define XCP_ENABLE_GET_PGM_PROCESSOR_INFO       XCP_OFF
-    #define XCP_ENABLE_GET_SECTOR_INFO              XCP_OFF
-    #define XCP_ENABLE_PROGRAM_PREPARE              XCP_OFF
+    #define XCP_ENABLE_GET_PGM_PROCESSOR_INFO       XCP_ON
+    #define XCP_ENABLE_GET_SECTOR_INFO              XCP_ON
+    #define XCP_ENABLE_PROGRAM_PREPARE              XCP_ON
     #define XCP_ENABLE_PROGRAM_FORMAT               XCP_OFF
     #define XCP_ENABLE_PROGRAM_NEXT                 XCP_OFF
     #define XCP_ENABLE_PROGRAM_MAX                  XCP_OFF
@@ -175,9 +197,6 @@
 
 #define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
 
-#define XCP_DAQ_LIST_TYPE                           uint8_t
-#define XCP_DAQ_ODT_TYPE                            uint8_t
-#define XCP_DAQ_ODT_ENTRY_TYPE                      uint8_t
 
 /*
 **  Platform specific Options.
