@@ -67,18 +67,18 @@ typedef struct tagFlsEmu_SystemMemoryType {
 **  Local Function Prototypes.
 */
 static void FlsEmu_OpenCreate(uint8_t segmentIdx);
-static FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, DWORD size, PersistentArrayType * persistentArray);
+static FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, DWORD size, FlsEmu_PersistentArrayType * persistentArray);
 static bool FlsEmu_Flush(uint8_t segmentIdx);
 static void FlsEmu_Close(uint8_t segmentIdx);
-static void FlsEmu_CloseFileView(Xcp_HwFileViewType * fileView);
-static void FlsEmu_ClosePersitentArray(PersistentArrayType const * persistentArray);
+static void FlsEmu_CloseFileView(FlsEmu_HwFileViewType * fileView);
+static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray);
 static bool FlsEmu_MapView(FlsEmu_SegmentType * config, uint32_t offset, uint32_t length);
 //static void FlsEmu_SelectBlock(uint8_t segmentIdx, uint8_t block);
 static DWORD GetPageSize(void);
 static DWORD GetAllocationGranularity(void);
 static void MemoryInfo(void * address);
 static HANDLE OpenCreateFile(char const * fileName, bool create);
-static bool CreateFileView(HANDLE handle, DWORD length, Xcp_HwFileViewType * fileView);
+static bool CreateFileView(HANDLE handle, DWORD length, FlsEmu_HwFileViewType * fileView);
 /*
 **  Local Variables.
 */
@@ -126,7 +126,7 @@ static void FlsEmu_OpenCreate(uint8_t segmentIdx)
     char adm[1024];
     char rom[1024];
     FlsEmu_SegmentType * segment;
-    PersistentArrayType temp;
+    FlsEmu_PersistentArrayType temp;
     FlsEmu_OpenCreateResultType result;
 
     FLSEMU_ASSERT_INITIALIZED();
@@ -134,7 +134,7 @@ static void FlsEmu_OpenCreate(uint8_t segmentIdx)
         return;
     }
     segment = FlsEmu_Config->segments[segmentIdx];
-    segment->persistentArray = (PersistentArrayType *)malloc(sizeof(PersistentArrayType));
+    segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
     segment->currentPage = 0x00;
     length = strlen(segment->name);
     strncpy((char *)adm, (char *)segment->name, length);
@@ -381,10 +381,10 @@ static bool FlsEmu_MapView(FlsEmu_SegmentType * config, uint32_t offset, uint32_
     return TRUE;
 }
 
-static FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, DWORD size, PersistentArrayType * persistentArray)
+static FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, DWORD size, FlsEmu_PersistentArrayType * persistentArray)
 {
     DWORD error;
-    Xcp_HwFileViewType fileView;
+    FlsEmu_HwFileViewType fileView;
     FlsEmu_OpenCreateResultType result;
     bool newFile = FALSE;
 
@@ -420,7 +420,7 @@ static FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * 
     return result;
 }
 
-static void FlsEmu_ClosePersitentArray(PersistentArrayType const * persistentArray)
+static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray)
 {
     FLSEMU_ASSERT_INITIALIZED();
     UnmapViewOfFile(persistentArray->mappingAddress);
@@ -478,7 +478,7 @@ static HANDLE OpenCreateFile(char const * fileName, bool create)
     return handle;
 }
 
-static bool CreateFileView(HANDLE handle, DWORD length, Xcp_HwFileViewType * fileView)
+static bool CreateFileView(HANDLE handle, DWORD length, FlsEmu_HwFileViewType * fileView)
 {
     fileView->mappingHandle = CreateFileMapping(handle, (LPSECURITY_ATTRIBUTES)NULL, PAGE_READWRITE, (DWORD)0, (DWORD)length, NULL);
     if (fileView->mappingHandle == NULL) {
@@ -504,7 +504,7 @@ static void MemoryInfo(void * address)
 }
 
 
-static void FlsEmu_CloseFileView(Xcp_HwFileViewType * fileView)
+static void FlsEmu_CloseFileView(FlsEmu_HwFileViewType * fileView)
 {
     CloseHandle(fileView->mappingHandle);
 }

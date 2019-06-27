@@ -39,6 +39,10 @@
 
 
 /*
+**  Global Defines.
+*/
+
+/*
 **  Global Macros.
 */
 #define FLSEMU_KB(v)   (((uint32_t)((v))) * 0x400UL)                /**< Kilobytes to bytes. */
@@ -48,17 +52,23 @@
 /*
 **  Global Types.
 */
-typedef struct tagXcp_HwFileViewType {
+typedef enum tagFlsEmu_MemoryTypeType {
+    FLSEMU_FLASH,
+    FLSEMU_EEPROM,
+    FLSEMU_RAM
+} FlsEmu_MemoryTypeType;
+
+typedef struct tagFlsEmu_FileViewType {
     HANDLE mappingHandle;
     void * mappingAddress;
-} Xcp_HwFileViewType;
+} FlsEmu_HwFileViewType;
 
 #if 0
-typedef struct tagXcp_HwMapFileType {
+typedef struct tagFlsEmu_HwMapFileType {
     HANDLE handle;
     uint64_t size;
-    Xcp_HwFileViewType view;
-} Xcp_HwMapFieleType;
+    FlsEmu_HwFileViewType view;
+} FlsEmu_MapFieleType;
 #endif
 
 typedef enum tagFlsEmu_StatusType {
@@ -67,15 +77,15 @@ typedef enum tagFlsEmu_StatusType {
 } FlsEmu_StatusType;
 
 
-typedef struct tagPersistentArrayType {
+typedef struct tagFlsEmu_PersistentArrayType {
     HANDLE fileHandle;
     HANDLE mappingHandle;
     void * mappingAddress;
     uint16_t currentPage;
-} PersistentArrayType;
+} FlsEmu_PersistentArrayType;
 
 
-typedef enum tagOpenCreateType {
+typedef enum tagFlsEmu_OpenCreateType {
     OPEN_ERROR,
     OPEN_EXSISTING,
     NEW_FILE
@@ -90,7 +100,7 @@ typedef struct tagFlsEmu_SegmentType {
     uint32_t pageSize;
     uint8_t blockCount;
     uint32_t baseAddress;
-    PersistentArrayType * persistentArray;
+    FlsEmu_PersistentArrayType * persistentArray;
     uint8_t currentPage;
 } FlsEmu_SegmentType;
 
@@ -115,3 +125,4 @@ void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block);
 Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType * const src);
 
 #endif // __FLSEMU_H
+
