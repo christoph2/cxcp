@@ -27,7 +27,7 @@
 #define __XCP_TYPES_H
 
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 extern "C"
 {
@@ -85,7 +85,7 @@ typedef unsigned long long  uint64_t;
 #define INT64(x)    ((int64_t)(x))
 
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 }
 #endif  /* __cplusplus */

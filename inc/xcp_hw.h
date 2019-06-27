@@ -26,7 +26,7 @@
 #if !defined(__XCP_HW_H)
 #define __XCP_HW_H
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 extern "C"
 {
@@ -43,7 +43,7 @@ void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options);
 
 void Win_ErrorMsg(char * const function, unsigned errorCode);
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 }
 #endif  /* __cplusplus */

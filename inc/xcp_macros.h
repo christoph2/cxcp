@@ -37,7 +37,7 @@
 #define __XCP_MACROS_H
 
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 extern "C"
 {
@@ -117,7 +117,7 @@ extern "C"
 #define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))
 
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 }
 #endif  /* __cplusplus */

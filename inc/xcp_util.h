@@ -27,7 +27,7 @@
 #define __XCP_UTIL_H
 
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 extern "C"
 {
@@ -44,7 +44,7 @@ void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
 void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t * buf);
 
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 }
 #endif  /* __cplusplus */
