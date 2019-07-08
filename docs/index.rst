@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to BlueParrot XCP's documentation!
-=================================
+==========================================
 
 .. toctree::
    :maxdepth: 4
@@ -15,6 +15,7 @@ Welcome to BlueParrot XCP's documentation!
    api
    options
    hook_functions
+   flash_emulator
 
 
 Indices and tables
