@@ -122,7 +122,7 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page);
 void FlsEmu_ErasePage(uint8_t segmentIdx, uint8_t page);
 void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address);
 void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block);
-Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType * const src);
+Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src);
 
 #endif // __FLSEMU_H
 

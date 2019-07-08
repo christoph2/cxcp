@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "flsemu.h"
+#include "xcp_hw.h"
 
 
 /*
@@ -509,7 +510,7 @@ static void FlsEmu_CloseFileView(FlsEmu_HwFileViewType * fileView)
     CloseHandle(fileView->mappingHandle);
 }
 
-Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType * const src)
+Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
 {
     uint8_t idx;
     uint16_t numPages;
@@ -524,7 +525,7 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType *
         numPages = (uint16_t)(segment->memSize / segment->pageSize);
         /* printf("BASE: %x END: %x SIZE: %x # %d\n", segment->baseAddress, (segment->baseAddress + segment->pageSize), segment->memSize, numPages); */
         if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
-            dst->address = (ptr - segment->baseAddress) + src->address;
+            dst->address = ((uint32_t)ptr - segment->baseAddress) + src->address;
             dst->ext = src->ext;
             /* printf("MAPPED: addr: %x ext: %d TO: %x:%d\n", src->address, src->ext, dst->address, dst->ext); */
             return XCP_MEMORY_MAPPED;
