@@ -51,7 +51,7 @@
 
 #include "xcp_config.h"
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 extern "C"
 {
@@ -61,6 +61,10 @@ extern "C"
 /*
 ** Configuration checks.
 */
+
+/* Check for unsupported features. */
+
+
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
     #define XCP_ENFORCE_CAN_RESTRICTIONS    XCP_ON
 #endif /* XCP_TRANSPORT_LAYER */
@@ -78,6 +82,29 @@ extern "C"
 #if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_MAX_EVENT_CHANNEL < 1)
     #error XCP_DAQ_MAX_EVENT_CHANNEL must be at least 1
 #endif /* XCP_DAQ_MAX_EVENT_CHANNEL */
+
+#if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) &&  (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF)
+    #if XCP_ENABLE_FREE_DAQ == XCP_ON
+        #undef XCP_ENABLE_FREE_DAQ
+        #define XCP_ENABLE_FREE_DAQ     XCP_OFF
+    #endif /* XCP_ENABLE_FREE_DAQ */
+
+    #if XCP_ENABLE_ALLOC_DAQ == XCP_ON
+        #undef XCP_ENABLE_ALLOC_DAQ
+        #define XCP_ENABLE_ALLOC_DAQ     XCP_OFF
+    #endif /* XCP_ENABLE_ALLOC_DAQ */
+
+    #if XCP_ENABLE_ALLOC_ODT == XCP_ON
+        #undef XCP_ENABLE_ALLOC_ODT
+        #define XCP_ENABLE_ALLOC_ODT     XCP_OFF
+    #endif /* XCP_ENABLE_ALLOC_ODT */
+
+    #if XCP_ENABLE_ALLOC_ODT_ENTRY == XCP_ON
+        #undef XCP_ENABLE_ALLOC_ODT_ENTRY
+        #define XCP_ENABLE_ALLOC_ODT_ENTRY     XCP_OFF
+    #endif /* XCP_ENABLE_ALLOC_ODT_ENTRY */
+#endif
+
 
 #if XCP_ENFORCE_CAN_RESTRICTIONS == XCP_ON
     #if XCP_MAX_CTO != 8
@@ -110,6 +137,24 @@ extern "C"
 #endif
 
 #define XCP_TRANSPORT_LAYER_BUFFER_OFFSET   (XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_LENGTH_SIZE)
+
+#if !defined(XCP_MAX_BS)
+    #define XCP_MAX_BS      (0)
+#endif  /* XCP_MAX_BS */
+
+#if !defined(XCP_MIN_ST)
+    #define  XCP_MIN_ST     (0)
+#endif  /* XCP_MIN_ST */
+
+#if !defined(XCP_MAX_BS_PGM)
+    #define XCP_MAX_BS_PGM  (0)
+#endif  /* XCP_MAX_BS_PGM */
+
+#if !defined(XCP_MIN_ST_PGM)
+    #define  XCP_MIN_ST_PGM (0)
+#endif  /* XCP_MIN_ST_PGM */
+
+
 
 /*
 **  Available Resources.
@@ -146,15 +191,65 @@ extern "C"
 #define XCP_DAQ_LIST_MODE_STARTED       ((uint8_t)0x80)
 
 /* DAQ Properties */
-#define XCP_DAQ_PROP_OVERLOAD_EVENT          ((uint8_t)0x80)
-#define XCP_DAQ_PROP_OVERLOAD_MSB            ((uint8_t)0x40)
-#define XCP_DAQ_PROP_PID_OFF_SUPPORTED       ((uint8_t)0x20)
-#define XCP_DAQ_PROP_TIMESTAMP_SUPPORTED     ((uint8_t)0x10)
-#define XCP_DAQ_PROP_BIT_STIM_SUPPORTED      ((uint8_t)0x08)
-#define XCP_DAQ_PROP_RESUME_SUPPORTED        ((uint8_t)0x04)
-#define XCP_DAQ_PROP_PRESCALER_SUPPORTED     ((uint8_t)0x02)
-#define XCP_DAQ_PROP_DAQ_CONFIG_TYPE         ((uint8_t)0x01)
+#define XCP_DAQ_PROP_OVERLOAD_EVENT         ((uint8_t)0x80)
+#define XCP_DAQ_PROP_OVERLOAD_MSB           ((uint8_t)0x40)
+#define XCP_DAQ_PROP_PID_OFF_SUPPORTED      ((uint8_t)0x20)
+#define XCP_DAQ_PROP_TIMESTAMP_SUPPORTED    ((uint8_t)0x10)
+#define XCP_DAQ_PROP_BIT_STIM_SUPPORTED     ((uint8_t)0x08)
+#define XCP_DAQ_PROP_RESUME_SUPPORTED       ((uint8_t)0x04)
+#define XCP_DAQ_PROP_PRESCALER_SUPPORTED    ((uint8_t)0x02)
+#define XCP_DAQ_PROP_DAQ_CONFIG_TYPE        ((uint8_t)0x01)
 
+/* DAQ Event Channel Properties */
+#define XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ      ((uint8_t)0x04)
+#define XCP_DAQ_EVENT_CHANNEL_TYPE_STIM     ((uint8_t)0x08)
+
+/* DAQ Consistancy */
+#define XCP_DAQ_CONSISTENCY_DAQ_LIST        ((uint8_t)0x40)
+#define XCP_DAQ_CONSISTENCY_EVENT_CHANNEL   ((uint8_t)0x80)
+
+/* DAQ Time Units */
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1NS    UINT8(0)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_10NS   UINT8(1)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_100NS  UINT8(2)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1US    UINT8(3)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_10US   UINT8(4)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_100US  UINT8(5)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS    UINT8(6)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_10MS   UINT8(7)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_100MS  UINT8(8)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1S     UINT8(9)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1PS    UINT8(10)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_10PS   UINT8(11)
+#define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_100PS  UINT8(12)
+
+#define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
+
+
+/* DAQ Event Implementation Macros */
+#define XCP_DAQ_BEGIN_EVENTS    const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
+#define XCP_DAQ_END_EVENTS      };
+#define XCP_DAQ_DEFINE_EVENT(name, props, timebase, cycle)  \
+    {                                                       \
+        (uint8_t const * const)(name),                      \
+        sizeof((name)) - 1,                                 \
+        (props),                                            \
+        (timebase),                                         \
+        (cycle),                                            \
+    }
+
+
+/*
+**  PGM Capabilities.
+*/
+#define XCP_PGM_NON_SEQ_PGM_REQUIRED        UINT8(0x80)
+#define XCP_PGM_NON_SEQ_PGM_SUPPORTED       UINT8(0x40)
+#define XCP_PGM_ENCRYPTION_REQUIRED         UINT8(0x20)
+#define XCP_PGM_ENCRYPTION_SUPPORTED        UINT8(0x10)
+#define XCP_PGM_COMPRESSION_REQUIRED        UINT8(8)
+#define XCP_PGM_COMPRESSION_SUPPORTED       UINT8(4)
+#define XCP_PGM_FUNCTIONAL_MODE             UINT8(2)
+#define XCP_PGM_ABSOLUTE_MODE               UINT8(1)
 
 /*
 **  XCPonCAN specific function-like macros.
@@ -317,6 +412,7 @@ typedef struct tagXcp_MtaType {
     uint32_t address;
 } Xcp_MtaType;
 
+
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 typedef struct tagXcpDaq_MtaType {
 #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
@@ -345,6 +441,20 @@ typedef struct tagXcpDaq_PointerType {
 } XcpDaq_PointerType;
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
+
+#if XCP_ENABLE_PGM_COMMANDS == XCP_ON
+typedef enum tagXcpPgm_ProcessorStateType {
+    XCP_PGM_STATE_UNINIT    = 0,
+    XCP_PGM_IDLE            = 1,
+    XCP_PGM_ACTIVE          = 2,
+} XcpPgm_ProcessorStateType;
+
+typedef struct tagXcpPgm_ProcessorType {
+    XcpPgm_ProcessorStateType state;
+} XcpPgm_ProcessorType;
+#endif /* ENABLE_PGM_COMMANDS */
+
+
 typedef struct tagXcp_StateType {
     bool connected;
     bool busy;
@@ -352,6 +462,9 @@ typedef struct tagXcp_StateType {
     XcpDaq_ProcessorType daqProcessor;
     XcpDaq_PointerType daqPointer;
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
+#if XCP_ENABLE_PGM_COMMANDS == XCP_ON
+    XcpPgm_ProcessorType pgmProcessor;
+#endif /* ENABLE_PGM_COMMANDS */
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
     uint16_t counter;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -416,7 +529,7 @@ typedef enum tagXcpDaq_DirectionType {
 } XcpDaq_DirectionType;
 
 
-typedef struct tagXcpDaq_ListType {
+typedef struct tagXcpDaq_XcpDaq_DynamicListType {
     XcpDaq_ODTIntegerType numOdts;
     uint16_t firstOdt;
     uint8_t mode;
@@ -424,7 +537,22 @@ typedef struct tagXcpDaq_ListType {
     uint8_t prescaler;
     uint8_t  counter;
 #endif /* XCP_DAQ_PRESCALER_SUPPORTED */
-} XcpDaq_ListType;
+} XcpDaq_DynamicListType;
+
+
+typedef struct tagXcpDaq_ListConfigurationType {
+    XcpDaq_ODTIntegerType numOdts;
+    uint16_t firstOdt;
+} XcpDaq_ListConfigurationType;
+
+
+typedef struct tagXcpDaq_ListStateType {
+    uint8_t mode;
+#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
+    uint8_t prescaler;
+    uint8_t  counter;
+#endif /* XCP_DAQ_PRESCALER_SUPPORTED */
+} XcpDaq_ListStateType;
 
 
 typedef enum tagXcpDaq_EntityKindType {
@@ -440,22 +568,18 @@ typedef struct tagXcpDaq_EntityType {
     union {
         XcpDaq_ODTEntryType odtEntry;
         XcpDaq_ODTType odt;
-        XcpDaq_ListType daqList;
+        XcpDaq_DynamicListType daqList;
     } entity;
 } XcpDaq_EntityType;
 
 
-
 typedef struct tagXcpDaq_EventType {
-    uint8_t const * name;
-/*
-1  BYTE  DAQ_EVENT_PROPERTIES           Specific properties for this event channel
-2  BYTE  MAX_DAQ_LIST [0,1,2,..255]     maximum number of DAQ lists in this event channel
-3  BYTE  EVENT_CHANNEL_NAME_LENGTH      in bytes 0 – If not available
-4  BYTE  EVENT_CHANNEL_TIME_CYCLE       0 – Not cyclic
-5  BYTE  EVENT_CHANNEL_TIME_UNIT        don’t care if Event channel time cycle = 0
-6  BYTE  EVENT_CHANNEL_PRIORITY         (FF highest)
-*/
+    uint8_t const * const name;
+    uint8_t nameLen;
+    uint8_t properties;
+    uint8_t timeunit;
+    uint8_t cycle;
+    /* unit8_t priority; */
 } XcpDaq_EventType;
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
@@ -500,22 +624,25 @@ bool Xcp_IsBusy(void);
 Xcp_StateType * Xcp_GetState(void);
 
 
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 /*
 ** DAQ Implementation Functions.
 */
-#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 void XcpDaq_Init(void);
 Xcp_ReturnType XcpDaq_Free(void);
 Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount);
 Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtCount);
 Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntriesCount);
-XcpDaq_ListType * XcpDaq_GetList(XcpDaq_ListIntegerType daqListNumber);
+XcpDaq_ListStateType * XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber);
+XcpDaq_ListConfigurationType const * XcpDaq_GetListConfiguration(XcpDaq_ListIntegerType daqListNumber);
 XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber);
 bool XcpDaq_ValidateConfiguration(void);
 bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber);
 bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntry);
 void XcpDaq_MainFunction(void);
 void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t eventChannelNumber);
+void XcpDaq_CopyMemory(void * dst, void * src, uint32_t len);
+XcpDaq_EventType const * XcpDaq_GetEventConfiguration(uint16_t eventChannelNumber);
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
 void XcpDaq_GetProperties(uint8_t * properties);
 XcpDaq_ListIntegerType XcpDaq_GetListCount(void);
@@ -524,7 +651,30 @@ void XcpDaq_StartSelectedLists(void);
 void XcpDaq_StopSelectedLists(void);
 void XcpDaq_StopAllLists(void);
 bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType * firstPID);
+
+
+/*
+**  Predefined DAQ constants.
+*/
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+extern const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[];
+extern const XcpDaq_ODTType XcpDaq_PredefinedOdts[];
+extern const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[];
+extern const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount;
+extern XcpDaq_ListStateType XcpDaq_PredefinedListsState[];
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+
+extern const XcpDaq_EventType XcpDaq_Events[];
+
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
+
+
+/*
+** PGM Functions.
+*/
+#if XCP_ENABLE_PGM_COMMANDS == XCP_ON
+void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state);
+#endif /* ENABLE_PGM_COMMANDS */
 
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)
@@ -633,7 +783,7 @@ void Xcp_SendChecksumPositiveResponse(Xcp_ChecksumType checksum);
 void Xcp_SendChecksumOutOfRangeResponse(void);
 void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size);
 
-#if XCP_EXTERN_C_GUARDS == XCP_ON
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 }
 #endif  /* __cplusplus */
