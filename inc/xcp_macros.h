@@ -27,8 +27,8 @@
 /** @file xcp_macros.h
  *  @brief Common macros and function like macros.
  *
- * All prefixed with **XCP_** to prevent collisions
- * esp. with Windows.h
+ *  All macros are prefixed with **XCP_** to prevent collisions
+ *  esp. with Windows.h
  *
  *  @author Christoph Schueler (cpu12.gems@googlemail.com)
  */
@@ -50,35 +50,35 @@ extern "C"
 #endif /* defined(_WIN32) */
 
 #if !defined(XCP_LOBYTE)
-#define XCP_LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))
+#define XCP_LOBYTE(w)   ((uint8_t)((w) & (uint8_t)0xff))    /**< Get the low-byte from a word. */
 #endif
 
 #if !defined(XCP_HIBYTE)
-#define XCP_HIBYTE(w)   ((uint8_t)(((w)  & (uint16_t)0xff00) >> 8))
+#define XCP_HIBYTE(w)   ((uint8_t)(((w)  & (uint16_t)0xff00) >> 8)) /**< Get the high-byte from a word. */
 #endif
 
 #if !defined(XCP_LOWORD)
-#define XCP_LOWORD(w)   ((uint16_t)((w) & (uint16_t)0xffff))
+#define XCP_LOWORD(w)   ((uint16_t)((w) & (uint16_t)0xffff))    /**< Get the low-word from a doubleword. */
 #endif
 
 #if !defined(XCP_HIWORD)
-#define XCP_HIWORD(w)   ((uint16_t)(((w)  & (uint32_t)0xffff0000) >> 16))
+#define XCP_HIWORD(w)   ((uint16_t)(((w)  & (uint32_t)0xffff0000) >> 16))   /**< Get the high-word from a doubleword. */
 #endif
 
 #if !defined(XCP_MAX)
-#define XCP_MAX(l, r) ((l) > (r) ? (l) : (r))
+#define XCP_MAX(l, r) ((l) > (r) ? (l) : (r))   /**< Computes the maximum of \a l and \a r. */
 #endif
 
 #if !defined(XCP_MIN)
-#define XCP_MIN(l, r) ((l) < (r) ? (l) : (r))
+#define XCP_MIN(l, r) ((l) < (r) ? (l) : (r))   /**< Computes the minimum of \a l and \a r. */
 #endif
 
 #if !defined(XCP_TRUE)
-#define XCP_TRUE    (1)
+#define XCP_TRUE    (1)     /**< Boolean \a TRUE value. */
 #endif
 
 #if !defined(XCP_FALSE)
-#define XCP_FALSE   (0)
+#define XCP_FALSE   (0)     /**< Boolean \a FALSE value. */
 #endif
 
 #if !defined(XCP_NULL)
@@ -114,7 +114,7 @@ extern "C"
 #define DBG_PRINT6(a, b, c, d, e, f)
 #endif /* defined(_MSC_VER) */
 
-#define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))
+#define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))  /**< Calculates the number of elements of \a arr */
 
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
@@ -125,4 +125,3 @@ extern "C"
 
 
 #endif /* __XCP_MACROS_H */
-
