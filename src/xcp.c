@@ -43,7 +43,6 @@
 */
 
 
-
 /*
 **  Global Variables.
 */
@@ -1340,6 +1339,8 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
     odt = Xcp_GetByte(pdu, UINT8(4));
     odtEntry = Xcp_GetByte(pdu, UINT8(5));
 
+    /* TODO: Check for Predef. lists only */
+
     if (!XcpDaq_ValidateOdtEntry(daqList, odt, odtEntry)) {
         /* If the specified list is not available, ERR_OUT_OF_RANGE will be returned. */
         Xcp_ErrorResponse(ERR_OUT_OF_RANGE);
@@ -1368,6 +1369,15 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_DAQ_STOPPED();
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+    /* WRITE_DAQ is only possible for elements in configurable DAQ lists. */
+    if (Xcp_State.daqPointer.daqList < XcpDaq_PredefinedListCount) {
+        Xcp_SendResult(ERR_WRITE_PROTECTED);
+        return;
+    }
+
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+
     entry = XcpDaq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
@@ -1388,7 +1398,7 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 
 static void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
-    XcpDaq_ListType * entry;
+    XcpDaq_ListStateType * entry;
     const uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
     const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     const uint16_t eventChannelNumber = Xcp_GetWord(pdu, UINT8(4));
@@ -1432,7 +1442,7 @@ The master is not allowed to set the ALTERNATING flag and the TIMESTAMP flag at 
     }
 #endif /* XCP_DAQ_PRESCALER_SUPPORTED */
 
-    entry = XcpDaq_GetList(daqListNumber);
+    entry = XcpDaq_GetListState(daqListNumber);
     XcpDaq_AddEventChannel(daqListNumber, eventChannelNumber);
 
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_TIMESTAMP);
@@ -1450,7 +1460,7 @@ The master is not allowed to set the ALTERNATING flag and the TIMESTAMP flag at 
 
 static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
 {
-    XcpDaq_ListType * entry;
+    XcpDaq_ListStateType * entry;
     const uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
     XcpDaq_ODTIntegerType firstPid;
     const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
@@ -1465,7 +1475,12 @@ static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT3("START_STOP_DAQ_LIST [mode: 0x%02x daq: %03u]\n", mode, daqListNumber);
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-    entry = XcpDaq_GetList(daqListNumber);
+
+    if (daqListNumber >=XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(ERR_OUT_OF_RANGE);
+    }
+
+    entry = XcpDaq_GetListState(daqListNumber);
 
     if (mode == 0) {
 
@@ -1474,7 +1489,7 @@ static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
     } else if (mode == 2) {
         entry->mode = XCP_DAQ_LIST_MODE_SELECTED;
     } else {
-        Xcp_ErrorResponse(ERR_OUT_OF_RANGE);
+        Xcp_ErrorResponse(ERR_OUT_OF_RANGE);    /* correct? */
         return;
     }
 
@@ -1659,21 +1674,42 @@ static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
       UINT8(1),    /* Timestamp ticks per unit (WORD) */
       UINT8(0)
     );
-#if 0
-0  BYTE                                     Packet ID: 0xFF
-1  BYTE  GRANULARITY_ODT_ENTRY_SIZE_DAQ
-2  BYTE  MAX_ODT_ENTRY_SIZE_DAQ
-3  BYTE  GRANULARITY_ODT_ENTRY_SIZE_STIM
-4  BYTE  MAX_ODT_ENTRY_SIZE_STIM
-5  BYTE  TIMESTAMP_MODE
-6  WORD  TIMESTAMP_TICKS
-#endif
 }
 #endif /* XCP_ENABLE_GET_DAQ_RESOLUTION_INFO */
 
-/*
-** MANY MISSING FUNCTIONS
-*/
+
+#if XCP_ENABLE_GET_DAQ_EVENT_INFO == XCP_ON
+static void Xcp_GetDaqEventInfo_Res(Xcp_PDUType const * const pdu)
+{
+    uint16_t eventChannel = Xcp_GetWord(pdu, 2);
+    uint8_t nameLen;
+    XcpDaq_EventType const * event;
+
+    DBG_PRINT2("GET_DAQ_EVENT_INFO [eventChannel: %d]\n", eventChannel);
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    if (eventChannel >= UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)) {
+        Xcp_SendResult(ERR_OUT_OF_RANGE);
+    }
+    event = XcpDaq_GetEventConfiguration(eventChannel);
+    if ((event->name == XCP_NULL) || (event->nameLen == UINT8(0))) {
+        nameLen = UINT8(0);
+    } else {
+        nameLen = event->nameLen;
+        Xcp_SetMta(Xcp_GetNonPagedAddress(event->name));
+    }
+
+    Xcp_Send8(UINT8(7), UINT8(0xff),
+      UINT8(event->properties), /* DAQ_EVENT_PROPERTIES */
+      UINT8(1),                 /* maximum number of DAQ lists in this event channel */
+      UINT8(nameLen),           /* EVENT_CHANNEL_NAME_LENGTH in bytes 0 – If not available */
+      UINT8(event->cycle),      /* EVENT_CHANNEL_TIME_CYCLE 0 – Not cyclic */
+      UINT8(event->timeunit),   /* EVENT_CHANNEL_TIME_UNIT don’t care if Event channel time cycle = 0 */
+      UINT8(0),                 /* EVENT_CHANNEL_PRIORITY (FF highest) */
+      UINT8(0)
+    );
+}
+#endif /* XCP_ENABLE_GET_DAQ_EVENT_INFO */
 
 
 /*
@@ -1733,9 +1769,6 @@ static void Xcp_Program_Res(Xcp_PDUType const * const pdu)
     Xcp_State.mta.address += UINT32(len);
 
     Xcp_PositiveResponse();
-
-    DBG_PRINT1("PROGRAM\n");
-    XCP_ASSERT_PGM_ACTIVE();
 }
 
 static void Xcp_ProgramReset_Res(Xcp_PDUType const * const pdu)
