@@ -67,7 +67,7 @@
 /*
 **  DAQ Settings.
 */
-#define XCP_DAQ_ENABLE_DYNAMIC_LISTS                XCP_ON
+#define XCP_DAQ_ENABLE_DYNAMIC_LISTS                XCP_OFF
 #define XCP_DAQ_ENABLE_STATIC_LISTS                 XCP_OFF
 #define XCP_DAQ_ENABLE_PREDEFINED_LISTS             XCP_ON
 #define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
@@ -79,6 +79,7 @@
 #define XCP_DAQ_ALTERNATING_SUPPORTED               XCP_OFF
 #define XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED       XCP_ON
 
+#define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (100)
 #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
 #define XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  XCP_OFF
 
@@ -135,7 +136,7 @@
     #define XCP_ENABLE_GET_DAQ_PROCESSOR_INFO       XCP_ON
     #define XCP_ENABLE_GET_DAQ_RESOLUTION_INFO      XCP_ON
     #define XCP_ENABLE_GET_DAQ_LIST_INFO            XCP_OFF
-    #define XCP_ENABLE_GET_DAQ_EVENT_INFO           XCP_OFF
+    #define XCP_ENABLE_GET_DAQ_EVENT_INFO           XCP_ON
     #define XCP_ENABLE_FREE_DAQ                     XCP_ON
     #define XCP_ENABLE_ALLOC_DAQ                    XCP_ON
     #define XCP_ENABLE_ALLOC_ODT                    XCP_ON
