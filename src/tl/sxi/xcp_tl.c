@@ -80,7 +80,6 @@ void XcpTl_DeInit(void)
 
 void XcpTl_MainFunction(void)
 {
-
 }
 
 

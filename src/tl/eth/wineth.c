@@ -125,6 +125,7 @@ void XcpTl_Init(void)
     int idx;
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
+    uint32_t mode;
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
@@ -182,6 +183,13 @@ void XcpTl_Init(void)
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
+#if 0
+    if (XcpTl_Connection.socketType == SOCK_STREAM) {
+        mode = 0;
+        ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &mode);
+    }
+#endif
+
 #ifdef SO_REUSEPORT
     if (!Xcp_EnableSocketOption(boundSocket, SO_REUSEPORT)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEPORT)", WSAGetLastError());
@@ -206,10 +214,10 @@ void XcpTl_MainFunction(void)
 
 void *get_in_addr(struct sockaddr *sa)
 {
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	}
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 void XcpTl_RxHandler(void)
@@ -232,13 +240,13 @@ void XcpTl_RxHandler(void)
                 exit(1);
                 return;
             }
-//			inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
-//			printf("server: got connection from %s\n", s);
+        //inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
+//      printf("server: got connection from %s\n", s);
 //            if (getnameinfo(&From, FromLen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) != 0) {
 //                strcpy(hostname, "<unknown>");
 //                //Win_ErrorMsg("XcpTl_RxHandler::getnameinfo()", WSAGetLastError());
 //            }
-            DBG_PRINT2("\nAccepted connection from %s\n", hostname);
+//        DBG_PRINT2("\nAccepted connection from %s\n", hostname);
 
         }
         recv_len = recv(XcpTl_Connection.connectedSocket, (char*)buf, XCP_COMM_BUFLEN, 0);
