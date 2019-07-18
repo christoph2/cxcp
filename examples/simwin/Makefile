@@ -1,12 +1,8 @@
 vpath %.c ../../src
+vpath %.h ../..inc . ../../flsemu
 
-PROGRAMS = xcp_sim
-
-xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/win/hw.c tl/eth/wineth.c main.c ../flsemu/flsemu.c
+xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/win/hw.c  main.c ../flsemu/flsemu.c
 xcp_sim_OBJS = $(xcp_sim_SRC:%.c=%.o)
-
-
-xcp_sim_TARGET=xcp_sim
 
 INCLUDE= -I . -I ../../inc -I ../../flsemu
 CPPFLAGS += $(INCLUDE)
@@ -22,23 +18,31 @@ else
 CFLAGS += -O3
 endif
 
+ifeq ($(strip $(TARGET)), kvaser)
+KV_BASE_DIR = f:/kvaser/Canlib
+xcp_sim_SRC+=tl/can/kvaser.c
+xcp_sim_TARGET=xcp_sim_kvaser
+INCLUDE+=-I $(KV_BASE_DIR)/INC
+LDFLAGS+=-L $(KV_BASE_DIR)/Lib/MS -l canlib32
+CPPFLAGS += -DKVASER_CAN
+else
+xcp_sim_SRC+=tl/eth/wineth.c
+xcp_sim_TARGET=xcp_sim
+endif
 
-all: $(PROGRAMS)
+all: $(xcp_sim_TARGET)
+
+xcp_sim_OBJS: xcp.h xcp_hw.h xcp_macros.h xcp_types.h xcp_ow.h xcp_util.h xcp_config.h flsemu.h
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $(notdir $@)
 
-
-
-
-xcp_sim: $(xcp_sim_OBJS)
+$(xcp_sim_TARGET): $(xcp_sim_OBJS)
 	@echo Linking $(xcp_sim_TARGET)
 	$(CC) $(CFLAGS) -o $(xcp_sim_TARGET) $(notdir $(xcp_sim_OBJS)) $(LDFLAGS)
 
 clean:
-	rm -vf *o *exe
-#	rm -f $(xcp_sim_objs) $(PROGRAMS)
+	rm -f $(xcp_sim_OBJS) $(xcp_sim_TARGET).exe
 
 .PHONY: clean all
-
 
