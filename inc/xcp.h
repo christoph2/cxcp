@@ -63,6 +63,27 @@ extern "C"
 */
 
 /* Check for unsupported features. */
+#if XCP_ENABLE_STIM  == XCP_ON
+    #error STIM not supported yet.
+#endif /* XCP_ENABLE_STIM */
+
+#if XCP_DAQ_ALTERNATING_SUPPORTED == XCP_ON
+    #error XCP_DAQ_ALTERNATING_SUPPORTED not supported yet.
+#endif /* XCP_DAQ_ALTERNATING_SUPPORTED */
+
+#if XCP_DAQ_PRIORITIZATION_SUPPORTED == XCP_ON
+    #error DAQ priorization not supported yet.
+#endif /* XCP_DAQ_PRIORITIZATION_SUPPORTED */
+
+#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+    #error DAQ doesnt support bit-offsets yet.
+#endif /* XCP_DAQ_BIT_OFFSET_SUPPORTED */
+
+
+#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
+    #error DAQ doesnt support address extension.
+#endif /* XCP_DAQ_ADDR_EXT_SUPPORTED */
+
 
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
