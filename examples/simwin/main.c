@@ -7,14 +7,6 @@
 #include "xcp_hw.h"
 #include "flsemu.h"
 
-
-
-#pragma bss_seg(push, /*stack1,*/ ".arbeitsseite")
-int in_der_arbeitsseite;
-uint8_t calram[255];
-#pragma bss_seg(pop/*, stack1*/)
-int bss_normal;
-
 void XcpOnCan_Init(void);
 
 #define SIZE    (4096)
@@ -89,7 +81,6 @@ void memimnfo(void * ptr)
 #endif
 
 
-
 int main(void)
 {
     bool finished;
@@ -102,6 +93,8 @@ int main(void)
 
     Xcp_Init();
     XcpTl_DisplayInfo();
+
+    srand(23);
 
     for (;;) {
         Xcp_MainFunction();
@@ -172,7 +165,62 @@ typedef struct {
 } triangle_type;
 
 triangle_type triangle = {0};
+uint16_t randomValue;
 
+/////////////////////////
+/////////////////////////
+/////////////////////////
+
+const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
+    {
+        (uint32_t)&triangle, sizeof(triangle_type)
+    },
+    {
+        (uint32_t)&randomValue, sizeof(uint16_t)
+    },
+};
+
+
+const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {
+    {
+        2, 0
+    }
+};
+
+
+const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[] = {
+    {
+        1, 0
+    }
+};
+
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+XcpDaq_ListStateType XcpDaq_PredefinedListsState[XCP_DAQ_PREDEFINDED_LIST_COUNT];
+const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount = XCP_DAQ_PREDEFINDED_LIST_COUNT;
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+
+
+XCP_DAQ_BEGIN_EVENTS
+    XCP_DAQ_DEFINE_EVENT("EVT 100ms",
+        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
+        100
+    ),
+    XCP_DAQ_DEFINE_EVENT("EVT sporadic",
+        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
+        0
+    ),
+    XCP_DAQ_DEFINE_EVENT("EVT 10ms",
+        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
+        10
+    ),
+XCP_DAQ_END_EVENTS
+
+/////////////////////////
+/////////////////////////
+/////////////////////////
 
 void AppTask(void)
 {
@@ -196,6 +244,8 @@ void AppTask(void)
                     triangle.down = XCP_TRUE;
                 }
             }
+            randomValue = (uint16_t)rand();
+
             //printf("\t\t\tTRI [%u]\n", triangle.value);
             XcpDaq_TriggerEvent(1);
         }
