@@ -49,6 +49,10 @@
 #define XCP_ON_ETHERNET         (4)
 #define XCP_ON_SXI              (5)
 
+#define XCP_DAQ_CONFIG_TYPE_STATIC      (0)
+#define XCP_DAQ_CONFIG_TYPE_DYNAMIC     (1)
+#define XCP_DAQ_CONFIG_TYPE_NONE        (3)
+
 #include "xcp_config.h"
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
@@ -98,6 +102,27 @@ extern "C"
     #error GET_SEED requires UNLOCK
 #elif (XCP_ENABLE_GET_SEED == XCP_OFF) && (XCP_ENABLE_UNLOCK == XCP_ON)
     #error UNLOCK requires GET_SEED
+#endif
+
+#if XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE
+    #define XCP_DAQ_ENABLE_DYNAMIC_LISTS    XCP_OFF
+    #define XCP_DAQ_ENABLE_STATIC_LISTS     XCP_OFF
+#elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_DYNAMIC
+    #define XCP_DAQ_ENABLE_DYNAMIC_LISTS    XCP_ON
+    #define XCP_DAQ_ENABLE_STATIC_LISTS     XCP_OFF
+#elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_STATIC
+    #define XCP_DAQ_ENABLE_DYNAMIC_LISTS    XCP_OFF
+    #define XCP_DAQ_ENABLE_STATIC_LISTS     XCP_ON
+#endif /* XCP_DAQ_CONFIG_TYPE */
+
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+    #define XCP_MIN_DAQ XcpDaq_PredefinedListCount
+#else
+    #define XCP_MIN_DAQ ((XcpDaq_ListIntegerType)0)
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+
+#if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == STD_OFF)
+    #error Neither predefined nor configurable lists are enabled.
 #endif
 
 #if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_MAX_EVENT_CHANNEL < 1)
