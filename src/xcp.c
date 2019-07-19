@@ -1690,6 +1690,7 @@ static void Xcp_GetDaqEventInfo_Res(Xcp_PDUType const * const pdu)
 
     if (eventChannel >= UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)) {
         Xcp_SendResult(ERR_OUT_OF_RANGE);
+        return;
     }
     event = XcpDaq_GetEventConfiguration(eventChannel);
     if ((event->name == XCP_NULL) || (event->nameLen == UINT8(0))) {
