@@ -1635,9 +1635,6 @@ static void Xcp_AllocOdtEntry_Res(Xcp_PDUType const * const pdu)
 }
 #endif  /* XCP_ENABLE_ALLOC_ODT_ENTRY */
 
-
-#endif /* XCP_ENABLE_DAQ_COMMANDS */
-
 #if XCP_ENABLE_GET_DAQ_CLOCK == XCP_ON
 static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 {
@@ -1712,6 +1709,7 @@ static void Xcp_GetDaqEventInfo_Res(Xcp_PDUType const * const pdu)
 }
 #endif /* XCP_ENABLE_GET_DAQ_EVENT_INFO */
 
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 /*
 **
