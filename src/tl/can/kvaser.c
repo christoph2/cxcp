@@ -79,7 +79,7 @@ void Kv_Check(char* id, canStatus stat)
     }
 }
 
-    
+
 static bool XcpTl_MatchingAddress(uint32_t id0, uint32_t id1, uint16_t flag)
 {
     uint16_t ext0;

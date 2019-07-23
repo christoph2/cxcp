@@ -53,14 +53,14 @@
 #define XCP_DAQ_CONFIG_TYPE_DYNAMIC     (1)
 #define XCP_DAQ_CONFIG_TYPE_NONE        (3)
 
-#include "xcp_config.h"
-
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 extern "C"
 {
 #endif  /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
+
+#include "xcp_config.h"
 
 /*
 ** Configuration checks.
@@ -83,16 +83,43 @@ extern "C"
     #error DAQ doesnt support bit-offsets yet.
 #endif /* XCP_DAQ_BIT_OFFSET_SUPPORTED */
 
-
 #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     #error DAQ doesnt support address extension.
 #endif /* XCP_DAQ_ADDR_EXT_SUPPORTED */
 
+#if XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED == XCP_ON
+    #error Multiple DAQ lists per event are not supported yet.
+#endif /* XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED */
 
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
-    #define XCP_ENFORCE_CAN_RESTRICTIONS    XCP_ON
+    #ifdef XCP_MAX_CTO
+        #undef XCP_MAX_CTO
+    #endif /* XCP_MAX_CTO */
+    #define XCP_MAX_CTO (8)
+
+    #ifdef XCP_MAX_DTO
+        #undef XCP_MAX_DTO
+    #endif /* XCP_MAX_DTO */
+    #define XCP_MAX_DTO (8)
+
+    #ifdef XCP_TRANSPORT_LAYER_LENGTH_SIZE
+        #undef XCP_TRANSPORT_LAYER_LENGTH_SIZE
+    #endif /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
+    #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (0)
+
+    #ifdef XCP_TRANSPORT_LAYER_COUNTER_SIZE
+        #undef XCP_TRANSPORT_LAYER_COUNTER_SIZE
+    #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
+    #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
+
+    #ifdef XCP_TRANSPORT_LAYER_CHECKSUM_SIZE
+        #undef XCP_TRANSPORT_LAYER_CHECKSUM_SIZE
+    #endif /* XCP_TRANSPORT_LAYER_CHECKSUM_SIZE */
+    #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
+
 #endif /* XCP_TRANSPORT_LAYER */
+
 
 #if (XCP_ENABLE_GET_SEED == XCP_ON) && (XCP_ENABLE_UNLOCK == XCP_ON)
     #define XCP_ENABLE_RESOURCE_PROTECTION  (XCP_ON)
@@ -152,27 +179,13 @@ extern "C"
 #endif
 
 
-#if XCP_ENFORCE_CAN_RESTRICTIONS == XCP_ON
-    #if XCP_MAX_CTO != 8
-        #error XCP_MAX_CTO must be set to 8
-    #endif /* XCP_MAX_CTO */
-    #if XCP_MAX_DTO != 8
-        #error XCP_MAX_DTO must be set to 8
-    #endif /* XCP_MAX_DTO */
-    #if XCP_TRANSPORT_LAYER_LENGTH_SIZE  != 0
-        #error XCP_TRANSPORT_LAYER_LENGTH_SIZE must be set to 0
-    #endif  /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
-    #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
-        #error XCP_TRANSPORT_LAYER_COUNTER_SIZE must be set to 0
-    #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
-    #if XCP_TRANSPORT_LAYER_CHECKSUM_SIZE!= 0
-        #error XCP_TRANSPORT_LAYER_CHECKSUM_SIZE must be set to 0
-    #endif /* XCP_TRANSPORT_LAYER_CHECKSUM_SIZE */
+#if XCP_TRANSPORT_LAYER == XCP_ON_CAN
+
 #else
     #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
         #error XCP_ON_CAN_MAX_DLC_REQUIRED only applies to XCP_ON_CAN
     #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
-#endif /* XCP_ENFORCE_CAN_RESTRICTIONS */
+#endif /* XCP_TRANSPORT_LAYER == XCP_ON_CAN */
 
 #if (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0) && (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 1) && (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 2)
     #error XCP_TRANSPORT_LAYER_COUNTER_SIZE must be 0, 1, or 2
@@ -199,7 +212,6 @@ extern "C"
 #if !defined(XCP_MIN_ST_PGM)
     #define  XCP_MIN_ST_PGM (0)
 #endif  /* XCP_MIN_ST_PGM */
-
 
 
 /*
@@ -627,6 +639,14 @@ typedef struct tagXcpDaq_EventType {
     uint8_t cycle;
     /* unit8_t priority; */
 } XcpDaq_EventType;
+
+
+typedef struct tagXcpDaq_SamplingBufferStateType {
+    uint16_t numEntries;
+    uint16_t front;
+    uint16_t back;
+} XcpDaq_SamplingBufferStateType;
+
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 
@@ -828,6 +848,7 @@ void Xcp_ChecksumMainFunction(void);
 void Xcp_SendChecksumPositiveResponse(Xcp_ChecksumType checksum);
 void Xcp_SendChecksumOutOfRangeResponse(void);
 void Xcp_StartChecksumCalculation(uint8_t const * ptr, uint32_t size);
+
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)

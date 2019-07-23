@@ -68,6 +68,7 @@
 **  DAQ Settings.
 */
 #define XCP_DAQ_CONFIG_TYPE                         XCP_DAQ_CONFIG_TYPE_NONE
+#define XCP_DAQ_SAMPLING_BUFFER_SIZE                (40)
 #define XCP_DAQ_ENABLE_PREDEFINED_LISTS             XCP_ON
 #define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
 #define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
@@ -158,13 +159,6 @@
 #if defined(KVASER_CAN)
     #define XCP_TRANSPORT_LAYER                         XCP_ON_CAN
 
-    #define XCP_MAX_CTO                                 (8)
-    #define XCP_MAX_DTO                                 (8)
-
-    #define XCP_TRANSPORT_LAYER_LENGTH_SIZE             (0)
-    #define XCP_TRANSPORT_LAYER_COUNTER_SIZE            (0)
-    #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE           (0)
-
     #define XCP_ON_CAN_INBOUND_IDENTIFIER               (0x102 | XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_OUTBOUND_IDENTIFIER              (0x101 | XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_MAX_DLC_REQUIRED                 XCP_OFF
@@ -177,8 +171,6 @@
     #define XCP_ON_CAN_NOSAMP                           (1)
 #else
     #define XCP_TRANSPORT_LAYER                         XCP_ON_ETHERNET
-
-    #define XCP_ENFORCE_CAN_RESTRICTIONS                XCP_OFF
 
     #define XCP_MAX_CTO                                 (64)
     #define XCP_MAX_DTO                                 (64)
