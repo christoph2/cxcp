@@ -72,16 +72,18 @@
 #define XCP_DAQ_ENABLE_PREDEFINED_LISTS             XCP_ON
 #define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
 #define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
-#define XCP_DAQ_PRESCALER_SUPPORTED                 XCP_OFF
-#define XCP_DAQ_ADDR_EXT_SUPPORTED                  XCP_OFF
-#define XCP_DAQ_BIT_OFFSET_SUPPORTED                XCP_OFF
-#define XCP_DAQ_PRIORITIZATION_SUPPORTED            XCP_OFF
-#define XCP_DAQ_ALTERNATING_SUPPORTED               XCP_OFF
-#define XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED       XCP_ON
+#define XCP_DAQ_ENABLE_PRESCALER                    XCP_OFF
+#define XCP_DAQ_ENABLE_ADDR_EXT                     XCP_OFF
+#define XCP_DAQ_ENABLE_BIT_OFFSET                   XCP_OFF
+#define XCP_DAQ_ENABLE_PRIORITIZATION               XCP_OFF
+#define XCP_DAQ_ENABLE_ALTERNATING                  XCP_OFF
+#define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          XCP_ON
+
+#define XCP_DAQ_ENABLE_DTO_PADDING                  XCP_OFF
 
 #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (100)
 #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
-#define XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED  XCP_OFF
+#define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT XCP_OFF
 
 #define XCP_DAQ_LIST_TYPE                           uint8_t
 #define XCP_DAQ_ODT_TYPE                            uint8_t

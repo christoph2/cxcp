@@ -1382,12 +1382,12 @@ static void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
     entry->bitOffset = bitOffset;
-#endif /* XCP_DAQ_BIT_OFFSET_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
     entry->length = elemSize;
     entry->mta.address = address;
 #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     entry->mta.ext = adddrExt;
-#endif /* XCP_DAQ_ADDR_EXT_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
     /* Advance ODT entry pointer within  one  and  the same ODT. After writing to the
     last ODT entry of an ODT, the value of the DAQ pointer is undefined! */
@@ -1426,21 +1426,21 @@ The master is not allowed to set the ALTERNATING flag and the TIMESTAMP flag at 
         Xcp_ErrorResponse(ERR_CMD_SYNTAX);
         return;
     }
-#endif /* XCP_DAQ_ALTERNATING_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_ALTERNATING */
 #if XCP_DAQ_PRIORITIZATION_SUPPORTED == XCP_OFF
     /* Needs to be 0 */
     if (priority > UINT8(0)) {
         Xcp_ErrorResponse(ERR_OUT_OF_RANGE);
         return;
     }
-#endif /* XCP_DAQ_PRIORITIZATION_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_PRIORITIZATION */
 #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_OFF
     /* Needs to be 1 */
     if (prescaler > UINT8(1)) {
         Xcp_ErrorResponse(ERR_OUT_OF_RANGE);
         return;
     }
-#endif /* XCP_DAQ_PRESCALER_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_PRESCALER */
 
     entry = XcpDaq_GetListState(daqListNumber);
     XcpDaq_AddEventChannel(daqListNumber, eventChannelNumber);
@@ -1451,9 +1451,9 @@ The master is not allowed to set the ALTERNATING flag and the TIMESTAMP flag at 
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_PID_OFF);
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_SELECTED);
     entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_STARTED);
-#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
     entry->prescaler = prescaler;
-#endif /* XCP_DAQ_PRESCALER_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_PRESCALER */
 
     Xcp_PositiveResponse();
 }
@@ -1643,7 +1643,7 @@ static void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_PGM_IDLE();
 #if XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED == XCP_OFF
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-#endif /* XCP_DAQ_CLOCK_ACCESS_ALWAYS_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS */
 
     timestamp = XcpHw_GetTimerCounter();
     DBG_PRINT2("GET_DAQ_CLOCK [timestamp: %u]\n", timestamp);

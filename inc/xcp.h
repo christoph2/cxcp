@@ -71,25 +71,25 @@ extern "C"
     #error STIM not supported yet.
 #endif /* XCP_ENABLE_STIM */
 
-#if XCP_DAQ_ALTERNATING_SUPPORTED == XCP_ON
-    #error XCP_DAQ_ALTERNATING_SUPPORTED not supported yet.
-#endif /* XCP_DAQ_ALTERNATING_SUPPORTED */
+#if XCP_DAQ_ENABLE_ALTERNATING == XCP_ON
+    #error XCP_DAQ_ENABLE_ALTERNATING not supported yet.
+#endif /* XCP_DAQ_ENABLE_ALTERNATING */
 
-#if XCP_DAQ_PRIORITIZATION_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_PRIORITIZATION == XCP_ON
     #error DAQ priorization not supported yet.
-#endif /* XCP_DAQ_PRIORITIZATION_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_PRIORITIZATION */
 
-#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_BIT_OFFSET == XCP_ON
     #error DAQ doesnt support bit-offsets yet.
-#endif /* XCP_DAQ_BIT_OFFSET_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
 
-#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_ADDR_EXT == XCP_ON
     #error DAQ doesnt support address extension.
-#endif /* XCP_DAQ_ADDR_EXT_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
-#if XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_ON
     #error Multiple DAQ lists per event are not supported yet.
-#endif /* XCP_DAQ_MULTIPLE_DAQ_LISTS_PER_EVENT_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
@@ -473,9 +473,9 @@ typedef struct tagXcp_MtaType {
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 typedef struct tagXcpDaq_MtaType {
-#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_ADDR_EXT == XCP_ON
     uint8_t ext;
-#endif /* XCP_DAQ_ADDR_EXT_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
     uint32_t address;
 } XcpDaq_MtaType;
 
@@ -568,9 +568,9 @@ typedef struct tagXcp_StationIDType {
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 typedef struct tagXcpDaq_ODTEntryType {
     XcpDaq_MtaType mta;
-#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_BIT_OFFSET == XCP_ON
     uint8_t bitOffset;
-#endif /* XCP_DAQ_BIT_OFFSET_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
     uint32_t length;
 } XcpDaq_ODTEntryType;
 
@@ -591,10 +591,10 @@ typedef struct tagXcpDaq_XcpDaq_DynamicListType {
     XcpDaq_ODTIntegerType numOdts;
     uint16_t firstOdt;
     uint8_t mode;
-#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
     uint8_t prescaler;
     uint8_t  counter;
-#endif /* XCP_DAQ_PRESCALER_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_PRESCALER */
 } XcpDaq_DynamicListType;
 
 
@@ -606,10 +606,10 @@ typedef struct tagXcpDaq_ListConfigurationType {
 
 typedef struct tagXcpDaq_ListStateType {
     uint8_t mode;
-#if XCP_DAQ_PRESCALER_SUPPORTED == XCP_ON
+#if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
     uint8_t prescaler;
     uint8_t  counter;
-#endif /* XCP_DAQ_PRESCALER_SUPPORTED */
+#endif /* XCP_DAQ_ENABLE_PRESCALER */
 } XcpDaq_ListStateType;
 
 
@@ -645,7 +645,14 @@ typedef struct tagXcpDaq_SamplingBufferStateType {
     uint16_t numEntries;
     uint16_t front;
     uint16_t back;
+    uint16_t allocated;
 } XcpDaq_SamplingBufferStateType;
+
+
+typedef struct tagXcpDaq_MessageType {
+    uint8_t dlc;
+    uint8_t const * data;
+} XcpDaq_MessageType;
 
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
