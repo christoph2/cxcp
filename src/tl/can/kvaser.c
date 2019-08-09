@@ -144,7 +144,7 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
             //printf("ID: %08x DLC: %d Flags: %08x Timer: %d\n", id, dlc, flag, time);
             break;
         case canNOTIFY_STATUS:
-            printf("CAN status\n");
+            /* printf("CAN status %u\n", stat); */
             break;
         case canNOTIFY_ERROR:
             Kv_Error("Error frame received");
@@ -290,7 +290,6 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
     flag = ext ? canMSG_EXT : canMSG_STD;
     stat = canWrite(XcpTl_Connection.handle, id, (void*)buf, len, flag);
-    //printf("Send Handle %d %x %d %d %d\n", XcpTl_Connection.handle, id, ext, flag, len);
     Kv_Check("canWrite", stat);
 }
 
