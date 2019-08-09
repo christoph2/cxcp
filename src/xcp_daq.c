@@ -95,8 +95,8 @@ static const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
 ** Local Variables.
 */
 
-static uint8_t XcpDaq_SamplingBuffer[XCP_DAQ_SAMPLING_BUFFER_SIZE + 1];
-static XcpDaq_SamplingBufferStateType XcpDaq_SamplingBufferState;
+static uint8_t XcpDaq_DtoBuffer[XCP_DAQ_DTO_BUFFER_SIZE + 1];
+static XcpDaq_DtoBufferStateType XcpDaq_DtoBufferState;
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 static XcpDaq_AllocStateType XcpDaq_AllocState;
@@ -474,10 +474,10 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
 static void XcpDaq_InitMessageQueue(void)
 {
     XCP_DAQ_ENTER_CRITICAL();
-    XcpDaq_SamplingBufferState.numEntries = UINT16(0);
-    XcpDaq_SamplingBufferState.front = UINT16(0);
-    XcpDaq_SamplingBufferState.back = UINT16(0);
-    XcpDaq_SamplingBufferState.allocated = UINT16(0);
+    XcpDaq_DtoBufferState.numEntries = UINT16(0);
+    XcpDaq_DtoBufferState.front = UINT16(0);
+    XcpDaq_DtoBufferState.back = UINT16(0);
+    XcpDaq_DtoBufferState.allocated = UINT16(0);
     XCP_DAQ_LEAVE_CRITICAL();
 }
 
@@ -487,32 +487,32 @@ bool XcpDaq_EnqueueMessage(XcpDaq_MessageType const * msg)
     uint16_t lhs;
 
     XCP_DAQ_ENTER_CRITICAL();
-    if ((XCP_DAQ_MESSAGE_SIZE(msg) + XcpDaq_SamplingBufferState.allocated) > UINT16(XCP_DAQ_SAMPLING_BUFFER_SIZE)) {
+    if ((XCP_DAQ_MESSAGE_SIZE(msg) + XcpDaq_DtoBufferState.allocated) > UINT16(XCP_DAQ_DTO_BUFFER_SIZE)) {
         /* Overflow. */
         XCP_DAQ_LEAVE_CRITICAL();
         return (bool)XCP_FALSE;
     }
 
-    if ((XcpDaq_SamplingBufferState.back + XCP_DAQ_MESSAGE_SIZE(msg)) > UINT16(XCP_DAQ_SAMPLING_BUFFER_SIZE)) {
+    if ((XcpDaq_DtoBufferState.back + XCP_DAQ_MESSAGE_SIZE(msg)) > UINT16(XCP_DAQ_DTO_BUFFER_SIZE)) {
         /* Wrapping required. */
-        lhs = UINT16(XCP_DAQ_SAMPLING_BUFFER_SIZE) - XcpDaq_SamplingBufferState.back;
+        lhs = UINT16(XCP_DAQ_DTO_BUFFER_SIZE) - XcpDaq_DtoBufferState.back;
         rhs = XCP_DAQ_MESSAGE_SIZE(msg) - lhs;
-        XcpDaq_SamplingBuffer[XcpDaq_SamplingBufferState.back] = msg->dlc;
-        XcpDaq_SamplingBufferState.back += UINT16(1);
+        XcpDaq_DtoBuffer[XcpDaq_DtoBufferState.back] = msg->dlc;
+        XcpDaq_DtoBufferState.back += UINT16(1);
         --lhs;
         if ((lhs > UINT16(0)) && (lhs)) {
-            XcpUtl_MemCopy(&XcpDaq_SamplingBuffer + XcpDaq_SamplingBufferState.back, msg->data, lhs);
-            XcpDaq_SamplingBufferState.back += lhs;
+            XcpUtl_MemCopy(&XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.back, msg->data, lhs);
+            XcpDaq_DtoBufferState.back += lhs;
         }
-        XcpUtl_MemCopy(&XcpDaq_SamplingBuffer, msg->data, rhs);
-        XcpDaq_SamplingBufferState.back = rhs;
+        XcpUtl_MemCopy(&XcpDaq_DtoBuffer, msg->data, rhs);
+        XcpDaq_DtoBufferState.back = rhs;
     } else {
-        XcpDaq_SamplingBuffer[XcpDaq_SamplingBufferState.back] = msg->dlc;
-        XcpDaq_SamplingBufferState.back += UINT16(1);
-        XcpUtl_MemCopy(&XcpDaq_SamplingBuffer + XcpDaq_SamplingBufferState.back, msg->data, msg->dlc);
-        XcpDaq_SamplingBufferState.back = (XcpDaq_SamplingBufferState.back + msg->dlc) % UINT16(XCP_DAQ_SAMPLING_BUFFER_SIZE);
+        XcpDaq_DtoBuffer[XcpDaq_DtoBufferState.back] = msg->dlc;
+        XcpDaq_DtoBufferState.back += UINT16(1);
+        XcpUtl_MemCopy(&XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.back, msg->data, msg->dlc);
+        XcpDaq_DtoBufferState.back = (XcpDaq_DtoBufferState.back + msg->dlc) % UINT16(XCP_DAQ_DTO_BUFFER_SIZE);
     }
-    XcpDaq_SamplingBufferState.allocated += XCP_DAQ_MESSAGE_SIZE(msg);
+    XcpDaq_DtoBufferState.allocated += XCP_DAQ_MESSAGE_SIZE(msg);
     XCP_DAQ_LEAVE_CRITICAL();
     return (bool)XCP_TRUE;
 }
@@ -524,31 +524,31 @@ bool XcpDaq_DequeueMessage(XcpDaq_MessageType * msg)
     uint16_t lhs;
 
     XCP_DAQ_ENTER_CRITICAL();
-    if (XcpDaq_SamplingBufferState.front == XcpDaq_SamplingBufferState.back) {
+    if (XcpDaq_DtoBufferState.front == XcpDaq_DtoBufferState.back) {
         XCP_DAQ_LEAVE_CRITICAL();
         return (bool)XCP_FALSE;
     }
-    msg->dlc = XcpDaq_SamplingBuffer[XcpDaq_SamplingBufferState.front];
-    if ((XcpDaq_SamplingBufferState.front + XCP_DAQ_MESSAGE_SIZE(msg)) > UINT16(XCP_DAQ_SAMPLING_BUFFER_SIZE)) {
+    msg->dlc = XcpDaq_DtoBuffer[XcpDaq_DtoBufferState.front];
+    if ((XcpDaq_DtoBufferState.front + XCP_DAQ_MESSAGE_SIZE(msg)) > UINT16(XCP_DAQ_DTO_BUFFER_SIZE)) {
         /* Wrapping required. */
-        lhs = UINT16(XCP_DAQ_SAMPLING_BUFFER_SIZE) - XcpDaq_SamplingBufferState.front;
+        lhs = UINT16(XCP_DAQ_DTO_BUFFER_SIZE) - XcpDaq_DtoBufferState.front;
         rhs = XCP_DAQ_MESSAGE_SIZE(msg) - lhs;
-        msg->dlc = XcpDaq_SamplingBuffer[XcpDaq_SamplingBufferState.front];
-        XcpDaq_SamplingBufferState.front += UINT16(1);
+        msg->dlc = XcpDaq_DtoBuffer[XcpDaq_DtoBufferState.front];
+        XcpDaq_DtoBufferState.front += UINT16(1);
         --lhs;
         if ((lhs > UINT16(0)) && (lhs)) {
-            XcpUtl_MemCopy(msg->data, &XcpDaq_SamplingBuffer + XcpDaq_SamplingBufferState.front, lhs);
-            XcpDaq_SamplingBufferState.front += lhs;
+            XcpUtl_MemCopy(msg->data, &XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.front, lhs);
+            XcpDaq_DtoBufferState.front += lhs;
         }
-        XcpUtl_MemCopy(msg->data, &XcpDaq_SamplingBuffer, rhs);
-        XcpDaq_SamplingBufferState.front = rhs;
+        XcpUtl_MemCopy(msg->data, &XcpDaq_DtoBuffer, rhs);
+        XcpDaq_DtoBufferState.front = rhs;
     } else {
-        msg-> dlc = XcpDaq_SamplingBuffer[XcpDaq_SamplingBufferState.front];
-        XcpDaq_SamplingBufferState.front += UINT16(1);
-        XcpUtl_MemCopy(msg->data, &XcpDaq_SamplingBuffer + XcpDaq_SamplingBufferState.front, msg->dlc);
-        XcpDaq_SamplingBufferState.front = (XcpDaq_SamplingBufferState.front + msg->dlc) % UINT16(XCP_DAQ_SAMPLING_BUFFER_SIZE);
+        msg-> dlc = XcpDaq_DtoBuffer[XcpDaq_DtoBufferState.front];
+        XcpDaq_DtoBufferState.front += UINT16(1);
+        XcpUtl_MemCopy(msg->data, &XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.front, msg->dlc);
+        XcpDaq_DtoBufferState.front = (XcpDaq_DtoBufferState.front + msg->dlc) % UINT16(XCP_DAQ_DTO_BUFFER_SIZE);
     }
-    XcpDaq_SamplingBufferState.allocated -= XCP_DAQ_MESSAGE_SIZE(msg);
+    XcpDaq_DtoBufferState.allocated -= XCP_DAQ_MESSAGE_SIZE(msg);
     XCP_DAQ_LEAVE_CRITICAL();
     return (bool)XCP_TRUE;
 }
@@ -556,13 +556,13 @@ bool XcpDaq_DequeueMessage(XcpDaq_MessageType * msg)
 #if 0
 bool XcpDaq_MessageQueueEmpty(void)
 {
-    return (XcpDaq_SamplingBufferState.front == XcpDaq_SamplingBufferState.back);
+    return (XcpDaq_DtoBufferState.front == XcpDaq_DtoBufferState.back);
 }
 
 bool XcpDaq_MessageQueueFull(void)
 {
-    return (XcpDaq_SamplingBufferState.back == (
-        (XcpDaq_SamplingBufferState.front - 1 + XCP_DAQ_SAMPLING_BUFFER_SIZE) % XCP_DAQ_SAMPLING_BUFFER_SIZE)
+    return (XcpDaq_DtoBufferState.back == (
+        (XcpDaq_DtoBufferState.front - 1 + XCP_DAQ_DTO_BUFFER_SIZE) % XCP_DAQ_DTO_BUFFER_SIZE)
     );
 }
 #endif // 0

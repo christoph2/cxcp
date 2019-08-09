@@ -646,7 +646,7 @@ typedef struct tagXcpDaq_SamplingBufferStateType {
     uint16_t front;
     uint16_t back;
     uint16_t allocated;
-} XcpDaq_SamplingBufferStateType;
+} XcpDaq_DtoBufferStateType;
 
 
 typedef struct tagXcpDaq_MessageType {
