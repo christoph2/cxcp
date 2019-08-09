@@ -296,6 +296,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
 
 void XcpTl_MainFunction(void)
 {
+    Sleep(1);
 #if 0
     if (XcpTl_FrameAvailable(0, 1000) > 0) {
         XcpTl_RxHandler();
