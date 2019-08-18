@@ -1,9 +1,6 @@
 User API
 ========
 
-`html </html>`_
+See  :download:`Doxygen API doc <html/index.html>`.
 
-
-.. raw: html
-   :file: html/index.html
 
