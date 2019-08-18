@@ -18,7 +18,8 @@ import sys
 
 import subprocess
 
-subprocess.call("cd .. ; doxygen", shell = True)
+subprocess.call("doxygen", shell = True)
+print(os.listdir("html"))
 
 # -- Project information -----------------------------------------------------
 
@@ -71,7 +72,7 @@ language = None
 # This pattern also affects html_static_path and html_extra_path .
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-html_extra_path = ["./doxy"]
+html_extra_path = ["./html"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

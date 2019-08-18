@@ -1,9 +1,9 @@
 User API
 ========
 
-`doxy </doxy>`_
+`html </html>`_
 
 
 .. raw: html
-   :file doxy/index.html
+   :file: html/index.html
 
