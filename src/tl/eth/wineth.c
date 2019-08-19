@@ -176,9 +176,12 @@ void XcpTl_Init(void)
     }
     freeaddrinfo(AddrInfo);
     if (boundSocketNum == -1) {
-        fprintf(stderr, "Fatal error: unable to serve on any address.\n");
+        fprintf(stderr, "Fatal error: unable to serve on any address.\nPerhaps" \
+            " a server is already running on port %s / %s [%s]?\n",
+            DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+        );
         WSACleanup();
-        return;
+        exit(2);
     }
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
