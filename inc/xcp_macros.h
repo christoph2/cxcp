@@ -45,6 +45,8 @@ extern "C"
 #endif /* XCP_EXTERN_C_GUARDS */
 
 
+#include "xcp_config.h"
+
 #if defined(_WIN32) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 #include <stdio.h>
 #endif /* defined(_WIN32) */

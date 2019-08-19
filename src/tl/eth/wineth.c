@@ -323,6 +323,7 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
         res = select(0, &fds, 0, 0, &timeout);
         if (res == SOCKET_ERROR) {
             Win_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
+            exit(2);
         }
         return res;
     } else {
