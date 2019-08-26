@@ -249,7 +249,7 @@ void XcpTl_RxHandler(void)
         if (recv_len == 0) {
             DBG_PRINT1("Client closed connection\n");
             closesocket(XcpTl_Connection.connectedSocket);
-            XcpTl_Connection.connected = XCP_FALSE;
+            Xcp_Disconnect();
             return;
         }
     } else {

@@ -702,6 +702,7 @@ void Xcp_MainFunction(void);
 */
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
+void Xcp_Disconnect(void);
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
 Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);

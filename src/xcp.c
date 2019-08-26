@@ -143,7 +143,6 @@ static bool Xcp_SlaveBlockTransferIsActive(void);
 static void Xcp_SlaveBlockTransferSetActive(bool onOff);
 #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
 
-static void Xcp_Disconnect(void);
 static void Xcp_SendResult(Xcp_ReturnType result);
 
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
@@ -655,7 +654,7 @@ static void Xcp_DefaultResourceProtection(void)
 }
 
 
-static void Xcp_Disconnect(void)
+void Xcp_Disconnect(void)
 {
     XcpTl_ReleaseConnection();
     Xcp_DefaultResourceProtection();
