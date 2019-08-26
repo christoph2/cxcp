@@ -135,7 +135,7 @@ void Win_ErrorMsg(char * const fun, unsigned errorCode)
     //LPWSTR buffer = NULL;
     char * buffer = XCP_NULL;
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, XCP_NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &buffer, 0, XCP_NULL);
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, XCP_NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buffer, 0, XCP_NULL);
     if (buffer != XCP_NULL) {
         fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
         LocalFree((HLOCAL)buffer);

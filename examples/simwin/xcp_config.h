@@ -36,7 +36,7 @@
 
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
-#define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_OFF
+#define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_ON
 #define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
 
 #define XCP_ENABLE_STIM                             XCP_OFF
@@ -174,7 +174,7 @@
 #else
     #define XCP_TRANSPORT_LAYER                         XCP_ON_ETHERNET
 
-    #define XCP_MAX_CTO                                 (64)
+    #define XCP_MAX_CTO                                 (16)    // (64)
     #define XCP_MAX_DTO                                 (64)
 
     #define XCP_TRANSPORT_LAYER_LENGTH_SIZE             (2)

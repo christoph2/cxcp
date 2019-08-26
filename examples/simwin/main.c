@@ -137,7 +137,7 @@ bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
 }
 
 
-bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, Xcp_MemoryAccessType access, bool programming)
+bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming)
 {
     return XCP_TRUE;
 }
@@ -173,10 +173,10 @@ uint16_t randomValue;
 
 const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
     {
-        (uint32_t)&triangle, sizeof(triangle_type)
+        {(uint32_t)&triangle},      sizeof(triangle_type)
     },
     {
-        (uint32_t)&randomValue, sizeof(uint16_t)
+        {(uint32_t)&randomValue},   sizeof(uint16_t)
     },
 };
 

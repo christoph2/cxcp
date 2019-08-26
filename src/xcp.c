@@ -76,6 +76,8 @@ static Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_Mt
 #define STOP_SELECTED   UINT8(0x02)
 
 
+#define XCP_INCREMENT_MTA(i) Xcp_State.mta.address += UINT32((i))
+
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 #define XCP_ASSERT_DAQ_STOPPED()                                        \
     do {                                                                \
@@ -118,12 +120,12 @@ static Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_Mt
     } while (0)
 
 #if XCP_ENABLE_CHECK_MEMORY_ACCESS == XCP_ON
-#define XCP_CHECK_MEMORY_ACCESS(m, a, p)                                \
-    do {                                                                \
-            if (!Xcp_HookFunction_CheckMemoryAccess((m), (a), (p))) {   \
-                Xcp_SendResult(ERR_ACCESS_DENIED);                      \
-                return;                                                 \
-        }                                                               \
+#define XCP_CHECK_MEMORY_ACCESS(m, l, a, p)                                 \
+    do {                                                                    \
+            if (!Xcp_HookFunction_CheckMemoryAccess((m), (l), (a), (p))) {  \
+                Xcp_SendResult(ERR_ACCESS_DENIED);                          \
+                return;                                                     \
+        }                                                                   \
     } while (0)
 #else
 #define XCP_CHECK_MEMORY_ACCESS(mta, access)
@@ -135,8 +137,15 @@ static Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_Mt
 */
 static bool Xcp_IsProtected(uint8_t resource);
 static void Xcp_DefaultResourceProtection(void);
+
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+static bool Xcp_SlaveBlockTransferIsActive(void);
+static void Xcp_SlaveBlockTransferSetActive(bool onOff);
+#endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
+
 static void Xcp_Disconnect(void);
 static void Xcp_SendResult(Xcp_ReturnType result);
+
 static void Xcp_CommandNotImplemented_Res(Xcp_PDUType const * const pdu);
 
 static void Xcp_Connect_Res(Xcp_PDUType const * const pdu);
@@ -598,6 +607,12 @@ void Xcp_Init(void)
 
     Xcp_DefaultResourceProtection();
 
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+    Xcp_State.slaveBlockModeState.slaveBlockTransferActive = (bool)XCP_FALSE;
+    Xcp_State.slaveBlockModeState.address.address = UINT32(0);
+    Xcp_State.slaveBlockModeState.address.ext = UINT8(0);
+    Xcp_State.slaveBlockModeState.remaining = UINT8(0);
+#endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
     Xcp_State.daqProcessor.state = XCP_DAQ_STATE_STOPPED;
@@ -654,6 +669,10 @@ void Xcp_MainFunction(void)
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_MainFunction();
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
+
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+    Xcp_UploadSingleFrame();
+#endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
 
 #if (XCP_ENABLE_BUILD_CHECKSUM == XCP_ON) && (XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON)
     Xcp_ChecksumMainFunction();
@@ -753,27 +772,97 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
     Xcp_SendPdu();
 }
 
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+static bool Xcp_SlaveBlockTransferIsActive(void)
+{
+    return Xcp_State.slaveBlockModeState.slaveBlockTransferActive;
+}
+
+
+static void Xcp_SlaveBlockTransferSetActive(bool onOff)
+{
+    XCP_ENTER_CRITICAL();
+    Xcp_SetBusy(onOff); /* Active slave block-mode also means command processor is busy. */
+    Xcp_State.slaveBlockModeState.slaveBlockTransferActive = onOff;
+    XCP_LEAVE_CRITICAL();
+}
+
+
+void Xcp_UploadSingleFrame(void)
+{
+    uint8_t * dataOut;
+    Xcp_MtaType dst;
+    Xcp_MtaType src;
+
+    if (!Xcp_SlaveBlockTransferIsActive()) {
+        return;
+    }
+    dataOut = Xcp_GetOutPduPtr();
+    dataOut[0] = (uint8_t)ERR_SUCCESS;
+    dst.address = (uint32_t)(dataOut + 1);
+    dst.ext = (uint8_t)0;
+#if 0
+    Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)len);
+    XCP_INCREMENT_MTA(len);
+#endif
+    if (Xcp_State.slaveBlockModeState.remaining <= (XCP_MAX_CTO - 1)) {
+        Xcp_SetPduOutLen(Xcp_State.slaveBlockModeState.remaining + 1);
+        src.address = Xcp_State.slaveBlockModeState.address.address;
+        src.ext = Xcp_State.slaveBlockModeState.address.ext;
+        Xcp_CopyMemory(dst, src, (uint32_t)(XCP_MAX_CTO - 1));
+        XCP_INCREMENT_MTA((XCP_MAX_CTO - 1));
+
+
+        Xcp_SlaveBlockTransferSetActive((bool)XCP_FALSE);
+    } else {
+        Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+        src.address = Xcp_State.slaveBlockModeState.address.address;
+        src.ext = Xcp_State.slaveBlockModeState.address.ext;
+        Xcp_CopyMemory(dst, src, (uint32_t)(XCP_MAX_CTO - 1));
+        XCP_INCREMENT_MTA((XCP_MAX_CTO - 1));
+        Xcp_State.slaveBlockModeState.remaining -= (XCP_MAX_CTO - 1);
+        Xcp_State.slaveBlockModeState.address.address += (XCP_MAX_CTO - 1);
+    }
+
+#if 0
+#if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
+    Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+#else
+    Xcp_SetPduOutLen(len + UINT16(1));
+#endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
+#endif
+    Xcp_SendPdu();
+}
+#endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
+
+
 static void Xcp_Upload(uint8_t len)
 {
     uint8_t * dataOut = Xcp_GetOutPduPtr();
     Xcp_MtaType dst;
 
-/* TODO: Blockmode!!! */
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_OFF
     dataOut[0] = (uint8_t)ERR_SUCCESS;
-
-    dst.address = (uint32_t)(dataOut + 1);  /* FIX ME!!! */
+    dst.address = (uint32_t)(dataOut + 1);
     dst.ext = (uint8_t)0;
-
     Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)len);
-
-    Xcp_State.mta.address += UINT32(len);
+    XCP_INCREMENT_MTA(len);
 #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
     Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
 #else
     Xcp_SetPduOutLen(len + UINT16(1));
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
     Xcp_SendPdu();
+#else
+    Xcp_State.slaveBlockModeState.address.address = Xcp_State.mta.address;
+    Xcp_State.slaveBlockModeState.address.ext = Xcp_State.mta.ext;
+    Xcp_State.slaveBlockModeState.remaining = len;
+
+    Xcp_SlaveBlockTransferSetActive((bool)XCP_TRUE);
+    Xcp_UploadSingleFrame();
+#endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
 }
+
 
 /**
  * Entry point, needs to be "wired" to CAN-Rx interrupt.
@@ -1091,15 +1180,18 @@ static void Xcp_Upload_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t len = Xcp_GetByte(pdu, UINT8(1));
 
-/* TODO: Blockmode!!! */
     DBG_PRINT2("UPLOAD [len: %u]\n", len);
 
     XCP_ASSERT_PGM_IDLE();
-    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_READ, XCP_FALSE);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, len, XCP_MEM_ACCESS_READ, XCP_FALSE);
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_OFF
     if (len > UINT8(XCP_MAX_CTO - 1)) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
     }
+#else
+
+#endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
 
     Xcp_Upload(len);
 }
@@ -1111,11 +1203,10 @@ static void Xcp_ShortUpload_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t len = Xcp_GetByte(pdu, UINT8(1));
 
-/* TODO: Blockmode!!! */
     DBG_PRINT2("SHORT-UPLOAD [len: %u]\n", len);
 
     XCP_ASSERT_PGM_IDLE();
-    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, len, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE);
     if (len > UINT8(XCP_MAX_CTO - 1)) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
@@ -1178,7 +1269,7 @@ static void Xcp_BuildChecksum_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT2("BUILD_CHECKSUM [blocksize: %u]\n", blockSize);
 
     XCP_ASSERT_PGM_IDLE();
-    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, blockSize, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE);
 #if XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE > 0
     /* We need to range check. */
     if (blockSize > UINT32(XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE)) {
@@ -1244,12 +1335,11 @@ static void Xcp_Download_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT2("DOWNLOAD [len: %u]\n", len);
 
     XCP_ASSERT_PGM_IDLE();
-    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, len, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
     src.address = (uint32_t)pdu->data + 2;
     src.ext = UINT8(0);
     Xcp_CopyMemory(Xcp_State.mta, src, (uint32_t)len);
-
-    Xcp_State.mta.address += UINT32(len);
+    XCP_INCREMENT_MTA(len);
 
     Xcp_PositiveResponse();
 }
@@ -1268,7 +1358,7 @@ static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
     dst.ext = addrExt;
 
     XCP_ASSERT_PGM_IDLE();
-    XCP_CHECK_MEMORY_ACCESS(dst, XCP_MEM_ACCESS_WRITE, (bool)XCP_FALSE);
+    XCP_CHECK_MEMORY_ACCESS(dst, len, XCP_MEM_ACCESS_WRITE, (bool)XCP_FALSE);
     if (len > (XCP_MAX_CTO - UINT8(8))) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
@@ -1278,7 +1368,7 @@ static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
     src.ext = UINT8(0);
     Xcp_CopyMemory(dst, src, (uint32_t)len);
 
-    Xcp_State.mta.address += UINT32(len);
+    XCP_INCREMENT_MTA(len);
 
     Xcp_PositiveResponse();
 }
@@ -1294,7 +1384,7 @@ static void Xcp_ModifyBits_Res(Xcp_PDUType const * const pdu)
     uint32_t * vp;
 
     DBG_PRINT4("MODIFY-BITS [shiftValue: 0x%02X andMask: 0x%04x ext: xorMask: 0x%04x]\n", shiftValue, andMask, xorMask);
-    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_WRITE, (bool)XCP_FALSE);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, 2, XCP_MEM_ACCESS_WRITE, (bool)XCP_FALSE);
     vp = (uint32_t*)Xcp_State.mta.address;
     *vp = ((*vp) & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue)))) ^ ((uint32_t)(xorMask << shiftValue)));
 
@@ -1760,12 +1850,12 @@ static void Xcp_Program_Res(Xcp_PDUType const * const pdu)
     DBG_PRINT2("PROGRAM [len: %u]\n", len);
 
     XCP_ASSERT_PGM_ACTIVE();
-    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, XCP_MEM_ACCESS_WRITE, (bool)XCP_TRUE);
+    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, len, XCP_MEM_ACCESS_WRITE, (bool)XCP_TRUE);
     src.address = (uint32_t)pdu->data + 2;
     src.ext = UINT8(0);
 //    Xcp_CopyMemory(Xcp_State.mta, src, (uint32_t)len);
 
-    Xcp_State.mta.address += UINT32(len);
+    XCP_INCREMENT_MTA(len);
 
     Xcp_PositiveResponse();
 }

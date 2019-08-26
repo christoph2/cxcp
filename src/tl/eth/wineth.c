@@ -24,7 +24,7 @@
  */
 
 
-#include <winsock2.h>
+#include <WinSock2.h>
 #include <Ws2tcpip.h>
 #include <Mstcpip.h>
 #include <stdio.h>
@@ -125,7 +125,6 @@ void XcpTl_Init(void)
     int idx;
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
-    uint32_t mode;
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
@@ -186,18 +185,6 @@ void XcpTl_Init(void)
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
-#if 0
-    if (XcpTl_Connection.socketType == SOCK_STREAM) {
-        mode = 0;
-        ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &mode);
-    }
-#endif
-
-#ifdef SO_REUSEPORT
-    if (!Xcp_EnableSocketOption(boundSocket, SO_REUSEPORT)) {
-        Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEPORT)", WSAGetLastError());
-    }
-#endif
 }
 
 
@@ -229,7 +216,7 @@ void XcpTl_RxHandler(void)
     uint16_t dlc;
     int FromLen;
     SOCKADDR_STORAGE From;
-    char hostname[NI_MAXHOST];
+    /* char hostname[NI_MAXHOST]; */
 
     ZeroMemory(buf,XCP_COMM_BUFLEN);
 
@@ -339,7 +326,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
-            (SOCKADDR_STORAGE*)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
+            (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
             Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {

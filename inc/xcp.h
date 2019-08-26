@@ -513,9 +513,20 @@ typedef struct tagXcpPgm_ProcessorType {
 #endif /* ENABLE_PGM_COMMANDS */
 
 
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+typedef struct tagXcp_SlaveBlockModeStateType {
+    bool slaveBlockTransferActive;
+    Xcp_MtaType address;
+    uint8_t remaining;
+} Xcp_SlaveBlockModeStateType;
+#endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
+
+
 typedef struct tagXcp_StateType {
+    /* TODO: replace with bitmap. */
     bool connected;
     bool busy;
+    bool programming;
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_ProcessorType daqProcessor;
     XcpDaq_PointerType daqPointer;
@@ -526,13 +537,15 @@ typedef struct tagXcp_StateType {
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
     uint16_t counter;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
-    bool programming;
     uint8_t mode;
 #if XCP_ENABLE_RESOURCE_PROTECTION  == XCP_ON
     uint8_t resourceProtection;
     uint8_t seedRequested;
 #endif /* XCP_ENABLE_RESOURCE_PROTECTION */
     Xcp_MtaType mta;
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+    Xcp_SlaveBlockModeStateType slaveBlockModeState;
+#endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
 } Xcp_StateType;
 
 typedef enum tagXcp_DTOType {
@@ -641,7 +654,7 @@ typedef struct tagXcpDaq_EventType {
 } XcpDaq_EventType;
 
 
-typedef struct tagXcpDaq_SamplingBufferStateType {
+typedef struct tagXcpDaq_DtoBufferStateType {
     uint16_t numEntries;
     uint16_t front;
     uint16_t back;
@@ -672,6 +685,7 @@ typedef enum tagXcp_MemoryMappingResultType {
 typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
 typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
 
+
 typedef struct tagXcp_1DArrayType {
     uint8_t length;
     uint8_t * data;
@@ -694,6 +708,7 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
 void Xcp_SetMta(Xcp_MtaType mta);
 void Xcp_SetBusy(bool enable);
 bool Xcp_IsBusy(void);
+void Xcp_UploadSingleFrame(void);
 Xcp_StateType * Xcp_GetState(void);
 
 
@@ -823,7 +838,7 @@ bool Xcp_HookFunction_GetId(uint8_t idType);
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result);
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key);
 
-bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, Xcp_MemoryAccessType access, bool programming);
+bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming);
 Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xcp_MtaType const * src);
 
 /*

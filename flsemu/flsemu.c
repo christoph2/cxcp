@@ -513,7 +513,6 @@ static void FlsEmu_CloseFileView(FlsEmu_HwFileViewType * fileView)
 Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
 {
     uint8_t idx;
-    uint16_t numPages;
     uint8_t * ptr;
     FlsEmu_SegmentType * segment;
 
@@ -522,7 +521,6 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType c
     for (idx = 0; idx < FlsEmu_Config->numSegments; ++idx) {
         ptr = FlsEmu_BasePointer(idx);
         segment = FlsEmu_Config->segments[idx];
-        numPages = (uint16_t)(segment->memSize / segment->pageSize);
         /* printf("BASE: %x END: %x SIZE: %x # %d\n", segment->baseAddress, (segment->baseAddress + segment->pageSize), segment->memSize, numPages); */
         if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
             dst->address = ((uint32_t)ptr - segment->baseAddress) + src->address;
