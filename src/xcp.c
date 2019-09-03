@@ -790,6 +790,7 @@ static void Xcp_SlaveBlockTransferSetActive(bool onOff)
 void Xcp_UploadSingleFrame(void)
 {
     uint8_t * dataOut;
+    uint8_t length;
     Xcp_MtaType dst;
     Xcp_MtaType src;
 
@@ -800,19 +801,23 @@ void Xcp_UploadSingleFrame(void)
     dataOut[0] = (uint8_t)ERR_SUCCESS;
     dst.address = (uint32_t)(dataOut + 1);
     dst.ext = (uint8_t)0;
-#if 0
-    Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)len);
-    XCP_INCREMENT_MTA(len);
-#endif
+
     if (Xcp_State.slaveBlockModeState.remaining <= (XCP_MAX_CTO - 1)) {
-        Xcp_SetPduOutLen(Xcp_State.slaveBlockModeState.remaining + 1);
+        length = Xcp_State.slaveBlockModeState.remaining;
+
+        #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
+        Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+        #else
+        Xcp_SetPduOutLen(length + UINT16(1));
+        #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
+
+
         src.address = Xcp_State.slaveBlockModeState.address.address;
         src.ext = Xcp_State.slaveBlockModeState.address.ext;
-        Xcp_CopyMemory(dst, src, (uint32_t)(XCP_MAX_CTO - 1));
-        XCP_INCREMENT_MTA((XCP_MAX_CTO - 1));
-
-
-        Xcp_SlaveBlockTransferSetActive((bool)XCP_FALSE);
+        Xcp_CopyMemory(dst, src, (uint32_t)length);
+        XCP_INCREMENT_MTA(length);
+        Xcp_State.slaveBlockModeState.remaining -= length;
+        Xcp_State.slaveBlockModeState.address.address += length;
     } else {
         Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
         src.address = Xcp_State.slaveBlockModeState.address.address;
@@ -823,14 +828,10 @@ void Xcp_UploadSingleFrame(void)
         Xcp_State.slaveBlockModeState.address.address += (XCP_MAX_CTO - 1);
     }
 
-#if 0
-#if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
-    Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
-#else
-    Xcp_SetPduOutLen(len + UINT16(1));
-#endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
-#endif
     Xcp_SendPdu();
+    if (Xcp_State.slaveBlockModeState.remaining == UINT8(0)) {
+        Xcp_SlaveBlockTransferSetActive((bool)XCP_FALSE);
+    }
 }
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
 
@@ -838,9 +839,8 @@ void Xcp_UploadSingleFrame(void)
 static void Xcp_Upload(uint8_t len)
 {
     uint8_t * dataOut = Xcp_GetOutPduPtr();
-    Xcp_MtaType dst;
-
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_OFF
+    Xcp_MtaType dst;
     dataOut[0] = (uint8_t)ERR_SUCCESS;
     dst.address = (uint32_t)(dataOut + 1);
     dst.ext = (uint8_t)0;
