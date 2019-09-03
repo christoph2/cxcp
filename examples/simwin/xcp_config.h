@@ -161,10 +161,10 @@
 #if defined(KVASER_CAN)
     #define XCP_TRANSPORT_LAYER                         XCP_ON_CAN
 
-    #define XCP_ON_CAN_INBOUND_IDENTIFIER               (0x102 | XCP_ON_CAN_EXT_IDENTIFIER)
-    #define XCP_ON_CAN_OUTBOUND_IDENTIFIER              (0x101 | XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_INBOUND_IDENTIFIER               (0x102)
+    #define XCP_ON_CAN_OUTBOUND_IDENTIFIER              (0x101)
     #define XCP_ON_CAN_MAX_DLC_REQUIRED                 XCP_OFF
-    #define XCP_ON_CAN_BROADCAST_IDENTIFIER             (0x103 | XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_BROADCAST_IDENTIFIER             (0x103)
     #define XCP_ON_CAN_FREQ                             (canBITRATE_250K)
     #define XCP_ON_CAN_BTQ                              (16)
     #define XCP_ON_CAN_TSEG1                            (14)
