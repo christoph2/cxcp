@@ -12,10 +12,11 @@ void XcpOnCan_Init(void);
 #define SIZE    (4096)
 uint8_t puffer[SIZE];
 
-void XcpHw_MainFunction(bool * finished);
+DWORD XcpHw_UIThread(LPVOID param);
 void XcpTl_SetOptions(XcpHw_OptionsType const * options);
 
-void AppTask(void);
+DWORD AppTask(LPVOID param);
+DWORD Xcp_MainTask(LPVOID param);
 
 #define FLS_SECTOR_SIZE (256)
 
@@ -80,10 +81,21 @@ void memimnfo(void * ptr)
 }
 #endif
 
+#define XCP_THREAD  (0)
+//#define IOCP_THREAD (1)
+#define UI_THREAD   (1)
+#define APP_THREAD  (2)
+
+#define NUM_THREADS (3)
+
+HANDLE threads[NUM_THREADS];
+
+HANDLE quit_event;
+
 
 int main(void)
 {
-    bool finished;
+    //bool finished;
     XcpHw_OptionsType options;
 
     XcpHw_GetCommandLineOptions(&options);
@@ -92,13 +104,23 @@ int main(void)
     FlsEmu_Init(&FlsEmu_Config);
 
     Xcp_Init();
-    XcpTl_DisplayInfo();
+    Xcp_DisplayInfo();
 
     srand(23);
+    quit_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    threads[XCP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Xcp_MainTask, &quit_event, 0, NULL);
+    threads[UI_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)XcpHw_UIThread, &quit_event, 0, NULL);
+    threads[APP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AppTask, &quit_event, 0, NULL);
 
+#if 0
     for (;;) {
         Xcp_MainFunction();
         XcpTl_MainFunction();
+        res = WaitForSingleObject(ui_thread, 0);
+        printf("\tRES: %d\n", res);
+        if (res == WAIT_OBJECT_0) {
+            break;
+        }
 
         XcpHw_MainFunction(&finished);
         if (finished) {
@@ -107,6 +129,10 @@ int main(void)
         AppTask();
         XcpDaq_MainFunction();
     }
+#endif
+    //SetEvent(quit_event);
+
+    WaitForMultipleObjects(NUM_THREADS, threads, TRUE, INFINITE);
 
     FlsEmu_DeInit();
 
@@ -222,34 +248,59 @@ XCP_DAQ_END_EVENTS
 /////////////////////////
 /////////////////////////
 
-void AppTask(void)
+DWORD Xcp_MainTask(LPVOID param)
+{
+    HANDLE * quit_event = (HANDLE *)param;
+    XCP_FOREVER {
+
+        Xcp_MainFunction();
+        XcpTl_MainFunction();
+        XcpDaq_MainFunction();
+
+        if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
+            break;
+        }
+    }
+    printf("EXITING XCP-MAIN-TASK...\n");
+    ExitThread(0);
+}
+
+DWORD AppTask(LPVOID param)
 {
     static uint32_t currentTS = 0UL;
     static uint32_t previousTS = 0UL;
     static uint16_t ticker = 0;
+    HANDLE * quit_event = (HANDLE *)param;
 
-    currentTS = XcpHw_GetTimerCounter() / 1000;
-    if (currentTS >= (previousTS + 10)) {
-        //printf("T [%u::%lu]\n", currentTS, XcpHw_GetTimerCounter() / 1000);
+    XCP_FOREVER {
+        currentTS = XcpHw_GetTimerCounter() / 1000;
+        if (currentTS >= (previousTS + 10)) {
+            //printf("T [%u::%lu]\n", currentTS, XcpHw_GetTimerCounter() / 1000);
 
-        if ((ticker % 3) == 0) {
-            if (triangle.down) {
-                triangle.value--;
-                if (triangle.value == 0) {
-                    triangle.down = XCP_FALSE;
+            if ((ticker % 3) == 0) {
+                if (triangle.down) {
+                    triangle.value--;
+                    if (triangle.value == 0) {
+                        triangle.down = XCP_FALSE;
+                    }
+                } else {
+                    triangle.value++;
+                    if (triangle.value >= 75) {
+                        triangle.down = XCP_TRUE;
+                    }
                 }
-            } else {
-                triangle.value++;
-                if (triangle.value >= 75) {
-                    triangle.down = XCP_TRUE;
-                }
+                randomValue = (uint16_t)rand();
+
+                //printf("\t\t\tTRI [%u]\n", triangle.value);
+                XcpDaq_TriggerEvent(1);
             }
-            randomValue = (uint16_t)rand();
-
-            //printf("\t\t\tTRI [%u]\n", triangle.value);
-            XcpDaq_TriggerEvent(1);
+            ticker++;
+            previousTS =  XcpHw_GetTimerCounter() / 1000;
         }
-        ticker++;
-        previousTS =  XcpHw_GetTimerCounter() / 1000;
+        if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
+            break;
+        }
     }
+    printf("EXITING APPZ...\n");
+    ExitThread(0);
 }
