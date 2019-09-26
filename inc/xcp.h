@@ -804,6 +804,8 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
 /*
 **  Helpers.
 */
+void Xcp_DisplayInfo(void);
+
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len);
 
 uint8_t Xcp_GetByte(Xcp_PDUType const * const value, uint8_t offs);
@@ -830,7 +832,7 @@ void XcpTl_ReleaseConnection(void);
 bool XcpTl_VerifyConnection(void);
 void XcpTl_FeedReceiver(uint8_t octet);
 void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
-void XcpTl_DisplayInfo(void);
+void XcpTl_PrintConnectionInformation(void);
 
 /*
 **  Customization Stuff.

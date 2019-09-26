@@ -27,7 +27,9 @@
 #include <crtdbg.h>
 
 #include <windows.h>
+#include <io.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -65,6 +67,8 @@ typedef struct tagHwStateType {
 static HwStateType HwState = {0};
 
 
+void XcpTl_PrintConnectionInformation(void);
+
 static void DisplayHelp(void);
 static void SystemInformation(void);
 
@@ -72,23 +76,30 @@ void FlsEmu_Info(void);
 void XcpDaq_Info(void);
 void XcpDaq_PrintDAQDetails();
 
-void exitFunc(void);
+bool XcpHw_MainFunction(HANDLE * quit_event);
 
+#if (defined(_DEBUG)) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
+void exitFunc(void);
 
 void exitFunc(void)
 {
-    //printf("Exiting %s...\n", __argv[0]);
+    printf("Exiting %s...\n", __argv[0]);
     _CrtDumpMemoryLeaks();
 }
-
+#endif
 
 /*
 **  Global Functions.
 */
 void XcpHw_Init(void)
 {
+#if (defined(_DEBUG)) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
     atexit(exitFunc);
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+    fflush(stdout);
+    //_setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
+    //_setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
 }
 
@@ -132,27 +143,43 @@ uint32_t XcpHw_GetTimerCounter(void)
 
 void Win_ErrorMsg(char * const fun, unsigned errorCode)
 {
-    //LPWSTR buffer = NULL;
-    char * buffer = XCP_NULL;
+    char buffer[1024];
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, XCP_NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buffer, 0, XCP_NULL);
-    if (buffer != XCP_NULL) {
-        fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
-        LocalFree((HLOCAL)buffer);
-    } else {
-        //DBG_PRINT("FormatMessage failed!\n");
-    }
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                  NULL,
+                  errorCode,
+                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                  buffer,
+                  1024,
+                  NULL
+    );
+    fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
 }
 
+DWORD XcpHw_UIThread(LPVOID param)
+{
+    HANDLE * quit_event = (HANDLE *)param;
 
-void XcpHw_MainFunction(bool * finished)
+    XCP_FOREVER {
+        if (!XcpHw_MainFunction(quit_event)) {
+            break;
+        }
+        if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
+            break;
+        }
+    }
+    printf("EXITING UI-THREAD\n");
+    ExitThread(0);
+}
+
+void XcpTl_PostQuitMessage();
+
+bool XcpHw_MainFunction(HANDLE * quit_event)
 {
     HANDLE hStdin;
     DWORD cNumRead, fdwMode, idx;
     INPUT_RECORD irInBuf[128];
     KEY_EVENT_RECORD key;
-
-    *finished = XCP_FALSE;
 
     hStdin = GetStdHandle(STD_INPUT_HANDLE);
     if (hStdin == INVALID_HANDLE_VALUE) {
@@ -178,16 +205,18 @@ void XcpHw_MainFunction(bool * finished)
 //                        printf("KeyEvent: %x %x %x %u\n", key.wVirtualKeyCode, key.wVirtualScanCode, key.dwControlKeyState, key.bKeyDown);
                         if (key.bKeyDown) {
                             if (key.wVirtualKeyCode == VK_ESCAPE) {
-                                *finished = XCP_TRUE;
-                                return;
+                                SetEvent(*quit_event);
+                                XcpTl_PostQuitMessage();
+                                return XCP_FALSE;
                             }
                             if (key.wVirtualKeyCode == VK_F9) {
 //                                printf("\tF9\n");
                             }
                             switch (tolower(key.uChar.AsciiChar)) {
                                 case 'q':
-                                    *finished = XCP_TRUE;
-                                    break;
+                                    SetEvent(*quit_event);
+                                    XcpTl_PostQuitMessage();
+                                    return XCP_FALSE;
                                 case 'h':
                                     DisplayHelp();
                                     break;
@@ -207,6 +236,7 @@ void XcpHw_MainFunction(bool * finished)
             }
         }
     }
+    return XCP_TRUE;
 }
 
 
@@ -259,10 +289,10 @@ static void SystemInformation(void)
 {
     printf("\nSystem-Information\n");
     printf("------------------\n");
+    XcpTl_PrintConnectionInformation();
     printf("MAX_CTO: %d  MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
 
     FlsEmu_Info();
     XcpDaq_Info();
     printf("-------------------------------------------------------------------------------\n");
 }
-

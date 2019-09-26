@@ -125,6 +125,7 @@ void XcpTl_Init(void)
     int idx;
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
+    /* unsigned long ul = 1; */
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
@@ -171,6 +172,7 @@ void XcpTl_Init(void)
         }
         boundSocketNum = idx;
         XcpTl_Connection.boundSocket = serverSockets[boundSocketNum];
+        /* ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &ul); */
         break;  /* Grab first address. */
     }
     freeaddrinfo(AddrInfo);
@@ -274,7 +276,7 @@ void XcpTl_RxHandler(void)
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
             Xcp_PduIn.len = dlc;
-            Xcp_PduIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+            Xcp_PduIn.data = buf + XCP_TRANPORT_LAYER_BUFFER_OFFSET;
             Xcp_DispatchCommand(&Xcp_PduIn);
         }
         if (recv_len < 5) {
@@ -361,10 +363,12 @@ void XcpTl_SetOptions(XcpHw_OptionsType const * options)
     Xcp_Options = *options;
 }
 
-void XcpTl_DisplayInfo(void)
+void XcpTl_PrintConnectionInformation(void)
 {
-    printf("\nXCPonEth -- Listening on port %s / %s [%s]\n", DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4");
-    printf("Press h for help.\n");
-    fflush(stdout);
+    printf("\nXCPonEth -- Listening on port %s / %s [%s]\n",
+        DEFAULT_PORT,
+        Xcp_Options.tcp ? "TCP" : "UDP",
+        Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+    );
 }
 

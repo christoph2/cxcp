@@ -2156,3 +2156,11 @@ void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state)
 }
 #endif /* ENABLE_PGM_COMMANDS */
 
+#if defined(_WIN32)
+void Xcp_DisplayInfo(void)
+{
+    XcpTl_PrintConnectionInformation();
+    printf("Press h for help.\n");
+    fflush(stdout);
+}
+#endif

@@ -31,6 +31,11 @@
 #include <stdio.h>
 
 
+#if _MSC_VER
+#pragma warning(disable: 4996)
+#endif /* _MSC_VER */
+
+
 #define KV_MAX_DLC     ((uint16_t)8)   /* TODO: depends on classic or FD. */
 
 
@@ -266,7 +271,6 @@ static void XcpTl_SetCANFilter(void)
         ext = 0;
         mask ^= 0x7ff;
     }
-    //printf("Calculated Filter: %x Mask: %x Ext: %d\n", filter, mask, ext);
     stat = canSetAcceptanceFilter(XcpTl_Connection.handle, filter, mask, ext);
     Kv_Check("canSetAcceptanceFilter", stat);
 }
@@ -344,7 +348,7 @@ void XcpTl_SetOptions(XcpHw_OptionsType const * options)
     Xcp_Options = *options;
 }
 
-void XcpTl_DisplayInfo(void)
+void XcpTl_PrintConnectionInformation(void)
 {
     int stat;
     int num;
@@ -359,6 +363,6 @@ void XcpTl_DisplayInfo(void)
     printf("\nXCPonCAN -- %s (channel %d), listening on 0x%X [%s]\n", name, num,
         XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
     );
-    fflush(stdout);
 }
+
 
