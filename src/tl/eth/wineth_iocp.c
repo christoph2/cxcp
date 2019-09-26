@@ -76,7 +76,6 @@ typedef struct tagPerIoData {
     SOCKET socket;
 } PerIoData;
 
-unsigned char buf[XCP_COMM_BUFLEN];
 int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
@@ -264,8 +263,6 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
     SOCKADDR_STORAGE From;
     DWORD error;
 
-    ZeroMemory(buf,XCP_COMM_BUFLEN);
-
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_STREAM) {
             if (!XcpTl_Connection.xcpConnected) {
@@ -424,9 +421,9 @@ static DWORD WINAPI WorkerThread(LPVOID lpParameter)
                         if (numReceived > 0) {
 //                            printf("\t\tReceived %d bytes.\n", numReceived);
 #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-                            dlc = (uint16_t)buf[0];
+                            dlc = (uint16_t)wsaBuffer.buf[0];
 #elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-                            dlc = MAKEWORD(buf[0], buf[1]);
+                            dlc = MAKEWORD(wsaBuffer.buf[0], wsaBuffer.buf[1]);
                             //dlc = (uint16_t)*(buf + 0);
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
                             if (!XcpTl_Connection.xcpConnected || (XcpTl_VerifyConnection())) {
