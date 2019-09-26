@@ -95,7 +95,7 @@ HANDLE quit_event;
 
 int main(void)
 {
-    //bool finished;
+    size_t idx;
     XcpHw_OptionsType options;
 
     XcpHw_GetCommandLineOptions(&options);
@@ -133,6 +133,9 @@ int main(void)
     //SetEvent(quit_event);
 
     WaitForMultipleObjects(NUM_THREADS, threads, TRUE, INFINITE);
+    for (idx = 0; idx < NUM_THREADS; ++idx) {
+        CloseHandle(threads[idx]);
+    }
 
     FlsEmu_DeInit();
 

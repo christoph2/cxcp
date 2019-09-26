@@ -133,8 +133,11 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
     return XCP_TRUE;
 }
 
-HANDLE hThread;
-HANDLE hTimer;
+#define TL_WORKER_THREAD    (0)
+#define TL_ACCEPTOR_THREAD  (1)
+#define NUM_TL_THREADS      (2)
+
+static HANDLE XcpTl_Threads[NUM_TL_THREADS];
 
 void XcpTl_Init(void)
 {
@@ -153,9 +156,10 @@ void XcpTl_Init(void)
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     XcpTl_Connection.iocp = XcpTl_CreateIOCP();
-    hThread = CreateThread(NULL, 0, WorkerThread, (LPVOID)XcpTl_Connection.iocp, 0, NULL);
 
-    SetThreadPriority(hThread, THREAD_PRIORITY_ABOVE_NORMAL);
+    XcpTl_Threads[TL_WORKER_THREAD] = CreateThread(NULL, 0, WorkerThread, (LPVOID)XcpTl_Connection.iocp, 0, NULL);
+    SetThreadPriority(XcpTl_Threads[TL_WORKER_THREAD], THREAD_PRIORITY_ABOVE_NORMAL);
+    SetProcessAffinityMask(XcpTl_Threads[TL_WORKER_THREAD], 1UL);
 
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
     ZeroMemory(&Hints, sizeof(Hints));
@@ -228,16 +232,24 @@ void XcpTl_Init(void)
     SetWaitableTimer(hTimer, &liDueTime, 2000, NULL, NULL, 0);
     XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp, (HANDLE)hTimer, (ULONG_PTR)hTimer);
 #endif
-    hThread = CreateThread(NULL, 0, AcceptorThread, NULL, 0, NULL);
+    XcpTl_Threads[TL_ACCEPTOR_THREAD] = CreateThread(NULL, 0, AcceptorThread, NULL, 0, NULL);
+    SetProcessAffinityMask(XcpTl_Threads[TL_ACCEPTOR_THREAD], 1UL);
 }
 
 void XcpTl_DeInit(void)
 {
-    CloseHandle(hTimer);
+    size_t idx;
+
     XcpTl_PostQuitMessage();
     closesocket(XcpTl_Connection.connectedSocket);
     closesocket(XcpTl_Connection.boundSocket);
     CloseHandle(XcpTl_Connection.iocp);
+
+    WaitForMultipleObjects(NUM_TL_THREADS, XcpTl_Threads, TRUE, INFINITE);
+    for (idx = 0; idx < NUM_TL_THREADS; ++idx) {
+        CloseHandle(XcpTl_Threads[idx]);
+    }
+
     WSACleanup();
 }
 
@@ -279,7 +291,7 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
                 }
 
                 XcpTl_Connection.socketConnected = XCP_TRUE;
-                printf("Connected to Socket: %d\n", XcpTl_Connection.connectedSocket);
+                /* printf("Connected to Socket: %d\n", XcpTl_Connection.connectedSocket); */
                 XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp,
                     (HANDLE)XcpTl_Connection.connectedSocket,
                     (ULONG_PTR)XcpTl_Connection.connectedSocket
@@ -291,24 +303,6 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
 //    printf("Exiting Acceptor...\n");
     ExitThread(0);
 }
-
-void XcpTl_RxHandler(void)
-{
-
-}
-
-
-
-void XcpTl_TxHandler(void)
-{
-
-}
-
-
-int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
-{
-}
-
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
