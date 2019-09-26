@@ -231,7 +231,6 @@ void XcpTl_Init(void)
     hThread = CreateThread(NULL, 0, AcceptorThread, NULL, 0, NULL);
 }
 
-
 void XcpTl_DeInit(void)
 {
     CloseHandle(hTimer);
@@ -266,14 +265,14 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_STREAM) {
             if (!XcpTl_Connection.xcpConnected) {
-
+                FromLen = sizeof(From);
                 XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, &FromLen);
                 if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
                     error = WSAGetLastError();
                     if (error == WSAEINTR) {
                         break;
                     } else {
-                        Win_ErrorMsg("XcpTl_RxHandler::accept()", error);
+                        Win_ErrorMsg("AcceptorThread::accept()", error);
                         WSACleanup();
                         exit(1);
                     }
