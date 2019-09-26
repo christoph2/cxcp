@@ -29,6 +29,9 @@
 #include "flsemu.h"
 #include "xcp_hw.h"
 
+#if _MSC_VER
+#pragma warning(disable: 4996)
+#endif /* _MSC_VER */
 
 /*
 **  Local Defines.
