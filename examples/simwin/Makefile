@@ -2,7 +2,6 @@ vpath %.c ../../src
 vpath %.h ../..inc . ../../flsemu
 
 xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/win/hw.c  main.c ../flsemu/flsemu.c
-xcp_sim_OBJS = $(xcp_sim_SRC:%.c=%.o)
 
 INCLUDE= -I . -I ../../inc -I ../../flsemu
 CPPFLAGS += $(INCLUDE)
@@ -26,9 +25,12 @@ INCLUDE+=-I $(KV_BASE_DIR)/INC
 LDFLAGS+=-L $(KV_BASE_DIR)/Lib/MS -l canlib32
 CPPFLAGS += -DKVASER_CAN
 else
-xcp_sim_SRC+=tl/eth/wineth.c
+#xcp_sim_SRC+=tl/eth/wineth.c
+xcp_sim_SRC+=tl/eth/wineth_iocp.c
 xcp_sim_TARGET=xcp_sim
 endif
+
+xcp_sim_OBJS = $(xcp_sim_SRC:%.c=%.o)
 
 all: $(xcp_sim_TARGET)
 
