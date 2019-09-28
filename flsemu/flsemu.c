@@ -220,6 +220,7 @@ static bool FlsEmu_Flush(uint8_t segmentIdx)
 
 void * FlsEmu_BasePointer(uint8_t segmentIdx)
 {
+    /// TODO: getSegment()
     FlsEmu_SegmentType const * segment;
     FLSEMU_ASSERT_INITIALIZED();
 
@@ -227,8 +228,21 @@ void * FlsEmu_BasePointer(uint8_t segmentIdx)
         return (void*)NULL;
     }
     segment = FlsEmu_Config->segments[segmentIdx];
-
+    //
     return segment->persistentArray->mappingAddress;
+}
+
+uint32_t FlsEmu_NumPages(uint8_t segmentIdx)
+{
+    FlsEmu_SegmentType const * segment;
+    FLSEMU_ASSERT_INITIALIZED();
+
+    if (!VALIDATE_SEGMENT_IDX(segmentIdx)) {
+        return UINT32(0);
+    }
+    segment = FlsEmu_Config->segments[segmentIdx];
+
+    return segment->memSize / segment->pageSize;
 }
 
 void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
@@ -524,6 +538,7 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType c
     for (idx = 0; idx < FlsEmu_Config->numSegments; ++idx) {
         ptr = FlsEmu_BasePointer(idx);
         segment = FlsEmu_Config->segments[idx];
+        //segment.
         /* printf("BASE: %x END: %x SIZE: %x # %d\n", segment->baseAddress, (segment->baseAddress + segment->pageSize), segment->memSize, numPages); */
         if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
             dst->address = ((uint32_t)ptr - segment->baseAddress) + src->address;
@@ -549,7 +564,7 @@ void FlsEmu_Info(void)
     for (idx = 0; idx < FlsEmu_Config->numSegments; ++idx) {
         ptr = FlsEmu_BasePointer(idx);
         segment = FlsEmu_Config->segments[idx];
-        printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n", segment->name, (void*)segment->baseAddress, ptr, segment->memSize / 1024, segment->pageSize / 1024, segment->memSize / segment->pageSize);
+        printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n", segment->name, (void*)segment->baseAddress, ptr, segment->memSize / 1024, segment->pageSize / 1024, FlsEmu_NumPages(idx));
     }
     printf("\n");
 
