@@ -623,6 +623,13 @@ void Xcp_Init(void)
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0
     Xcp_State.counter = (uint16_t)0;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
+
+#if XCP_ENABLE_STATISTICS == XCP_ON
+    Xcp_State.statistics.crosBusy = UINT32(0);
+    Xcp_State.statistics.crosSend = UINT32(0);
+    Xcp_State.statistics.ctosReceived = UINT32(0);
+#endif /* XCP_ENABLE_STATISTICS */
+
     XcpHw_Init();
     XcpTl_Init();
 
@@ -711,6 +718,10 @@ void Xcp_SendPdu(void)
     Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
+
+#if XCP_ENABLE_STATISTICS == XCP_ON
+    Xcp_State.statistics.crosSend++;
+#endif /* XCP_ENABLE_STATISTICS */
 
     XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
 }
@@ -869,13 +880,20 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         /*DBG_PRINT2("CMD: [%02X]\n", cmd); */
+
         if (Xcp_IsBusy()) {
             printf("\n\t\t!!! BUSY !!!\n\n");
             Xcp_BusyResponse();
         } else {
+#if XCP_ENABLE_STATISTICS == XCP_ON
+            Xcp_State.statistics.ctosReceived++;
+#endif /* XCP_ENABLE_STATISTICS */
             Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);
         }
     } else {    /* not connected. */
+#if XCP_ENABLE_STATISTICS == XCP_ON
+    Xcp_State.statistics.ctosReceived++;
+#endif /* XCP_ENABLE_STATISTICS */
         if (pdu->data[0] == UINT8(XCP_CONNECT)) {
             Xcp_Connect_Res(pdu);
         } else {
@@ -2119,6 +2137,9 @@ static void Xcp_ErrorResponse(uint8_t errorCode)
 
 static void Xcp_BusyResponse(void)
 {
+    #if XCP_ENABLE_STATISTICS == XCP_ON
+    Xcp_State.statistics.crosBusy++;
+    #endif /* XCP_ENABLE_STATISTICS */
     Xcp_ErrorResponse(ERR_CMD_BUSY);
 }
 

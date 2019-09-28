@@ -36,7 +36,7 @@
 
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
-#define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_OFF
+#define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_ON
 #define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
 
 #define XCP_ENABLE_STIM                             XCP_OFF
@@ -49,6 +49,8 @@
 #define XCP_BYTE_ORDER                              XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY                     XCP_ADDRESS_GRANULARITY_BYTE
 
+
+#define XCP_ENABLE_STATISTICS                       XCP_ON
 
 #define XCP_MAX_BS                                  (0)
 #define XCP_MIN_ST                                  (0)

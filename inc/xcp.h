@@ -526,6 +526,15 @@ typedef struct tagXcp_SlaveBlockModeStateType {
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
 
 
+#if XCP_ENABLE_STATISTICS == XCP_ON
+typedef struct tagXcp_StatisticsType {
+    uint32_t ctosReceived;
+    uint32_t crosSend;
+    uint32_t crosBusy;
+} Xcp_StatisticsType;
+#endif /* XCP_ENABLE_STATISTICS */
+
+
 typedef struct tagXcp_StateType {
     /* TODO: replace with bitmap. */
     bool connected;
@@ -550,6 +559,9 @@ typedef struct tagXcp_StateType {
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
     Xcp_SlaveBlockModeStateType slaveBlockModeState;
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
+#if XCP_ENABLE_STATISTICS == XCP_ON
+    Xcp_StatisticsType statistics;
+#endif /* XCP_ENABLE_STATISTICS */
 } Xcp_StateType;
 
 typedef enum tagXcp_DTOType {
