@@ -608,8 +608,6 @@ void Xcp_Init(void)
 
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
     Xcp_State.slaveBlockModeState.slaveBlockTransferActive = (bool)XCP_FALSE;
-    Xcp_State.slaveBlockModeState.address.address = UINT32(0);
-    Xcp_State.slaveBlockModeState.address.ext = UINT8(0);
     Xcp_State.slaveBlockModeState.remaining = UINT8(0);
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
@@ -792,7 +790,6 @@ void Xcp_UploadSingleFrame(void)
     uint8_t * dataOut;
     uint8_t length;
     Xcp_MtaType dst;
-    Xcp_MtaType src;
 
     if (!Xcp_SlaveBlockTransferIsActive()) {
         return;
@@ -811,26 +808,23 @@ void Xcp_UploadSingleFrame(void)
         Xcp_SetPduOutLen(length + UINT16(1));
         #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
 
-
-        src.address = Xcp_State.slaveBlockModeState.address.address;
-        src.ext = Xcp_State.slaveBlockModeState.address.ext;
-        Xcp_CopyMemory(dst, src, (uint32_t)length);
+        printf("PART BLOCK: %08x LEN% 02x\n", Xcp_State.mta.address, length);
+        Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)length);
         XCP_INCREMENT_MTA(length);
         Xcp_State.slaveBlockModeState.remaining -= length;
-        Xcp_State.slaveBlockModeState.address.address += length;
     } else {
         Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
-        src.address = Xcp_State.slaveBlockModeState.address.address;
-        src.ext = Xcp_State.slaveBlockModeState.address.ext;
-        Xcp_CopyMemory(dst, src, (uint32_t)(XCP_MAX_CTO - 1));
+        printf("FULL BLOCK: %08x\n", Xcp_State.mta.address);
+        Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)(XCP_MAX_CTO - 1));
         XCP_INCREMENT_MTA((XCP_MAX_CTO - 1));
         Xcp_State.slaveBlockModeState.remaining -= (XCP_MAX_CTO - 1);
-        Xcp_State.slaveBlockModeState.address.address += (XCP_MAX_CTO - 1);
     }
 
     Xcp_SendPdu();
     if (Xcp_State.slaveBlockModeState.remaining == UINT8(0)) {
         Xcp_SlaveBlockTransferSetActive((bool)XCP_FALSE);
+        printf("FINISHED.\n");
+        printf("----------------------------------------\n");
     }
 }
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
@@ -853,10 +847,9 @@ static void Xcp_Upload(uint8_t len)
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
     Xcp_SendPdu();
 #else
-    Xcp_State.slaveBlockModeState.address.address = Xcp_State.mta.address;
-    Xcp_State.slaveBlockModeState.address.ext = Xcp_State.mta.ext;
     Xcp_State.slaveBlockModeState.remaining = len;
 
+    printf("----------------------------------------\n");
     Xcp_SlaveBlockTransferSetActive((bool)XCP_TRUE);
     Xcp_UploadSingleFrame();
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
@@ -877,6 +870,7 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         /*DBG_PRINT2("CMD: [%02X]\n", cmd); */
         if (Xcp_IsBusy()) {
+            printf("\n\t\t!!! BUSY !!!\n\n");
             Xcp_BusyResponse();
         } else {
             Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);

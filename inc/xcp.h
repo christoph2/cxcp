@@ -283,6 +283,11 @@ extern "C"
 
 #define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
+/* DAQ Implementation Macros */
+#define XCP_DAQ_DEFINE_ODT_ENTRY(meas)              \
+    {                                               \
+        {(uint32_t)&(meas)},      sizeof((meas))    \
+    }
 
 /* DAQ Event Implementation Macros */
 #define XCP_DAQ_BEGIN_EVENTS    const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
@@ -516,7 +521,6 @@ typedef struct tagXcpPgm_ProcessorType {
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
 typedef struct tagXcp_SlaveBlockModeStateType {
     bool slaveBlockTransferActive;
-    Xcp_MtaType address;
     uint8_t remaining;
 } Xcp_SlaveBlockModeStateType;
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
