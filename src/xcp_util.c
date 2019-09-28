@@ -36,6 +36,8 @@ void XcpUtl_MemCopy(void * dst, void * src, uint32_t len)
     uint8_t * pd = (uint8_t *)dst;
     uint8_t * ps = (uint8_t *)src;
 
+    //printf("\tDST: %p SRC: %p LEN: %u\n", dst, src, len);
+
 /*    ASSERT(dst != (void *)NULL); */
 /*    ASSERT(pd >= ps + len || ps >= pd + len); */
 /*    ASSERT(len != (uint16_t)0); */
