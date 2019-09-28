@@ -320,6 +320,14 @@ extern "C"
 #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i)    (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
 #define XCP_ON_CAN_STRIP_IDENTIFIER(i)          ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
+/*
+**
+*/
+#define XCP_HW_LOCK_XCP     (0)
+#define XCP_HW_LOCK_TL      (1)
+#define XCP_HW_LOCK_DAQ     (2)
+
+#define XCP_HW_LOCK_COUNT   (3)
 
 /*
 ** Global Types.
@@ -864,6 +872,7 @@ Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xc
 **  Hardware dependent stuff.
 */
 void XcpHw_Init(void);
+void XcpHw_Deinit(void);
 uint32_t XcpHw_GetTimerCounter(void);
 
 extern Xcp_PDUType Xcp_PduIn;

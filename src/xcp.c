@@ -601,6 +601,7 @@ void Xcp_Init(void)
 {
     Xcp_ConnectionState = XCP_DISCONNECTED;
 
+    XcpHw_Init();
     XcpUtl_MemSet(&Xcp_State, UINT8(0), (uint32_t)sizeof(Xcp_StateType));
     Xcp_State.busy = (bool)XCP_FALSE;
 
@@ -629,8 +630,6 @@ void Xcp_Init(void)
     Xcp_State.statistics.crosSend = UINT32(0);
     Xcp_State.statistics.ctosReceived = UINT32(0);
 #endif /* XCP_ENABLE_STATISTICS */
-
-    XcpHw_Init();
     XcpTl_Init();
 
 #if (XCP_ENABLE_BUILD_CHECKSUM == XCP_ON) && (XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON)

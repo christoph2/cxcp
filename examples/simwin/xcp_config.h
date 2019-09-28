@@ -197,12 +197,12 @@
 /*
 **  Platform Specific Options.
 */
-#define XCP_ENTER_CRITICAL()
-#define XCP_LEAVE_CRITICAL()
-#define XCP_TL_ENTER_CRITICAL()
-#define XCP_TL_LEAVE_CRITICAL()
-#define XCP_DAQ_ENTER_CRITICAL()
-#define XCP_DAQ_LEAVE_CRITICAL()
+#define XCP_ENTER_CRITICAL()        XcpHw_AcquireLock(XCP_HW_LOCK_XCP)
+#define XCP_LEAVE_CRITICAL()        XcpHw_ReleaseLock(XCP_HW_LOCK_XCP)
+#define XCP_TL_ENTER_CRITICAL()     XcpHw_AcquireLock(XCP_HW_LOCK_TL)
+#define XCP_TL_LEAVE_CRITICAL()     XcpHw_ReleaseLock(XCP_HW_LOCK_TL)
+#define XCP_DAQ_ENTER_CRITICAL()    XcpHw_AcquireLock(XCP_HW_LOCK_DAQ)
+#define XCP_DAQ_LEAVE_CRITICAL()    XcpHw_ReleaseLock(XCP_HW_LOCK_DAQ)
 #define XCP_STIM_ENTER_CRITICAL()
 #define XCP_STIM_LEAVE_CRITICAL()
 #define XCP_PGM_ENTER_CRITICAL()

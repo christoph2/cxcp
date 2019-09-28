@@ -119,7 +119,7 @@ int main(void)
     }
 
     FlsEmu_DeInit();
-
+    XcpHw_Deinit();
     XcpTl_DeInit();
 
     return 0;

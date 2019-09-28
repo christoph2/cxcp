@@ -62,11 +62,14 @@ typedef struct tagHwStateType {
 
 
 /*
-**  Local Variables.
+**  Local Function Prototypes.
 */
-static HwStateType HwState = {0};
+static void XcpHw_InitLocks(void);
+static void XcpHw_DeinitLocks();
 
-
+/*
+**  External Function Prototypes.
+*/
 void XcpTl_PrintConnectionInformation(void);
 
 static void DisplayHelp(void);
@@ -80,6 +83,13 @@ bool XcpHw_MainFunction(HANDLE * quit_event);
 
 #if (defined(_DEBUG)) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 void exitFunc(void);
+
+/*
+**  Local Variables.
+*/
+static HwStateType HwState = {0};
+static CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
+
 
 void exitFunc(void)
 {
@@ -101,6 +111,12 @@ void XcpHw_Init(void)
     //_setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
     //_setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
+    XcpHw_InitLocks();
+}
+
+void XcpHw_Deinit(void)
+{
+    XcpHw_DeinitLocks();
 }
 
 uint32_t XcpHw_GetTimerCounter(void)
@@ -140,6 +156,39 @@ uint32_t XcpHw_GetTimerCounter(void)
 #endif // XCP_DAQ_TIMESTAMP_SIZE
 }
 
+static void XcpHw_InitLocks(void)
+{
+    uint8_t idx = UINT8(0);
+
+    for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
+        InitializeCriticalSection(&XcpHw_Locks[idx]);
+    }
+}
+
+static void XcpHw_DeinitLocks(void)
+{
+    uint8_t idx = UINT8(0);
+
+    for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
+        DeleteCriticalSection(&XcpHw_Locks[idx]);
+    }
+}
+
+void XcpHw_AcquireLock(uint8_t lockIdx)
+{
+    if (lockIdx >= XCP_HW_LOCK_COUNT) {
+        return;
+    }
+    EnterCriticalSection(&XcpHw_Locks[lockIdx]);
+}
+
+void XcpHw_ReleaseLock(uint8_t lockIdx)
+{
+    if (lockIdx >= XCP_HW_LOCK_COUNT) {
+        return;
+    }
+    LeaveCriticalSection(&XcpHw_Locks[lockIdx]);
+}
 
 void Win_ErrorMsg(char * const fun, unsigned errorCode)
 {
@@ -170,6 +219,7 @@ DWORD XcpHw_UIThread(LPVOID param)
     }
     ExitThread(0);
 }
+
 
 void XcpTl_PostQuitMessage();
 
