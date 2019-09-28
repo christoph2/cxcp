@@ -98,6 +98,8 @@ int main(void)
     size_t idx;
     XcpHw_OptionsType options;
 
+    srand(23);
+
     XcpHw_GetCommandLineOptions(&options);
     XcpTl_SetOptions(&options);
 
@@ -106,31 +108,10 @@ int main(void)
     Xcp_Init();
     Xcp_DisplayInfo();
 
-    srand(23);
     quit_event = CreateEvent(NULL, TRUE, FALSE, NULL);
     threads[XCP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Xcp_MainTask, &quit_event, 0, NULL);
     threads[UI_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)XcpHw_UIThread, &quit_event, 0, NULL);
     threads[APP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AppTask, &quit_event, 0, NULL);
-
-#if 0
-    for (;;) {
-        Xcp_MainFunction();
-        XcpTl_MainFunction();
-        res = WaitForSingleObject(ui_thread, 0);
-        printf("\tRES: %d\n", res);
-        if (res == WAIT_OBJECT_0) {
-            break;
-        }
-
-        XcpHw_MainFunction(&finished);
-        if (finished) {
-            break;
-        }
-        AppTask();
-        XcpDaq_MainFunction();
-    }
-#endif
-    //SetEvent(quit_event);
 
     WaitForMultipleObjects(NUM_THREADS, threads, TRUE, INFINITE);
     for (idx = 0; idx < NUM_THREADS; ++idx) {
@@ -191,6 +172,7 @@ bool Xcp_HookFunction_GetId(uint8_t idType)
 typedef struct {
     uint8_t value;
     bool down;
+    uint32_t dummy;
 } triangle_type;
 
 triangle_type triangle = {0};
@@ -201,12 +183,8 @@ uint16_t randomValue;
 /////////////////////////
 
 const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
-    {
-        {(uint32_t)&triangle},      sizeof(triangle_type)
-    },
-    {
-        {(uint32_t)&randomValue},   sizeof(uint16_t)
-    },
+    XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
+    XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
 };
 
 
@@ -258,13 +236,11 @@ DWORD Xcp_MainTask(LPVOID param)
 
         Xcp_MainFunction();
         XcpTl_MainFunction();
-        XcpDaq_MainFunction();
 
         if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
             break;
         }
     }
-    printf("EXITING XCP-MAIN-TASK...\n");
     ExitThread(0);
 }
 
@@ -304,6 +280,5 @@ DWORD AppTask(LPVOID param)
             break;
         }
     }
-    printf("EXITING APPZ...\n");
     ExitThread(0);
 }
