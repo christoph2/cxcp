@@ -168,7 +168,6 @@ DWORD XcpHw_UIThread(LPVOID param)
             break;
         }
     }
-    printf("EXITING UI-THREAD\n");
     ExitThread(0);
 }
 
@@ -287,12 +286,53 @@ static void DisplayHelp(void)
 
 static void SystemInformation(void)
 {
+#if XCP_ENABLE_STATISTICS == XCP_ON
+    Xcp_StateType * state;
+#endif /* XCP_ENABLE_STATISTICS */
+
     printf("\nSystem-Information\n");
     printf("------------------\n");
     XcpTl_PrintConnectionInformation();
-    printf("MAX_CTO: %d  MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
+    printf("MAX_CTO         : %d    MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
+    printf("Slave-Blockmode : %s\n", (XCP_SLAVE_BLOCK_MODE == XCP_ON) ? "Yes" : "No");
+    printf("Master-Blockmode: %s\n", (XCP_MASTER_BLOCK_MODE == XCP_ON) ? "Yes" : "No");
 
-    FlsEmu_Info();
+#if XCP_ENABLE_CAL_COMMANDS == XCP_ON
+    printf("Calibration     : Yes   Protected: %s\n", (XCP_PROTECT_CAL == XCP_ON)  ? "Yes" : "No");
+#else
+    printf("Calibration     : No\n");
+#endif /* XCP_ENABLE_CAL_COMMANDS */
+
+#if XCP_ENABLE_PAG_COMMANDS == XCP_ON
+    printf("Paging          : Yes   Protected: %s\n", (XCP_PROTECT_PAG == XCP_ON)  ? "Yes" : "No");
+#else
+    printf("Paging          : No\n");
+#endif /* XCP_ENABLE_PAG_COMMANDS */
+
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+    printf("DAQ             : Yes   Protected: (DAQ: %s STIM: %s)\n", (XCP_PROTECT_DAQ == XCP_ON)  ?
+           "Yes" : "No", (XCP_PROTECT_STIM == XCP_ON)  ? "Yes" : "No"
+    );
+#else
+    printf("DAQ             : No\n");
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
+
+#if XCP_ENABLE_PGM_COMMANDS
+    printf("Programming     : Yes   Protected: %s\n", (XCP_PROTECT_PGM == XCP_ON)  ? "Yes" : "No");
+#else
+    printf("Programming     : No\n");
+#endif /* XCP_ENABLE_PGM_COMMANDS */
+    printf("\n");
     XcpDaq_Info();
+    FlsEmu_Info();
+
+#if XCP_ENABLE_STATISTICS == XCP_ON
+    state = Xcp_GetState();
+    printf("\nStatistics\n");
+    printf("----------\n");
+    printf("CTOs rec'd      : %d\n", state->statistics.ctosReceived);
+    printf("CROs busy       : %d\n", state->statistics.crosBusy);
+    printf("CROs send       : %d\n", state->statistics.crosSend);
+#endif /* XCP_ENABLE_STATISTICS */
     printf("-------------------------------------------------------------------------------\n");
 }
