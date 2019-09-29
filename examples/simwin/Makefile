@@ -9,7 +9,7 @@ CPPFLAGS += $(INCLUDE)
 CFLAGS += -m32 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function  -ffunction-sections
 LDFLAGS= -lws2_32 -Wl,-Map=$(xcp_sim_TARGET).map -Wl,--cref -Wl,-gc-sections
 ifeq ($(PROFILE),1)
-CFLAGS += -fprofile-arcs -ftest-coverage --coverage
+CFLAGS += -pg -fprofile-arcs -ftest-coverage --coverage
 endif
 ifeq ($(DEBUG),1)
 CFLAGS += -g -O0
