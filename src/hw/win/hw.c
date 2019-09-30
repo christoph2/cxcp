@@ -81,7 +81,6 @@ void XcpDaq_PrintDAQDetails();
 
 bool XcpHw_MainFunction(HANDLE * quit_event);
 
-#if (defined(_DEBUG)) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 void exitFunc(void);
 
 /*
@@ -90,7 +89,7 @@ void exitFunc(void);
 static HwStateType HwState = {0};
 static CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
 
-
+#if (defined(_DEBUG)) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 void exitFunc(void)
 {
     printf("Exiting %s...\n", __argv[0]);
@@ -240,6 +239,8 @@ bool XcpHw_MainFunction(HANDLE * quit_event)
         Win_ErrorMsg("SetConsoleMode", GetLastError());
     }
 
+    WaitForSingleObject(hStdin, 1000);
+
     if (!GetNumberOfConsoleInputEvents (hStdin, &cNumRead)) {
         Win_ErrorMsg("PeekConsoleInput", GetLastError());
     } else {
@@ -344,8 +345,8 @@ static void SystemInformation(void)
     printf("------------------\n");
     XcpTl_PrintConnectionInformation();
     printf("MAX_CTO         : %d    MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
-    printf("Slave-Blockmode : %s\n", (XCP_SLAVE_BLOCK_MODE == XCP_ON) ? "Yes" : "No");
-    printf("Master-Blockmode: %s\n", (XCP_MASTER_BLOCK_MODE == XCP_ON) ? "Yes" : "No");
+    printf("Slave-Blockmode : %s\n", (XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON) ? "Yes" : "No");
+    printf("Master-Blockmode: %s\n", (XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON) ? "Yes" : "No");
 
 #if XCP_ENABLE_CAL_COMMANDS == XCP_ON
     printf("Calibration     : Yes   Protected: %s\n", (XCP_PROTECT_CAL == XCP_ON)  ? "Yes" : "No");
@@ -360,7 +361,7 @@ static void SystemInformation(void)
 #endif /* XCP_ENABLE_PAG_COMMANDS */
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    printf("DAQ             : Yes   Protected: (DAQ: %s STIM: %s)\n", (XCP_PROTECT_DAQ == XCP_ON)  ?
+    printf("DAQ             : Yes   Protected: [DAQ: %s STIM: %s]\n", (XCP_PROTECT_DAQ == XCP_ON)  ?
            "Yes" : "No", (XCP_PROTECT_STIM == XCP_ON)  ? "Yes" : "No"
     );
 #else
