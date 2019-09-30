@@ -673,9 +673,11 @@ void Xcp_MainFunction(void)
     XcpDaq_MainFunction();
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
-#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
-    Xcp_UploadSingleFrame();
-#endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
+#if 0
+    #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+        Xcp_UploadSingleFrame();
+    #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
+#endif
 
 #if (XCP_ENABLE_BUILD_CHECKSUM == XCP_ON) && (XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON)
     Xcp_ChecksumMainFunction();
@@ -818,13 +820,13 @@ void Xcp_UploadSingleFrame(void)
         Xcp_SetPduOutLen(length + UINT16(1));
         #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
 
-        printf("PART BLOCK: %08x LEN% 02x\n", Xcp_State.mta.address, length);
+        //printf("PART BLOCK: %08x LEN% 02x\n", Xcp_State.mta.address, length);
         Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)length);
         XCP_INCREMENT_MTA(length);
         Xcp_State.slaveBlockModeState.remaining -= length;
     } else {
         Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
-        printf("FULL BLOCK: %08x\n", Xcp_State.mta.address);
+        //printf("FULL BLOCK: %08x\n", Xcp_State.mta.address);
         Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)(XCP_MAX_CTO - 1));
         XCP_INCREMENT_MTA((XCP_MAX_CTO - 1));
         Xcp_State.slaveBlockModeState.remaining -= (XCP_MAX_CTO - 1);
@@ -833,8 +835,8 @@ void Xcp_UploadSingleFrame(void)
     Xcp_SendPdu();
     if (Xcp_State.slaveBlockModeState.remaining == UINT8(0)) {
         Xcp_SlaveBlockTransferSetActive((bool)XCP_FALSE);
-        printf("FINISHED.\n");
-        printf("----------------------------------------\n");
+        //printf("FINISHED.\n");
+        //printf("----------------------------------------\n");
     }
 }
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
@@ -859,7 +861,7 @@ static void Xcp_Upload(uint8_t len)
 #else
     Xcp_State.slaveBlockModeState.remaining = len;
 
-    printf("----------------------------------------\n");
+    //printf("----------------------------------------\n");
     Xcp_SlaveBlockTransferSetActive((bool)XCP_TRUE);
     Xcp_UploadSingleFrame();
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
