@@ -64,16 +64,32 @@ typedef struct tagXcpTl_ConnectionType {
     int socketType;
 } XcpTl_ConnectionType;
 
+typedef enum tagHandleType {
+    HANDLE_SOCKET,
+    HANDLE_FILE,
+    HANDLE_NAMED_PIPE,
+    HANDLE_USER,
+} HandleType;
+
 typedef enum tagIoOpcode {
     IoAccept,
     IoRead,
     IoWrite
 } IoOpcode;
 
+typedef struct tagPerHandleData {
+    HandleType handleType;
+    HANDLE handle;
+    DWORD seqNoSend;
+    DWORD seqNoRecv;
+} PerHandleData;
+
 typedef struct tagPerIoData {
     OVERLAPPED overlapped;
     IoOpcode opcode;
     SOCKET socket;
+    char buf[XCP_COMM_BUFLEN];
+    WSABUF wsabuf;
 } PerIoData;
 
 int addrSize = sizeof(SOCKADDR_STORAGE);
@@ -96,7 +112,8 @@ static bool XcpTl_RegisterIOCPHandle(HANDLE port, HANDLE object, ULONG_PTR key);
 static DWORD WINAPI WorkerThread(LPVOID lpParameter);
 static DWORD WINAPI AcceptorThread(LPVOID lpParameter);
 void XcpTl_PostQuitMessage(void);
-static void XcpTl_Receive(DWORD numBytes);
+static void XcpTl_TriggerRecv(DWORD numBytes);
+static void XcpTl_Feed(DWORD numBytesReceived);
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
@@ -138,6 +155,8 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 #define NUM_TL_THREADS      (2)
 
 static HANDLE XcpTl_Threads[NUM_TL_THREADS];
+static PerIoData recvOlap = {0};
+static PerIoData sendOlap = {0};
 
 void XcpTl_Init(void)
 {
@@ -151,8 +170,6 @@ void XcpTl_Init(void)
     int idx;
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
-
-    LARGE_INTEGER liDueTime;
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     XcpTl_Connection.iocp = XcpTl_CreateIOCP();
@@ -232,8 +249,21 @@ void XcpTl_Init(void)
     SetWaitableTimer(hTimer, &liDueTime, 2000, NULL, NULL, 0);
     XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp, (HANDLE)hTimer, (ULONG_PTR)hTimer);
 #endif
-    XcpTl_Threads[TL_ACCEPTOR_THREAD] = CreateThread(NULL, 0, AcceptorThread, NULL, 0, NULL);
-    SetProcessAffinityMask(XcpTl_Threads[TL_ACCEPTOR_THREAD], 1UL);
+    recvOlap.opcode = IoRead;
+    recvOlap.wsabuf.buf = recvOlap.buf;
+    recvOlap.wsabuf.len = XCP_COMM_BUFLEN;
+
+    sendOlap.opcode = IoWrite;
+    sendOlap.wsabuf.buf = sendOlap.buf;
+    sendOlap.wsabuf.len = XCP_COMM_BUFLEN;
+
+    if (XcpTl_Connection.socketType == SOCK_STREAM) {
+        XcpTl_Threads[TL_ACCEPTOR_THREAD] = CreateThread(NULL, 0, AcceptorThread, NULL, 0, NULL);
+        SetProcessAffinityMask(XcpTl_Threads[TL_ACCEPTOR_THREAD], 1UL);
+    } else {
+        recvOlap.opcode = IoAccept;
+        XcpTl_TriggerRecv(XCP_COMM_BUFLEN);
+    }
 }
 
 void XcpTl_DeInit(void)
@@ -244,7 +274,6 @@ void XcpTl_DeInit(void)
     closesocket(XcpTl_Connection.connectedSocket);
     closesocket(XcpTl_Connection.boundSocket);
     CloseHandle(XcpTl_Connection.iocp);
-
     WaitForMultipleObjects(NUM_TL_THREADS, XcpTl_Threads, TRUE, INFINITE);
     for (idx = 0; idx < NUM_TL_THREADS; ++idx) {
         CloseHandle(XcpTl_Threads[idx]);
@@ -270,59 +299,74 @@ void *get_in_addr(struct sockaddr *sa)
 
 static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
 {
-    int FromLen;
+    int fromLen;
     SOCKADDR_STORAGE From;
     DWORD error;
+    DWORD flags = (DWORD)0;
 
     XCP_FOREVER {
-        if (XcpTl_Connection.socketType == SOCK_STREAM) {
-            if (!XcpTl_Connection.xcpConnected) {
-                FromLen = sizeof(From);
-                XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, &FromLen);
-                if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
-                    error = WSAGetLastError();
-                    if (error == WSAEINTR) {
-                        break;
-                    } else {
-                        Win_ErrorMsg("AcceptorThread::accept()", error);
-                        WSACleanup();
-                        exit(1);
-                    }
+        if (!XcpTl_Connection.xcpConnected) {
+            fromLen = sizeof(From);
+            XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket,
+                (LPSOCKADDR)&XcpTl_Connection.currentAddress, &fromLen
+            );
+            if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
+                error = WSAGetLastError();
+                if (error == WSAEINTR) {
+                    break;
+                } else {
+                    Win_ErrorMsg("AcceptorThread::accept()", error);
+                    WSACleanup();
+                    exit(1);
                 }
-
-                XcpTl_Connection.socketConnected = XCP_TRUE;
-                /* printf("Connected to Socket: %d\n", XcpTl_Connection.connectedSocket); */
-                XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp,
-                    (HANDLE)XcpTl_Connection.connectedSocket,
-                    (ULONG_PTR)XcpTl_Connection.connectedSocket
-                );
-                XcpTl_Receive(0);
             }
+            XcpTl_Connection.socketConnected = XCP_TRUE;
+            XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp,
+                (HANDLE)XcpTl_Connection.connectedSocket,
+                (ULONG_PTR)XcpTl_Connection.connectedSocket
+            );
+            XcpTl_TriggerRecv(XCP_COMM_BUFLEN);
         }
     }
-//    printf("Exiting Acceptor...\n");
     ExitThread(0);
 }
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
-    static WSABUF sendBuffer;
     DWORD bytesWritten;
-    static PerIoData ov = {0};
+    int addrLen;
 
-    sendBuffer.buf = buf;
-    sendBuffer.len = len;
-    ov.opcode = IoWrite;
+    sendOlap.wsabuf.buf = buf;
+    sendOlap.wsabuf.len = len;
+    sendOlap.opcode = IoWrite;
 
+    SecureZeroMemory(&sendOlap.overlapped, sizeof(OVERLAPPED));
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+        addrLen = sizeof(SOCKADDR_STORAGE);
+        WSASendTo(XcpTl_Connection.boundSocket,
+            &sendOlap.wsabuf,
+            1,
+            &bytesWritten,
+            0,
+            (LPSOCKADDR)&XcpTl_Connection.currentAddress,
+            addrLen,
+            (LPWSAOVERLAPPED)&sendOlap.overlapped,
+            NULL
+        );
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
             (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
+            Win_ErrorMsg("XcpTl_Send:WSASendTo()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
-        if (WSASend(XcpTl_Connection.connectedSocket, &sendBuffer, 1, &bytesWritten, 0, (LPWSAOVERLAPPED)&ov, NULL) == SOCKET_ERROR) {
-        //if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
+        if (WSASend(
+            XcpTl_Connection.connectedSocket,
+            &sendOlap.wsabuf,
+            1,
+            &bytesWritten,
+            0,
+            (LPWSAOVERLAPPED)&sendOlap.overlapped,
+            NULL) == SOCKET_ERROR) {
+            Win_ErrorMsg("XcpTl_Send:WSASend()", WSAGetLastError());
             closesocket(XcpTl_Connection.connectedSocket);
         }
     }
@@ -344,7 +388,8 @@ void XcpTl_ReleaseConnection(void)
 
 bool XcpTl_VerifyConnection(void)
 {
-    return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
+    bool res =  memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
+    return res;
 }
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options)
@@ -367,91 +412,69 @@ void XcpTl_PrintConnectionInformation(void)
 ///////////////////
 ///////////////////
 /*
-** TODO: use SetFileCompletionNotificationModes() and SetFileIoOverlappedRange() on Vista an later.
+** TODO: use SetFileCompletionNotificationModes() and SetFileIoOverlappedRange() on Vista and later.
 */
 
 static DWORD WINAPI WorkerThread(LPVOID lpParameter)
 {
     HANDLE hCompletionPort = (HANDLE)lpParameter;
-    DWORD NumBytesRecv = 0;
+    DWORD numBytesReceived = 0;
     ULONG_PTR CompletionKey;
     PerIoData * iod = NULL;
-    OVERLAPPED * ov = NULL;
+    OVERLAPPED * olap = NULL;
     bool exitLoop = FALSE;
-    char receiveBuffer[XCP_COMM_BUFLEN];
-    static WSABUF wsaBuffer;
     DWORD flags = (DWORD)0;
-    DWORD numReceived;
-    uint16_t dlc;
     DWORD error;
 
-    wsaBuffer.buf = receiveBuffer;
-    wsaBuffer.len = XCP_COMM_BUFLEN;
 
     while (!exitLoop) {
-        if (GetQueuedCompletionStatus(hCompletionPort, &NumBytesRecv, &CompletionKey, (LPOVERLAPPED*)&ov, INFINITE)) {
-//            printf("\tGot Event: %ld %ld\n", NumBytesRecv, CompletionKey);
-            if ((NumBytesRecv == 0) &&  (CompletionKey == 0)) {
+        if (GetQueuedCompletionStatus(hCompletionPort, &numBytesReceived, &CompletionKey, (LPOVERLAPPED*)&olap, INFINITE)) {
+            if ((numBytesReceived == 0) &&  (CompletionKey == 0)) {
                 exitLoop = XCP_TRUE;
             } else {
-                iod = (PerIoData*)ov;
+                iod = (PerIoData*)olap;
                 switch (iod->opcode) {
+                    case IoAccept:
+                        //printf("ACCEPT() %d %ld\n", numBytesReceived, CompletionKey);
+                        printf("\t");
+                        XcpUtl_Hexdump(recvOlap.wsabuf.buf, numBytesReceived);
+                        printf("\n");
+//                        XcpTl_Connection.socketConnected = XCP_TRUE;
+                        recvOlap.opcode = IoRead;
+                        XcpTl_Feed(numBytesReceived);
+                        XcpTl_TriggerRecv(XCP_COMM_BUFLEN);
+                        break;
                     case IoRead:
-                        WSARecv(XcpTl_Connection.connectedSocket,
-                                &wsaBuffer,
-                                1,
-                                &numReceived,
-                                &flags,
-                                (LPWSAOVERLAPPED)NULL,
-                                (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL
-                        );
-                        if (numReceived == (DWORD)0) {
+                        //printf("READ() %d %ld [%d]\n", numBytesReceived, CompletionKey, recvOlap.opcode);
+                        if (numBytesReceived == (DWORD)0) {
                             DBG_PRINT1("Client closed connection\n");
                             XcpTl_Connection.socketConnected = XCP_FALSE;
                             closesocket(XcpTl_Connection.connectedSocket);
                             Xcp_Disconnect();
                         }
-                        if (numReceived > 0) {
-//                            printf("\t\tReceived %d bytes.\n", numReceived);
-#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-                            dlc = (uint16_t)wsaBuffer.buf[0];
-#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-                            dlc = MAKEWORD(wsaBuffer.buf[0], wsaBuffer.buf[1]);
-                            //dlc = (uint16_t)*(buf + 0);
-#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
-                            if (!XcpTl_Connection.xcpConnected || (XcpTl_VerifyConnection())) {
-                                Xcp_PduIn.len = dlc;
-                                Xcp_PduIn.data = wsaBuffer.buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-                                Xcp_DispatchCommand(&Xcp_PduIn);
-                            }
-                            if (numReceived < 5) {
-                                DBG_PRINT2("Error: frame to short: %d\n", numReceived);
-                            } else {
-
-                            }
-                            fflush(stdout);
-                        }
-                        XcpTl_Receive(0);
-                        break;
-                    case IoAccept:
+                        XcpTl_Feed(numBytesReceived);
+                        XcpTl_TriggerRecv(XCP_COMM_BUFLEN);
                         break;
                     case IoWrite:
+                        //printf("WRITE() %d %ld\n", numBytesReceived, CompletionKey);
+#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
+                        Xcp_UploadSingleFrame();
+#endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
                         break;
                 }
             }
         } else {
             error = GetLastError();
-            if (ov == NULL) {
+            if (olap == NULL) {
 
             } else {
                 // Failed I/O operation.
                 // The function stores information in the variables pointed to by lpNumberOfBytes, lpCompletionKey.
             }
-            Win_ErrorMsg("IOWorkerThread::GetQueuedCompletionStatus()", error);
+            Win_ErrorMsg("WorkerThread::GetQueuedCompletionStatus()", error);
         }
     }
     ExitThread(0);
-    return 0;
 }
 
 static HANDLE XcpTl_CreateIOCP(void)
@@ -485,29 +508,70 @@ void XcpTl_PostQuitMessage(void)
 }
 
 
-static void XcpTl_Receive(DWORD numBytes)
+static void XcpTl_TriggerRecv(DWORD numBytes)
 {
-    static WSABUF receiveBuffer;
-    static PerIoData ov = {0};
     DWORD numReceived = (DWORD)0;
     DWORD flags = (DWORD)0;
     DWORD err = 0;
+    int addrLen;
 
-    if (XcpTl_Connection.socketConnected == XCP_FALSE) {
-        return;
-    }
+    SecureZeroMemory(&recvOlap.overlapped, sizeof(OVERLAPPED));
 
-    ov.opcode = IoRead;
-    if (WSARecv(XcpTl_Connection.connectedSocket,
-                &receiveBuffer,
-                1, &numReceived,
-                &flags,
-                (LPWSAOVERLAPPED)&ov,
-                (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL)  == SOCKET_ERROR) {
-        err = WSAGetLastError();
-        if (err != WSA_IO_PENDING) {
-            Win_ErrorMsg("XcpTl_Receive::WSARecv()", err);
+    if (XcpTl_Connection.socketType == SOCK_STREAM) {
+        if (XcpTl_Connection.socketConnected == XCP_FALSE) {
+            return;
+        }
+        if (WSARecv(XcpTl_Connection.connectedSocket,
+                    &recvOlap.wsabuf,
+                    1,
+                    &numReceived,
+                    &flags,
+                    (LPWSAOVERLAPPED)&recvOlap,
+                    (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL)  == SOCKET_ERROR) {
+            err = WSAGetLastError();
+            if (err != WSA_IO_PENDING) {
+                Win_ErrorMsg("XcpTl_TriggerRecv::WSARecv()", err);
+            }
+        }
+    } else if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+        addrLen = sizeof(SOCKADDR_STORAGE);
+        if (WSARecvFrom(XcpTl_Connection.boundSocket,
+                    &recvOlap.wsabuf,
+                    1,
+                    &numReceived,
+                    &flags,
+                    (LPSOCKADDR)&XcpTl_Connection.currentAddress,
+                    &addrLen,
+                    (LPWSAOVERLAPPED)&recvOlap,
+                    (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL)) {
+            err = WSAGetLastError();
+            if (err != WSA_IO_PENDING) {
+                Win_ErrorMsg("XcpTl_TriggerRecv:WSARecvFrom()", WSAGetLastError());
+            }
         }
     }
-//    printf("Rec'd: %d on [%d]\n", numReceived, XcpTl_Connection.connectedSocket);
+}
+
+
+static void XcpTl_Feed(DWORD numBytesReceived)
+{
+    uint16_t dlc;
+
+    if (numBytesReceived > 0) {
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
+        dlc = (uint16_t)recvOlap.wsabuf.buf[0];
+#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
+        dlc = MAKEWORD(recvOlap.wsabuf.buf[0], recvOlap.wsabuf.buf[1]);
+#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
+        if (!XcpTl_Connection.xcpConnected || (XcpTl_VerifyConnection())) {
+            Xcp_PduIn.len = dlc;
+            Xcp_PduIn.data = recvOlap.wsabuf.buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+            Xcp_DispatchCommand(&Xcp_PduIn);
+        }
+        if (numBytesReceived < 5) {
+            DBG_PRINT2("Error: frame to short: %d\n", numBytesReceived);
+        } else {
+
+        }
+    }
 }

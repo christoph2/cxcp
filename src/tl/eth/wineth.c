@@ -220,7 +220,7 @@ void XcpTl_RxHandler(void)
     SOCKADDR_STORAGE From;
     /* char hostname[NI_MAXHOST]; */
 
-    ZeroMemory(buf,XCP_COMM_BUFLEN);
+    ZeroMemory(buf, XCP_COMM_BUFLEN);
 
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (!XcpTl_Connection.connected) {
@@ -269,9 +269,9 @@ void XcpTl_RxHandler(void)
     }
     if (recv_len > 0) {
 #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-		dlc = (uint16_t)buf[0];
+        dlc = (uint16_t)buf[0];
 #elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-		dlc = MAKEWORD(buf[0], buf[1]);
+        dlc = MAKEWORD(buf[0], buf[1]);
         //dlc = (uint16_t)*(buf + 0);
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
