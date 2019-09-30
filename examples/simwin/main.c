@@ -237,7 +237,7 @@ DWORD Xcp_MainTask(LPVOID param)
         Xcp_MainFunction();
         XcpTl_MainFunction();
 
-        if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
+        if (WaitForSingleObject(*quit_event, INFINITE) == WAIT_OBJECT_0) {
             break;
         }
     }
