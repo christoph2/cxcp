@@ -343,7 +343,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     SecureZeroMemory(&sendOlap.overlapped, sizeof(OVERLAPPED));
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         addrLen = sizeof(SOCKADDR_STORAGE);
-        WSASendTo(XcpTl_Connection.boundSocket,
+        if (WSASendTo(XcpTl_Connection.boundSocket,
             &sendOlap.wsabuf,
             1,
             &bytesWritten,
@@ -352,9 +352,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
             addrLen,
             (LPWSAOVERLAPPED)&sendOlap.overlapped,
             NULL
-        );
-        if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
-            (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
+        ) == SOCKET_ERROR) {
             Win_ErrorMsg("XcpTl_Send:WSASendTo()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
