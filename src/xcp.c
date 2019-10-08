@@ -1589,7 +1589,7 @@ static void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
     } else if (mode == UINT8(1)) {
 
     } else if (mode == UINT8(2)) {
-        entry->mode = XCP_DAQ_LIST_MODE_SELECTED;
+        entry->mode |= XCP_DAQ_LIST_MODE_SELECTED;
     } else {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));    /* correct? */
         return;
