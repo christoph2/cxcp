@@ -28,6 +28,7 @@
 #ifndef __FLSEMU_H
 #define __FLSEMU_H
 
+#define _WIN32_WINNT    0x601
 #include <Windows.h>
 
 #if STANDALONE_DLL == 1

@@ -92,6 +92,8 @@ HANDLE threads[NUM_THREADS];
 
 HANDLE quit_event;
 
+HANDLE userTimer;
+
 
 int main(void)
 {
@@ -109,6 +111,9 @@ int main(void)
     Xcp_DisplayInfo();
 
     quit_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    userTimer = CreateWaitableTimer(NULL, FALSE, NULL);
+
     threads[XCP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Xcp_MainTask, &quit_event, 0, NULL);
     threads[UI_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)XcpHw_UIThread, &quit_event, 0, NULL);
     threads[APP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AppTask, &quit_event, 0, NULL);
@@ -117,6 +122,8 @@ int main(void)
     for (idx = 0; idx < NUM_THREADS; ++idx) {
         CloseHandle(threads[idx]);
     }
+
+    CloseHandle(userTimer);
 
     FlsEmu_DeInit();
     XcpHw_Deinit();
@@ -251,6 +258,17 @@ DWORD AppTask(LPVOID param)
     static uint16_t ticker = 0;
     HANDLE * quit_event = (HANDLE *)param;
 
+    LARGE_INTEGER liDueTime;
+    LONG period;
+    HANDLE handles[2] = {*quit_event, userTimer};
+    DWORD res;
+
+    //liDueTime.QuadPart=-10 0 000 000;
+    liDueTime.QuadPart=-50000;
+    period = 5000;
+    SetWaitableTimer(userTimer, &liDueTime, period, NULL, NULL, 0);
+
+
     XCP_FOREVER {
         currentTS = XcpHw_GetTimerCounter() / 1000;
         if (currentTS >= (previousTS + 10)) {
@@ -276,9 +294,13 @@ DWORD AppTask(LPVOID param)
             ticker++;
             previousTS =  XcpHw_GetTimerCounter() / 1000;
         }
-        if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
+        res = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+        if (res == WAIT_OBJECT_0) {
             break;
         }
+        //if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
+        //    break;
+        //}
     }
     ExitThread(0);
 }
