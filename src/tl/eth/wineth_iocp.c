@@ -117,6 +117,8 @@ static void XcpTl_Feed(DWORD numBytesReceived);
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
+static boolean Xcp_SetSocketOptionInt(SOCKET sock, int option, int value);
+
 static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
 {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
@@ -150,6 +152,15 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
     return XCP_TRUE;
 }
 
+static boolean Xcp_SetSocketOptionInt(SOCKET sock, int option, int value)
+{
+    if (setsockopt(sock, SOL_SOCKET, option, (const char*)&value, sizeof(int)) < 0) {
+        return XCP_FALSE;
+    }
+    return XCP_TRUE;
+}
+
+
 #define TL_WORKER_THREAD    (0)
 #define TL_ACCEPTOR_THREAD  (1)
 #define NUM_TL_THREADS      (2)
@@ -170,6 +181,7 @@ void XcpTl_Init(void)
     int idx;
     DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
     BOOL fAdjustmentDisabled = XCP_TRUE;
+    int one = 1;
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     XcpTl_Connection.iocp = XcpTl_CreateIOCP();
@@ -239,16 +251,9 @@ void XcpTl_Init(void)
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
-#if 0
-    hTimer = CreateWaitableTimer(NULL, FALSE, "Timeout");
-    if (hTimer == NULL) {
-        Win_ErrorMsg("XcpTl_Init::CreateWaitableTimer()", GetLastError());
-    }
 
-    liDueTime.QuadPart=-300000000;
-    SetWaitableTimer(hTimer, &liDueTime, 2000, NULL, NULL, 0);
-    XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp, (HANDLE)hTimer, (ULONG_PTR)hTimer);
-#endif
+    setsockopt(XcpTl_Connection.boundSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&one, sizeof(one));
+
     recvOlap.opcode = IoRead;
     recvOlap.wsabuf.buf = recvOlap.buf;
     recvOlap.wsabuf.len = XCP_COMM_BUFLEN;
@@ -302,7 +307,7 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
     int fromLen;
     SOCKADDR_STORAGE From;
     DWORD error;
-    DWORD flags = (DWORD)0;
+    int one = 1;
 
     XCP_FOREVER {
         if (!XcpTl_Connection.xcpConnected) {
@@ -320,6 +325,10 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
                     exit(1);
                 }
             }
+            if (!Xcp_EnableSocketOption(XcpTl_Connection.connectedSocket, SO_REUSEADDR)) {
+                Win_ErrorMsg("AcceptorThread::setsockopt(SO_REUSEADDR)", WSAGetLastError());
+            }
+            setsockopt(XcpTl_Connection.boundSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&one, sizeof(one));
             XcpTl_Connection.socketConnected = XCP_TRUE;
             XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp,
                 (HANDLE)XcpTl_Connection.connectedSocket,
@@ -392,8 +401,7 @@ bool XcpTl_VerifyConnection(void)
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options)
 {
-    Xcp_Options = *options;
-
+    CopyMemory(&Xcp_Options, options, sizeof(XcpHw_OptionsType));
 }
 
 void XcpTl_PrintConnectionInformation(void)
@@ -421,9 +429,7 @@ static DWORD WINAPI WorkerThread(LPVOID lpParameter)
     PerIoData * iod = NULL;
     OVERLAPPED * olap = NULL;
     bool exitLoop = FALSE;
-    DWORD flags = (DWORD)0;
     DWORD error;
-
 
     while (!exitLoop) {
         if (GetQueuedCompletionStatus(hCompletionPort, &numBytesReceived, &CompletionKey, (LPOVERLAPPED*)&olap, INFINITE)) {
@@ -434,9 +440,9 @@ static DWORD WINAPI WorkerThread(LPVOID lpParameter)
                 switch (iod->opcode) {
                     case IoAccept:
                         //printf("ACCEPT() %d %ld\n", numBytesReceived, CompletionKey);
-                        printf("\t");
-                        XcpUtl_Hexdump(recvOlap.wsabuf.buf, numBytesReceived);
-                        printf("\n");
+                        //printf("\t");
+                        //XcpUtl_Hexdump(recvOlap.wsabuf.buf, numBytesReceived);
+                        //printf("\n");
 //                        XcpTl_Connection.socketConnected = XCP_TRUE;
                         recvOlap.opcode = IoRead;
                         XcpTl_Feed(numBytesReceived);
@@ -567,7 +573,7 @@ static void XcpTl_Feed(DWORD numBytesReceived)
             Xcp_DispatchCommand(&Xcp_PduIn);
         }
         if (numBytesReceived < 5) {
-            DBG_PRINT2("Error: frame to short: %d\n", numBytesReceived);
+            DBG_PRINT2("Error: frame to short: %ld\n", numBytesReceived);
         } else {
 
         }

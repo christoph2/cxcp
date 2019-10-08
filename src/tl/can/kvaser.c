@@ -326,6 +326,10 @@ void XcpTl_ReleaseConnection(void)
 
 }
 
+void XcpTl_PostQuitMessage(void)
+{
+
+}
 
 bool XcpTl_VerifyConnection(void)
 {
@@ -345,7 +349,7 @@ void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu)
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options)
 {
-    Xcp_Options = *options;
+    CopyMemory(&Xcp_Options, options, sizeof(XcpHw_OptionsType));
 }
 
 void XcpTl_PrintConnectionInformation(void)
