@@ -1682,6 +1682,46 @@ static void Xcp_GetDaqProcessorInfo_Res(Xcp_PDUType const * const pdu)
 #endif /* XCP_ENABLE_GET_DAQ_PROCESSOR_INFO */
 
 
+#if XCP_ENABLE_GET_DAQ_LIST_INFO == XCP_ON
+static void Xcp_GetDaqListInfo_Res(Xcp_PDUType const * const pdu)
+{
+    const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+    XcpDaq_ListConfigurationType const * listConf;
+    XcpDaq_ListStateType * listState;
+    uint8_t properties;
+
+    DBG_PRINT2("GET_DAQ_LIST_INFO [daq: %u] \n", daqListNumber);
+    XCP_ASSERT_PGM_IDLE();
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    if (daqListNumber >=XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+    }
+
+    listConf = XcpDaq_GetListConfiguration(daqListNumber);
+    listState = XcpDaq_GetListState(daqListNumber);
+
+    properties |= DAQ_LIST_PROPERTY_PREDEFINED;     /* Hardcoded for now. */
+    properties |= DAQ_LIST_PROPERTY_EVENT_FIXED;    /* "                " */
+    properties |= DAQ_LIST_PROPERTY_DAQ;            /* "                " */
+
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+    Xcp_Send8(UINT8(8), UINT8(0xff),
+        properties,
+        listConf->numOdts,
+        0,  /* Hardcoded for now. */
+        0,  /* Hardcoded for now. */
+        UINT8(0),
+        UINT8(0),
+        UINT8(0)
+    );
+#else
+    Xcp_ErrorResponse(UINT8(ERR_CMD_SYNTAX));
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+}
+#endif /* XCP_ENABLE_GET_DAQ_LIST_INFO */
+
+
 #if XCP_ENABLE_FREE_DAQ == XCP_ON
 static void Xcp_FreeDaq_Res(Xcp_PDUType const * const pdu)
 {
