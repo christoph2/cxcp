@@ -89,23 +89,11 @@ void exitFunc(void);
 static HwStateType HwState = {0};
 static CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
 
-#if (defined(_DEBUG)) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
-void exitFunc(void)
-{
-    printf("Exiting %s...\n", __argv[0]);
-    _CrtDumpMemoryLeaks();
-}
-#endif
-
 /*
 **  Global Functions.
 */
 void XcpHw_Init(void)
 {
-#if (defined(_DEBUG)) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
-    atexit(exitFunc);
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
     fflush(stdout);
     //_setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
     //_setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
