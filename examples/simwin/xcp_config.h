@@ -36,7 +36,7 @@
 
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
-#define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_ON
+#define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_OFF
 #define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
 
 #define XCP_ENABLE_STIM                             XCP_OFF
@@ -139,7 +139,7 @@
     #define XCP_ENABLE_READ_DAQ                     XCP_OFF
     #define XCP_ENABLE_GET_DAQ_PROCESSOR_INFO       XCP_ON
     #define XCP_ENABLE_GET_DAQ_RESOLUTION_INFO      XCP_ON
-    #define XCP_ENABLE_GET_DAQ_LIST_INFO            XCP_OFF
+    #define XCP_ENABLE_GET_DAQ_LIST_INFO            XCP_ON
     #define XCP_ENABLE_GET_DAQ_EVENT_INFO           XCP_ON
     #define XCP_ENABLE_FREE_DAQ                     XCP_ON
     #define XCP_ENABLE_ALLOC_DAQ                    XCP_ON

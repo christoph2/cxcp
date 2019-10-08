@@ -281,6 +281,12 @@ extern "C"
 #define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_10PS   UINT8(11)
 #define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_100PS  UINT8(12)
 
+/* DAQ list properties */
+#define DAQ_LIST_PROPERTY_STIM          (8)
+#define DAQ_LIST_PROPERTY_DAQ           (4)
+#define DAQ_LIST_PROPERTY_EVENT_FIXED   (2)
+#define DAQ_LIST_PROPERTY_PREDEFINED    (1)
+
 #define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
 /* DAQ Implementation Macros */
