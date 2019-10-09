@@ -12,7 +12,7 @@ ifeq ($(PROFILE),1)
 CFLAGS += -pg -fprofile-arcs -ftest-coverage --coverage
 endif
 ifeq ($(DEBUG),1)
-CFLAGS += -g -O0
+CFLAGS += -g3 -O0
 else
 CFLAGS += -O3
 endif
