@@ -46,7 +46,7 @@
 #define DEFAULT_SOCKTYPE   SOCK_STREAM //
 #define DEFAULT_PORT       "5555"
 
-void Win_ErrorMsg(char * const function, unsigned errorCode);
+void XcpHw_ErrorMsg(char * const function, unsigned errorCode);
 
 
 typedef struct tagXcpTl_ConnectionType {
@@ -132,7 +132,7 @@ void XcpTl_Init(void)
     memset(&Hints, 0, sizeof(Hints));
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        Win_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
 
@@ -143,7 +143,7 @@ void XcpTl_Init(void)
     Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
     ret = getaddrinfo(Address, Port, &Hints, &AddrInfo);
     if (ret != 0) {
-        Win_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
         WSACleanup();
         return;
     }
@@ -157,16 +157,16 @@ void XcpTl_Init(void)
         }
         serverSockets[idx] = socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol);
         if (serverSockets[idx] == INVALID_SOCKET){
-            Win_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
             continue;
         }
         if (bind(serverSockets[idx], AI->ai_addr, AI->ai_addrlen) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
             continue;
         }
         if (XcpTl_Connection.socketType == SOCK_STREAM) {
             if (listen(serverSockets[idx], 1) == SOCKET_ERROR) {
-                Win_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());
+                XcpHw_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());
                 continue;
             }
         }
@@ -185,7 +185,7 @@ void XcpTl_Init(void)
         exit(2);
     }
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
-        Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
 }
 
@@ -227,7 +227,7 @@ void XcpTl_RxHandler(void)
             FromLen = sizeof(From);
             XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, &FromLen);
             if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
-                Win_ErrorMsg("XcpTl_RxHandler::accept()", WSAGetLastError());
+                XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", WSAGetLastError());
                 //WSACleanup();
                 exit(1);
                 return;
@@ -243,7 +243,7 @@ void XcpTl_RxHandler(void)
         }
         recv_len = recv(XcpTl_Connection.connectedSocket, (char*)buf, XCP_COMM_BUFLEN, 0);
         if (recv_len == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_RxHandler::recv()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_RxHandler::recv()", WSAGetLastError());
             closesocket(XcpTl_Connection.connectedSocket);
             exit(1);
             return;
@@ -260,7 +260,7 @@ void XcpTl_RxHandler(void)
         );
         if (recv_len == SOCKET_ERROR)
         {
-            Win_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
             fflush(stdout);
             exit(1);
         }
@@ -314,7 +314,7 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
     if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
         res = select(0, &fds, 0, 0, &timeout);
         if (res == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
             exit(2);
         }
         return res;
@@ -329,11 +329,11 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
             (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
             closesocket(XcpTl_Connection.connectedSocket);
         }
     }

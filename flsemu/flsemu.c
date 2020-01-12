@@ -201,17 +201,17 @@ static bool FlsEmu_Flush(uint8_t segmentIdx)
     segment = FlsEmu_Config->segments[segmentIdx];
 
     if (VirtualQuery(segment->persistentArray->mappingAddress, &info, sizeof(MEMORY_BASIC_INFORMATION)) == 0) {
-        Win_ErrorMsg("FlsEmu_Flush::VirtualQuery()", GetLastError());
+        XcpHw_ErrorMsg("FlsEmu_Flush::VirtualQuery()", GetLastError());
         return FALSE;
     }
 
     if (!FlushViewOfFile(segment->persistentArray->mappingAddress, info.RegionSize)) {
-        Win_ErrorMsg("FlsEmu_Flush::FlushViewOfFile()", GetLastError());
+        XcpHw_ErrorMsg("FlsEmu_Flush::FlushViewOfFile()", GetLastError());
         return FALSE;
     }
 
     if (!FlushFileBuffers(segment->persistentArray->fileHandle)) {
-        Win_ErrorMsg("FlsEmu_Flush::FlushFileBuffers()", GetLastError());
+        XcpHw_ErrorMsg("FlsEmu_Flush::FlushFileBuffers()", GetLastError());
         return FALSE;
     }
 
@@ -385,14 +385,14 @@ static bool FlsEmu_MapView(FlsEmu_SegmentType * config, uint32_t offset, uint32_
 
     error = UnmapViewOfFile(config->persistentArray->mappingAddress);
     if (error == 0UL) {
-        Win_ErrorMsg("FlsEmu_MapView::MapViewOfFile()", GetLastError());
+        XcpHw_ErrorMsg("FlsEmu_MapView::MapViewOfFile()", GetLastError());
         CloseHandle(config->persistentArray->mappingHandle);
         return FALSE;
     }
 
     config->persistentArray->mappingAddress = (void *)MapViewOfFile(config->persistentArray->mappingHandle, FILE_MAP_ALL_ACCESS, 0, offset, length);
     if (config->persistentArray->mappingAddress == NULL) {
-        Win_ErrorMsg("FlsEmu_MapView::MapViewOfFile()", GetLastError());
+        XcpHw_ErrorMsg("FlsEmu_MapView::MapViewOfFile()", GetLastError());
         CloseHandle(config->persistentArray->mappingHandle);
         return FALSE;
     }
@@ -490,7 +490,7 @@ static HANDLE OpenCreateFile(char const * fileName, bool create)
         (LPSECURITY_ATTRIBUTES)NULL, dispoition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, (HANDLE)NULL
     );
     if (handle == INVALID_HANDLE_VALUE) {
-        Win_ErrorMsg("OpenCreateFile::CreateFile()", GetLastError());
+        XcpHw_ErrorMsg("OpenCreateFile::CreateFile()", GetLastError());
     }
 
     return handle;
@@ -506,7 +506,7 @@ static bool CreateFileView(HANDLE handle, DWORD length, FlsEmu_HwFileViewType * 
     /* TODO: Refactor to function; s. FlsEmu_MapView() */
     fileView->mappingAddress = (void *)MapViewOfFile(fileView->mappingHandle, FILE_MAP_ALL_ACCESS, 0, 0, length);
     if (fileView->mappingAddress == NULL) {
-        Win_ErrorMsg("CreateFileView::MapViewOfFile()", GetLastError());
+        XcpHw_ErrorMsg("CreateFileView::MapViewOfFile()", GetLastError());
         CloseHandle(fileView->mappingHandle);
         return FALSE;
     }

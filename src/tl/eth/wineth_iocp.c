@@ -192,7 +192,7 @@ void XcpTl_Init(void)
     ZeroMemory(&Hints, sizeof(Hints));
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        Win_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
 
@@ -203,7 +203,7 @@ void XcpTl_Init(void)
     Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
     ret = getaddrinfo(Address, Port, &Hints, &AddrInfo);
     if (ret != 0) {
-        Win_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
         WSACleanup();
         return;
     }
@@ -217,19 +217,19 @@ void XcpTl_Init(void)
         }
         serverSockets[idx] = WSASocket(AI->ai_family, AI->ai_socktype, AI->ai_protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
         if (serverSockets[idx] == INVALID_SOCKET){
-            Win_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
             continue;
         }
 
         XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp, (HANDLE)serverSockets[idx], (ULONG_PTR)serverSockets[idx]);
 
         if (bind(serverSockets[idx], AI->ai_addr, AI->ai_addrlen) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
             continue;
         }
         if (XcpTl_Connection.socketType == SOCK_STREAM) {
             if (listen(serverSockets[idx], 1) == SOCKET_ERROR) {
-                Win_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());
+                XcpHw_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());
                 continue;
             }
         }
@@ -247,7 +247,7 @@ void XcpTl_Init(void)
         exit(2);
     }
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
-        Win_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
 
     setsockopt(XcpTl_Connection.boundSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&one, sizeof(one));
@@ -318,13 +318,13 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
                 if (error == WSAEINTR) {
                     break;
                 } else {
-                    Win_ErrorMsg("AcceptorThread::accept()", error);
+                    XcpHw_ErrorMsg("AcceptorThread::accept()", error);
                     WSACleanup();
                     exit(1);
                 }
             }
             if (!Xcp_EnableSocketOption(XcpTl_Connection.connectedSocket, SO_REUSEADDR)) {
-                Win_ErrorMsg("AcceptorThread::setsockopt(SO_REUSEADDR)", WSAGetLastError());
+                XcpHw_ErrorMsg("AcceptorThread::setsockopt(SO_REUSEADDR)", WSAGetLastError());
             }
             setsockopt(XcpTl_Connection.boundSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&one, sizeof(one));
             XcpTl_Connection.socketConnected = XCP_TRUE;
@@ -360,7 +360,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
             (LPWSAOVERLAPPED)&sendOlap.overlapped,
             NULL
         ) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Send:WSASendTo()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Send:WSASendTo()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (WSASend(
@@ -371,7 +371,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
             0,
             (LPWSAOVERLAPPED)&sendOlap.overlapped,
             NULL) == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_Send:WSASend()", WSAGetLastError());
+            XcpHw_ErrorMsg("XcpTl_Send:WSASend()", WSAGetLastError());
             closesocket(XcpTl_Connection.connectedSocket);
         }
     }
@@ -473,7 +473,7 @@ static DWORD WINAPI WorkerThread(LPVOID lpParameter)
                 // Failed I/O operation.
                 // The function stores information in the variables pointed to by lpNumberOfBytes, lpCompletionKey.
             }
-            Win_ErrorMsg("WorkerThread::GetQueuedCompletionStatus()", error);
+            XcpHw_ErrorMsg("WorkerThread::GetQueuedCompletionStatus()", error);
         }
     }
     ExitThread(0);
@@ -485,7 +485,7 @@ static HANDLE XcpTl_CreateIOCP(void)
 
     handle  = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (ULONG_PTR)0, 1);
     if (handle == NULL) {
-        Win_ErrorMsg("XcpTl_CreateIOCP::CreateIoCompletionPort()", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_CreateIOCP::CreateIoCompletionPort()", WSAGetLastError());
         exit(EXIT_FAILURE);
     }
     return handle;
@@ -498,7 +498,7 @@ static bool XcpTl_RegisterIOCPHandle(HANDLE port, HANDLE object, ULONG_PTR key)
 
     handle = CreateIoCompletionPort(object, port, key, 0);
     if (handle == NULL) {
-        Win_ErrorMsg("XcpTl_RegisterIOCPHandle::CreateIoCompletionPort()", WSAGetLastError());
+        XcpHw_ErrorMsg("XcpTl_RegisterIOCPHandle::CreateIoCompletionPort()", WSAGetLastError());
         exit(EXIT_FAILURE);
     }
     return (bool)(handle == port);
@@ -532,7 +532,7 @@ static void XcpTl_TriggerRecv(DWORD numBytes)
                     (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL)  == SOCKET_ERROR) {
             err = WSAGetLastError();
             if (err != WSA_IO_PENDING) {
-                Win_ErrorMsg("XcpTl_TriggerRecv::WSARecv()", err);
+                XcpHw_ErrorMsg("XcpTl_TriggerRecv::WSARecv()", err);
             }
         }
     } else if (XcpTl_Connection.socketType == SOCK_DGRAM) {
@@ -548,7 +548,7 @@ static void XcpTl_TriggerRecv(DWORD numBytes)
                     (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL)) {
             err = WSAGetLastError();
             if (err != WSA_IO_PENDING) {
-                Win_ErrorMsg("XcpTl_TriggerRecv:WSARecvFrom()", WSAGetLastError());
+                XcpHw_ErrorMsg("XcpTl_TriggerRecv:WSARecvFrom()", WSAGetLastError());
             }
         }
     }

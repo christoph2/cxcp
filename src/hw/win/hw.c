@@ -178,7 +178,7 @@ void XcpHw_ReleaseLock(uint8_t lockIdx)
     LeaveCriticalSection(&XcpHw_Locks[lockIdx]);
 }
 
-void Win_ErrorMsg(char * const fun, int errorCode)
+void XcpHw_ErrorMsg(char * const fun, int errorCode)
 {
     char buffer[1024];
 
@@ -220,22 +220,22 @@ bool XcpHw_MainFunction(HANDLE * quit_event)
 
     hStdin = GetStdHandle(STD_INPUT_HANDLE);
     if (hStdin == INVALID_HANDLE_VALUE) {
-        Win_ErrorMsg("GetStdHandle", GetLastError());
+        XcpHw_ErrorMsg("GetStdHandle", GetLastError());
     }
 
     fdwMode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
     if (!SetConsoleMode(hStdin, fdwMode)) {
-        Win_ErrorMsg("SetConsoleMode", GetLastError());
+        XcpHw_ErrorMsg("SetConsoleMode", GetLastError());
     }
 
     WaitForSingleObject(hStdin, 1000);
 
     if (!GetNumberOfConsoleInputEvents (hStdin, &cNumRead)) {
-        Win_ErrorMsg("PeekConsoleInput", GetLastError());
+        XcpHw_ErrorMsg("PeekConsoleInput", GetLastError());
     } else {
         if (cNumRead) {
             if (!ReadConsoleInput(hStdin, irInBuf, 128, &cNumRead)) {
-                Win_ErrorMsg("ReadConsoleInput", GetLastError());
+                XcpHw_ErrorMsg("ReadConsoleInput", GetLastError());
             }
             for (idx = 0; idx < cNumRead; ++idx) {
             switch(irInBuf[idx].EventType) {

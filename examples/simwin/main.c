@@ -73,7 +73,7 @@ void memimnfo(void * ptr)
     GetSystemInfo(&si);
     res = VirtualQuery(ptr, &info, sizeof(MEMORY_BASIC_INFORMATION));
     if (!res) {
-        Win_ErrorMsg("memimnfo::VirtualQuery()", GetLastError());
+        XcpHw_ErrorMsg("memimnfo::VirtualQuery()", GetLastError());
     } else {
         printf("%p %p %d %08x %08x %08x\n", info.BaseAddress, info.AllocationBase, info.RegionSize / 1024,
                info.AllocationProtect, info.Protect, info.Type);
