@@ -884,7 +884,6 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
         /*DBG_PRINT2("CMD: [%02X]\n", cmd); */
 
         if (Xcp_IsBusy()) {
-            printf("\n\t\t!!! BUSY !!!\n\n");
             Xcp_BusyResponse();
             return;
         } else {
@@ -1691,7 +1690,7 @@ static void Xcp_GetDaqListInfo_Res(Xcp_PDUType const * const pdu)
     const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     XcpDaq_ListConfigurationType const * listConf;
     XcpDaq_ListStateType * listState;
-    uint8_t properties;
+    uint8_t properties = (uint8_t)0x00;
 
     DBG_PRINT2("GET_DAQ_LIST_INFO [daq: %u] \n", daqListNumber);
     XCP_ASSERT_PGM_IDLE();

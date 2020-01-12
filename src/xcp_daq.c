@@ -439,7 +439,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
     XcpDaq_ODTIntegerType odtIdx;
     XcpDaq_ODTIntegerType pid;
     XcpDaq_ODTEntryIntegerType odtEntryIdx;
-    XcpDaq_ODTType * odt;
+    XcpDaq_ODTType const * odt;
     XcpDaq_ODTEntryType * entry;
     XcpDaq_ListConfigurationType const * listConf;
 
@@ -510,15 +510,15 @@ bool XcpDaq_EnqueueMessage(XcpDaq_MessageType const * msg)
         XcpDaq_DtoBufferState.back += UINT16(1);
         --lhs;
         if ((lhs > UINT16(0)) && (lhs)) {
-            XcpUtl_MemCopy(&XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.back, msg->data, lhs);
+            XcpUtl_MemCopy(&XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.back, (void *)msg->data, lhs);
             XcpDaq_DtoBufferState.back += lhs;
         }
-        XcpUtl_MemCopy(&XcpDaq_DtoBuffer, msg->data, rhs);
+        XcpUtl_MemCopy(&XcpDaq_DtoBuffer, (void *)msg->data, rhs);
         XcpDaq_DtoBufferState.back = rhs;
     } else {
         XcpDaq_DtoBuffer[XcpDaq_DtoBufferState.back] = msg->dlc;
         XcpDaq_DtoBufferState.back += UINT16(1);
-        XcpUtl_MemCopy(&XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.back, msg->data, msg->dlc);
+        XcpUtl_MemCopy(&XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.back, (void *)msg->data, msg->dlc);
         XcpDaq_DtoBufferState.back = (XcpDaq_DtoBufferState.back + msg->dlc) % UINT16(XCP_DAQ_DTO_BUFFER_SIZE);
     }
     XcpDaq_DtoBufferState.allocated += XCP_DAQ_MESSAGE_SIZE(msg);
@@ -550,15 +550,15 @@ bool XcpDaq_DequeueMessage(XcpDaq_MessageType * msg)
         XcpDaq_DtoBufferState.front += UINT16(1);
         --lhs;
         if ((lhs > UINT16(0)) && (lhs)) {
-            XcpUtl_MemCopy(msg->data, &XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.front, lhs);
+            XcpUtl_MemCopy((void *)msg->data, &XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.front, lhs);
             XcpDaq_DtoBufferState.front += lhs;
         }
-        XcpUtl_MemCopy(msg->data, &XcpDaq_DtoBuffer, rhs);
+        XcpUtl_MemCopy((void *)msg->data, &XcpDaq_DtoBuffer, rhs);
         XcpDaq_DtoBufferState.front = rhs;
     } else {
         msg-> dlc = XcpDaq_DtoBuffer[XcpDaq_DtoBufferState.front];
         XcpDaq_DtoBufferState.front += UINT16(1);
-        XcpUtl_MemCopy(msg->data, &XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.front, msg->dlc);
+        XcpUtl_MemCopy((void *)msg->data, &XcpDaq_DtoBuffer + XcpDaq_DtoBufferState.front, msg->dlc);
         XcpDaq_DtoBufferState.front = (XcpDaq_DtoBufferState.front + msg->dlc) % UINT16(XCP_DAQ_DTO_BUFFER_SIZE);
     }
     XcpDaq_DtoBufferState.allocated -= XCP_DAQ_MESSAGE_SIZE(msg);
