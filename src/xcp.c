@@ -873,6 +873,7 @@ static void Xcp_Upload(uint8_t len)
  *
  * @param pdu
  */
+
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 {
     const uint8_t cmd = pdu->data[0];
@@ -885,7 +886,9 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
         if (Xcp_IsBusy()) {
             printf("\n\t\t!!! BUSY !!!\n\n");
             Xcp_BusyResponse();
+            return;
         } else {
+
 #if XCP_ENABLE_STATISTICS == XCP_ON
             Xcp_State.statistics.ctosReceived++;
 #endif /* XCP_ENABLE_STATISTICS */
