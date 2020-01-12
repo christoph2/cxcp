@@ -880,6 +880,8 @@ Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xc
 void XcpHw_Init(void);
 void XcpHw_Deinit(void);
 uint32_t XcpHw_GetTimerCounter(void);
+void XcpHw_AcquireLock(uint8_t lockIdx);
+void XcpHw_ReleaseLock(uint8_t lockIdx);
 
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
