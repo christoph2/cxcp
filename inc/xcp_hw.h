@@ -46,7 +46,7 @@ typedef struct tagXcpHw_OptionsType {
 
 void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options);
 
-void Win_ErrorMsg(char * const function, unsigned errorCode);
+void Win_ErrorMsg(char * const function, int errorCode);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)

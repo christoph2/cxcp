@@ -178,7 +178,7 @@ void XcpHw_ReleaseLock(uint8_t lockIdx)
     LeaveCriticalSection(&XcpHw_Locks[lockIdx]);
 }
 
-void Win_ErrorMsg(char * const fun, unsigned errorCode)
+void Win_ErrorMsg(char * const fun, int errorCode)
 {
     char buffer[1024];
 

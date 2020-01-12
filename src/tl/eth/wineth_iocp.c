@@ -50,8 +50,6 @@
 #define DEFAULT_SOCKTYPE   SOCK_STREAM //
 #define DEFAULT_PORT       "5555"
 
-void Win_ErrorMsg(char * const function, unsigned errorCode);
-
 
 typedef struct tagXcpTl_ConnectionType {
     HANDLE iocp;
