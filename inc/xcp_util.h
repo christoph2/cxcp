@@ -43,6 +43,7 @@ bool XcpUtl_MemCmp(void const * dst, void const * src, uint32_t len);
 void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
 void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t * buf);
 
+#define XcpUtl_ZeroMem(dest, len) XcpUtl_MemSet((dest), '\0', (len))
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)

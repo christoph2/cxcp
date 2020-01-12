@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -60,11 +60,19 @@ extern "C"
 #endif
 
 #if !defined(XCP_LOWORD)
-#define XCP_LOWORD(w)   ((uint16_t)((w) & (uint16_t)0xffff))    /**< Get the low-word from a doubleword. */
+#define XCP_LOWORD(w)   ((uint16_t)((w) & (uint16_t)0xffff))    /**< Get the low-word from a double-word. */
 #endif
 
 #if !defined(XCP_HIWORD)
 #define XCP_HIWORD(w)   ((uint16_t)(((w)  & (uint32_t)0xffff0000) >> 16))   /**< Get the high-word from a doubleword. */
+#endif
+
+#if !defined(XCP_MAKEWORD)
+#define XCP_MAKEWORD(h, l) ((((uint16_t)((h) & ((uint8_t)0xff))) <<  (uint16_t)8) | ((uint16_t)((l) & ((uint8_t)0xff)))) /**< Make word from high and low bytes. */
+#endif
+
+#if !defined(XCP_MAKEDWORD)
+#define XCP_MAKEDWORD(h, l)  ((((uint32)((h) & ((uint16)0xffffu))) << (uint32)16) | ((uint32)((l) & ((uint16)0xffffu)))) /**< Make double-word from high and low words. */
 #endif
 
 #if !defined(XCP_MAX)
