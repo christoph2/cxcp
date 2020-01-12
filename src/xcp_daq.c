@@ -471,6 +471,10 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
     return;
 }
 
+/** @brief Initialize DAQ message queue.
+ *
+ *
+ */
 static void XcpDaq_InitMessageQueue(void)
 {
     XCP_DAQ_ENTER_CRITICAL();
@@ -481,6 +485,11 @@ static void XcpDaq_InitMessageQueue(void)
     XCP_DAQ_LEAVE_CRITICAL();
 }
 
+/** @brief Post a message to queue.
+ *
+ * @param[in] msg
+ *
+ */
 bool XcpDaq_EnqueueMessage(XcpDaq_MessageType const * msg)
 {
     uint16_t rhs;
@@ -517,7 +526,11 @@ bool XcpDaq_EnqueueMessage(XcpDaq_MessageType const * msg)
     return (bool)XCP_TRUE;
 }
 
-
+/** @brief Take a message from queue.
+ *
+ * @param[out] msg
+ *
+ */
 bool XcpDaq_DequeueMessage(XcpDaq_MessageType * msg)
 {
     uint16_t rhs;
