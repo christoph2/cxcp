@@ -153,9 +153,13 @@ bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
     return XcpUtl_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
 }
 
-
+/*
+ADDR = 0x4000
+LENGTH = 0x1000
+*/
 bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming)
 {
+    //mta.address
     return XCP_TRUE;
 }
 

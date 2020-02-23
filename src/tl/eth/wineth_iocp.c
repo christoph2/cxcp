@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -182,6 +182,7 @@ void XcpTl_Init(void)
     int one = 1;
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
+    ZeroMemory(&serverSockets, FD_SETSIZE);
     XcpTl_Connection.iocp = XcpTl_CreateIOCP();
 
     XcpTl_Threads[TL_WORKER_THREAD] = CreateThread(NULL, 0, WorkerThread, (LPVOID)XcpTl_Connection.iocp, 0, NULL);
