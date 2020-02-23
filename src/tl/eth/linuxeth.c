@@ -139,7 +139,7 @@ static bool Xcp_DisableSocketOption(int sock, int option)
     return true;
 }
 
-static int Xcp_Set_Nonblocking(int fd)
+static int Xcp_SetNonblocking(int fd)
 {
     int old_option = fcntl(fd, F_GETFL);
     int new_option = old_option | O_NONBLOCK;
@@ -357,7 +357,7 @@ void lt_process(struct epoll_event* events, int number, int epoll_fd, int listen
             socklen_t client_addrlength = sizeof(client_address);
             int connfd = accept(listen_fd, (struct sockaddr*)&client_address, &client_addrlength);
             printf("accepted()\n");
-            Xcp_AddFd(epoll_fd, connfd, false);  //Register new customer connection fd to epoll event table, using lt mode
+            Xcp_AddFd(epoll_fd, connfd);  //Register new customer connection fd to epoll event table, using lt mode
         } else if(events[i].events & EPOLLIN) { //Readable with client data
             // This code is triggered as long as the data in the buffer has not been read.This is what LT mode is all about: repeating notifications until processing is complete
             printf("lt mode: event trigger once!\n");
@@ -435,6 +435,9 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
+
+    XcpUtl_Hexdump(buf,  len);
+
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
             (struct sockaddr const *)&XcpTl_Connection.connectionAddress, addrSize) == -1) {
