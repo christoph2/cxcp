@@ -348,16 +348,32 @@ void lt_process(struct epoll_event* events, int number, int epoll_fd, int listen
     int i;
     int recv_len;
     uint16_t dlc;
+    int from_len = sizeof(sockaddr_storage);
+    char hostname[NI_MAXHOST];
 
     for(i = 0; i < number; i++) //number: number of events ready
     {
         int sockfd = events[i].data.fd;
         if(sockfd == listen_fd) { //If it is a file descriptor for listen, it indicates that a new customer is connected to
+#if 0
             struct sockaddr_in client_address;
             socklen_t client_addrlength = sizeof(client_address);
             int connfd = accept(listen_fd, (struct sockaddr*)&client_address, &client_addrlength);
-            printf("accepted()\n");
-            Xcp_AddFd(epoll_fd, connfd);  //Register new customer connection fd to epoll event table, using lt mode
+            Xcp_AddFd(epoll_fd, connfd);
+#endif
+            if (!XcpTl_Connection.connected) {
+                XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len);
+                if (XcpTl_Connection.connectedSocket == -1) {
+                    XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", errno);
+                    exit(1);
+                    return;
+                }
+                Xcp_AddFd(epoll_fd, XcpTl_Connection.connectedSocket);
+                inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
+                printf("server: got connection from %s\n", hostname);
+            }
+
+
         } else if(events[i].events & EPOLLIN) { //Readable with client data
             // This code is triggered as long as the data in the buffer has not been read.This is what LT mode is all about: repeating notifications until processing is complete
             printf("lt mode: event trigger once!\n");
