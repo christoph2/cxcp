@@ -83,6 +83,12 @@ bool XcpHw_MainFunction();
 
 void exitFunc(void);
 
+
+/*
+** Global Variables.
+*/
+pthread_t XcpHw_ThreadID[4];
+
 /*
 **  Local Variables.
 */
@@ -178,7 +184,7 @@ static void XcpHw_InitLocks(void)
     uint8_t idx = UINT8(0);
 
     for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
-        pthread_mutex_init(&XcpHw_Locks[idx], PTHREAD_MUTEX_RECURSIVE_NP);
+        pthread_mutex_init(&XcpHw_Locks[idx], NULL/*PTHREAD_MUTEX_RECURSIVE_NP*/);
     }
 }
 

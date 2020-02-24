@@ -78,8 +78,7 @@ typedef struct tagXcpTl_ConnectionType {
  } XcpTl_ConnectionType;
 
 
-static pthread_t worker_thread_id;
-
+extern pthread_t XcpHw_ThreadID[4];
 
 unsigned char buf[XCP_COMM_BUFLEN];
 int addrSize = sizeof(struct sockaddr_storage);
@@ -214,7 +213,7 @@ void XcpTl_Init(void)
 
     Xcp_AddFd(epoll_fd, sock);
 
-    ret = pthread_create(&worker_thread_id, NULL, &XcpTl_WorkerThread, NULL);
+    ret = pthread_create(&XcpHw_ThreadID[0], NULL, &XcpTl_WorkerThread, NULL);
     if (ret != 0) {
         err_abort(ret, "Create worker thread");
     }
