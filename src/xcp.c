@@ -2055,15 +2055,15 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 {
 #if XCP_ENABLE_ADDRESS_MAPPER == XCP_ON
-    Xcp_MtaType tmpD = {0};
-    Xcp_MtaType tmpS = {0};
+    Xcp_MtaType tmpD = dst.address;
+    Xcp_MtaType tmpS = src.address;
     Xcp_MemoryMappingResultType res = XCP_MEMORY_ADDRESS_INVALID;
 
     res = Xcp_HookFunction_AddressMapper(&tmpD, &dst);
     if (res == XCP_MEMORY_MAPPED) {
 
     } else if (res == XCP_MEMORY_NOT_MAPPED) {
-        tmpD.address = dst.address;
+        //tmpD.address = dst.address;
     }  else if (res == XCP_MEMORY_ADDRESS_INVALID) {
 
     } else {
@@ -2072,7 +2072,7 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
     if (res == XCP_MEMORY_MAPPED) {
 
     } else if (res == XCP_MEMORY_NOT_MAPPED) {
-        tmpS.address = src.address;
+        //tmpS.address = src.address;
     }  else if (res == XCP_MEMORY_ADDRESS_INVALID) {
 
     } else {
@@ -2081,7 +2081,7 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
     XcpUtl_MemCopy((void*)tmpD.address, (void*)tmpS.address, len);
 #else
 
-    /* Without address-mapper we don't know howto handle address extensions. */
+    /* Without address-mapper we don't know how to handle address extensions. */
     XcpUtl_MemCopy((void*)dst.address, (void*)src.address, len);
 #endif /* XCP_ENABLE_ADDRESS_MAPPER */
 }
