@@ -2077,7 +2077,6 @@ void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 
     } else {
     }
-    /* printf("COPYING %d bytes from %p TO %p\n", len, tmpS.address, tmpD.address); */
     XcpUtl_MemCopy((void*)tmpD.address, (void*)tmpS.address, len);
 #else
 
