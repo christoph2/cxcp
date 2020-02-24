@@ -26,7 +26,6 @@ LDFLAGS+=-L $(KV_BASE_DIR)/Lib/MS -l canlib32
 CPPFLAGS += -DKVASER_CAN
 else
 xcp_sim_SRC+=tl/eth/linuxeth.c
-#xcp_sim_SRC+=tl/eth/wineth_iocp.c
 xcp_sim_TARGET=xcp_sim
 endif
 
@@ -44,7 +43,7 @@ $(xcp_sim_TARGET): $(xcp_sim_OBJS)
 	$(CC) $(CFLAGS) -o $(xcp_sim_TARGET) $(notdir $(xcp_sim_OBJS)) $(LDFLAGS)
 
 clean:
-	rm -f $(xcp_sim_OBJS) $(xcp_sim_TARGET).exe
+	@rm -f $(xcp_sim_OBJS) $(xcp_sim_TARGET).exe
 
 .PHONY: clean all
 
