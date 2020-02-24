@@ -2055,26 +2055,23 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)
 {
 #if XCP_ENABLE_ADDRESS_MAPPER == XCP_ON
-    Xcp_MtaType tmpD = dst.address;
-    Xcp_MtaType tmpS = src.address;
+    Xcp_MtaType tmpD = {0};
+    Xcp_MtaType tmpS = {0};
     Xcp_MemoryMappingResultType res = XCP_MEMORY_ADDRESS_INVALID;
+
+    tmpD.address = dst.address;
+    tmpS.address = src.address;
 
     res = Xcp_HookFunction_AddressMapper(&tmpD, &dst);
     if (res == XCP_MEMORY_MAPPED) {
-
     } else if (res == XCP_MEMORY_NOT_MAPPED) {
-        //tmpD.address = dst.address;
     }  else if (res == XCP_MEMORY_ADDRESS_INVALID) {
-
     } else {
     }
     res = Xcp_HookFunction_AddressMapper(&tmpS, &src);
     if (res == XCP_MEMORY_MAPPED) {
-
     } else if (res == XCP_MEMORY_NOT_MAPPED) {
-        //tmpS.address = src.address;
     }  else if (res == XCP_MEMORY_ADDRESS_INVALID) {
-
     } else {
     }
     XcpUtl_MemCopy((void*)tmpD.address, (void*)tmpS.address, len);
