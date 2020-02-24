@@ -48,6 +48,7 @@
                         text, __FILE__, __LINE__, strerror (code)); \
         abort (); \
         } while (0)
+
 #define errno_abort(text) do { \
         fprintf (stderr, "%s at \"%s\":%d: %s\n", \
                         text, __FILE__, __LINE__, strerror (errno)); \
@@ -59,7 +60,7 @@
 #define XCP_COMM_PORT    (5555)
 
 #define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
-#define DEFAULT_SOCKTYPE   SOCK_STREAM //
+#define DEFAULT_SOCKTYPE   SOCK_STREAM
 #define DEFAULT_PORT       "5555"
 
 #define EVENT_TABLE_SIZE    (8)
@@ -151,9 +152,9 @@ static void Xcp_AddFd(int epoll_fd, int fd)
 {
     struct epoll_event event;
     event.data.fd = fd;
-    event.events = EPOLLIN; //Registering the fd is readable
+    event.events = EPOLLIN;
 
-    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event);  //Register the fd with the epoll kernel event table
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event);
     Xcp_SetNonblocking(fd);
 }
 
@@ -164,9 +165,6 @@ void XcpTl_Init(void)
     char * port = DEFAULT_PORT;
     int sock;
     int ret;
-    int idx;
-
-    printf("Tl_Init()\n");
 
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
@@ -210,7 +208,7 @@ void XcpTl_Init(void)
 
     epoll_fd = epoll_create(EVENT_TABLE_SIZE);
     if (epoll_fd == -1) {
-        XcpHw_ErrorMsg("XcpTl_Init::epoll_create", errno);
+        XcpHw_ErrorMsg("XcpTl_Init::epoll_create()", errno);
         exit(1);
     }
 
@@ -250,7 +248,7 @@ void XcpTl_MainFunction(void)
 {
 }
 
-void *get_in_addr(struct sockaddr *sa)
+void * get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
         return &(((struct sockaddr_in*)sa)->sin_addr);
@@ -280,12 +278,6 @@ void XcpTl_RxHandler(void)
             }
             inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
             printf("server: got connection from %s\n", hostname);
-//            if (getnameinfo(&From, FromLen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) != 0) {
-//                strcpy(hostname, "<unknown>");
-//                //XcpHw_ErrorMsg("XcpTl_RxHandler::getnameinfo()", errno);
-//            }
-//        DBG_PRINT2("\nAccepted connection from %s\n", hostname);
-
         }
         recv_len = recv(XcpTl_Connection.connectedSocket, (char*)buf, XCP_COMM_BUFLEN, 0);
         if (recv_len == -1) {
@@ -349,12 +341,6 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
     {
         int sockfd = events[i].data.fd;
         if(sockfd == listen_fd) { //If it is a file descriptor for listen, it indicates that a new customer is connected to
-#if 0
-            struct sockaddr_in client_address;
-            socklen_t client_addrlength = sizeof(client_address);
-            int connfd = accept(listen_fd, (struct sockaddr*)&client_address, &client_addrlength);
-            Xcp_AddFd(epoll_fd, connfd);
-#endif
             if (!XcpTl_Connection.connected) {
                 printf("Try connect\n");
                 XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len);
