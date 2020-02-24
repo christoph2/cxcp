@@ -15,6 +15,7 @@ uint8_t puffer[SIZE];
 void XcpTl_SetOptions(XcpHw_OptionsType const * options);
 
 
+extern pthread_t XcpHw_ThreadID[4];
 
 #define XCP_THREAD  (0)
 //#define IOCP_THREAD (1)
@@ -37,9 +38,13 @@ int main(void)
     Xcp_Init();
     Xcp_DisplayInfo();
 
+    pthread_join(XcpHw_ThreadID[0], NULL);
+
+#if 0
     while (XCP_TRUE) {
         XcpTl_MainFunction();
     }
+#endif
 
     XcpHw_Deinit();
     XcpTl_DeInit();
