@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -48,18 +49,22 @@ typedef struct tagHwStateType {
  /*
  ** Local Defines.
  */
-#define TIMER_PS_1US   (1000000UL)
-#define TIMER_PS_10US  (100000UL)
-#define TIMER_PS_100US (10000UL)
+#define TIMER_PS_1NS    (1L)
+#define TIMER_PS_10NS   (10L)
+#define TIMER_PS_100NS  (100L)
+#define TIMER_PS_1US    (1000L)
+#define TIMER_PS_10US   (10000L)
+#define TIMER_PS_100US  (100000L)
+#define TIMER_PS_1MS    (1000000L)
+#define TIMER_PS_10MS   (10000000L)
+#define TIMER_PS_100MS  (100000000L)
+#define TIMER_PS_1S     (1000000000L)
 
-#define TIMER_PS_1MS   (1000UL)
-#define TIMER_PS_10MS  (100UL)
-#define TIMER_PS_100MS (10UL)
+#define TIMER_MASK_1    (0x000000FFL)
+#define TIMER_MASK_2    (0x0000FFFFL)
+#define TIMER_MASK_4    (0xFFFFFFFFL)
 
-#define TIMER_MASK_1    (0x000000FFUL)
-#define TIMER_MASK_2    (0x0000FFFFUL)
-#define TIMER_MASK_4    (0xFFFFFFFFUL)
-
+#define SIG SIGRTMIN
 
 /*
 **  Local Function Prototypes.
@@ -93,15 +98,179 @@ pthread_t XcpHw_ThreadID[4];
 **  Local Variables.
 */
 static HwStateType HwState = {0};
-static pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT];
-
+static pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT] = {PTHREAD_MUTEX_INITIALIZER};
+static bool Xcp_TerminationFlag = (bool)XCP_FALSE;
 static struct timespec XcpHw_TimerResolution = {0};
+static timer_t XcpHw_AppMsTimer;
 
 /*
 **  Global Functions.
 */
+#if 0
+    #include <stdlib.h>
+    #include <unistd.h>
+    #include <stdio.h>
+    #include <signal.h>
+    #include <time.h>
+
+    #define CLOCKID CLOCK_REALTIME
+    #define SIG SIGRTMIN
+
+    #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                               } while (0)
+
+static void print_siginfo(siginfo_t *si)
+{
+    timer_t *tidp;
+    int or;
+
+    tidp = si->si_value.sival_ptr;
+
+    printf("    sival_ptr = %p; ", si->si_value.sival_ptr);
+    printf("    *sival_ptr = 0x%lx\n", (long) *tidp);
+
+    or = timer_getoverrun(*tidp);
+
+    if (or == -1) {
+        errExit("timer_getoverrun");
+    } else {
+        printf("    overrun count = %d\n", or);
+    }
+}
+
+int  main(int argc, char *argv[])
+{
+    timer_t timerid;
+    struct sigevent sev;
+    struct itimerspec its;
+    long long freq_nanosecs;
+    sigset_t mask;
+    struct sigaction sa;
+
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <sleep-secs> <freq-nanosecs>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Establish handler for timer signal */
+
+    printf("Establishing handler for signal %d\n", SIG);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = handler;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIG, &sa, NULL) == -1)
+        errExit("sigaction");
+
+    /* Block timer signal temporarily */
+
+    printf("Blocking signal %d\n", SIG);
+    sigemptyset(&mask);
+    sigaddset(&mask, SIG);
+    if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1)
+        errExit("sigprocmask");
+
+    /* Create
+     * the
+     * timer
+     * */
+
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIG;
+    sev.sigev_value.sival_ptr = &timerid;
+    if (timer_create(CLOCKID, &sev, &timerid) == -1)
+        errExit("timer_create");
+
+    printf("timer ID is 0x%lx\n", (long) timerid);
+
+    /* Start
+     * the
+     * timer
+     * */
+
+    freq_nanosecs = atoll(argv[2]);
+    its.it_value.tv_sec = freq_nanosecs / 1000000000;
+    its.it_value.tv_nsec = freq_nanosecs % 1000000000;
+    its.it_interval.tv_sec = its.it_value.tv_sec;
+    its.it_interval.tv_nsec = its.it_value.tv_nsec;
+
+    if (timer_settime(timerid, 0, &its, NULL) == -1)
+        errExit("timer_settime");
+
+    /* Sleep
+     * for
+     * a
+     * while;
+     * meanwhile,
+     * the
+     * timer
+     * may
+     * expire
+     *                                                                                                                                                                                                                                                                                                           *
+     *                                                                                                                                                                                                                                                                                                           multiple
+     *                                                                                                                                                                                                                                                                                                           times
+     *                                                                                                                                                                                                                                                                                                           */
+
+    printf("Sleeping for %d seconds\n", atoi(argv[1]));
+    sleep(atoi(argv[1]));
+
+    /* Unlock
+     * the
+     * timer
+     * signal,
+     * so
+     * that
+     * timer
+     * notification
+     *                                              /*
+     *                                              Unlock
+     *                                              the
+     *                                              timer
+     *                                              signal,
+     *                                              so
+     *                                              that
+     *                                              timer
+     *                                              notification
+     *
+     *
+     *                                                                                            *
+     *                                                                                            can
+     *                                                                                            be
+     *                                                                                            delivered
+     *                                                                                            */
+
+    printf("Unblocking signal %d\n", SIG);
+    if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
+        errExit("sigprocmask");
+
+    exit(EXIT_SUCCESS);
+}
+
+*
+#endif
+
+static void handler(int sig, siginfo_t *si, void *uc)
+{
+    /* Note: calling printf() from a signal handler is not safe
+     * (and should not be done in production programs), since
+     * printf() is not async-signal-safe; see signal-safety(7).
+     *  Nevertheless, we use printf() here as a simple way of
+     * showing that the handler was called. */
+    printf("Caught signal %d\n", sig);
+    print_siginfo(si);
+    signal(sig, SIG_IGN);
+}
+
 void XcpHw_Init(void)
 {
+    int status;
+    struct sigevent sev;
+
+    timer_t timerid;
+    struct itimerspec its;
+    long long freq_nanosecs = 100LL;
+    sigset_t mask;
+    struct sigaction sa;
+
     if (clock_getres(CLOCK_MONOTONIC_RAW, &XcpHw_TimerResolution) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
     }
@@ -112,11 +281,61 @@ void XcpHw_Init(void)
     fflush(stdout);
     //_setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
     //_setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
+
+    /* Establish handler for timer signal */
+    printf("Establishing handler for signal %d\n", SIG);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = handler;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIG, &sa, NULL) == -1) {
+        XcpHw_ErrorMsg("XcpHw_Init::sigaction()", errno);
+    }
+
+    /* Block timer signal temporarily */
+    printf("Blocking signal %d\n", SIG);
+    sigemptyset(&mask);
+    sigaddset(&mask, SIG);
+    if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
+        XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
+    }
+
+    /* Create the timer */
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIG;
+    sev.sigev_value.sival_ptr = &XcpHw_AppMsTimer;
+    // Parameter sevp could be NULL!?
+    if (timer_create(CLOCK_MONOTONIC, &sevp, &XcpHw_AppMsTimer) == -1) {
+        XcpHw_ErrorMsg("XcpHw_Init::timer_create()", errno);
+    }
+
+    /* Start the timer */
+    its.it_value.tv_sec = freq_nanosecs / 1000000000;
+    its.it_value.tv_nsec = freq_nanosecs % 1000000000;
+    its.it_interval.tv_sec = its.it_value.tv_sec;
+    its.it_interval.tv_nsec = its.it_value.tv_nsec;
+    if (timer_settime(XcpHw_AppMsTimer, 0, &its, NULL) == -1) {
+        XcpHw_ErrorMsg("XcpHw_Init::timer_settime()", errno);
+    }
+
+    if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
+        XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
+    }
+
 }
 
 void XcpHw_Deinit(void)
 {
     XcpHw_DeinitLocks();
+}
+
+bool Xcp_KeepRunningApp(void)
+{
+    return Xcp_TerminationFlag;
+}
+
+void Xcp_TerminateApp(void)
+{
+    Xcp_TerminationFlag = (bool)XCP_TRUE;
 }
 
 #if 0
@@ -138,45 +357,45 @@ uint32_pec diff(timespec start, timespec end)
 uint32_t XcpHw_GetTimerCounter(void)
 {
     struct timespec now = {0};
+    long timestamp;
 
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &now) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
     }
-#if 0
-    LARGE_INTEGER Now;
-    LARGE_INTEGER Elapsed;
-
-    QueryPerformanceCounter(&Now);
-    Elapsed.QuadPart = Now.QuadPart - HwState.StartingTime.QuadPart;
-
-#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-    Elapsed.QuadPart *= TIMER_PS_1US;
+    timestamp = now.tv_nsec;
+#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
+    timestamp /= TIMER_PS_1NS;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
+    timestamp /= TIMER_PS_10NS;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100NS
+    timestamp /= TIMER_PS_100NS;
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
+    timestamp /= TIMER_PS_1US;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
-    Elapsed.QuadPart *= TIMER_PS_10US;
+    timestamp /= TIMER_PS_10US;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
-    Elapsed.QuadPart *= TIMER_PS_100US;
+    timestamp /= TIMER_PS_100US;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-    Elapsed.QuadPart *= TIMER_PS_1MS;
+    timestamp /= TIMER_PS_1MS;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
-    Elapsed.QuadPart *= TIMER_PS_10MS;
-#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
-    Elapsed.QuadPart *= TIMER_PS_100MS;
+    timestamp /= TIMER_PS_10MS;
+//#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
+//    timestamp /= TIMER_PS_100MS;
 #else
 #error Timestamp-unit not supported.
 #endif // XCP_DAQ_TIMESTAMP_UNIT
 
-    Elapsed.QuadPart /= HwState.TicksPerSecond.QuadPart;
-
 #if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
-    return (uint32_t)Elapsed.QuadPart & TIMER_MASK_1;
+    timestamp &= TIMER_MASK_1;
 #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_2
-    return (uint32_t)Elapsed.QuadPart) & TIMER_MASK_2;
+    timestamp &= TIMER_MASK_2;
 #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_4
-    return (uint32_t)Elapsed.QuadPart & TIMER_MASK_4;
+    timestamp &= TIMER_MASK_4;
 #else
 #error Timestamp-size not supported.
 #endif // XCP_DAQ_TIMESTAMP_SIZE
-#endif // if 0
+
+    return (uint32_t)timestamp;
 }
 
 static void XcpHw_InitLocks(void)
@@ -184,7 +403,7 @@ static void XcpHw_InitLocks(void)
     uint8_t idx = UINT8(0);
 
     for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
-        pthread_mutex_init(&XcpHw_Locks[idx], NULL/*PTHREAD_MUTEX_RECURSIVE_NP*/);
+        pthread_mutex_init(&XcpHw_Locks[idx], NULL);
     }
 }
 

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -45,8 +45,10 @@ typedef struct tagXcpHw_OptionsType {
 } XcpHw_OptionsType;
 
 void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options);
-
 void XcpHw_ErrorMsg(char * const function, int errorCode);
+
+bool Xcp_KeepRunningApp(void);
+void Xcp_TerminateApp(void);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
