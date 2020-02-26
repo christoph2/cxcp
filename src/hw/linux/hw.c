@@ -203,7 +203,7 @@ void Xcp_TerminateApp(void)
 
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end)
 {
-    struct temp;
+    struct timespec temp;
 
     if ((end.tv_nsec-start.tv_nsec) < 0) {
         temp.tv_sec = end.tv_sec-start.tv_sec - 1;
