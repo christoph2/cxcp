@@ -49,20 +49,20 @@ typedef struct tagHwStateType {
  /*
  ** Local Defines.
  */
-#define TIMER_PS_1NS    (1L)
-#define TIMER_PS_10NS   (10L)
-#define TIMER_PS_100NS  (100L)
-#define TIMER_PS_1US    (1000L)
-#define TIMER_PS_10US   (10000L)
-#define TIMER_PS_100US  (100000L)
-#define TIMER_PS_1MS    (1000000L)
-#define TIMER_PS_10MS   (10000000L)
-#define TIMER_PS_100MS  (100000000L)
-#define TIMER_PS_1S     (1000000000L)
+#define TIMER_PS_1NS    (1ULL)
+#define TIMER_PS_10NS   (10ULL)
+#define TIMER_PS_100NS  (100ULL)
+#define TIMER_PS_1US    (1000ULL)
+#define TIMER_PS_10US   (10000ULL)
+#define TIMER_PS_100US  (100000ULL)
+#define TIMER_PS_1MS    (1000000ULL)
+#define TIMER_PS_10MS   (10000000ULL)
+#define TIMER_PS_100MS  (100000000ULL)
+#define TIMER_PS_1S     (1000000000ULL)
 
-#define TIMER_MASK_1    (0x000000FFL)
-#define TIMER_MASK_2    (0x0000FFFFL)
-#define TIMER_MASK_4    (0xFFFFFFFFL)
+#define TIMER_MASK_1    (0x000000FFULL)
+#define TIMER_MASK_2    (0x0000FFFFULL)
+#define TIMER_MASK_4    (0xFFFFFFFFULL)
 
 #define SIG SIGRTMIN
 
@@ -71,6 +71,7 @@ typedef struct tagHwStateType {
 */
 static void XcpHw_InitLocks(void);
 static void XcpHw_DeinitLocks();
+static struct timespec Timespec_Diff(struct timespec start, struct timespec end);
 
 /*
 **  External Function Prototypes.
@@ -102,7 +103,7 @@ static pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT] = {PTHREAD_MUTEX_INITIALIZ
 static bool Xcp_TerminationFlag = (bool)XCP_FALSE;
 static struct timespec XcpHw_TimerResolution = {0};
 static timer_t XcpHw_AppMsTimer;
-
+static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
 /*
 **  Global Functions.
 */
@@ -130,6 +131,8 @@ void XcpHw_Init(void)
     long long freq_nanosecs = 1000 * 1000 * 1000LL;
     sigset_t mask;
     struct sigaction sa;
+
+    XcpHw_FreeRunningCounter = 0ULL;
 
     if (clock_getres(CLOCK_MONOTONIC_RAW, &XcpHw_TimerResolution) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
@@ -198,26 +201,25 @@ void Xcp_TerminateApp(void)
     Xcp_TerminationFlag = (bool)XCP_TRUE;
 }
 
-#if 0
-uint32_pec diff(timespec start, timespec end)
+static struct timespec Timespec_Diff(struct timespec start, struct timespec end)
 {
-    timespec temp;
+    struct temp;
 
-    if ((end.tv_nsec-start.tv_nsec)<0) {
-        temp.tv_sec = end.tv_sec-start.tv_sec-1;
-        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+    if ((end.tv_nsec-start.tv_nsec) < 0) {
+        temp.tv_sec = end.tv_sec-start.tv_sec - 1;
+        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
     } else {
         temp.tv_sec = end.tv_sec-start.tv_sec;
         temp.tv_nsec = end.tv_nsec-start.tv_nsec;
     }
     return temp;
 }
-#endif
 
 uint32_t XcpHw_GetTimerCounter(void)
 {
     struct timespec now = {0};
-    long timestamp;
+    struct timespec dt = {0};
+    unsigned long long timestamp;
     double res;
     unsigned long long lts;
 
@@ -225,12 +227,14 @@ uint32_t XcpHw_GetTimerCounter(void)
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
     }
 
-    res = ((double)(now.tv_sec) * (double)1000 * 1000 * 1000) + ((double)now.tv_nsec);
+    dt = Timespec_Diff(HwState.StartingTime, now);
+
+    res = ((double)(dt.tv_sec) * (double)1000 * 1000 * 1000) + ((double)dt.tv_nsec);
     res /= TIMER_PS_1US;
-    lts = (unsigned long long)res;
+    XcpHw_FreeRunningCounter = (unsigned long long)res;
 
     printf("\tTS: %lu %lu %f\n", now.tv_sec, now.tv_nsec, res);
-    timestamp = now.tv_nsec;
+    timestamp = XcpHw_FreeRunningCounter;
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
     timestamp /= TIMER_PS_1NS;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
