@@ -103,6 +103,8 @@ static int Xcp_SetNonblocking(int fd);
 static void Xcp_AddFd(int epoll_fd, int fd);
 static void lt_process(struct epoll_event* events, int number, int epoll_fd, int listen_fd);
 static void * XcpTl_WorkerThread(void * param);
+static void XcpTl_Feed(char * buf);
+
 
 static  bool Xcp_EnableSocketOption(int sock, int option)
 {
@@ -323,18 +325,34 @@ void XcpTl_RxHandler(void)
     }
 }
 
+static void XcpTl_Feed(char * buf)
+{
+    uint16_t dlc;
+
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
+    dlc = (uint16_t)buf[0];
+#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
+    dlc = XCP_MAKEWORD(buf[0], buf[1]);
+#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
+    if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
+        Xcp_PduIn.len = dlc;
+        Xcp_PduIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+        Xcp_DispatchCommand(&Xcp_PduIn);
+    }
+}
+
 static void lt_process(struct epoll_event* events, int number, int epoll_fd, int listen_fd)
 {
-    char buf[BUFFER_SIZE];
+    static char buf[BUFFER_SIZE];
     int i;
     int recv_len;
-    uint16_t dlc;
+    //uint16_t dlc;
     int from_len = sizeof(struct sockaddr_storage);
     char hostname[NI_MAXHOST];
 
     for(i = 0; i < number; i++) {
         int sockfd = events[i].data.fd;
-        if(sockfd == listen_fd) {
+        if (sockfd == listen_fd) {
             if (XcpTl_Connection.socketType == SOCK_STREAM) {
                 if (!XcpTl_Connection.connected) {
                     printf("Try connect\n");
@@ -357,34 +375,23 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
                     fflush(stdout);
                     exit(1);
                 } else {
-                    printf("UDP: Received %d bytes.\n", recv_len);
+                    //printf("UDP: Received %d bytes\n", recv_len);
+                    XcpTl_Feed(buf);
+                    //XcpUtl_Hexdump(buf,  recv_len);
                 }
            }
-        } else if(events[i].events & EPOLLIN) {
+        } else if (events[i].events & EPOLLIN) {
             memset(buf, 0, BUFFER_SIZE);
             int ret = recv(sockfd, buf, BUFFER_SIZE - 1, 0);
-            if(ret <= 0)
-            {
+            if (ret <= 0) {
                 printf("disco()\n");
                 close(sockfd);
                 continue;
             }
             recv_len = ret;
             printf("NETWORK: Received %d bytes.\n", recv_len);
-
-//            hexdump(buf, ret);
             if (recv_len > 0) {
-        #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-                dlc = (uint16_t)buf[0];
-        #elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-                dlc = XCP_MAKEWORD(buf[0], buf[1]);
-                //dlc = (uint16_t)*(buf + 0);
-        #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
-                if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
-                    Xcp_PduIn.len = dlc;
-                    Xcp_PduIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-                    Xcp_DispatchCommand(&Xcp_PduIn);
-                }
+                XcpTl_Feed(buf);
                 if (recv_len < 5) {
                     DBG_PRINT2("Error: frame to short: %d\n", recv_len);
                 } else {
@@ -392,9 +399,7 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
                 }
                 fflush(stdout);
             }
-        }
-        else
-        {
+        } else {
             printf("something unexpected happened!\n");
         }
     }
