@@ -169,7 +169,7 @@ void XcpTl_Init(void)
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
     memset(&hints, 0, sizeof(hints));
 
-    Xcp_Options.tcp = 1;
+//    Xcp_Options.tcp = 1;
 
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;

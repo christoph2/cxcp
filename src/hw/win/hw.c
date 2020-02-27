@@ -279,7 +279,7 @@ bool XcpHw_MainFunction(HANDLE * quit_event)
 }
 
 
-void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options)
+void XcpHw_ParseCommandLineOptions(int argc, char ** argv, XcpHw_OptionsType * options)
 {
     int idx;
     char * arg;
@@ -287,9 +287,9 @@ void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options)
     options->ipv6 = XCP_FALSE;
     options->tcp = XCP_TRUE;
 
-    if (__argc >= 2) {
-        for(idx = 1; idx < __argc; ++idx) {
-            arg = __argv[idx];
+    if (argc >= 2) {
+        for(idx = 1; idx < argc; ++idx) {
+            arg = argv[idx];
             if ((arg[0] != '/') && (arg[0] != '-')) {
                 continue;
             }

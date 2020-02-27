@@ -95,14 +95,14 @@ HANDLE quit_event;
 HANDLE userTimer;
 
 
-int main(void)
+int main(int argc, char **argv)
 {
     size_t idx;
     XcpHw_OptionsType options;
 
     srand(23);
 
-    XcpHw_GetCommandLineOptions(&options);
+    XcpHw_ParseCommandLineOptions(argc, argv, &options);
     XcpTl_SetOptions(&options);
 
     FlsEmu_Init(&FlsEmu_Config);

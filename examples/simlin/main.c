@@ -25,14 +25,14 @@ extern pthread_t XcpHw_ThreadID[4];
 #define NUM_THREADS (3)
 
 
-int main(void)
+int main(int argc, char **argv)
 {
     size_t idx;
     XcpHw_OptionsType options;
 
     srand(23);
 
-    XcpHw_GetCommandLineOptions(&options);
+    XcpHw_GetCommandLineOptions(argc, argv, &options);
     XcpTl_SetOptions(&options);
 
     Xcp_Init();

@@ -44,7 +44,7 @@ typedef struct tagXcpHw_OptionsType {
     bool tcp;
 } XcpHw_OptionsType;
 
-void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options);
+void XcpHw_ParseCommandLineOptions(int argc, char **argv, XcpHw_OptionsType * options);
 void XcpHw_ErrorMsg(char * const function, int errorCode);
 
 bool Xcp_KeepRunningApp(void);

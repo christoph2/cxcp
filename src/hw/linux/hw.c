@@ -394,17 +394,17 @@ bool XcpHw_MainFunction()
 }
 
 
-void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options)
+void XcpHw_ParseCommandLineOptions(int argc, char **argv, XcpHw_OptionsType * options)
 {
     int idx;
     char * arg;
-#if 0
+
     options->ipv6 = XCP_FALSE;
     options->tcp = XCP_TRUE;
 
-    if (__argc >= 2) {
-        for(idx = 1; idx < __argc; ++idx) {
-            arg = __argv[idx];
+    if (argc >= 2) {
+        for(idx = 1; idx < argc; ++idx) {
+            arg = argv[idx];
             if ((arg[0] != '/') && (arg[0] != '-')) {
                 continue;
             }
@@ -428,7 +428,6 @@ void XcpHw_GetCommandLineOptions(XcpHw_OptionsType * options)
             }
         }
     }
-#endif
 }
 
 static void DisplayHelp(void)
