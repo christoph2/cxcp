@@ -100,6 +100,10 @@ pthread_t XcpHw_ThreadID[4];
 */
 static HwStateType HwState = {0};
 static pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT] = {PTHREAD_MUTEX_INITIALIZER};
+
+static pthread_mutex_t XcpHw_AppTerminateMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t XcpHw_AppTerminateCondition = PTHREAD_COND_INITIALIZER;
+
 static bool Xcp_TerminationFlag = (bool)XCP_FALSE;
 static struct timespec XcpHw_TimerResolution = {0};
 static timer_t XcpHw_AppMsTimer;
@@ -115,7 +119,8 @@ static void handler(int sig, siginfo_t *si, void *uc)
      * printf() is not async-signal-safe; see signal-safety(7).
      *  Nevertheless, we use printf() here as a simple way of
      * showing that the handler was called. */
-    printf("Caught signal %d %d\n", sig, XcpHw_GetTimerCounter());
+
+    //printf("Caught signal %d %d\n", sig, XcpHw_GetTimerCounter());
 
     //print_siginfo(si);
     //signal(sig, SIG_IGN);
@@ -193,12 +198,16 @@ void XcpHw_Deinit(void)
 
 bool Xcp_KeepRunningApp(void)
 {
+//    pthread_cond_timedwait(
     return Xcp_TerminationFlag;
 }
 
 void Xcp_TerminateApp(void)
 {
     Xcp_TerminationFlag = (bool)XCP_TRUE;
+
+    pthread_mutex_lock(&XcpHw_AppTerminateMutex);
+    pthread_cond_signal(&XcpHw_AppTerminateCondition);
 }
 
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end)
