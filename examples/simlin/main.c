@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     srand(23);
 
-    XcpHw_GetCommandLineOptions(argc, argv, &options);
+    XcpHw_ParseCommandLineOptions(argc, argv, &options);
     XcpTl_SetOptions(&options);
 
     Xcp_Init();
