@@ -107,7 +107,7 @@ extern "C"
 
 #define XCP_FOREVER     for(;;)
 
-#if (defined(_WIN32)) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
+#if (XCP_BUILD_TYPE == XCP_DEBUG_BUILD) // (defined(_WIN32)) &&
 #define INLINE __inline
 #define DBG_PRINT1(a)                   printf(a)
 #define DBG_PRINT2(a, b)                printf(a, b)

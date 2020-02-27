@@ -70,7 +70,6 @@
 typedef struct tagXcpTl_ConnectionType {
     struct sockaddr_storage connectionAddress;
     struct sockaddr_storage currentAddress;
-
     int boundSocket;
     int connectedSocket;
     bool connected;
@@ -82,7 +81,6 @@ extern pthread_t XcpHw_ThreadID[4];
 
 unsigned char buf[XCP_COMM_BUFLEN];
 int addrSize = sizeof(struct sockaddr_storage);
-
 
 static XcpTl_ConnectionType XcpTl_Connection;
 static XcpHw_OptionsType Xcp_Options;
@@ -168,8 +166,6 @@ void XcpTl_Init(void)
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
     memset(&hints, 0, sizeof(hints));
-
-//    Xcp_Options.tcp = 1;
 
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;
@@ -336,38 +332,46 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
     int from_len = sizeof(struct sockaddr_storage);
     char hostname[NI_MAXHOST];
 
-    for(i = 0; i < number; i++) //number: number of events ready
-    {
+    for(i = 0; i < number; i++) {
         int sockfd = events[i].data.fd;
-        if(sockfd == listen_fd) { //If it is a file descriptor for listen, it indicates that a new customer is connected to
-            if (!XcpTl_Connection.connected) {
-                printf("Try connect\n");
-                XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len);
-                if (XcpTl_Connection.connectedSocket == -1) {
-                    XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", errno);
-                    exit(1);
-                    return;
+        if(sockfd == listen_fd) {
+            if (XcpTl_Connection.socketType == SOCK_STREAM) {
+                if (!XcpTl_Connection.connected) {
+                    printf("Try connect\n");
+                    XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len);
+                    if (XcpTl_Connection.connectedSocket == -1) {
+                        XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", errno);
+                        exit(1);
+                        return;
+                    }
+                    Xcp_AddFd(epoll_fd, XcpTl_Connection.connectedSocket);
+                    inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
+                    printf("server: got connection from %s\n", hostname);
                 }
-                Xcp_AddFd(epoll_fd, XcpTl_Connection.connectedSocket);
-                inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
-                printf("server: got connection from %s\n", hostname);
-            }
-
-
-        } else if(events[i].events & EPOLLIN) { //Readable with client data
-            // This code is triggered as long as the data in the buffer has not been read.This is what LT mode is all about: repeating notifications until processing is complete
-            //printf("Recv\n");
-            //printf("lt mode: event trigger once!\n");
+           } else {
+                recv_len = recvfrom(XcpTl_Connection.boundSocket, (char*)buf, XCP_COMM_BUFLEN, 0,
+                    (struct sockaddr *)&XcpTl_Connection.currentAddress, &addrSize
+                );
+                if (recv_len == -1) {
+                    XcpHw_ErrorMsg("XcpTl_RxHandler:recvfrom()", errno);
+                    fflush(stdout);
+                    exit(1);
+                } else {
+                    printf("UDP: Received %d bytes.\n", recv_len);
+                }
+           }
+        } else if(events[i].events & EPOLLIN) {
             memset(buf, 0, BUFFER_SIZE);
             int ret = recv(sockfd, buf, BUFFER_SIZE - 1, 0);
-            if(ret <= 0)  //After reading the data, remember to turn off fd
+            if(ret <= 0)
             {
                 printf("disco()\n");
                 close(sockfd);
                 continue;
             }
-//            printf("get %d bytes of content: \n", ret);
             recv_len = ret;
+            printf("NETWORK: Received %d bytes.\n", recv_len);
+
 //            hexdump(buf, ret);
             if (recv_len > 0) {
         #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
@@ -404,7 +408,7 @@ void XcpTl_TxHandler(void)
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
 
-    XcpUtl_Hexdump(buf,  len);
+    //XcpUtl_Hexdump(buf,  len);
 
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
