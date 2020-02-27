@@ -220,8 +220,6 @@ uint32_t XcpHw_GetTimerCounter(void)
     struct timespec now = {0};
     struct timespec dt = {0};
     unsigned long long timestamp;
-    double res;
-    unsigned long long lts;
 
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &now) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
@@ -229,11 +227,9 @@ uint32_t XcpHw_GetTimerCounter(void)
 
     dt = Timespec_Diff(HwState.StartingTime, now);
 
-    res = ((double)(dt.tv_sec) * (double)1000 * 1000 * 1000) + ((double)dt.tv_nsec);
-    res /= TIMER_PS_1US;
-    XcpHw_FreeRunningCounter = (unsigned long long)res;
+    XcpHw_FreeRunningCounter = ((unsigned long long)(dt.tv_sec) * (unsigned long long)1000 * 1000 * 1000) + ((unsigned long long)dt.tv_nsec);
 
-    printf("\tTS: %lu %lu %f\n", now.tv_sec, now.tv_nsec, res);
+    printf("\tTS: %llu\n", XcpHw_FreeRunningCounter);
     timestamp = XcpHw_FreeRunningCounter;
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
     timestamp /= TIMER_PS_1NS;
