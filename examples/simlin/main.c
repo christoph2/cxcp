@@ -1,11 +1,11 @@
 
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "xcp.h"
 #include "xcp_hw.h"
-//#include "flsemu.h"
 
 void XcpOnCan_Init(void);
 
@@ -178,15 +178,16 @@ DWORD Xcp_MainTask(LPVOID param)
     }
     ExitThread(0);
 }
+#endif
 
-DWORD AppTask(LPVOID param)
+void * AppTask(void * param)
 {
     static uint32_t currentTS = 0UL;
     static uint32_t previousTS = 0UL;
     static uint16_t ticker = 0;
     uint32_t state;
+#if 0
     HANDLE * quit_event = (HANDLE *)param;
-
     LARGE_INTEGER liDueTime;
     LONG period;
     HANDLE handles[2] = {*quit_event, userTimer};
@@ -196,14 +197,15 @@ DWORD AppTask(LPVOID param)
     liDueTime.QuadPart=-50000;
     period = 5000;
     SetWaitableTimer(userTimer, &liDueTime, period, NULL, NULL, 0);
-
+#endif
 
     XCP_FOREVER {
 
-        while (state != 0x01) {
-            state = XcpHw_WaitApplicationState(0x03);
-            printf("signaled: %u\n", state);
-            XcpHw_ResetApplicationState(state);
+        state = XcpHw_WaitApplicationState(0x03);
+        printf("signaled: %u\n", state);
+        XcpHw_ResetApplicationState(state);
+        if (state == 1) {
+            break;
         }
 
         currentTS = XcpHw_GetTimerCounter() / 1000;
@@ -230,15 +232,7 @@ DWORD AppTask(LPVOID param)
             ticker++;
             previousTS =  XcpHw_GetTimerCounter() / 1000;
         }
-        res = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-        if (res == WAIT_OBJECT_0) {
-            break;
-        }
-        //if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
-        //    break;
-        //}
     }
-    ExitThread(0);
+    return NULL;
 }
-#endif
 
