@@ -95,19 +95,31 @@ void exitFunc(void);
 */
 pthread_t XcpHw_ThreadID[4];
 
+
+/*
+ * Local Types.
+ */
+typedef struct tagXcpHw_ApplicationStateType {
+    pthread_mutex_t stateMutex;
+    pthread_cond_t stateCond;
+    uint32_t stateBitmap;
+} XcpHw_ApplicationStateType;
+
+
 /*
 **  Local Variables.
 */
 static HwStateType HwState = {0};
 static pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT] = {PTHREAD_MUTEX_INITIALIZER};
 
-static pthread_mutex_t XcpHw_AppTerminateMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t XcpHw_AppTerminateCondition = PTHREAD_COND_INITIALIZER;
 
-static bool Xcp_TerminationFlag = (bool)XCP_FALSE;
 static struct timespec XcpHw_TimerResolution = {0};
 static timer_t XcpHw_AppMsTimer;
 static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
+
+
+static XcpHw_ApplicationStateType XcpHw_ApplicationState = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0};
+
 /*
 **  Global Functions.
 */
@@ -124,6 +136,7 @@ static void handler(int sig, siginfo_t *si, void *uc)
 
     //print_siginfo(si);
     //signal(sig, SIG_IGN);
+    XcpHw_SignalApplicationState(2);
 }
 
 void XcpHw_Init(void)
@@ -147,8 +160,10 @@ void XcpHw_Init(void)
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
     }
     fflush(stdout);
-    //_setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
-    //_setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
+#if 0
+    _setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
+    _setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
+#endif
 
     /* Establish handler for timer signal */
     printf("Establishing handler for signal %d\n", SIG);
@@ -196,18 +211,71 @@ void XcpHw_Deinit(void)
     XcpHw_DeinitLocks();
 }
 
-bool Xcp_KeepRunningApp(void)
+void XcpHw_SignalApplicationState(uint32_t state)
 {
-//    pthread_cond_timedwait(
-    return Xcp_TerminationFlag;
+    int status;
+
+    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
+    if (status != 0) {
+
+    }
+    XcpHw_ApplicationState.stateBitmap = state;
+    status = pthread_cond_signal(&XcpHw_ApplicationState.stateCond);
+    if (status != 0) {
+
+    }
+    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
+    if (status != 0) {
+
+    }
 }
 
-void Xcp_TerminateApp(void)
+void XcpHw_ResetApplicationState(uint32_t mask)
 {
-    Xcp_TerminationFlag = (bool)XCP_TRUE;
+    int status;
 
-    pthread_mutex_lock(&XcpHw_AppTerminateMutex);
-    pthread_cond_signal(&XcpHw_AppTerminateCondition);
+    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
+    if (status != 0) {
+
+    }
+    XcpHw_ApplicationState.stateBitmap &= ~mask;
+    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
+    if (status != 0) {
+
+    }
+}
+
+uint32_t XcpHw_WaitApplicationState(uint32_t mask)
+{
+    uint32_t result = 0UL;
+    int status;
+    struct timespec timeout;
+    int match = 0;
+
+    timeout.tv_sec = time(NULL) + 2;
+    timeout.tv_nsec = 0;
+    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
+    if (status != 0) {
+
+    }
+
+    while ((XcpHw_ApplicationState.stateBitmap == 0) && (!match)) {
+        //status = pthread_cond_timedwait(&XcpHw_ApplicationState.stateCond, &XcpHw_ApplicationState.stateMutex, &timeout);
+        status = pthread_cond_wait(&XcpHw_ApplicationState.stateCond, &XcpHw_ApplicationState.stateMutex);
+        if (status != 0) {
+            printf("ERROR! %u[%s]\n", status, strerror(status));
+        }
+        match = (XcpHw_ApplicationState.stateBitmap & mask) != 0x00;
+        result = XcpHw_ApplicationState.stateBitmap;
+        printf("match: %u result: %u\n", match, result);
+//        XcpHw_ApplicationState.stateBitmap = 0UL;
+    }
+
+    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
+    if (status != 0) {
+
+    }
+    return result;
 }
 
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end)

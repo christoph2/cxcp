@@ -47,7 +47,7 @@ extern "C"
 
 #include "xcp_config.h"
 
-#if defined(_WIN32) && (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
+#if defined(_WIN32) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 #include <stdio.h>
 #endif /* defined(_WIN32) */
 
@@ -107,7 +107,8 @@ extern "C"
 
 #define XCP_FOREVER     for(;;)
 
-#if (XCP_BUILD_TYPE == XCP_DEBUG_BUILD) // (defined(_WIN32)) &&
+#if XCP_BUILD_TYPE == XCP_DEBUG_BUILD // (defined(_WIN32)) &&
+//    #error DEBUG!!!
 #define INLINE __inline
 #define DBG_PRINT1(a)                   printf(a)
 #define DBG_PRINT2(a, b)                printf(a, b)
@@ -117,6 +118,7 @@ extern "C"
 #define DBG_PRINT6(a, b, c, d, e, f)    printf(a, b, c, d, e, f)
 #else
 #define INLINE
+//    #error RELEASE!!!
 #define DBG_PRINT1(a)
 #define DBG_PRINT2(a, b)
 #define DBG_PRINT3(a, b, c)
@@ -136,3 +138,4 @@ extern "C"
 
 
 #endif /* __XCP_MACROS_H */
+

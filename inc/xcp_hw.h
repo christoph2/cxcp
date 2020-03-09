@@ -47,8 +47,9 @@ typedef struct tagXcpHw_OptionsType {
 void XcpHw_ParseCommandLineOptions(int argc, char **argv, XcpHw_OptionsType * options);
 void XcpHw_ErrorMsg(char * const function, int errorCode);
 
-bool Xcp_KeepRunningApp(void);
-void Xcp_TerminateApp(void);
+void XcpHw_SignalApplicationState(uint32_t state);
+uint32_t XcpHw_WaitApplicationState(uint32_t mask);
+void XcpHw_ResetApplicationState(uint32_t mask);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
