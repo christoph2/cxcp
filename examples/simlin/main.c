@@ -24,10 +24,10 @@ extern pthread_t XcpHw_ThreadID[4];
 
 #define NUM_THREADS (3)
 
-
 int main(int argc, char **argv)
 {
     size_t idx;
+    uint32_t state = 0UL;
     XcpHw_OptionsType options;
 
     srand(23);
@@ -38,7 +38,13 @@ int main(int argc, char **argv)
     Xcp_Init();
     Xcp_DisplayInfo();
 
-    pthread_join(XcpHw_ThreadID[0], NULL);
+    while (state != 0x01) {
+        state = XcpHw_WaitApplicationState(0x03);
+        printf("signaled: %u\n", state);
+        XcpHw_ResetApplicationState(state);
+    }
+
+//    pthread_join(XcpHw_ThreadID[0], NULL);
 
 #if 0
     while (XCP_TRUE) {
@@ -178,6 +184,7 @@ DWORD AppTask(LPVOID param)
     static uint32_t currentTS = 0UL;
     static uint32_t previousTS = 0UL;
     static uint16_t ticker = 0;
+    uint32_t state;
     HANDLE * quit_event = (HANDLE *)param;
 
     LARGE_INTEGER liDueTime;
@@ -192,6 +199,13 @@ DWORD AppTask(LPVOID param)
 
 
     XCP_FOREVER {
+
+        while (state != 0x01) {
+            state = XcpHw_WaitApplicationState(0x03);
+            printf("signaled: %u\n", state);
+            XcpHw_ResetApplicationState(state);
+        }
+
         currentTS = XcpHw_GetTimerCounter() / 1000;
         if (currentTS >= (previousTS + 10)) {
             //printf("T [%u::%lu]\n", currentTS, XcpHw_GetTimerCounter() / 1000);
