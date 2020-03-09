@@ -223,7 +223,7 @@ void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
     XcpHw_ApplicationState.stateBitmap = state;
 
     if (signal_all) {
-        status = pthread_cond_brodcast(&XcpHw_ApplicationState.stateCond);
+        status = pthread_cond_broadcast(&XcpHw_ApplicationState.stateCond);
     } else {
         status = pthread_cond_signal(&XcpHw_ApplicationState.stateCond);
     }
