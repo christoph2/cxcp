@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <signal.h>
@@ -132,11 +133,11 @@ static void handler(int sig, siginfo_t *si, void *uc)
      *  Nevertheless, we use printf() here as a simple way of
      * showing that the handler was called. */
 
-    //printf("Caught signal %d %d\n", sig, XcpHw_GetTimerCounter());
+    printf("Caught signal %u %u\n", sig, XcpHw_GetTimerCounter());
 
     //print_siginfo(si);
     //signal(sig, SIG_IGN);
-    XcpHw_SignalApplicationState(2);
+    XcpHw_SignalApplicationState(2, XCP_TRUE);
 }
 
 void XcpHw_Init(void)
@@ -211,22 +212,27 @@ void XcpHw_Deinit(void)
     XcpHw_DeinitLocks();
 }
 
-void XcpHw_SignalApplicationState(uint32_t state)
+void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
 {
     int status;
 
     status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-
+        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_mutex_lock()", status);
     }
     XcpHw_ApplicationState.stateBitmap = state;
-    status = pthread_cond_signal(&XcpHw_ApplicationState.stateCond);
-    if (status != 0) {
 
+    if (signal_all) {
+        status = pthread_cond_brodcast(&XcpHw_ApplicationState.stateCond);
+    } else {
+        status = pthread_cond_signal(&XcpHw_ApplicationState.stateCond);
+    }
+    if (status != 0) {
+        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_cond_signal()", status);
     }
     status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-
+        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_mutex_unlock()", status);
     }
 }
 
@@ -236,46 +242,47 @@ void XcpHw_ResetApplicationState(uint32_t mask)
 
     status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-
+        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::pthread_mutex_lock()", status);
     }
     XcpHw_ApplicationState.stateBitmap &= ~mask;
     status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-
+        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::pthread_mutex_unlock()", status);
     }
+}
+
+void XcpHw_CondResetApplicationState(uint32_t mask)
+{
+
 }
 
 uint32_t XcpHw_WaitApplicationState(uint32_t mask)
 {
-    uint32_t result = 0UL;
     int status;
-    struct timespec timeout;
     int match = 0;
+#if 0
+    struct timespec timeout;
 
     timeout.tv_sec = time(NULL) + 2;
     timeout.tv_nsec = 0;
+#endif
     status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-
+        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_mutex_lock()", status);
     }
 
     while ((XcpHw_ApplicationState.stateBitmap == 0) && (!match)) {
-        //status = pthread_cond_timedwait(&XcpHw_ApplicationState.stateCond, &XcpHw_ApplicationState.stateMutex, &timeout);
         status = pthread_cond_wait(&XcpHw_ApplicationState.stateCond, &XcpHw_ApplicationState.stateMutex);
         if (status != 0) {
-            printf("ERROR! %u[%s]\n", status, strerror(status));
+            XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_cond_wait()", status);
         }
         match = (XcpHw_ApplicationState.stateBitmap & mask) != 0x00;
-        result = XcpHw_ApplicationState.stateBitmap;
-        printf("match: %u result: %u\n", match, result);
-//        XcpHw_ApplicationState.stateBitmap = 0UL;
     }
-
     status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-
+        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_mutex_unlock()", status);
     }
-    return result;
+    return XcpHw_ApplicationState.stateBitmap;
 }
 
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end)
@@ -307,7 +314,7 @@ uint32_t XcpHw_GetTimerCounter(void)
     XcpHw_FreeRunningCounter = ((unsigned long long)(dt.tv_sec) * (unsigned long long)1000 * 1000 * 1000) + ((unsigned long long)dt.tv_nsec);
 
     printf("\tTS: %llu\n", XcpHw_FreeRunningCounter);
-    timestamp = XcpHw_FreeRunningCounter;
+    timestamp = XcpHw_FreeRunningCounter % UINT_MAX;
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
     timestamp /= TIMER_PS_1NS;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
