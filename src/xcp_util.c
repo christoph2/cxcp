@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2018 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -85,9 +85,9 @@ void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz)
 
 void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
 {
-    uint32_t  mod;
-    uint8_t   pos = (uint8_t)0x00, swap_pos = (uint8_t)0x00;
-    uint8_t   ch;
+    uint8_t mod;
+    uint8_t pos = (uint8_t)0x00, swap_pos = (uint8_t)0x00;
+    uint8_t ch;
 
     /* ASSERT(buf != (void *)NULL); */
     if (((int32_t)value) < 0L && base == (uint8_t)10) {
