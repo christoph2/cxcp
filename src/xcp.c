@@ -675,7 +675,7 @@ void Xcp_MainFunction(void)
 
 #if 0
     #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
-        Xcp_UploadSingleFrame();
+        Xcp_UploadSingleBlock();
     #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
 #endif
 
@@ -797,7 +797,7 @@ static void Xcp_SlaveBlockTransferSetActive(bool onOff)
 }
 
 
-void Xcp_UploadSingleFrame(void)
+void Xcp_UploadSingleBlock(void)
 {
     uint8_t * dataOut = XCP_NULL;
     uint8_t length = UINT8(0x00);
@@ -864,7 +864,7 @@ static void Xcp_Upload(uint8_t len)
 
     //printf("----------------------------------------\n");
     Xcp_SlaveBlockTransferSetActive((bool)XCP_TRUE);
-    Xcp_UploadSingleFrame();
+    Xcp_UploadSingleBlock();
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
 }
 

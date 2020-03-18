@@ -461,7 +461,7 @@ static DWORD WINAPI WorkerThread(LPVOID lpParameter)
                     case IoWrite:
                         //printf("WRITE() %d %ld\n", numBytesReceived, CompletionKey);
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
-                        Xcp_UploadSingleFrame();
+                        Xcp_UploadSingleBlock();
 #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
                         break;
                 }

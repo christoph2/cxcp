@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -739,7 +739,7 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr);
 void Xcp_SetMta(Xcp_MtaType mta);
 void Xcp_SetBusy(bool enable);
 bool Xcp_IsBusy(void);
-void Xcp_UploadSingleFrame(void);
+void Xcp_UploadSingleBlock(void);
 Xcp_StateType * Xcp_GetState(void);
 
 
