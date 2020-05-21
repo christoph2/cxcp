@@ -182,6 +182,32 @@ void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block)
     XcpUtl_MemSet(ptr, ERASED_VALUE, blockSize);
 }
 
+Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
+{
+    uint8_t idx;
+    uint8_t * ptr;
+    FlsEmu_SegmentType * segment;
+
+    /* printf("addr: %x ext: %d\n", src->address, src->ext); */
+
+    for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
+        ptr = FlsEmu_BasePointer(idx);
+        segment = FlsEmu_GetConfig()->segments[idx];
+        if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
+            if (src->ext >= FlsEmu_NumPages(idx)) {
+                return XCP_MEMORY_ADDRESS_INVALID;
+            } else {
+                FlsEmu_SelectPage(idx, src->ext);
+            }
+            dst->address = ((uint32_t)ptr - segment->baseAddress) + src->address;
+            dst->ext = src->ext;
+            /* printf("MAPPED: addr: %x ext: %d TO: %x:%d\n", src->address, src->ext, dst->address, dst->ext); */
+            return XCP_MEMORY_MAPPED;
+        }
+    }
+    return XCP_MEMORY_NOT_MAPPED;
+}
+
 FlsEmu_ConfigType const * FlsEmu_GetConfig(void)
 {
     return FlsEmu_Config;

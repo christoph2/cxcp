@@ -91,7 +91,6 @@ static bool CreateFileView(MEM_HANDLE handle, DWORD length, FlsEmu_HwFileViewTyp
 void FlsEmu_OpenCreate(uint8_t segmentIdx)
 {
     int length;
-    char adm[1024];
     char rom[1024];
     FlsEmu_SegmentType * segment;
     FlsEmu_PersistentArrayType temp;
@@ -105,9 +104,6 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx)
     segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
     segment->currentPage = 0x00;
     length = strlen(segment->name);
-    strncpy((char *)adm, (char *)segment->name, length);
-    adm[length] = '\x00';
-    strcat((char *)adm, ".adm");
     strncpy((char *)rom, (char *)segment->name, length);
     rom[length] = '\x00';
     strcat((char *)rom, ".rom");
@@ -117,13 +113,6 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx)
 
     } else if (result == NEW_FILE) {
         XcpUtl_MemSet(segment->persistentArray->mappingAddress, ERASED_VALUE, segment->memSize);
-    }
-
-    result = FlsEmu_OpenCreatePersitentArray(adm, sizeof(FlsEmu_SegmentType) + (segment->memSize * sizeof(uint32_t)), &temp);
-    if (result == OPEN_ERROR) {
-    } else if (result == NEW_FILE) {
-        CopyMemory(temp.mappingAddress, segment, sizeof(FlsEmu_SegmentType));
-        SecureZeroMemory((uint8_t *)temp.mappingAddress + sizeof(FlsEmu_SegmentType), sizeof(uint32_t));
     }
 }
 
@@ -399,31 +388,6 @@ static void FlsEmu_CloseFileView(FlsEmu_HwFileViewType * fileView)
     CloseHandle(fileView->mappingHandle);
 }
 
-Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
-{
-    uint8_t idx;
-    uint8_t * ptr;
-    FlsEmu_SegmentType * segment;
-
-    /* printf("addr: %x ext: %d\n", src->address, src->ext); */
-
-    for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
-        ptr = FlsEmu_BasePointer(idx);
-        segment = FlsEmu_GetConfig()->segments[idx];
-        if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
-            if (src->ext >= FlsEmu_NumPages(idx)) {
-                return XCP_MEMORY_ADDRESS_INVALID;
-            } else {
-                FlsEmu_SelectPage(idx, src->ext);
-            }
-            dst->address = ((uint32_t)ptr - segment->baseAddress) + src->address;
-            dst->ext = src->ext;
-            /* printf("MAPPED: addr: %x ext: %d TO: %x:%d\n", src->address, src->ext, dst->address, dst->ext); */
-            return XCP_MEMORY_MAPPED;
-        }
-    }
-    return XCP_MEMORY_NOT_MAPPED;
-}
 
 #if defined(_WIN32)
 void FlsEmu_Info(void)
