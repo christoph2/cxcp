@@ -47,10 +47,25 @@
 
 
 /*
+**  Local Function-like Macros.
+*/
+#define FLSEMU_ASSERT_INITIALIZED() assert(*FlsEmu_GetModuleState() == FLSEMU_INIT)
+#define FLSEMU_VALIDATE_SEGMENT_IDX(idx)    ((idx) < FlsEmu_GetConfig()->numSegments)
+
+/*
 **  Global Types.
 */
 
 typedef void * MEM_HANDLE;
+
+/** @brief State of flash-emulator module.
+ *
+ *
+ */
+typedef enum tagFlsEmu_ModuleStateType {
+    FLSEMU_UNINIT,
+    FLSEMU_INIT
+} FlsEmu_ModuleStateType;
 
 typedef struct tagFlsEmu_PersistentArrayType {
     MEM_HANDLE fileHandle;
@@ -77,17 +92,23 @@ typedef struct tagFlsEmu_ConfigType {
     FlsEmu_SegmentType /*const*/ ** segments;
 } FlsEmu_ConfigType;
 
+
 /*
-**  Global Functions.
+**  Global Functions / FlashEmu Interface.
 */
 void FlsEmu_Init(FlsEmu_ConfigType const * config);
 void FlsEmu_DeInit(void);
+void FlsEmu_Close(uint8_t segmentIdx);
+FlsEmu_ConfigType const * FlsEmu_GetConfig(void);
+void FlsEmu_OpenCreate(uint8_t segmentIdx);
+FlsEmu_ModuleStateType * FlsEmu_GetModuleState(void);
 void * FlsEmu_BasePointer(uint8_t segmentIdx);
 void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page);
 uint32_t FlsEmu_NumPages(uint8_t segmentIdx);
 void FlsEmu_ErasePage(uint8_t segmentIdx, uint8_t page);
 void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address);
 void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block);
+uint32_t FlsEmu_GetPageSize(void);
 Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src);
 
 #endif // __FLSEMU_H
