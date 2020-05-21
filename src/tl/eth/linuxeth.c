@@ -168,7 +168,6 @@ void XcpTl_Init(void)
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
     memset(&hints, 0, sizeof(hints));
-
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;
     hints.ai_socktype = XcpTl_Connection.socketType;
@@ -181,7 +180,6 @@ void XcpTl_Init(void)
     }
 
     sock = socket(addr_info->ai_family, addr_info->ai_socktype, addr_info->ai_protocol);
-    printf("socket()\n");
     if (sock == -1){
         XcpHw_ErrorMsg("XcpTl_Init::socket()", errno);
         return;
@@ -448,7 +446,7 @@ bool XcpTl_VerifyConnection(void)
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options)
 {
-    Xcp_Options = *options;
+    memcpy(&Xcp_Options, options, sizeof(XcpHw_OptionsType));
 }
 
 void XcpTl_PrintConnectionInformation(void)

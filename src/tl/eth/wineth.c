@@ -360,7 +360,7 @@ bool XcpTl_VerifyConnection(void)
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options)
 {
-    Xcp_Options = *options;
+    memcpy(&Xcp_Options, options, sizeof(XcpHw_OptionsType));
 }
 
 void XcpTl_PrintConnectionInformation(void)
