@@ -50,20 +50,20 @@ typedef struct tagHwStateType {
  /*
  ** Local Defines.
  */
-#define TIMER_PS_1NS    (1ULL)
-#define TIMER_PS_10NS   (10ULL)
-#define TIMER_PS_100NS  (100ULL)
-#define TIMER_PS_1US    (1000ULL)
-#define TIMER_PS_10US   (10000ULL)
-#define TIMER_PS_100US  (100000ULL)
-#define TIMER_PS_1MS    (1000000ULL)
-#define TIMER_PS_10MS   (10000000ULL)
-#define TIMER_PS_100MS  (100000000ULL)
-#define TIMER_PS_1S     (1000000000ULL)
+#define TIMER_PS_1NS    (1UL)
+#define TIMER_PS_10NS   (10UL)
+#define TIMER_PS_100NS  (100UL)
+#define TIMER_PS_1US    (1000UL)
+#define TIMER_PS_10US   (10000UL)
+#define TIMER_PS_100US  (100000UL)
+#define TIMER_PS_1MS    (1000000UL)
+#define TIMER_PS_10MS   (10000000UL)
+#define TIMER_PS_100MS  (100000000UL)
+#define TIMER_PS_1S     (1000000000UL)
 
-#define TIMER_MASK_1    (0x000000FFULL)
-#define TIMER_MASK_2    (0x0000FFFFULL)
-#define TIMER_MASK_4    (0xFFFFFFFFULL)
+#define TIMER_MASK_1    (0x000000FFUL)
+#define TIMER_MASK_2    (0x0000FFFFUL)
+#define TIMER_MASK_4    (0xFFFFFFFFUL)
 
 #define SIG SIGRTMIN
 
@@ -100,10 +100,13 @@ pthread_t XcpHw_ThreadID[4];
 /*
  * Local Types.
  */
+#define XCPHW_APPLICATION_STATES    (32)
+
 typedef struct tagXcpHw_ApplicationStateType {
     pthread_mutex_t stateMutex;
     pthread_cond_t stateCond;
-    uint32_t stateBitmap;
+    volatile uint32_t stateBitmap;
+    volatile uint8_t counter[XCPHW_APPLICATION_STATES];
 } XcpHw_ApplicationStateType;
 
 
@@ -118,8 +121,7 @@ static struct timespec XcpHw_TimerResolution = {0};
 static timer_t XcpHw_AppMsTimer;
 static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
 
-
-static XcpHw_ApplicationStateType XcpHw_ApplicationState = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0};
+static XcpHw_ApplicationStateType XcpHw_ApplicationState = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0, {0}};
 
 /*
 **  Global Functions.
@@ -133,7 +135,7 @@ static void handler(int sig, siginfo_t *si, void *uc)
      *  Nevertheless, we use printf() here as a simple way of
      * showing that the handler was called. */
 
-    printf("Caught signal %u %u\n", sig, XcpHw_GetTimerCounter());
+    //printf("Caught signal %u %lu\n", sig, XcpHw_GetTimerCounter());
 
     //print_siginfo(si);
     //signal(sig, SIG_IGN);
@@ -253,7 +255,15 @@ void XcpHw_ResetApplicationState(uint32_t mask)
 
 void XcpHw_CondResetApplicationState(uint32_t mask)
 {
+    uint8_t idx;
 
+    for (idx = 0; idx < 31; ++idx) {
+        printf("idx: %u mask: %u\n");
+        if ((mask & 0x01) == 0x01) {
+
+        }
+        mask >>= 1;
+    }
 }
 
 uint32_t XcpHw_WaitApplicationState(uint32_t mask)
@@ -276,7 +286,8 @@ uint32_t XcpHw_WaitApplicationState(uint32_t mask)
         if (status != 0) {
             XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_cond_wait()", status);
         }
-        match = (XcpHw_ApplicationState.stateBitmap & mask) != 0x00;
+        //match = (XcpHw_ApplicationState.stateBitmap & mask) != 0x00;
+        match = (XcpHw_ApplicationState.stateBitmap & mask) == mask;
     }
     status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
@@ -313,8 +324,8 @@ uint32_t XcpHw_GetTimerCounter(void)
 
     XcpHw_FreeRunningCounter = ((unsigned long long)(dt.tv_sec) * (unsigned long long)1000 * 1000 * 1000) + ((unsigned long long)dt.tv_nsec);
 
+    timestamp = XcpHw_FreeRunningCounter;
     printf("\tTS: %llu\n", XcpHw_FreeRunningCounter);
-    timestamp = XcpHw_FreeRunningCounter % UINT_MAX;
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
     timestamp /= TIMER_PS_1NS;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
@@ -336,6 +347,8 @@ uint32_t XcpHw_GetTimerCounter(void)
 #else
 #error Timestamp-unit not supported.
 #endif // XCP_DAQ_TIMESTAMP_UNIT
+
+    timestamp = XcpHw_FreeRunningCounter % UINT_MAX;
 
 #if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
     timestamp &= TIMER_MASK_1;

@@ -12,8 +12,12 @@ void XcpOnCan_Init(void);
 #define SIZE    (4096)
 uint8_t puffer[SIZE];
 
+#define CALRAM_SIZE (16 * 1024)
+uint8_t calram[CALRAM_SIZE];
+
 void XcpTl_SetOptions(XcpHw_OptionsType const * options);
 
+void * AppTask(void * param);
 
 extern pthread_t XcpHw_ThreadID[4];
 
@@ -30,6 +34,9 @@ int main(int argc, char **argv)
     uint32_t state = 0UL;
     XcpHw_OptionsType options;
 
+
+    printf("&calram: %p\n", calram);
+    printf("OFFSET: %x\n", (uint32_t)(calram - 0x4000) + 0x4000);
     srand(23);
 
     XcpHw_ParseCommandLineOptions(argc, argv, &options);
@@ -38,10 +45,12 @@ int main(int argc, char **argv)
     Xcp_Init();
     Xcp_DisplayInfo();
 
+    pthread_create(&XcpHw_ThreadID[1], NULL, &AppTask, NULL);
+
     while (state != 0x01) {
-        state = XcpHw_WaitApplicationState(0x03);
-        printf("signaled: %u\n", state);
-        XcpHw_ResetApplicationState(state);
+        state = XcpHw_WaitApplicationState(0x01);
+//        printf("signaled/main: %u\n", state);
+        XcpHw_ResetApplicationState(0x01);
     }
 
 //    pthread_join(XcpHw_ThreadID[0], NULL);
@@ -88,6 +97,10 @@ bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_Me
 Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
 {
 //    return FlsEmu_MemoryMapper(dst, src);
+    if ((src->address >= 0x4000) && (src->address < 0x8000)) {
+        dst->address = (uint32_t)(calram - 0x4000) + src->address;
+        dst->ext = src->ext;
+    }
     return XCP_MEMORY_NOT_MAPPED;
 }
 
@@ -202,7 +215,7 @@ void * AppTask(void * param)
     XCP_FOREVER {
 
         state = XcpHw_WaitApplicationState(0x03);
-        printf("signaled: %u\n", state);
+//        printf("signaled/AppTask: %u\n", state);
         XcpHw_ResetApplicationState(state);
         if (state == 1) {
             break;
@@ -210,7 +223,7 @@ void * AppTask(void * param)
 
         currentTS = XcpHw_GetTimerCounter() / 1000;
         if (currentTS >= (previousTS + 10)) {
-            //printf("T [%u::%lu]\n", currentTS, XcpHw_GetTimerCounter() / 1000);
+//            printf("T [%u::%lu]\n", currentTS, XcpHw_GetTimerCounter() / 1000);
 
             if ((ticker % 3) == 0) {
                 if (triangle.down) {

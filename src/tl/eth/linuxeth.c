@@ -389,7 +389,7 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
                 continue;
             }
             recv_len = ret;
-            printf("NETWORK: Received %d bytes.\n", recv_len);
+            //printf("NETWORK: Received %d bytes.\n", recv_len);
             if (recv_len > 0) {
                 XcpTl_Feed(buf);
                 if (recv_len < 5) {

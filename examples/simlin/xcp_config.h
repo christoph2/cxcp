@@ -73,7 +73,7 @@
 #define XCP_DAQ_CONFIG_TYPE                         XCP_DAQ_CONFIG_TYPE_NONE
 #define XCP_DAQ_DTO_BUFFER_SIZE                     (40)
 #define XCP_DAQ_ENABLE_PREDEFINED_LISTS             XCP_ON
-#define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
+#define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_10US)
 #define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
 #define XCP_DAQ_ENABLE_PRESCALER                    XCP_OFF
 #define XCP_DAQ_ENABLE_ADDR_EXT                     XCP_OFF
