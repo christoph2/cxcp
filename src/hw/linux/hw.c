@@ -169,7 +169,7 @@ void XcpHw_Init(void)
 #endif
 
     /* Establish handler for timer signal */
-    printf("Establishing handler for signal %d\n", SIG);
+    //printf("Establishing handler for signal %d\n", SIG);
     sa.sa_flags = SA_SIGINFO;
     sa.sa_sigaction = handler;
     sigemptyset(&sa.sa_mask);
@@ -178,7 +178,7 @@ void XcpHw_Init(void)
     }
 
     /* Block timer signal temporarily */
-    printf("Blocking signal %d\n", SIG);
+    //printf("Blocking signal %d\n", SIG);
     sigemptyset(&mask);
     sigaddset(&mask, SIG);
     if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
@@ -325,7 +325,7 @@ uint32_t XcpHw_GetTimerCounter(void)
     XcpHw_FreeRunningCounter = ((unsigned long long)(dt.tv_sec) * (unsigned long long)1000 * 1000 * 1000) + ((unsigned long long)dt.tv_nsec);
 
     timestamp = XcpHw_FreeRunningCounter;
-    printf("\tTS: %llu\n", XcpHw_FreeRunningCounter);
+//    printf("\tTS: %llu\n", XcpHw_FreeRunningCounter);
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
     timestamp /= TIMER_PS_1NS;
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS

@@ -34,9 +34,6 @@ int main(int argc, char **argv)
     uint32_t state = 0UL;
     XcpHw_OptionsType options;
 
-
-    printf("&calram: %p\n", calram);
-    printf("OFFSET: %x\n", (uint32_t)(calram - 0x4000) + 0x4000);
     srand(23);
 
     XcpHw_ParseCommandLineOptions(argc, argv, &options);

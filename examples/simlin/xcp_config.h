@@ -30,7 +30,7 @@
 /*
 **  General Options.
 */
-#define XCP_STATION_ID                              "description_of_test_ecu"
+#define XCP_STATION_ID                              "XCP running on Linux"
 
 //#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD // XCP_RELEASE_BUILD
 #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
