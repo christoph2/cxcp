@@ -31,7 +31,7 @@
 #include <stdio.h>
 #endif // _MSC_VER
 
-void XcpUtl_MemCopy(void * dst, void * src, uint32_t len)
+void XcpUtl_MemCopy(/*@out@*/void * dst,/*@in@*/ void const * src, uint32_t len)
 {
     uint8_t * pd = (uint8_t *)dst;
     uint8_t * ps = (uint8_t *)src;
@@ -48,7 +48,7 @@ void XcpUtl_MemCopy(void * dst, void * src, uint32_t len)
 
 }
 
-void XcpUtl_MemSet(void * dest, uint8_t fill_char, uint32_t len)
+void XcpUtl_MemSet(/*@out@*/void * dest, uint8_t fill_char, uint32_t len)
 {
     uint8_t * p = (uint8_t *)dest;
 
@@ -59,7 +59,7 @@ void XcpUtl_MemSet(void * dest, uint8_t fill_char, uint32_t len)
     }
 }
 
-bool XcpUtl_MemCmp(void const * lhs, void const * rhs, uint32_t len)
+bool XcpUtl_MemCmp(/*@in@*/void const * lhs,/*@in@*/ void const * rhs, uint32_t len)
 {
     uint8_t const * pl = (uint8_t *)lhs;
     uint8_t const * pr = (uint8_t *)rhs;
@@ -73,7 +73,7 @@ bool XcpUtl_MemCmp(void const * lhs, void const * rhs, uint32_t len)
 }
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz)
+void XcpUtl_Hexdump(/*@in@*/uint8_t const * buf, uint16_t sz)
 {
     uint16_t idx;
 

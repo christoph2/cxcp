@@ -37,7 +37,7 @@ extern "C"
 
 #include "xcp_types.h"
 
-void XcpUtl_MemCopy(void * dst, void * src, uint32_t len);
+void XcpUtl_MemCopy(void * dst, void const * src, uint32_t len);
 void XcpUtl_MemSet(void * dest, uint8_t fill_char, uint32_t len);
 bool XcpUtl_MemCmp(void const * dst, void const * src, uint32_t len);
 void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
