@@ -53,45 +53,12 @@
 /*
 **  Global Types.
 */
-typedef enum tagFlsEmu_MemoryTypeType {
-    FLSEMU_FLASH,
-    FLSEMU_EEPROM,
-    FLSEMU_RAM
-} FlsEmu_MemoryTypeType;
-
-typedef struct tagFlsEmu_FileViewType {
-    HANDLE mappingHandle;
-    void * mappingAddress;
-} FlsEmu_HwFileViewType;
-
-#if 0
-typedef struct tagFlsEmu_HwMapFileType {
-    HANDLE handle;
-    uint64_t size;
-    FlsEmu_HwFileViewType view;
-} FlsEmu_MapFieleType;
-#endif
-
-typedef enum tagFlsEmu_StatusType {
-    FLSEMU_OK,
-    FLSEMU_NOT_OK
-} FlsEmu_StatusType;
-
-
 typedef struct tagFlsEmu_PersistentArrayType {
     HANDLE fileHandle;
     HANDLE mappingHandle;
     void * mappingAddress;
     uint16_t currentPage;
 } FlsEmu_PersistentArrayType;
-
-
-typedef enum tagFlsEmu_OpenCreateType {
-    OPEN_ERROR,
-    OPEN_EXSISTING,
-    NEW_FILE
-} FlsEmu_OpenCreateResultType;
-
 
 typedef struct tagFlsEmu_SegmentType {
     char name[1024];
@@ -111,8 +78,6 @@ typedef struct tagFlsEmu_ConfigType {
     FlsEmu_SegmentType /*const*/ ** segments;
 } FlsEmu_ConfigType;
 
-
-
 /*
 **  Global Functions.
 */
@@ -127,4 +92,3 @@ void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block);
 Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src);
 
 #endif // __FLSEMU_H
-

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -47,6 +47,32 @@
 /*
 **  Local Types.
 */
+
+typedef enum tagFlsEmu_MemoryTypeType {
+    FLSEMU_FLASH,
+    FLSEMU_EEPROM,
+    FLSEMU_RAM
+} FlsEmu_MemoryTypeType;
+
+typedef struct tagFlsEmu_FileViewType {
+    HANDLE mappingHandle;
+    void * mappingAddress;
+} FlsEmu_HwFileViewType;
+
+
+typedef enum tagFlsEmu_StatusType {
+    FLSEMU_OK,
+    FLSEMU_NOT_OK
+} FlsEmu_StatusType;
+
+
+typedef enum tagFlsEmu_OpenCreateType {
+    OPEN_ERROR,
+    OPEN_EXSISTING,
+    NEW_FILE
+} FlsEmu_OpenCreateResultType;
+
+
 
 /** @brief State of flash-emulator module.
  *
