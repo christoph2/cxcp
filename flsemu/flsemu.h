@@ -38,6 +38,7 @@
 /*
 **  Global Defines.
 */
+#define FLSEMU_ERASED_VALUE (0xff) /**< Value of an erased Flash/EEPROM cell. */
 
 /*
 **  Global Macros.

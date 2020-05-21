@@ -29,7 +29,6 @@
 /*
 **  Local Defines.
 */
-#define ERASED_VALUE (0xff) /**< Value of an erased Flash/EEPROM cell. */
 
 
 /*
@@ -141,7 +140,7 @@ void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address)
         // TODO: warn misalignment.
         // ("address (%#X) should be aligned to %u-byte sector boundary.", address, segment->sectorSize)
     }
-    XcpUtl_MemSet(ptr + (address & ~mask), ERASED_VALUE, segment->sectorSize);
+    XcpUtl_MemSet(ptr + (address & ~mask), FLSEMU_ERASED_VALUE, segment->sectorSize);
 }
 
 
@@ -155,7 +154,7 @@ void FlsEmu_ErasePage(uint8_t segmentIdx, uint8_t page)
         return;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
-    XcpUtl_MemSet(ptr + (segment->pageSize * page), ERASED_VALUE, segment->pageSize);
+    XcpUtl_MemSet(ptr + (segment->pageSize * page), FLSEMU_ERASED_VALUE, segment->pageSize);
     segment->currentPage = page;
 }
 
@@ -179,7 +178,7 @@ void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block)
     offset = (blockSize * block);
 
     ptr = (uint8_t * )FlsEmu_BasePointer(segmentIdx) + offset;
-    XcpUtl_MemSet(ptr, ERASED_VALUE, blockSize);
+    XcpUtl_MemSet(ptr, FLSEMU_ERASED_VALUE, blockSize);
 }
 
 Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)

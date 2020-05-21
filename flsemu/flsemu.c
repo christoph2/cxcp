@@ -39,7 +39,6 @@
 /*
 **  Local Defines.
 */
-#define ERASED_VALUE (0xff) /**< Value of an erased Flash/EEPROM cell. */
 
 
 /*
@@ -93,7 +92,6 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx)
     int length;
     char rom[1024];
     FlsEmu_SegmentType * segment;
-    FlsEmu_PersistentArrayType temp;
     FlsEmu_OpenCreateResultType result;
 
     FLSEMU_ASSERT_INITIALIZED();
@@ -112,7 +110,7 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx)
     if (result == OPEN_ERROR) {
 
     } else if (result == NEW_FILE) {
-        XcpUtl_MemSet(segment->persistentArray->mappingAddress, ERASED_VALUE, segment->memSize);
+        XcpUtl_MemSet(segment->persistentArray->mappingAddress, FLSEMU_ERASED_VALUE, segment->memSize);
     }
 }
 
