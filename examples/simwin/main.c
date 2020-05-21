@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define _WIN32_WINNT    0x601
+#include <Windows.h>
+
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "flsemu.h"

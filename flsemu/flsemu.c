@@ -29,6 +29,9 @@
 #include "flsemu.h"
 #include "xcp_hw.h"
 
+#define _WIN32_WINNT    0x601
+#include <Windows.h>
+
 #if _MSC_VER
 #pragma warning(disable: 4996)
 #endif /* _MSC_VER */
@@ -55,7 +58,7 @@ typedef enum tagFlsEmu_MemoryTypeType {
 } FlsEmu_MemoryTypeType;
 
 typedef struct tagFlsEmu_FileViewType {
-    HANDLE mappingHandle;
+    MEM_HANDLE mappingHandle;
     void * mappingAddress;
 } FlsEmu_HwFileViewType;
 
@@ -107,8 +110,8 @@ static bool FlsEmu_MapView(FlsEmu_SegmentType * config, uint32_t offset, uint32_
 static DWORD GetPageSize(void);
 static DWORD GetAllocationGranularity(void);
 static void MemoryInfo(void * address);
-static HANDLE OpenCreateFile(char const * fileName, bool create);
-static bool CreateFileView(HANDLE handle, DWORD length, FlsEmu_HwFileViewType * fileView);
+static MEM_HANDLE OpenCreateFile(char const * fileName, bool create);
+static bool CreateFileView(MEM_HANDLE handle, DWORD length, FlsEmu_HwFileViewType * fileView);
 /*
 **  Local Variables.
 */
@@ -504,16 +507,16 @@ static bool FileExits(char * const name)
  *
  * @param fileName
  * @param create
- * @return HANDLE of file
+ * @return MEM_HANDLE of file
  *
  */
-static HANDLE OpenCreateFile(char const * fileName, bool create)
+static MEM_HANDLE OpenCreateFile(char const * fileName, bool create)
 {
-    HANDLE handle;
+    MEM_HANDLE handle;
     DWORD dispoition = (create == TRUE) ? CREATE_NEW : OPEN_EXISTING;
 
     handle = CreateFile(fileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-        (LPSECURITY_ATTRIBUTES)NULL, dispoition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, (HANDLE)NULL
+        (LPSECURITY_ATTRIBUTES)NULL, dispoition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, (MEM_HANDLE)NULL
     );
     if (handle == INVALID_HANDLE_VALUE) {
         XcpHw_ErrorMsg("OpenCreateFile::CreateFile()", GetLastError());
@@ -522,7 +525,7 @@ static HANDLE OpenCreateFile(char const * fileName, bool create)
     return handle;
 }
 
-static bool CreateFileView(HANDLE handle, DWORD length, FlsEmu_HwFileViewType * fileView)
+static bool CreateFileView(MEM_HANDLE handle, DWORD length, FlsEmu_HwFileViewType * fileView)
 {
     fileView->mappingHandle = CreateFileMapping(handle, (LPSECURITY_ATTRIBUTES)NULL, PAGE_READWRITE, (DWORD)0, (DWORD)length, NULL);
     if (fileView->mappingHandle == NULL) {

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP.
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -23,13 +23,9 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-
-
 #ifndef __FLSEMU_H
 #define __FLSEMU_H
 
-#define _WIN32_WINNT    0x601
-#include <Windows.h>
 
 #if STANDALONE_DLL == 1
 #include <stdint.h>
@@ -53,9 +49,12 @@
 /*
 **  Global Types.
 */
+
+typedef void * MEM_HANDLE;
+
 typedef struct tagFlsEmu_PersistentArrayType {
-    HANDLE fileHandle;
-    HANDLE mappingHandle;
+    MEM_HANDLE fileHandle;
+    MEM_HANDLE mappingHandle;
     void * mappingAddress;
     uint16_t currentPage;
 } FlsEmu_PersistentArrayType;
