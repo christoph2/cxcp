@@ -36,9 +36,6 @@
 #define XCP_TRANSPORT_LAYER_VERSION_MAJOR       (1)
 #define XCP_TRANSPORT_LAYER_VERSION_RELEASE     (1)
 
-#define XCP_DEBUG_BUILD         (1)
-#define XCP_RELEASE_BUILD       (2)
-
 #define XCP_ON                  (1)
 #define XCP_OFF                 (0)
 
