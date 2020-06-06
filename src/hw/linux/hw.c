@@ -36,6 +36,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <ncurses.h>
+
 #include "xcp.h"
 #include "xcp_hw.h"
 
@@ -73,6 +75,8 @@ typedef struct tagHwStateType {
 static void XcpHw_InitLocks(void);
 static void XcpHw_DeinitLocks();
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end);
+static void InitTUI(void);
+static void DeinitTUI(void);
 
 /*
 **  External Function Prototypes.
@@ -86,7 +90,7 @@ void FlsEmu_Info(void);
 void XcpDaq_Info(void);
 void XcpDaq_PrintDAQDetails();
 
-bool XcpHw_MainFunction();
+void * XcpHw_MainFunction();
 
 void exitFunc(void);
 
@@ -206,12 +210,26 @@ void XcpHw_Init(void)
     if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
     }
-
+    InitTUI();
 }
 
 void XcpHw_Deinit(void)
 {
+    DeinitTUI();
     XcpHw_DeinitLocks();
+}
+
+static void InitTUI(void)
+{
+    initscr();
+    raw();
+    keypad(stdscr, TRUE);
+    noecho();
+}
+
+static void DeinitTUI(void)
+{
+    endwin();
 }
 
 void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
@@ -258,7 +276,7 @@ void XcpHw_CondResetApplicationState(uint32_t mask)
     uint8_t idx;
 
     for (idx = 0; idx < 31; ++idx) {
-        printf("idx: %u mask: %u\n");
+        //printf("idx: %u mask: %u\n");
         if ((mask & 0x01) == 0x01) {
 
         }
@@ -417,8 +435,23 @@ DWORD XcpHw_UIThread()
 
 void XcpTl_PostQuitMessage();
 
-bool XcpHw_MainFunction()
+void * XcpHw_MainFunction(void)
 {
+    int ch;
+
+    while (XCP_TRUE) {
+        ch = getch();
+        if (tolower(ch) == 'q') {
+            break;
+        } else {
+            mvprintw(20, 10, "The pressed key is ");
+            attron(A_BOLD);
+            mvprintw(20, 30, "%c", ch);
+            attroff(A_BOLD);
+            refresh();
+        }
+    }
+    return NULL;
 #if 0
     HANDLE hStdin;
     DWORD cNumRead, fdwMode, idx;
@@ -483,7 +516,6 @@ bool XcpHw_MainFunction()
         }
     }
 #endif
-    return XCP_TRUE;
 }
 
 
@@ -594,6 +626,6 @@ void XcpHw_ErrorMsg(char * const function, int errorCode)
 void Xcp_DisplayInfo(void)
 {
     XcpTl_PrintConnectionInformation();
-    printf("Press h for help.\n");
-    fflush(stdout);
+//mvprintw(4, 5, "Press h for help.");
+    refresh();
 }

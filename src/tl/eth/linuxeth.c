@@ -43,6 +43,8 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include <ncurses.h>
+
 #define err_abort(code,text) do { \
         fprintf (stderr, "%s at \"%s\":%d: %s\n", \
                         text, __FILE__, __LINE__, strerror (code)); \
@@ -451,9 +453,12 @@ void XcpTl_SetOptions(XcpHw_OptionsType const * options)
 
 void XcpTl_PrintConnectionInformation(void)
 {
-    printf("\nXCPonEth -- Listening on port %s / %s [%s]\n",
+    attron(A_BOLD);
+    mvprintw(2, 40, "XCPonEth -- Listening on port %s / %s [%s]\n",
         DEFAULT_PORT,
         Xcp_Options.tcp ? "TCP" : "UDP",
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
+    attroff(A_BOLD);
+    refresh();
 }

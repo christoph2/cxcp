@@ -16,6 +16,7 @@ uint8_t puffer[SIZE];
 uint8_t calram[CALRAM_SIZE];
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options);
+void * XcpHw_MainFunction(void);
 
 void * AppTask(void * param);
 
@@ -43,14 +44,17 @@ int main(int argc, char **argv)
     Xcp_DisplayInfo();
 
     pthread_create(&XcpHw_ThreadID[1], NULL, &AppTask, NULL);
+    pthread_create(&XcpHw_ThreadID[2], NULL, &XcpHw_MainFunction, NULL);
 
+#if 0
     while (state != 0x01) {
         state = XcpHw_WaitApplicationState(0x01);
 //        printf("signaled/main: %u\n", state);
         XcpHw_ResetApplicationState(0x01);
     }
+#endif
 
-//    pthread_join(XcpHw_ThreadID[0], NULL);
+    pthread_join(XcpHw_ThreadID[2], NULL);
 
 #if 0
     while (XCP_TRUE) {
