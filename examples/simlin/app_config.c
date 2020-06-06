@@ -1,9 +1,60 @@
 
 #include "xcp.h"
+#include "app_config.h"
 
 #define CALRAM_SIZE (16 * 1024)
 uint8_t calram[CALRAM_SIZE];
 
+triangle_type triangle = {0};
+uint16_t randomValue;
+
+const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
+    XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
+    XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
+};
+
+
+const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {
+    {
+        2, 0
+    }
+};
+
+
+const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[] = {
+    {
+        1, 0
+    }
+};
+
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+XcpDaq_ListStateType XcpDaq_PredefinedListsState[XCP_DAQ_PREDEFINDED_LIST_COUNT];
+const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount = XCP_DAQ_PREDEFINDED_LIST_COUNT;
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+
+
+XCP_DAQ_BEGIN_EVENTS
+    XCP_DAQ_DEFINE_EVENT("EVT 100ms",
+        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
+        100
+    ),
+    XCP_DAQ_DEFINE_EVENT("EVT sporadic",
+        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
+        0
+    ),
+    XCP_DAQ_DEFINE_EVENT("EVT 10ms",
+        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
+        10
+    ),
+XCP_DAQ_END_EVENTS
+
+/*
+ * Customization Functions.
+ *
+ */
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
 {
     static const uint8_t seed[] = {0x11, 0x22, 0x33, 0x44};

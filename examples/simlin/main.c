@@ -6,24 +6,21 @@
 
 #include "xcp.h"
 #include "xcp_hw.h"
+#include "app_config.h"
 
 void XcpOnCan_Init(void);
 
-#define SIZE    (4096)
-uint8_t puffer[SIZE];
-
-#define CALRAM_SIZE (16 * 1024)
-uint8_t calram[CALRAM_SIZE];
 
 void XcpTl_SetOptions(XcpHw_OptionsType const * options);
 void * XcpHw_MainFunction(void);
+void XcpTl_MainFunction(void);
+void * TlTask(void * param);
 
 void * AppTask(void * param);
 
 extern pthread_t XcpHw_ThreadID[4];
 
 #define XCP_THREAD  (0)
-//#define IOCP_THREAD (1)
 #define UI_THREAD   (1)
 #define APP_THREAD  (2)
 
@@ -31,8 +28,6 @@ extern pthread_t XcpHw_ThreadID[4];
 
 int main(int argc, char **argv)
 {
-    size_t idx;
-    uint32_t state = 0UL;
     XcpHw_OptionsType options;
 
     srand(23);
@@ -45,7 +40,9 @@ int main(int argc, char **argv)
 
     pthread_create(&XcpHw_ThreadID[1], NULL, &AppTask, NULL);
     pthread_create(&XcpHw_ThreadID[2], NULL, &XcpHw_MainFunction, NULL);
+    pthread_create(&XcpHw_ThreadID[3], NULL, &TlTask, NULL);
 
+    pthread_join(XcpHw_ThreadID[2], NULL);
 #if 0
     while (state != 0x01) {
         state = XcpHw_WaitApplicationState(0x01);
@@ -54,7 +51,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-    pthread_join(XcpHw_ThreadID[2], NULL);
+    //pthread_join(XcpHw_ThreadID[2], NULL);
 
 #if 0
     while (XCP_TRUE) {
@@ -68,114 +65,6 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
-bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
-{
-    static const uint8_t seed[] = {0x11, 0x22, 0x33, 0x44};
-    result->length = 4;
-    result->data = (uint8_t*)&seed;
-
-    return XCP_TRUE;
-}
-
-
-bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
-{
-    static const uint8_t secret[] = {0x55, 0x66, 0x77, 0x88};
-
-//    printf("\tKEY [%u]: ", key->length);
-//    Xcp_Hexdump(key->data, key->length);
-
-    return XcpUtl_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
-}
-
-
-bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming)
-{
-    return XCP_TRUE;
-}
-
-Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
-{
-//    return FlsEmu_MemoryMapper(dst, src);
-    if ((src->address >= 0x4000) && (src->address < 0x8000)) {
-        dst->address = (uint32_t)(calram - 0x4000) + src->address;
-        dst->ext = src->ext;
-    }
-    return XCP_MEMORY_NOT_MAPPED;
-}
-
-#if 0
-bool Xcp_HookFunction_GetId(uint8_t idType)
-{
-    if (idType == 4) {
-        Xcp_SetMta(Xcp_GetNonPagedAddress(a2lFile.view.mappingAddress));
-        Xcp_Send8(8, 0xff, 0, 0, 0, XCP_LOBYTE(XCP_LOWORD(a2lFile.size)), XCP_HIBYTE(XCP_LOWORD(a2lFile.size)), XCP_LOBYTE(XCP_HIWORD(a2lFile.size)), XCP_HIBYTE(XCP_HIWORD(a2lFile.size)));
-        return XCP_TRUE;
-    }
-    return XCP_FALSE;
-}
-#endif // 0
-
-typedef struct {
-    uint8_t value;
-    bool down;
-    uint32_t dummy;
-} triangle_type;
-
-triangle_type triangle = {0};
-uint16_t randomValue;
-
-/////////////////////////
-/////////////////////////
-/////////////////////////
-
-const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
-    XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
-    XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
-};
-
-
-const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {
-    {
-        2, 0
-    }
-};
-
-
-const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[] = {
-    {
-        1, 0
-    }
-};
-
-#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
-XcpDaq_ListStateType XcpDaq_PredefinedListsState[XCP_DAQ_PREDEFINDED_LIST_COUNT];
-const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount = XCP_DAQ_PREDEFINDED_LIST_COUNT;
-#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
-
-
-XCP_DAQ_BEGIN_EVENTS
-    XCP_DAQ_DEFINE_EVENT("EVT 100ms",
-        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
-        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
-        100
-    ),
-    XCP_DAQ_DEFINE_EVENT("EVT sporadic",
-        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
-        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
-        0
-    ),
-    XCP_DAQ_DEFINE_EVENT("EVT 10ms",
-        XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
-        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS,
-        10
-    ),
-XCP_DAQ_END_EVENTS
-
-/////////////////////////
-/////////////////////////
-/////////////////////////
 
 #if 0
 DWORD Xcp_MainTask(LPVOID param)
@@ -193,6 +82,14 @@ DWORD Xcp_MainTask(LPVOID param)
     ExitThread(0);
 }
 #endif
+
+void * TlTask(void * param)
+{
+    XCP_FOREVER {
+        XcpTl_MainFunction();
+    }
+    return NULL;
+}
 
 void * AppTask(void * param)
 {
