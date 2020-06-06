@@ -69,7 +69,6 @@ typedef struct tagXcpTl_ConnectionType {
 
 
 unsigned char buf[XCP_COMM_BUFLEN];
-int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
@@ -83,43 +82,6 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
-
-static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
-static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
-
-
-static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
-{
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-    const char enable = 1;
-
-    if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-#else
-    if (setsockopt(sock, SOL_SOCKET, option, &(const char){1}, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-#endif
-    return XCP_TRUE;
-}
-
-
-static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
-{
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-    const char enable = 0;
-
-    if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-#else
-    if (setsockopt(sock, SOL_SOCKET, option, &(const char){0}, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-#endif
-    return XCP_TRUE;
-}
 
 
 int locate_interface(int socket, char const * name)
@@ -139,9 +101,8 @@ void XcpTl_Init(void)
     int enable_sockopt = 1;
     struct ifreq ifr;
     struct sockaddr_can addr;
-    struct can_frame frame;
 
-    ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
+    memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
 
     XcpTl_Connection.can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -155,7 +116,6 @@ void XcpTl_Init(void)
 	if (setsockopt(XcpTl_Connection.can_socket, SOL_SOCKET, SO_TIMESTAMP, &enable_sockopt, sizeof(enable_sockopt)) < 0) {
         // Enable precision timestamps.
 		errno_abort("setsockopt(SO_TIMESTAMP)");
-		return 1;
 	}
 
 
@@ -185,6 +145,21 @@ void XcpTl_MainFunction(void)
 
 void XcpTl_RxHandler(void)
 {
+    struct can_frame frame;
+    int nbytes;
+
+    nbytes = read(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
+
+    if (nbytes < 0) {
+        errno_abort("can raw socket read");
+    } else {
+        //printf("#%d bytes received from '%04x' DLC: %d .\n", nbytes, frame.can_id, frame.can_dlc);
+        if (frame.can_dlc > 0) {
+            Xcp_PduIn.len = frame.can_dlc;
+            Xcp_PduIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+            Xcp_DispatchCommand(&Xcp_PduIn);
+        }
+    }
 }
 
 
@@ -196,35 +171,20 @@ void XcpTl_TxHandler(void)
 
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 {
-    struct timeval timeout;
-    fd_set fds;
-    int16_t res;
-
-    timeout.tv_sec = sec;
-    timeout.tv_usec = usec;
-
-    FD_ZERO(&fds);
-    FD_SET(XcpTl_Connection.can_socket, &fds);
-
-    res = select(0, &fds, 0, 0, &timeout);
-    return res;
-#if 0
-//    if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
-        res = select(0, &fds, 0, 0, &timeout);
-        if (res == SOCKET_ERROR) {
-            Win_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
-            exit(2);
-        }
-        return res;
-    } else {
-        return 1;
-    }
-#endif
+    return 1;
 }
 
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
+    int nbytes;
+    struct can_frame frame = {0};
+
+    frame.can_dlc = len;
+    frame.can_id = 0x42;
+    memcpy(frame.data, buf, len);
+
+    nbytes = write(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
 
 }
 
