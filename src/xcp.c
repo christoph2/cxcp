@@ -878,7 +878,6 @@ static void Xcp_Upload(uint8_t len)
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu)
 {
     const uint8_t cmd = pdu->data[0];
-
     DBG_TRACE1("<- ");
 
     if (Xcp_State.connected == (bool)XCP_TRUE) {
@@ -1401,7 +1400,7 @@ static void Xcp_ModifyBits_Res(Xcp_PDUType const * const pdu)
     DBG_TRACE4("MODIFY-BITS [shiftValue: 0x%02X andMask: 0x%04x ext: xorMask: 0x%04x]\n", shiftValue, andMask, xorMask);
     XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, 2, XCP_MEM_ACCESS_WRITE, (bool)XCP_FALSE);
     vp = (uint32_t*)Xcp_State.mta.address;
-    *vp = ((*vp) & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue)))) ^ ((uint32_t)(xorMask << shiftValue)));
+    *vp = ((*vp) & (((~((uint32_t)(((uint16_t)~andMask) << shiftValue)))) ^ ((uint32_t)(xorMask << shiftValue))));
 
     Xcp_PositiveResponse();
 }
