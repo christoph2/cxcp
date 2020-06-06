@@ -127,7 +127,7 @@ extern "C"
 #define DBG_TRACE5(a, b, c, d, e)       DBG_PRINT5(a, b, c, d, e)
 #define DBG_TRACE6(a, b, c, d, e, f)    DBG_PRINT6(a, b, c, d, e, f)
 #else
-
+#define INLINE
 #define DBG_PRINT1(a)
 #define DBG_PRINT2(a, b)
 #define DBG_PRINT3(a, b, c)
@@ -142,7 +142,7 @@ extern "C"
 #define DBG_TRACE5(a, b, c, d, e)       DBG_PRINT5(a, b, c, d, e)
 #define DBG_TRACE6(a, b, c, d, e, f)    DBG_PRINT6(a, b, c, d, e, f)
 
-#endif defined(_WIN32)
+#endif // defined(_WIN32)
 
 #else
 #define INLINE

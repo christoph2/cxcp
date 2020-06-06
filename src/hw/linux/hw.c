@@ -148,14 +148,16 @@ static void handler(int sig, siginfo_t *si, void *uc)
 
 void XcpHw_Init(void)
 {
-    int status;
-    struct sigevent sev;
-
-    timer_t timerid;
-    struct itimerspec its;
+    int status = 0;
+    struct sigevent sev = {0};
+    timer_t timerid = 0;
+    struct itimerspec its = {0};
     long long freq_nanosecs = 1000 * 1000 * 1000LL;
-    sigset_t mask;
-    struct sigaction sa;
+    sigset_t mask = {0};
+    struct sigaction sa = {0};
+
+    XCP_UNREFERENCED_PARAMETER(timerid);
+    XCP_UNREFERENCED_PARAMETER(status);
 
     XcpHw_FreeRunningCounter = 0ULL;
 
