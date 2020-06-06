@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -32,8 +32,8 @@
 */
 #define XCP_STATION_ID                              "XCP running on Linux"
 
-//#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD // XCP_RELEASE_BUILD
-#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
+#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
+//#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
@@ -115,7 +115,7 @@
     #define XCP_ENABLE_UPLOAD                       XCP_ON
     #define XCP_ENABLE_SHORT_UPLOAD                 XCP_ON
     #define XCP_ENABLE_BUILD_CHECKSUM               XCP_ON
-    #define XCP_ENABLE_TRANSPORT_LAYER_CMD          XCP_OFF /* TODO: TL dependend include file! */
+    #define XCP_ENABLE_TRANSPORT_LAYER_CMD          XCP_OFF
     #define XCP_ENABLE_USER_CMD                     XCP_OFF
 
 #define XCP_ENABLE_CAL_COMMANDS                     XCP_ON
@@ -174,7 +174,15 @@
     #define XCP_ON_CAN_TSEG2                            (2)
     #define XCP_ON_CAN_SJW                              (2)
     #define XCP_ON_CAN_NOSAMP                           (1)
-#else
+#elif defined(SOCKET_CAN)
+
+    #define XCP_TRANSPORT_LAYER                         XCP_ON_CAN
+
+    #define XCP_ON_CAN_INBOUND_IDENTIFIER               (0x102)
+    #define XCP_ON_CAN_OUTBOUND_IDENTIFIER              (0x101)
+    #define XCP_ON_CAN_MAX_DLC_REQUIRED                 XCP_OFF
+    #define XCP_ON_CAN_BROADCAST_IDENTIFIER             (0x103)
+#elif defined(ETHER)
     #define XCP_TRANSPORT_LAYER                         XCP_ON_ETHERNET
 
     #define XCP_MAX_CTO                                 (64)    // (16)
@@ -183,7 +191,9 @@
     #define XCP_TRANSPORT_LAYER_LENGTH_SIZE             (2)
     #define XCP_TRANSPORT_LAYER_COUNTER_SIZE            (2)
     #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE           (0)
-#endif // KVASER_CAN
+#else
+#error NO transport-layer specified.
+#endif 
 
 /*
 **  Customization Options.
@@ -221,5 +231,5 @@
                                                                 */
 
 
-
 #endif /* __XCP_CONFIG_H */
+
