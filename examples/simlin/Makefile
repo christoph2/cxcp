@@ -1,9 +1,9 @@
 vpath %.c ../../src
 vpath %.h ../..inc . ../../flsemu
 
-xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/linux/hw.c  main.c #../flsemu/flsemu.c
+xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/linux/hw.c  app_config.c main.c #../flsemu/flsemu.c
 
-INCLUDE= -I . -I ../../inc -I #../../flsemu
+INCLUDE= -I . -I ../../inc # -I ../../flsemu
 CPPFLAGS += $(INCLUDE)
 
 CFLAGS +=  -Wall -Wextra -Wno-unused-parameter -Wno-unused-function  -ffunction-sections
@@ -17,14 +17,19 @@ else
 CFLAGS += -O3
 endif
 
-ifeq ($(strip $(TARGET)), kvaser)
-KV_BASE_DIR = f:/kvaser/Canlib
-xcp_sim_SRC+=tl/can/kvaser.c
-xcp_sim_TARGET=xcp_sim_kvaser
-INCLUDE+=-I $(KV_BASE_DIR)/INC
-LDFLAGS+=-L $(KV_BASE_DIR)/Lib/MS -l canlib32
-CPPFLAGS += -DKVASER_CAN
+#ifeq ($(strip $(TARGET)), kvaser)
+#KV_BASE_DIR = f:/kvaser/Canlib
+#xcp_sim_SRC+=tl/can/kvaser.c
+#xcp_sim_TARGET=xcp_sim_kvaser
+#INCLUDE+=-I $(KV_BASE_DIR)/INC
+#LDFLAGS+=-L $(KV_BASE_DIR)/Lib/MS -l canlib32
+#CPPFLAGS += -D KVASER_CAN
+ifeq ($(strip $(TARGET)), socket_can)
+xcp_sim_SRC+=tl/can/linux_socket_can.c
+xcp_sim_TARGET=xcp_sim_socket_can
+CPPFLAGS += -D SOCKET_CAN
 else
+CPPFLAGS += -D ETHER
 xcp_sim_SRC+=tl/eth/linuxeth.c
 xcp_sim_TARGET=xcp_sim
 endif
