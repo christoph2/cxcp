@@ -279,7 +279,7 @@ bool XcpHw_MainFunction(HANDLE * quit_event)
 }
 
 
-void XcpHw_ParseCommandLineOptions(int argc, char ** argv, XcpHw_OptionsType * options)
+void XcpHw_ParseCommandLineOptions(int argc, char ** argv, Xcp_OptionsType * options)
 {
     int idx;
     char * arg;

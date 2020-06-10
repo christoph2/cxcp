@@ -52,7 +52,7 @@ typedef struct tagXcpTl_ConnectionType {
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
 
-static XcpHw_OptionsType Xcp_Options;
+extern Xcp_OptionsType Xcp_Options;
 static XcpTl_ConnectionType XcpTl_Connection;
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 
@@ -347,9 +347,9 @@ void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu)
 
 }
 
-void XcpTl_SetOptions(XcpHw_OptionsType const * options)
+void XcpTl_SetOptions(Xcp_OptionsType const * options)
 {
-    CopyMemory(&Xcp_Options, options, sizeof(XcpHw_OptionsType));
+    CopyMemory(&Xcp_Options, options, sizeof(Xcp_OptionsType));
 }
 
 void XcpTl_PrintConnectionInformation(void)

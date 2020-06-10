@@ -64,7 +64,7 @@ int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
-static XcpHw_OptionsType Xcp_Options;
+static Xcp_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 
@@ -358,9 +358,9 @@ bool XcpTl_VerifyConnection(void)
     return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
 }
 
-void XcpTl_SetOptions(XcpHw_OptionsType const * options)
+void XcpTl_SetOptions(Xcp_OptionsType const * options)
 {
-    memcpy(&Xcp_Options, options, sizeof(XcpHw_OptionsType));
+    memcpy(&Xcp_Options, options, sizeof(Xcp_OptionsType));
 }
 
 void XcpTl_PrintConnectionInformation(void)

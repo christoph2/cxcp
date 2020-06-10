@@ -16,7 +16,7 @@ void XcpOnCan_Init(void);
 uint8_t puffer[SIZE];
 
 DWORD XcpHw_UIThread(LPVOID param);
-void XcpTl_SetOptions(XcpHw_OptionsType const * options);
+void XcpTl_SetOptions(Xcp_OptionsType const * options);
 
 DWORD AppTask(LPVOID param);
 DWORD Xcp_MainTask(LPVOID param);
@@ -98,10 +98,12 @@ HANDLE quit_event;
 HANDLE userTimer;
 
 
+Xcp_OptionsType Xcp_Options;
+
 int main(int argc, char **argv)
 {
     size_t idx;
-    XcpHw_OptionsType options;
+    Xcp_OptionsType options;
 
     srand(23);
 

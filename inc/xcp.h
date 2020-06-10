@@ -718,6 +718,19 @@ typedef struct tagXcp_1DArrayType {
     uint8_t * data;
 } Xcp_1DArrayType;
 
+
+typedef struct tagXcp_OptionsType {
+#if defined(KVASER_CAN)
+    int dummy;
+#elif defined(ETHER)
+    bool ipv6;
+    bool tcp;
+#elif defined(SOCKET_CAN)
+    bool fd;
+    char interface[64];
+#endif
+} Xcp_OptionsType;
+
 /*
 ** Global User Functions.
 */
