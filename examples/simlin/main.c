@@ -3,10 +3,14 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "xcp.h"
 #include "xcp_hw.h"
+#include "xcp_tui.h"
 #include "app_config.h"
+
+void usage(void);
 
 void XcpOnCan_Init(void);
 
@@ -26,11 +30,24 @@ extern pthread_t XcpHw_ThreadID[4];
 
 #define NUM_THREADS (3)
 
+
+#if defined(ETHER)
+static const char OPTION_STR[] = "htu46";
+#elif defined(SOCKET_CAN)
+static const char OPTION_STR[] = "hif";
+#endif
+
 int main(int argc, char **argv)
 {
+    int flags, opt;
     XcpHw_OptionsType options;
 
     srand(23);
+
+    while ((opt = getopt(argc, argv, OPTION_STR)) != -1) {
+        printf("opt: %c\n", opt);
+    }
+
 
     XcpHw_ParseCommandLineOptions(argc, argv, &options);
     XcpTl_SetOptions(&options);
@@ -39,7 +56,7 @@ int main(int argc, char **argv)
     Xcp_DisplayInfo();
 
     pthread_create(&XcpHw_ThreadID[1], NULL, &AppTask, NULL);
-    pthread_create(&XcpHw_ThreadID[2], NULL, &XcpHw_MainFunction, NULL);
+    pthread_create(&XcpHw_ThreadID[2], NULL, &XcpTui_MainFunction, NULL);
     pthread_create(&XcpHw_ThreadID[3], NULL, &TlTask, NULL);
 
     pthread_join(XcpHw_ThreadID[2], NULL);
@@ -65,6 +82,11 @@ int main(int argc, char **argv)
     return 0;
 }
 
+
+void usage(void)
+{
+
+}
 
 #if 0
 DWORD Xcp_MainTask(LPVOID param)

@@ -36,10 +36,9 @@
 #include <string.h>
 #include <time.h>
 
-#include <ncurses.h>
-
 #include "xcp.h"
 #include "xcp_hw.h"
+#include "xcp_tui.h"
 
 /*
 **  Local Types.
@@ -212,26 +211,13 @@ void XcpHw_Init(void)
     if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
     }
-    InitTUI();
+    XcpTui_Init();
 }
 
 void XcpHw_Deinit(void)
 {
-    DeinitTUI();
+    XcpTui_Deinit();
     XcpHw_DeinitLocks();
-}
-
-static void InitTUI(void)
-{
-    initscr();
-    raw();
-    keypad(stdscr, TRUE);
-    noecho();
-}
-
-static void DeinitTUI(void)
-{
-    endwin();
 }
 
 void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
@@ -437,89 +423,6 @@ DWORD XcpHw_UIThread()
 
 void XcpTl_PostQuitMessage();
 
-void * XcpHw_MainFunction(void)
-{
-    int ch;
-
-    while (XCP_TRUE) {
-        ch = getch();
-        if (tolower(ch) == 'q') {
-            break;
-        } else {
-            mvprintw(20, 10, "The pressed key is ");
-            attron(A_BOLD);
-            mvprintw(20, 30, "%c", ch);
-            attroff(A_BOLD);
-            refresh();
-        }
-    }
-    return NULL;
-#if 0
-    HANDLE hStdin;
-    DWORD cNumRead, fdwMode, idx;
-    INPUT_RECORD irInBuf[128];
-    KEY_EVENT_RECORD key;
-
-    hStdin = GetStdHandle(STD_INPUT_HANDLE);
-    if (hStdin == INVALID_HANDLE_VALUE) {
-        Win_ErrorMsg("GetStdHandle", GetLastError());
-    }
-
-    fdwMode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-    if (!SetConsoleMode(hStdin, fdwMode)) {
-        Win_ErrorMsg("SetConsoleMode", GetLastError());
-    }
-
-    WaitForSingleObject(hStdin, 1000);
-
-    if (!GetNumberOfConsoleInputEvents (hStdin, &cNumRead)) {
-        Win_ErrorMsg("PeekConsoleInput", GetLastError());
-    } else {
-        if (cNumRead) {
-            if (!ReadConsoleInput(hStdin, irInBuf, 128, &cNumRead)) {
-                Win_ErrorMsg("ReadConsoleInput", GetLastError());
-            }
-            for (idx = 0; idx < cNumRead; ++idx) {
-            switch(irInBuf[idx].EventType) {
-                    case KEY_EVENT:
-                        key = irInBuf[idx].Event.KeyEvent;
-//                        printf("KeyEvent: %x %x %x %u\n", key.wVirtualKeyCode, key.wVirtualScanCode, key.dwControlKeyState, key.bKeyDown);
-                        if (key.bKeyDown) {
-                            if (key.wVirtualKeyCode == VK_ESCAPE) {
-                                SetEvent(*quit_event);
-                                XcpTl_PostQuitMessage();
-                                return XCP_FALSE;
-                            }
-                            if (key.wVirtualKeyCode == VK_F9) {
-//                                printf("\tF9\n");
-                            }
-                            switch (tolower(key.uChar.AsciiChar)) {
-                                case 'q':
-                                    SetEvent(*quit_event);
-                                    XcpTl_PostQuitMessage();
-                                    return XCP_FALSE;
-                                case 'h':
-                                    DisplayHelp();
-                                    break;
-                                case 'i':
-                                    SystemInformation();
-                                    break;
-                                case 'd':
-                                    XcpDaq_PrintDAQDetails();
-                                    break;
-                            }
-                        }
-                        break;
-                    default:
-                        //MyErrorExit("unknown event type");
-                        break;
-                }
-            }
-        }
-    }
-#endif
-}
-
 
 void XcpHw_ParseCommandLineOptions(int argc, char **argv, XcpHw_OptionsType * options)
 {
@@ -620,14 +523,3 @@ static void SystemInformation(void)
     printf("-------------------------------------------------------------------------------\n");
 }
 
-void XcpHw_ErrorMsg(char * const function, int errorCode)
-{
-    fprintf(stderr, "[%s] failed with: [%d] %s", function, errorCode, strerror(errorCode));
-}
-
-void Xcp_DisplayInfo(void)
-{
-    XcpTl_PrintConnectionInformation();
-//mvprintw(4, 5, "Press h for help.");
-    refresh();
-}

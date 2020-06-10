@@ -193,7 +193,7 @@
     #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE           (0)
 #else
 #error NO transport-layer specified.
-#endif 
+#endif
 
 /*
 **  Customization Options.
