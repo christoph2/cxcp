@@ -52,7 +52,6 @@ typedef struct tagXcpTl_ConnectionType {
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
 
-extern Xcp_OptionsType Xcp_Options;
 static XcpTl_ConnectionType XcpTl_Connection;
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 

@@ -94,7 +94,6 @@ int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
-extern Xcp_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 

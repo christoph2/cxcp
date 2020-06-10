@@ -741,6 +741,8 @@ void Xcp_MainFunction(void);
 /*
 ** Global Helper Functions.
 */
+extern Xcp_OptionsType Xcp_Options;
+
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 void Xcp_Disconnect(void);
