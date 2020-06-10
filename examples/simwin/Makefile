@@ -28,6 +28,7 @@ else
 #xcp_sim_SRC+=tl/eth/wineth.c
 xcp_sim_SRC+=tl/eth/wineth_iocp.c
 xcp_sim_TARGET=xcp_sim
+CPPFLAGS += -D ETHER
 endif
 
 xcp_sim_OBJS = $(xcp_sim_SRC:%.c=%.o)

@@ -40,8 +40,15 @@ extern "C"
 
 
 typedef struct tagXcpHw_OptionsType {
+#if defined(KVASER_CAN)
+    int dummy;
+#elif defined(ETHER)
     bool ipv6;
     bool tcp;
+#elif defined(SOCKET_CAN)
+    bool fd;
+    char interface[64];
+#endif
 } XcpHw_OptionsType;
 
 void XcpHw_ParseCommandLineOptions(int argc, char **argv, XcpHw_OptionsType * options);

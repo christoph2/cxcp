@@ -32,7 +32,8 @@
 */
 #define XCP_STATION_ID                              "description_of_test_ecu"
 
-#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
+//#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
+#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
 
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
