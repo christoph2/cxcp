@@ -23,11 +23,13 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <ctype.h>
 #include <string.h>
 
 #include <ncurses.h>
 
 #include "xcp.h"
+#include "xcp_hw.h"
 #include "xcp_tui.h"
 
 
@@ -115,10 +117,16 @@ void XcpTui_Init(void)
     start_color(); /* Start color */
     init_pair(1, COLOR_BLUE, COLOR_BLACK);
 
+#if defined(SOCKET_CAN)
     ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER);
     sprintf(buf, "XCPonCAN listening on 0x%04x [%s]\n",
         XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
     );
+#elif defined(ETHER)
+    sprintf(buf, "XCPonEth -- Listening on port %d / %s [%s]",
+            Xcp_Options.port, Xcp_Options.tcp ? "TCP" : "UDP",Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+    );
+#endif
 
     centered_text(stdscr, 2, TITLE, COLOR_PAIR(1) | A_BOLD);
     centered_text(stdscr, 4, buf, A_DIM);
@@ -170,9 +178,3 @@ void XcpHw_ErrorMsg(char * const function, int errorCode)
     fprintf(stderr, "[%s] failed with: [%d] %s", function, errorCode, strerror(errorCode));
 }
 
-void Xcp_DisplayInfo(void)
-{
-    XcpTl_PrintConnectionInformation();
-//mvprintw(4, 5, "Press h for help.");
-    refresh();
-}

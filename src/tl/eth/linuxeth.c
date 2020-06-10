@@ -163,7 +163,7 @@ void XcpTl_Init(void)
 {
     struct addrinfo hints, *addr_info;
     char * address = NULL;
-    char * port = DEFAULT_PORT;
+    char port[16];
     int sock;
     int ret;
 
@@ -171,6 +171,7 @@ void XcpTl_Init(void)
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
+    sprintf(port, "%d", Xcp_Options.port);
     hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;
     hints.ai_socktype = XcpTl_Connection.socketType;
     hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
@@ -225,7 +226,7 @@ static void * XcpTl_WorkerThread(void * param)
     while(1) {
         status = epoll_wait(epoll_fd, socket_events, MAX_EVENT_NUMBER, -1);
         if (status < 0) {
-            printf("epoll failure!\n");
+            //printf("epoll failure!\n");
             break;
         }
         lt_process(socket_events, status, epoll_fd, XcpTl_Connection.boundSocket);
@@ -274,7 +275,7 @@ void XcpTl_RxHandler(void)
                 return;
             }
             inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
-            printf("server: got connection from %s\n", hostname);
+            //printf("server: got connection from %s\n", hostname);
         }
         recv_len = recv(XcpTl_Connection.connectedSocket, (char*)buf, XCP_COMM_BUFLEN, 0);
         if (recv_len == -1) {
@@ -355,7 +356,7 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
         if (sockfd == listen_fd) {
             if (XcpTl_Connection.socketType == SOCK_STREAM) {
                 if (!XcpTl_Connection.connected) {
-                    printf("Try connect\n");
+                    //printf("Try connect\n");
                     XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len);
                     if (XcpTl_Connection.connectedSocket == -1) {
                         XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", errno);
@@ -364,7 +365,7 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
                     }
                     Xcp_AddFd(epoll_fd, XcpTl_Connection.connectedSocket);
                     inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
-                    printf("server: got connection from %s\n", hostname);
+                    //printf("server: got connection from %s\n", hostname);
                 }
            } else {
                 recv_len = recvfrom(XcpTl_Connection.boundSocket, (char*)buf, XCP_COMM_BUFLEN, 0,
@@ -384,7 +385,7 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
             memset(buf, 0, BUFFER_SIZE);
             int ret = recv(sockfd, buf, BUFFER_SIZE - 1, 0);
             if (ret <= 0) {
-                printf("disco()\n");
+                //printf("disco()\n");
                 close(sockfd);
                 continue;
             }
@@ -400,7 +401,7 @@ static void lt_process(struct epoll_event* events, int number, int epoll_fd, int
                 fflush(stdout);
             }
         } else {
-            printf("something unexpected happened!\n");
+            //printf("something unexpected happened!\n");
         }
     }
 }
@@ -444,11 +445,6 @@ void XcpTl_ReleaseConnection(void)
 bool XcpTl_VerifyConnection(void)
 {
     return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_storage)) == 0;
-}
-
-void XcpTl_SetOptions(XcpHw_OptionsType const * options)
-{
-    memcpy(&Xcp_Options, options, sizeof(XcpHw_OptionsType));
 }
 
 void XcpTl_PrintConnectionInformation(void)

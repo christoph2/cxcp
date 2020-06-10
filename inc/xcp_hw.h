@@ -38,6 +38,7 @@ extern "C"
 **  Global Defines.
 */
 
+extern Xcp_OptionsType Xcp_Options;
 
 void XcpHw_ParseCommandLineOptions(int argc, char **argv, Xcp_OptionsType * options);
 void XcpHw_ErrorMsg(char * const function, int errorCode);

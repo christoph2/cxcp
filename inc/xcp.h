@@ -725,6 +725,7 @@ typedef struct tagXcp_OptionsType {
 #elif defined(ETHER)
     bool ipv6;
     bool tcp;
+    uint16_t port;
 #elif defined(SOCKET_CAN)
     bool fd;
     char interface[64];

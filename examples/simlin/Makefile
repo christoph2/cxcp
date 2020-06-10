@@ -31,7 +31,7 @@ CPPFLAGS += -D SOCKET_CAN
 else
 CPPFLAGS += -D ETHER
 xcp_sim_SRC+=tl/eth/linuxeth.c
-xcp_sim_TARGET=xcp_sim
+xcp_sim_TARGET=xcp_sim_eth
 endif
 
 xcp_sim_OBJS = $(xcp_sim_SRC:%.c=%.o)

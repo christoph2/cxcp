@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "xcp.h"
@@ -14,8 +15,6 @@ void usage(void);
 
 void XcpOnCan_Init(void);
 
-
-void XcpTl_SetOptions(XcpHw_OptionsType const * options);
 void * XcpHw_MainFunction(void);
 void XcpTl_MainFunction(void);
 void * TlTask(void * param);
@@ -30,48 +29,102 @@ extern pthread_t XcpHw_ThreadID[4];
 
 #define NUM_THREADS (3)
 
+#define DEFAULT_CAN_IF  "vcan0"
+#define XCP_ETH_DEFAULT_PORT    (5555)
 
 #if defined(ETHER)
-static const char OPTION_STR[] = "htu46";
+static const char OPTION_STR[] = "htu46p:";
 #elif defined(SOCKET_CAN)
-static const char OPTION_STR[] = "hif";
+static const char OPTION_STR[] = "hi:f";
 #endif
 
-Xcp_OptionsType Xcp_Options;
+Xcp_OptionsType Xcp_Options = {0};
 
 int main(int argc, char **argv)
 {
-    int flags, opt;
+    int opt;
+
+#if defined(ETHER)
+    int p_assigned = 0;
+    int v_assigned = 0;
+
+    Xcp_Options.tcp = XCP_TRUE;
+    Xcp_Options.ipv6 = XCP_FALSE;
+    Xcp_Options.port = XCP_ETH_DEFAULT_PORT;
+#elif defined(SOCKET_CAN)
+    int if_assigned = 0;
+
+    Xcp_Options.fd = XCP_FALSE;
+#endif
 
     srand(23);
 
     while ((opt = getopt(argc, argv, OPTION_STR)) != -1) {
-        printf("opt: %c\n", opt);
+        switch (opt) {
+            case 'h':
+            case '?':
+                usage();
+                break; /* never reached. */
+#if defined(ETHER)
+            case 't':
+                if (p_assigned) {
+                    printf("-t and -u options are mutual exclusive.\n");
+                    exit(1);
+                }
+                p_assigned = XCP_TRUE;
+                Xcp_Options.tcp = XCP_TRUE;
+                break;
+            case 'u':
+                if (p_assigned) {
+                    printf("-t and -u options are mutual exclusive.\n");
+                    exit(1);
+                }
+                p_assigned = XCP_TRUE;
+                Xcp_Options.tcp = XCP_FALSE;
+                break;
+            case '4':
+                if (v_assigned) {
+                    printf("-4 and -6 options are mutual exclusive.\n");
+                    exit(1);
+                }
+                v_assigned = XCP_TRUE;
+                Xcp_Options.ipv6 = XCP_FALSE;
+                break;
+            case '6':
+                if (v_assigned) {
+                    printf("-4 and -6 options are mutual exclusive.\n");
+                    exit(1);
+                }
+                v_assigned = XCP_TRUE;
+                Xcp_Options.ipv6 = XCP_TRUE;
+                break;
+            case 'p':
+                Xcp_Options.port = atoi(optarg);
+#elif defined(SOCKET_CAN)
+            case 'f':
+                Xcp_Options.fd = XCP_TRUE;
+                break;
+            case 'i':
+                if_assigned = 1;
+                strcpy(Xcp_Options.interface, optarg);
+                break;
+#endif
+        }
     }
 
+#if defined(SOCKET_CAN)
+    if (!if_assigned) {
+        strcpy(Xcp_Options.interface, DEFAULT_CAN_IF);
+    }
+#endif
+
     Xcp_Init();
-    Xcp_DisplayInfo();
 
     pthread_create(&XcpHw_ThreadID[1], NULL, &AppTask, NULL);
     pthread_create(&XcpHw_ThreadID[2], NULL, &XcpTui_MainFunction, NULL);
     pthread_create(&XcpHw_ThreadID[3], NULL, &TlTask, NULL);
 
     pthread_join(XcpHw_ThreadID[2], NULL);
-#if 0
-    while (state != 0x01) {
-        state = XcpHw_WaitApplicationState(0x01);
-//        printf("signaled/main: %u\n", state);
-        XcpHw_ResetApplicationState(0x01);
-    }
-#endif
-
-    //pthread_join(XcpHw_ThreadID[2], NULL);
-
-#if 0
-    while (XCP_TRUE) {
-        XcpTl_MainFunction();
-    }
-#endif
 
     XcpHw_Deinit();
     XcpTl_DeInit();
@@ -82,7 +135,20 @@ int main(int argc, char **argv)
 
 void usage(void)
 {
-
+    printf("\nparameter summary: \n");
+#if defined(ETHER)
+    printf("-h\t  this message.\n");
+    printf("-t\t  TCP\t\t  default: TRUE\n");
+    printf("-u\t  UDP\t\t  default: FALSE\n");
+    printf("-4\t  IPv4\t\t  default: TRUE\n");
+    printf("-6\t  IPv6\t\t  default: FALSE\n");
+    printf("-p <port> port to listen  default: 5555\n");
+#elif defined(SOCKET_CAN)
+    printf("-h\tthis message.\n");
+    printf("-f\t\tuse CAN-FD\t\tdefault: FALSE\n");
+    printf("-i <if-name>\tinterface to use\tdefault: vcan0\n");
+#endif
+    exit(0);
 }
 
 #if 0

@@ -48,12 +48,14 @@
 
 
 #define err_abort(code,text) do { \
+        endwin(); \
         fprintf (stderr, "%s at \"%s\":%d: %s\n", \
                         text, __FILE__, __LINE__, strerror (code)); \
         abort (); \
         } while (0)
 
 #define errno_abort(text) do { \
+        endwin(); \
         fprintf (stderr, "%s at \"%s\":%d: %s\n", \
                         text, __FILE__, __LINE__, strerror (errno)); \
         abort (); \
@@ -72,13 +74,14 @@ unsigned char buf[XCP_COMM_BUFLEN];
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
-static XcpHw_OptionsType Xcp_Options;
+extern Xcp_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 
 
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
+extern void endwin(void);
 
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;
@@ -109,9 +112,11 @@ void XcpTl_Init(void)
     if (XcpTl_Connection.can_socket== -1){
         errno_abort("XcpTl_Init::socket()");
     }
-#if 0
-	setsockopt(s, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_sockopt, sizeof(enable_sockopt));
-#endif
+    if (Xcp_Options.fd) {
+    	if (setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_sockopt, sizeof(enable_sockopt)) == -1) {
+            errno_abort("Your kernel doesn't supports CAN-FD.\n");
+        }
+    }
 
 	if (setsockopt(XcpTl_Connection.can_socket, SOL_SOCKET, SO_TIMESTAMP, &enable_sockopt, sizeof(enable_sockopt)) < 0) {
         // Enable precision timestamps.
@@ -121,7 +126,7 @@ void XcpTl_Init(void)
 
     /* Select that CAN interface, and bind the socket to it. */
     addr.can_family = AF_CAN;
-    addr.can_ifindex = locate_interface(XcpTl_Connection.can_socket, "vcan0");
+    addr.can_ifindex = locate_interface(XcpTl_Connection.can_socket, Xcp_Options.interface);
     bind(XcpTl_Connection.can_socket, (struct sockaddr*)&addr, sizeof(addr));
     if (XcpTl_Connection.can_socket== -1){
         errno_abort("XcpTl_Init::bind()");
