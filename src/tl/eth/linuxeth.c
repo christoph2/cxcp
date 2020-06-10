@@ -85,7 +85,7 @@ unsigned char buf[XCP_COMM_BUFLEN];
 int addrSize = sizeof(struct sockaddr_storage);
 
 static XcpTl_ConnectionType XcpTl_Connection;
-static XcpHw_OptionsType Xcp_Options;
+extern Xcp_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 static struct epoll_event socket_events[MAX_EVENT_NUMBER] = {0};

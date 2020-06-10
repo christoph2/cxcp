@@ -37,20 +37,17 @@ static const char OPTION_STR[] = "htu46";
 static const char OPTION_STR[] = "hif";
 #endif
 
+Xcp_OptionsType Xcp_Options;
+
 int main(int argc, char **argv)
 {
     int flags, opt;
-    XcpHw_OptionsType options;
 
     srand(23);
 
     while ((opt = getopt(argc, argv, OPTION_STR)) != -1) {
         printf("opt: %c\n", opt);
     }
-
-
-    XcpHw_ParseCommandLineOptions(argc, argv, &options);
-    XcpTl_SetOptions(&options);
 
     Xcp_Init();
     Xcp_DisplayInfo();
