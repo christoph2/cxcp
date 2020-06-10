@@ -90,6 +90,8 @@ extern "C"
 
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
+
+#if (!defined(XCP_ENABLE_CAN_FD)) || (XCP_ENABLE_CAN_FD == XCP_OFF)
     #ifdef XCP_MAX_CTO
         #undef XCP_MAX_CTO
     #endif /* XCP_MAX_CTO */
@@ -99,6 +101,16 @@ extern "C"
         #undef XCP_MAX_DTO
     #endif /* XCP_MAX_DTO */
     #define XCP_MAX_DTO (8)
+#else
+    #if (XCP_MAX_CTO < 8) || (XCP_MAX_CTO > 64)
+        #error MaxCTO must be in range [8 .. 64]
+    #endif
+
+    #if (XCP_MAX_DTO < 8) || (XCP_MAX_DTO > 64)
+        #error MaxDTO must be in range [8 .. 64]
+    #endif
+
+#endif
 
     #ifdef XCP_TRANSPORT_LAYER_LENGTH_SIZE
         #undef XCP_TRANSPORT_LAYER_LENGTH_SIZE

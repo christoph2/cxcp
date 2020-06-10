@@ -102,7 +102,6 @@ int locate_interface(int socket, char const * name)
 void XcpTl_Init(void)
 {
     int enable_sockopt = 1;
-    struct ifreq ifr;
     struct sockaddr_can addr;
 
     memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
@@ -117,12 +116,10 @@ void XcpTl_Init(void)
             errno_abort("Your kernel doesn't supports CAN-FD.\n");
         }
     }
-
 	if (setsockopt(XcpTl_Connection.can_socket, SOL_SOCKET, SO_TIMESTAMP, &enable_sockopt, sizeof(enable_sockopt)) < 0) {
         // Enable precision timestamps.
 		errno_abort("setsockopt(SO_TIMESTAMP)");
 	}
-
 
     /* Select that CAN interface, and bind the socket to it. */
     addr.can_family = AF_CAN;
@@ -150,20 +147,24 @@ void XcpTl_MainFunction(void)
 
 void XcpTl_RxHandler(void)
 {
-    struct can_frame frame;
+    struct canfd_frame frame;
     int nbytes;
 
-    nbytes = read(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
+    nbytes = read(XcpTl_Connection.can_socket, &frame, CANFD_MTU);
 
-    if (nbytes < 0) {
-        errno_abort("can raw socket read");
+    if (nbytes == CANFD_MTU) {
+        //printf("got CAN FD frame with length %d\n", frame.len);
+        /* FD frame.flags could be used here */
+    } else if (nbytes == CAN_MTU) {
+        //printf("got legacy CAN frame with length %d\n", frame.len);
     } else {
-        //printf("#%d bytes received from '%04x' DLC: %d .\n", nbytes, frame.can_id, frame.can_dlc);
-        if (frame.can_dlc > 0) {
-            Xcp_PduIn.len = frame.can_dlc;
-            Xcp_PduIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-            Xcp_DispatchCommand(&Xcp_PduIn);
-        }
+        errno_abort("can raw socket read");
+    }
+    //printf("#%d bytes received from '%04x' DLC: %d .\n", nbytes, frame.can_id, frame.can_dlc);
+    if (frame.len > 0) {
+        Xcp_PduIn.len = frame.len;
+        Xcp_PduIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+        Xcp_DispatchCommand(&Xcp_PduIn);
     }
 }
 
@@ -182,15 +183,20 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
-    int nbytes;
     struct can_frame frame = {0};
+    struct canfd_frame frame_fd = {0};
 
-    frame.can_dlc = len;
-    frame.can_id = 0x42;
-    memcpy(frame.data, buf, len);
-
-    nbytes = write(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
-
+    if (Xcp_Options.fd) {
+        frame_fd.len = len;
+        frame_fd.can_id = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
+        memcpy(frame_fd.data, buf, len);
+        (void)write(XcpTl_Connection.can_socket, &frame_fd, sizeof(struct canfd_frame));
+    } else {
+        frame.can_dlc = len;
+        frame.can_id = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
+        memcpy(frame.data, buf, len);
+        (void)write(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
+    }
 }
 
 
