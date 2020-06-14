@@ -130,10 +130,11 @@ void XcpTl_Init(void)
     if (XcpTl_Connection.can_socket== -1){
         errno_abort("XcpTl_Init::bind()");
     }
+
     rfilter[0].can_id   = XCP_ON_CAN_INBOUND_IDENTIFIER;
-    rfilter[0].can_mask = CAN_SFF_MASK;
+    rfilter[0].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER) ? CAN_EFF_FLAG :  CAN_SFF_MASK;
     rfilter[1].can_id   = XCP_ON_CAN_BROADCAST_IDENTIFIER;
-    rfilter[1].can_mask = CAN_SFF_MASK;
+    rfilter[1].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER) ? CAN_EFF_FLAG :  CAN_SFF_MASK;;
     setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
 }
 
