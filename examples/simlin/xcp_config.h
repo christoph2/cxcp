@@ -182,7 +182,7 @@
     #define XCP_ON_CAN_OUTBOUND_IDENTIFIER              (0x101)
     #define XCP_ON_CAN_MAX_DLC_REQUIRED                 XCP_OFF
     #define XCP_ON_CAN_BROADCAST_IDENTIFIER             (0x103)
-    #define XCP_ENABLE_CAN_FD                           XCP_ON
+    #define XCP_ENABLE_CAN_FD                           XCP_OFF
 
     #define XCP_MAX_CTO                                 (40)
     #define XCP_MAX_DTO                                 (40)

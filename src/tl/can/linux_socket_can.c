@@ -103,6 +103,8 @@ void XcpTl_Init(void)
 {
     int enable_sockopt = 1;
     struct sockaddr_can addr;
+    struct can_filter rfilter[2];
+
 
     memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
@@ -128,6 +130,11 @@ void XcpTl_Init(void)
     if (XcpTl_Connection.can_socket== -1){
         errno_abort("XcpTl_Init::bind()");
     }
+    rfilter[0].can_id   = XCP_ON_CAN_INBOUND_IDENTIFIER;
+    rfilter[0].can_mask = CAN_SFF_MASK;
+    rfilter[1].can_id   = XCP_ON_CAN_BROADCAST_IDENTIFIER;
+    rfilter[1].can_mask = CAN_SFF_MASK;
+    setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
 }
 
 
