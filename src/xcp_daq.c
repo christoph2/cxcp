@@ -434,7 +434,7 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
  */
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
 {
-    Xcp_StateType const * Xcp_State;
+    Xcp_StateType const * state;
     XcpDaq_ListIntegerType daqListNumber;
     XcpDaq_ODTIntegerType odtIdx;
     XcpDaq_ODTIntegerType pid;
@@ -443,11 +443,10 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
     XcpDaq_ODTEntryType * entry;
     XcpDaq_ListConfigurationType const * listConf;
 
-    Xcp_State = Xcp_GetState();
-    if (Xcp_State->daqProcessor.state != XCP_DAQ_STATE_RUNNING) {
+    state = Xcp_GetState();
+    if (state->daqProcessor.state != XCP_DAQ_STATE_RUNNING) {
         return;
     }
-
     if (eventChannelNumber >= UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)) {
         return;
     }
@@ -465,6 +464,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
         odt = XcpDaq_GetOdt(daqListNumber, odtIdx);
         for (odtEntryIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntryIdx < odt->numOdtEntries; ++odtEntryIdx) {
             entry = XcpDaq_GetOdtEntry(daqListNumber, odtIdx, odtEntryIdx);
+
             // XcpDaq_SamplingBuffer
         }
     }
@@ -718,11 +718,11 @@ void XcpDaq_GetProperties(uint8_t * properties)
 
 void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state)
 {
-    Xcp_StateType * Xcp_State;
+    Xcp_StateType * stateVar;
 
-    Xcp_State = Xcp_GetState();
+    stateVar = Xcp_GetState();
     XCP_DAQ_ENTER_CRITICAL();
-    Xcp_State->daqProcessor.state = state;
+    stateVar->daqProcessor.state = state;
     XCP_DAQ_LEAVE_CRITICAL();
 }
 
