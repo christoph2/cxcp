@@ -273,14 +273,14 @@ DWORD AppTask(LPVOID param)
     DWORD res;
 
     //liDueTime.QuadPart=-10 0 000 000;
-    liDueTime.QuadPart=-50000;
-    period = 5000;
+    liDueTime.QuadPart=-500;
+    period = 150;
     SetWaitableTimer(userTimer, &liDueTime, period, NULL, NULL, 0);
 
 
     XCP_FOREVER {
         currentTS = XcpHw_GetTimerCounter() / 1000;
-        if (currentTS >= (previousTS + 10)) {
+        if (currentTS >= (previousTS + 2)) {
             //printf("T [%u::%lu]\n", currentTS, XcpHw_GetTimerCounter() / 1000);
 
             if ((ticker % 3) == 0) {

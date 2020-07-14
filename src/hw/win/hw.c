@@ -283,7 +283,7 @@ void XcpHw_ParseCommandLineOptions(int argc, char ** argv, Xcp_OptionsType * opt
 {
     int idx;
     char * arg;
-
+#if !defined(KVASER_CAN)
     options->ipv6 = XCP_FALSE;
     options->tcp = XCP_TRUE;
 
@@ -313,6 +313,7 @@ void XcpHw_ParseCommandLineOptions(int argc, char ** argv, Xcp_OptionsType * opt
             }
         }
     }
+#endif
 }
 
 static void DisplayHelp(void)
