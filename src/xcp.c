@@ -1807,12 +1807,12 @@ static void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
 
     Xcp_Send8(UINT8(8), UINT8(0xff),
-      UINT8(1),    /* Granularity for size of ODT entry (DIRECTION = DAQ) */
-      UINT8(0),    /* Maximum size of ODT entry (DIRECTION = DAQ) */
-      UINT8(1),    /* Granularity for size of ODT entry (DIRECTION = STIM) */
-      UINT8(0),    /* Maximum size of ODT entry (DIRECTION = STIM) */
-      UINT8(0x34), /* Timestamp unit and size */
-      UINT8(1),    /* Timestamp ticks per unit (WORD) */
+      UINT8(1),                             /* Granularity for size of ODT entry (DIRECTION = DAQ) */
+      UINT8(XCP_DAQ_MAX_ODT_ENTRY_SIZE),    /* Maximum size of ODT entry (DIRECTION = DAQ) */
+      UINT8(1),                             /* Granularity for size of ODT entry (DIRECTION = STIM) */
+      UINT8(XCP_DAQ_MAX_ODT_ENTRY_SIZE),    /* Maximum size of ODT entry (DIRECTION = STIM) */
+      UINT8(0x34),                          /* Timestamp unit and size */
+      UINT8(1),                             /* Timestamp ticks per unit (WORD) */
       UINT8(0)
     );
 }

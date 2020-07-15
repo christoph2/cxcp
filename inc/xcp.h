@@ -187,6 +187,8 @@ extern "C"
     #endif /* XCP_ENABLE_ALLOC_ODT_ENTRY */
 #endif
 
+#define XCP_DAQ_ODT_ENTRY_OFFSET ((1) + (1))    /* Currently fixed (only abs. ODT numbers supported). */
+#define XCP_DAQ_MAX_ODT_ENTRY_SIZE  (XCP_MAX_DTO - XCP_DAQ_ODT_ENTRY_OFFSET)    /* Max. payload. */
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
