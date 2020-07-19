@@ -153,12 +153,12 @@ extern "C"
 #define DBG_PRINT5(a, b, c, d, e)
 #define DBG_PRINT6(a, b, c, d, e, f)
 
-#define DBG_TRACE1(a)                   DBG_PRINT1(a)
-#define DBG_TRACE2(a, b)                DBG_PRINT2(a, b)
-#define DBG_TRACE3(a, b, c)             DBG_PRINT3(a, b, c)
-#define DBG_TRACE4(a, b, c, d)          DBG_PRINT4(a, b, c, d)
-#define DBG_TRACE5(a, b, c, d, e)       DBG_PRINT5(a, b, c, d, e)
-#define DBG_TRACE6(a, b, c, d, e, f)    DBG_PRINT6(a, b, c, d, e, f)
+#define DBG_TRACE1(a)
+#define DBG_TRACE2(a, b)
+#define DBG_TRACE3(a, b, c)
+#define DBG_TRACE4(a, b, c, d)
+#define DBG_TRACE5(a, b, c, d, e)
+#define DBG_TRACE6(a, b, c, d, e, f)
 
 #endif /* XCP_BUILD_TYPE == XCP_DEBUG_BUILD */
 
