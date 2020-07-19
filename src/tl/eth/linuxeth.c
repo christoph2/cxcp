@@ -33,7 +33,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -65,9 +64,6 @@
 #define DEFAULT_SOCKTYPE   SOCK_STREAM
 #define DEFAULT_PORT       "5555"
 
-#define EVENT_TABLE_SIZE    (8)
-#define MAX_EVENT_NUMBER    (1024)
-
 
 typedef struct tagXcpTl_ConnectionType {
     struct sockaddr_storage connectionAddress;
@@ -88,8 +84,6 @@ static XcpTl_ConnectionType XcpTl_Connection;
 extern Xcp_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
-static struct epoll_event socket_events[MAX_EVENT_NUMBER] = {0};
-static int epoll_fd = 0;
 
 
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
@@ -100,10 +94,6 @@ extern Xcp_PDUType Xcp_PduOut;
 
 static bool Xcp_EnableSocketOption(int sock, int option);
 static bool Xcp_DisableSocketOption(int sock, int option);
-
-static int Xcp_SetNonblocking(int fd);
-static void Xcp_AddFd(int epoll_fd, int fd);
-static void lt_process(struct epoll_event* events, int number, int epoll_fd, int listen_fd);
 static void * XcpTl_WorkerThread(void * param);
 static void XcpTl_Feed(char * buf);
 
@@ -141,23 +131,6 @@ static bool Xcp_DisableSocketOption(int sock, int option)
     return true;
 }
 
-static int Xcp_SetNonblocking(int fd)
-{
-    int old_option = fcntl(fd, F_GETFL);
-    int new_option = old_option | O_NONBLOCK;
-    fcntl(fd, F_SETFL, new_option);
-    return old_option;
-}
-
-static void Xcp_AddFd(int epoll_fd, int fd)
-{
-    struct epoll_event event;
-    event.data.fd = fd;
-    event.events = EPOLLIN;
-
-    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event);
-    Xcp_SetNonblocking(fd);
-}
 
 void XcpTl_Init(void)
 {
@@ -204,14 +177,6 @@ void XcpTl_Init(void)
         XcpHw_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", errno);
     }
 
-    epoll_fd = epoll_create(EVENT_TABLE_SIZE);
-    if (epoll_fd == -1) {
-        XcpHw_ErrorMsg("XcpTl_Init::epoll_create()", errno);
-        exit(1);
-    }
-
-    Xcp_AddFd(epoll_fd, sock);
-
     ret = pthread_create(&XcpHw_ThreadID[0], NULL, &XcpTl_WorkerThread, NULL);
     if (ret != 0) {
         err_abort(ret, "Create worker thread");
@@ -224,12 +189,7 @@ static void * XcpTl_WorkerThread(void * param)
     int status;
 
     while(1) {
-        status = epoll_wait(epoll_fd, socket_events, MAX_EVENT_NUMBER, -1);
-        if (status < 0) {
-            //printf("epoll failure!\n");
-            break;
-        }
-        lt_process(socket_events, status, epoll_fd, XcpTl_Connection.boundSocket);
+        XcpTl_RxHandler();
     }
     return NULL;
 }
@@ -237,7 +197,6 @@ static void * XcpTl_WorkerThread(void * param)
 
 void XcpTl_DeInit(void)
 {
-    close(epoll_fd);
     close(XcpTl_Connection.boundSocket);
 }
 
@@ -342,74 +301,12 @@ static void XcpTl_Feed(char * buf)
     }
 }
 
-static void lt_process(struct epoll_event* events, int number, int epoll_fd, int listen_fd)
-{
-    static char buf[BUFFER_SIZE];
-    int i;
-    int recv_len;
-    //uint16_t dlc;
-    int from_len = sizeof(struct sockaddr_storage);
-    char hostname[NI_MAXHOST];
-
-    for(i = 0; i < number; i++) {
-        int sockfd = events[i].data.fd;
-        if (sockfd == listen_fd) {
-            if (XcpTl_Connection.socketType == SOCK_STREAM) {
-                if (!XcpTl_Connection.connected) {
-                    //printf("Try connect\n");
-                    XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len);
-                    if (XcpTl_Connection.connectedSocket == -1) {
-                        XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", errno);
-                        exit(1);
-                        return;
-                    }
-                    Xcp_AddFd(epoll_fd, XcpTl_Connection.connectedSocket);
-                    inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
-                    //printf("server: got connection from %s\n", hostname);
-                }
-           } else {
-                recv_len = recvfrom(XcpTl_Connection.boundSocket, (char*)buf, XCP_COMM_BUFLEN, 0,
-                    (struct sockaddr *)&XcpTl_Connection.currentAddress, &addrSize
-                );
-                if (recv_len == -1) {
-                    XcpHw_ErrorMsg("XcpTl_RxHandler:recvfrom()", errno);
-                    fflush(stdout);
-                    exit(1);
-                } else {
-                    //printf("UDP: Received %d bytes\n", recv_len);
-                    XcpTl_Feed(buf);
-                    //XcpUtl_Hexdump(buf,  recv_len);
-                }
-           }
-        } else if (events[i].events & EPOLLIN) {
-            memset(buf, 0, BUFFER_SIZE);
-            int ret = recv(sockfd, buf, BUFFER_SIZE - 1, 0);
-            if (ret <= 0) {
-                //printf("disco()\n");
-                close(sockfd);
-                continue;
-            }
-            recv_len = ret;
-            //printf("NETWORK: Received %d bytes.\n", recv_len);
-            if (recv_len > 0) {
-                XcpTl_Feed(buf);
-                if (recv_len < 5) {
-                    DBG_PRINT2("Error: frame to short: %d\n", recv_len);
-                } else {
-
-                }
-                fflush(stdout);
-            }
-        } else {
-            //printf("something unexpected happened!\n");
-        }
-    }
-}
 
 void XcpTl_TxHandler(void)
 {
 
 }
+
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
@@ -458,3 +355,4 @@ void XcpTl_PrintConnectionInformation(void)
     attroff(A_BOLD);
     refresh();
 }
+
