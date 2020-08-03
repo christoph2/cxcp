@@ -67,6 +67,7 @@ void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
 static uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
 static Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_MtaType * dst);
+static void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len);
 
 /*
 ** Local Macros.
@@ -608,9 +609,13 @@ void Xcp_Init(void)
     Xcp_DefaultResourceProtection();
 
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
-    Xcp_State.slaveBlockModeState.slaveBlockTransferActive = (bool)XCP_FALSE;
+    Xcp_State.slaveBlockModeState.blockTransferActive = (bool)XCP_FALSE;
     Xcp_State.slaveBlockModeState.remaining = UINT8(0);
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
+#if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
+    Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_FALSE;
+    Xcp_State.masterBlockModeState.remaining = UINT8(0);
+#endif /* XCP_ENABLE_MASTER_BLOCKMODE */
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
     Xcp_State.daqProcessor.state = XCP_DAQ_STATE_STOPPED;
@@ -784,7 +789,7 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
 static bool Xcp_SlaveBlockTransferIsActive(void)
 {
-    return Xcp_State.slaveBlockModeState.slaveBlockTransferActive;
+    return Xcp_State.slaveBlockModeState.blockTransferActive;
 }
 
 
@@ -792,7 +797,7 @@ static void Xcp_SlaveBlockTransferSetActive(bool onOff)
 {
     XCP_ENTER_CRITICAL();
     Xcp_SetBusy(onOff); /* Active slave block-mode also means command processor is busy. */
-    Xcp_State.slaveBlockModeState.slaveBlockTransferActive = onOff;
+    Xcp_State.slaveBlockModeState.blockTransferActive = onOff;
     XCP_LEAVE_CRITICAL();
 }
 
@@ -1345,18 +1350,74 @@ static void Xcp_Download_Res(Xcp_PDUType const * const pdu)
     uint8_t len = Xcp_GetByte(pdu, UINT8(1));
     Xcp_MtaType src = {0};
 
-/* TODO: Blockmode!!! */
     DBG_TRACE2("DOWNLOAD [len: %u]\n", len);
 
     XCP_ASSERT_PGM_IDLE();
     XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, len, XCP_MEM_ACCESS_WRITE, XCP_FALSE);
-    src.address = (uint32_t)pdu->data + 2;
-    src.ext = UINT8(0);
-    Xcp_CopyMemory(Xcp_State.mta, src, (uint32_t)len);
-    XCP_INCREMENT_MTA(len);
 
+#if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
+    Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_FALSE;
+    if (len > (XCP_MAX_BS * XCP_DOWNLOAD_PAYLOAD_LENGTH)) {
+        Xcp_ErrorResponse(ERR_OUT_OF_RANGE);    /* Request exceeds max. block size. */
+        return;
+    } else if (len > XCP_DOWNLOAD_PAYLOAD_LENGTH) {
+        /* OK, regular first-frame transfer. */
+        Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_TRUE;
+        Xcp_State.masterBlockModeState.remaining = len - XCP_DOWNLOAD_PAYLOAD_LENGTH;
+        Xcp_Download_Copy(UINT32(pdu->data + 2), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH));
+        return;
+    }
+#endif /* XCP_ENABLE_MASTER_BLOCKMODE */
+
+#if XCP_ENABLE_MASTER_BLOCKMODE == XCP_OFF
+    if (len > XCP_DOWNLOAD_PAYLOAD_LENGTH) {
+        Xcp_ErrorResponse(ERR_OUT_OF_RANGE);    /* Request exceeds max. payload size. */
+        return;
+    }
+#endif
+    Xcp_Download_Copy(UINT32(pdu->data + 2), UINT8(0), UINT32(len));
     Xcp_PositiveResponse();
 }
+
+#if XCP_ENABLE_DOWNLOAD_NEXT == XCP_ON
+#if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
+static void Xcp_DownloadNext_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t remaining = Xcp_GetByte(pdu, UINT8(1));
+    uint8_t len;
+    Xcp_MtaType src = {0};
+
+    DBG_TRACE2("DOWNLOAD_NEXT [remaining: %u]\n", remaining);
+
+    XCP_ASSERT_PGM_IDLE();
+    if (!Xcp_State.masterBlockModeState.blockTransferActive) {
+        Xcp_ErrorResponse(ERR_SEQUENCE);    /* Check: Is it really necessary to start a block-mode transfer with Xcp_Download_Res? */
+        return;
+    }
+    len = XCP_MIN(remaining, XCP_DOWNLOAD_PAYLOAD_LENGTH);
+    Xcp_Download_Copy(UINT32(pdu->data + 2), UINT8(0), UINT32(len));
+    Xcp_State.masterBlockModeState.remaining -= len;
+    if (Xcp_State.masterBlockModeState.remaining == UINT8(0)) {
+        Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_FALSE;
+        Xcp_PositiveResponse();
+    }
+}
+#endif /* XCP_ENABLE_MASTER_BLOCKMODE */
+#endif /* XCP_ENABLE_DOWNLOAD_NEXT */
+
+#if XCP_ENABLE_DOWNLOAD_MAX == XCP_ON
+static void Xcp_DownloadMax_Res(Xcp_PDUType const * const pdu)
+{
+    Xcp_MtaType src = {0};
+
+    DBG_TRACE1("DOWNLOAD_MAX\n");
+
+    XCP_ASSERT_PGM_IDLE();
+    Xcp_Download_Copy(UINT32(pdu->data + 1), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH + 1));
+    Xcp_PositiveResponse();
+
+}
+#endif /* XCP_ENABLE_DOWNLOAD_MAX */
 
 #if XCP_ENABLE_SHORT_DOWNLOAD == XCP_ON
 static void Xcp_ShortDownload_Res(Xcp_PDUType const * const pdu)
@@ -1722,6 +1783,28 @@ static void Xcp_GetDaqListInfo_Res(Xcp_PDUType const * const pdu)
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 }
 #endif /* XCP_ENABLE_GET_DAQ_LIST_INFO */
+
+
+#if XCP_ENABLE_WRITE_DAQ_MULTIPLE == XCP_ON
+static void Xcp_WriteDaqMultiple_Res(Xcp_PDUType const * const pdu)
+{
+    XcpDaq_ODTEntryType * entry = XCP_NULL;
+
+    uint8_t numElements = Xcp_GetByte(pdu, UINT8(1));
+/*
+    const uint8_t bitOffset = Xcp_GetByte(pdu, UINT8(1));
+    const uint8_t elemSize  = Xcp_GetByte(pdu, UINT8(2));
+    const uint8_t adddrExt  = Xcp_GetByte(pdu, UINT8(3));
+    const uint32_t address  = Xcp_GetDWord(pdu, UINT8(4));
+*/
+
+    DBG_TRACE2("WRITE_DAQ_MULTIPLE [numElements: 0x%08x]\n", numElements);
+
+    XCP_ASSERT_DAQ_STOPPED();
+    XCP_ASSERT_PGM_IDLE();
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+}
+#endif // XCP_ENABLE_WRITE_DAQ_MULTIPLE
 
 
 #if XCP_ENABLE_FREE_DAQ == XCP_ON
@@ -2197,6 +2280,16 @@ static Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_Mt
     printf("MAPPED: addr: %x ext: %d\n", mta->address, mta->ext);
 }
 #endif
+
+static void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len)
+{
+    Xcp_MtaType src = {0};
+
+    src.address = address;
+    src.ext = ext;
+    Xcp_CopyMemory(Xcp_State.mta, src, (uint32_t)len);
+    XCP_INCREMENT_MTA(len);
+}
 
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
 void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state)

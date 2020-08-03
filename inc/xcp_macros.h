@@ -111,55 +111,52 @@ extern "C"
 #define XCP_FOREVER     for(;;)
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-#if defined(_WIN32)
-#define INLINE __inline
-#define DBG_PRINT1(a)                   printf(a)
-#define DBG_PRINT2(a, b)                printf(a, b)
-#define DBG_PRINT3(a, b, c)             printf(a, b, c)
-#define DBG_PRINT4(a, b, c, d)          printf(a, b, c, d)
-#define DBG_PRINT5(a, b, c, d, e)       printf(a, b, c, d, e)
-#define DBG_PRINT6(a, b, c, d, e, f)    printf(a, b, c, d, e, f)
+    #define INLINE
+    #if defined(_WIN32)
+        #define DBG_PRINT1(A)                   printf(A)
+        #define DBG_PRINT2(A, B)                printf(A, B)
+        #define DBG_PRINT3(A, B, C)             printf(A, B, C)
+        #define DBG_PRINT4(A, B, C, D)          printf(A, B, C, D)
+        #define DBG_PRINT5(A, B, C, D, E)       printf(A, B, C, D, E)
+        #define DBG_PRINT6(A, B, C, D, E, F)    printf(A, B, C, D, E, F)
 
-#define DBG_TRACE1(a)                   DBG_PRINT1(a)
-#define DBG_TRACE2(a, b)                DBG_PRINT2(a, b)
-#define DBG_TRACE3(a, b, c)             DBG_PRINT3(a, b, c)
-#define DBG_TRACE4(a, b, c, d)          DBG_PRINT4(a, b, c, d)
-#define DBG_TRACE5(a, b, c, d, e)       DBG_PRINT5(a, b, c, d, e)
-#define DBG_TRACE6(a, b, c, d, e, f)    DBG_PRINT6(a, b, c, d, e, f)
+        #define DBG_TRACE1(A)                   DBG_PRINT1(A)
+        #define DBG_TRACE2(A, B)                DBG_PRINT2(A, B)
+        #define DBG_TRACE3(A, B, C)             DBG_PRINT3(A, B, C)
+        #define DBG_TRACE4(A, B, C, D)          DBG_PRINT4(A, B, C, D)
+        #define DBG_TRACE5(A, B, C, D, E)       DBG_PRINT5(A, B, C, D, E)
+        #define DBG_TRACE6(A, B, C, D, E, F)    DBG_PRINT6(A, B, C, D, E, F)
+    #else
+        #define INLINE
+        #define DBG_PRINT1(A)
+        #define DBG_PRINT2(A, B)
+        #define DBG_PRINT3(A, B, C)
+        #define DBG_PRINT4(A, B, C, D)
+        #define DBG_PRINT5(A, B, C, D, E)
+        #define DBG_PRINT6(A, B, C, D, E, F)
+
+        #define DBG_TRACE1(A)                   DBG_PRINT1(A)
+        #define DBG_TRACE2(A, B)                DBG_PRINT2(A, B)
+        #define DBG_TRACE3(A, B, C)             DBG_PRINT3(A, B, C)
+        #define DBG_TRACE4(A, B, C, D)          DBG_PRINT4(A, B, C, D)
+        #define DBG_TRACE5(A, B, C, D, E)       DBG_PRINT5(A, B, C, D, E)
+        #define DBG_TRACE6(A, B, C, D, E, F)    DBG_PRINT6(A, B, C, D, E, F)
+    #endif // defined(_WIN32)
 #else
-#define INLINE
-#define DBG_PRINT1(a)
-#define DBG_PRINT2(a, b)
-#define DBG_PRINT3(a, b, c)
-#define DBG_PRINT4(a, b, c, d)
-#define DBG_PRINT5(a, b, c, d, e)
-#define DBG_PRINT6(a, b, c, d, e, f)
+    #define INLINE
+    #define DBG_PRINT1(a)
+    #define DBG_PRINT2(a, b)
+    #define DBG_PRINT3(a, b, c)
+    #define DBG_PRINT4(a, b, c, d)
+    #define DBG_PRINT5(a, b, c, d, e)
+    #define DBG_PRINT6(a, b, c, d, e, f)
 
-#define DBG_TRACE1(a)                   DBG_PRINT1(a)
-#define DBG_TRACE2(a, b)                DBG_PRINT2(a, b)
-#define DBG_TRACE3(a, b, c)             DBG_PRINT3(a, b, c)
-#define DBG_TRACE4(a, b, c, d)          DBG_PRINT4(a, b, c, d)
-#define DBG_TRACE5(a, b, c, d, e)       DBG_PRINT5(a, b, c, d, e)
-#define DBG_TRACE6(a, b, c, d, e, f)    DBG_PRINT6(a, b, c, d, e, f)
-
-#endif // defined(_WIN32)
-
-#else
-#define INLINE
-#define DBG_PRINT1(a)
-#define DBG_PRINT2(a, b)
-#define DBG_PRINT3(a, b, c)
-#define DBG_PRINT4(a, b, c, d)
-#define DBG_PRINT5(a, b, c, d, e)
-#define DBG_PRINT6(a, b, c, d, e, f)
-
-#define DBG_TRACE1(a)
-#define DBG_TRACE2(a, b)
-#define DBG_TRACE3(a, b, c)
-#define DBG_TRACE4(a, b, c, d)
-#define DBG_TRACE5(a, b, c, d, e)
-#define DBG_TRACE6(a, b, c, d, e, f)
-
+    #define DBG_TRACE1(a)
+    #define DBG_TRACE2(a, b)
+    #define DBG_TRACE3(a, b, c)
+    #define DBG_TRACE4(a, b, c, d)
+    #define DBG_TRACE5(a, b, c, d, e)
+    #define DBG_TRACE6(a, b, c, d, e, f)
 #endif /* XCP_BUILD_TYPE == XCP_DEBUG_BUILD */
 
 #define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))  /**< Calculates the number of elements of \a arr */

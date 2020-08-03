@@ -88,6 +88,11 @@ extern "C"
     #error Multiple DAQ lists per event are not supported yet.
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 
+#if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
+    #if XCP_ENABLE_DOWNLOAD_NEXT == XCP_OFF
+        #error Master block-mode requires optional command 'downloadNext'.
+    #endif /* XCP_ENABLE_DOWNLOAD_NEXT */
+#endif /* XCP_ENABLE_MASTER_BLOCKMODE */
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
@@ -224,6 +229,7 @@ extern "C"
     #define  XCP_MIN_ST_PGM (0)
 #endif  /* XCP_MIN_ST_PGM */
 
+#define XCP_DOWNLOAD_PAYLOAD_LENGTH     ((XCP_MAX_CTO) - 2)
 
 /*
 **  Available Resources.
@@ -543,13 +549,12 @@ typedef struct tagXcpPgm_ProcessorType {
 #endif /* ENABLE_PGM_COMMANDS */
 
 
-#if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
-typedef struct tagXcp_SlaveBlockModeStateType {
-    bool slaveBlockTransferActive;
+#if (XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON) || (XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON)
+typedef struct tagXcp_BlockModeStateType {
+    bool blockTransferActive;
     uint8_t remaining;
-} Xcp_SlaveBlockModeStateType;
+} Xcp_BlockModeStateType;
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
-
 
 #if XCP_ENABLE_STATISTICS == XCP_ON
 typedef struct tagXcp_StatisticsType {
@@ -582,8 +587,11 @@ typedef struct tagXcp_StateType {
 #endif /* XCP_ENABLE_RESOURCE_PROTECTION */
     Xcp_MtaType mta;
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
-    Xcp_SlaveBlockModeStateType slaveBlockModeState;
+    Xcp_BlockModeStateType slaveBlockModeState;
 #endif  /* XCP_ENABLE_SLAVE_BLOCKMODE */
+#if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
+    Xcp_BlockModeStateType masterBlockModeState;
+#endif  /* XCP_ENABLE_MASTER_BLOCKMODE */
 #if XCP_ENABLE_STATISTICS == XCP_ON
     Xcp_StatisticsType statistics;
 #endif /* XCP_ENABLE_STATISTICS */
