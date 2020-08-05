@@ -167,7 +167,7 @@ static int FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size,
     if (addr == MAP_FAILED) {
         handle_error("mmap");
     }
-    printf("ADDR: %p\n", addr);
+    /* printf("ADDR: %p\n", addr); */
 
     persistentArray->mappingAddress = addr;
     persistentArray->mappingHandle = NULL;
@@ -191,7 +191,7 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
         return; /* Nothing to do. */
     }
     offset = (segment->pageSize * page);
-    printf("page# %u offset: %x\n", page, offset);
+    /* printf("page# %u offset: %x\n", page, offset); */
     FlsEmu_UnmapAddress(segment->persistentArray->mappingAddress, segment->memSize);
     FlsEmu_MapAddress(segment->persistentArray->mappingAddress, offset, segment->memSize, segment->persistentArray->fileHandle);
 /*
