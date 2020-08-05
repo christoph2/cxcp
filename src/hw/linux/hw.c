@@ -130,6 +130,38 @@ static XcpHw_ApplicationStateType XcpHw_ApplicationState = {PTHREAD_MUTEX_INITIA
 **  Global Functions.
 */
 
+static void termination_handler(int sig)
+{
+    endwin();
+
+    printf("Terminating due to ");
+    switch (sig) {
+        case SIGKILL:
+            printf("SIGKILL");
+            break;
+        case SIGSTOP:
+            printf("SIGSTOP");
+            break;
+        case SIGQUIT:
+            printf("SIGQUIT");
+            break;
+        case SIGILL:
+            printf("SIGILL");
+            break;
+        case SIGTRAP:
+            printf("SIGTRAP");
+            break;
+        case SIGABRT:
+            printf("SIGABRT");
+            break;
+        case SIGSEGV:
+            printf("SIGSEGV");
+            break;
+    }
+    printf(".\n");
+    exit(9);
+}
+
 static void handler(int sig, siginfo_t *si, void *uc)
 {
     /* Note: calling printf() from a signal handler is not safe
@@ -157,6 +189,14 @@ void XcpHw_Init(void)
 
     XCP_UNREFERENCED_PARAMETER(timerid);
     XCP_UNREFERENCED_PARAMETER(status);
+
+    signal(SIGKILL, termination_handler);
+    signal(SIGSTOP, termination_handler);
+    signal(SIGQUIT, termination_handler);
+    signal(SIGILL, termination_handler);
+    signal(SIGTRAP, termination_handler);
+    signal(SIGABRT, termination_handler);
+    signal(SIGSEGV, termination_handler);
 
     XcpHw_FreeRunningCounter = 0ULL;
 
