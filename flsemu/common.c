@@ -55,7 +55,7 @@ typedef struct tagFlsEmu_SystemMemoryType {
 */
 static FlsEmu_ModuleStateType FlsEmu_ModuleState = FLSEMU_UNINIT; /**< Module-state variable. */
 static FlsEmu_SystemMemoryType FlsEmu_SystemMemory;     /**< System memory configuration. */
-static FlsEmu_ConfigType const * FlsEmu_Config = NULL;  /**< Segment configuration. */
+static FlsEmu_ConfigType const * FlsEmu_Config = XCP_NULL;  /**< Segment configuration. */
 
 
 /*
@@ -101,7 +101,7 @@ void * FlsEmu_BasePointer(uint8_t segmentIdx)
     FLSEMU_ASSERT_INITIALIZED();
 
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
-        return (void*)NULL;
+        return (void*)XCP_NULL;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
     //
