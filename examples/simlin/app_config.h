@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "flsemu.h"
 
 typedef struct {
     uint8_t value;
@@ -14,6 +15,8 @@ typedef struct {
 
 extern triangle_type triangle;
 extern uint16_t randomValue;
+
+const FlsEmu_ConfigType FlsEmu_Config;
 
 #endif // __APP_CONFIG_H
 

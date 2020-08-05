@@ -1,9 +1,9 @@
 vpath %.c ../../src
 vpath %.h ../..inc . ../../flsemu
 
-xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/linux/hw.c hw/linux/tui.c app_config.c main.c #../flsemu/flsemu.c
+xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/linux/hw.c hw/linux/tui.c app_config.c main.c ../flsemu/posix/flsemu.c ../flsemu/common.c
 
-INCLUDE= -I . -I ../../inc # -I ../../flsemu
+INCLUDE= -I . -I ../../inc -I ../../flsemu
 CPPFLAGS += $(INCLUDE)
 
 CFLAGS +=  -Wall -Wextra -Wno-unused-parameter -Wno-unused-function  -ffunction-sections

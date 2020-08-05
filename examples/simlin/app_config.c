@@ -3,11 +3,51 @@
 #include "app_config.h"
 
 #define CALRAM_SIZE (16 * 1024)
+
 uint8_t calram[CALRAM_SIZE];
 
 triangle_type triangle = {0};
 uint16_t randomValue;
 
+#define FLS_SECTOR_SIZE (256)
+
+#define FLS_PAGE_ADDR           ((uint16_t)0x8000U)
+#define FLS_PAGE_SIZE           ((uint32_t)0x4000U)
+
+static FlsEmu_SegmentType S12D512_PagedFlash = {
+    "XCPSIM_Flash",
+    FLSEMU_KB(512),
+    2,
+    FLS_SECTOR_SIZE,
+    FLS_PAGE_SIZE,
+    4,
+    0x8000,
+    XCP_NULL,
+    0,
+};
+
+static FlsEmu_SegmentType S12D512_EEPROM = {
+    "XCPSIM_EEPROM",
+    FLSEMU_KB(4),
+    2,
+    4,
+    FLSEMU_KB(4),
+    1,
+    0x4000,
+    XCP_NULL,
+    0,
+};
+
+
+static FlsEmu_SegmentType const * segments[] = {
+    &S12D512_PagedFlash,
+    &S12D512_EEPROM,
+};
+
+const FlsEmu_ConfigType FlsEmu_Config = {
+    2,
+    (FlsEmu_SegmentType**)segments,
+};
 const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
     XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
     XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
@@ -81,6 +121,7 @@ bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_Me
     return XCP_TRUE;
 }
 
+#if 0
 Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
 {
 //    return FlsEmu_MemoryMapper(dst, src);
@@ -89,6 +130,12 @@ Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xc
         dst->ext = src->ext;
     }
     return XCP_MEMORY_NOT_MAPPED;
+}
+#endif
+
+Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xcp_MtaType const * src)
+{
+    return FlsEmu_MemoryMapper(dst, src);
 }
 
 #if 0

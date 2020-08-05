@@ -38,7 +38,7 @@
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
 #define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_OFF
-#define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
+#define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_ON
 
 #define XCP_ENABLE_STIM                             XCP_OFF
 
@@ -53,7 +53,7 @@
 
 #define XCP_ENABLE_STATISTICS                       XCP_ON
 
-#define XCP_MAX_BS                                  (0)
+#define XCP_MAX_BS                                  (5)
 #define XCP_MIN_ST                                  (0)
 #define XCP_QUEUE_SIZE                              (0)
 
@@ -120,7 +120,7 @@
 
 #define XCP_ENABLE_CAL_COMMANDS                     XCP_ON
 
-    #define XCP_ENABLE_DOWNLOAD_NEXT                XCP_OFF
+    #define XCP_ENABLE_DOWNLOAD_NEXT                XCP_ON
     #define XCP_ENABLE_DOWNLOAD_MAX                 XCP_OFF
     #define XCP_ENABLE_SHORT_DOWNLOAD               XCP_ON
     #define XCP_ENABLE_MODIFY_BITS                  XCP_ON

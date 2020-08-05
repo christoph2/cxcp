@@ -118,6 +118,7 @@ int main(int argc, char **argv)
     }
 #endif
 
+    FlsEmu_Init(&FlsEmu_Config);
     Xcp_Init();
 
     pthread_create(&XcpHw_ThreadID[1], NULL, &AppTask, NULL);
@@ -128,6 +129,8 @@ int main(int argc, char **argv)
 
     XcpHw_Deinit();
     XcpTl_DeInit();
+
+    FlsEmu_DeInit();
 
     return 0;
 }
