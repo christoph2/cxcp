@@ -95,11 +95,27 @@ XCP_DAQ_END_EVENTS
  * Customization Functions.
  *
  */
+static  uint8_t unlock_key[4] = {0};
+
+#define KEY_INITIAL (0xBC)
+
+
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
 {
-    static const uint8_t seed[] = {0x11, 0x22, 0x33, 0x44};
+    uint32_t ts;
+    static  uint8_t seed[4] = {0};
     result->length = 4;
     result->data = (uint8_t*)&seed;
+
+    ts = XcpHw_GetTimerCounter();
+    seed[0] = XCP_HIWORD(XCP_HIBYTE(ts));
+    seed[1] = XCP_HIWORD(XCP_LOBYTE(ts));
+    seed[2] = XCP_LOWORD(XCP_HIBYTE(ts));
+    seed[3] = XCP_LOWORD(XCP_LOBYTE(ts));
+    unlock_key[0] = (seed[0] + seed[3]) ^ KEY_INITIAL;
+    unlock_key[1] = seed[1] ^ unlock_key[0];
+    unlock_key[2] = seed[2] ^ unlock_key[1];
+    unlock_key[3] = seed[3] ^ unlock_key[2];
 
     return XCP_TRUE;
 }
@@ -107,12 +123,7 @@ bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
 
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
 {
-    static const uint8_t secret[] = {0x55, 0x66, 0x77, 0x88};
-
-//    printf("\tKEY [%u]: ", key->length);
-//    Xcp_Hexdump(key->data, key->length);
-
-    return XcpUtl_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
+    return XcpUtl_MemCmp(&unlock_key, key->data, 4);
 }
 
 

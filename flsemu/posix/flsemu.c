@@ -193,7 +193,7 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
     offset = (segment->pageSize * page);
     /* printf("page# %u offset: %x\n", page, offset); */
     FlsEmu_UnmapAddress(segment->persistentArray->mappingAddress, segment->memSize);
-    FlsEmu_MapAddress(segment->persistentArray->mappingAddress, offset, segment->memSize, segment->persistentArray->fileHandle);
+    FlsEmu_MapAddress(segment->persistentArray->mappingAddress, offset, segment->memSize, (int)segment->persistentArray->fileHandle);
 /*
     if (FlsEmu_MapView(segment, offset, segment->pageSize)) {
         segment->currentPage = page;

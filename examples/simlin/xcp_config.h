@@ -32,8 +32,8 @@
 */
 #define XCP_STATION_ID                              "XCP running on Linux"
 
-//#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
-#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
+#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
+//#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
@@ -53,7 +53,7 @@
 
 #define XCP_ENABLE_STATISTICS                       XCP_ON
 
-#define XCP_MAX_BS                                  (5)
+#define XCP_MAX_BS                                  (3)
 #define XCP_MIN_ST                                  (0)
 #define XCP_QUEUE_SIZE                              (0)
 

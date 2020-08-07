@@ -80,6 +80,9 @@ static void DeinitTUI(void);
 /*
 **  External Function Prototypes.
 */
+
+void endwin(void);  /* We don't want to include ncurses.h */
+
 void XcpTl_PrintConnectionInformation(void);
 
 static void DisplayHelp(void);

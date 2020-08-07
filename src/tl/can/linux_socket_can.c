@@ -224,6 +224,7 @@ void XcpTl_ReleaseConnection(void)
 bool XcpTl_VerifyConnection(void)
 {
 //    return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
+    return XCP_TRUE;
 }
 
 void XcpTl_PrintConnectionInformation(void)
