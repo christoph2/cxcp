@@ -619,9 +619,7 @@ void Xcp_Init(void)
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
     Xcp_State.daqProcessor.state = XCP_DAQ_STATE_STOPPED;
-    Xcp_State.daqPointer.daqList = (XcpDaq_ListIntegerType)0;
-    Xcp_State.daqPointer.odt = (XcpDaq_ODTIntegerType)0;
-    Xcp_State.daqPointer.odtEntry = (XcpDaq_ODTEntryIntegerType)0;
+    XcpDaq_SetPointer(0, 0, 0);
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
     Xcp_State.pgmProcessor.state = XCP_PGM_STATE_UNINIT;
@@ -1512,9 +1510,7 @@ static void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
         return;
     }
 
-    Xcp_State.daqPointer.daqList = daqList;
-    Xcp_State.daqPointer.odt = odt;
-    Xcp_State.daqPointer.odtEntry = odtEntry;
+    XcpDaq_SetPointer(daqList, odt, odtEntry);
 
     DBG_TRACE4("SET_DAQ_PTR [daq: %u odt: %u odtEntry: %u]\n", Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
 

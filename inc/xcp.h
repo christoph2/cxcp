@@ -806,7 +806,7 @@ void XcpDaq_StopSelectedLists(void);
 void XcpDaq_StopAllLists(void);
 bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType * firstPID);
 bool XcpDaq_DequeueMessage(XcpDaq_MessageType * msg);
-
+void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber);
 /*
 **  Predefined DAQ constants.
 */
