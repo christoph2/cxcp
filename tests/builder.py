@@ -13,7 +13,9 @@ class Builder:
     def clean(self):
         p0 = glob("*.o")
         p1 = glob("*.so")
-        philes = p0 + p1
+        p2 = glob("*gcda")
+        p3 = glob("*gcno")
+        philes = p0 + p1 + p2 + p3
         for ph in philes:
             res = os.unlink(ph)
 
@@ -30,6 +32,7 @@ class Builder:
 
     def build_so(self, so, *objs):
         self.run("gcc", CFLAGS_SO, " ".join(objs), "-o {}".format(so), "-ftest-coverage -fprofile-arcs")
+        self.run("ls", "-lhR")
 
 
 def main():

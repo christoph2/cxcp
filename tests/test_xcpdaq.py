@@ -53,7 +53,7 @@ class Xcp_ReturnType(enum.IntEnum):
 
     ERR_SUCCESS             = 0xff
 
-DLL_NAME = "test_daq.so"
+DLL_NAME = "./test_daq.so"
 
 dll = ctypes.CDLL(DLL_NAME)
 

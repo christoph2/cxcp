@@ -2,7 +2,7 @@
 import pytest
 import ctypes
 
-DLL_NAME = "test_cs.so"
+DLL_NAME = "./test_cs.so"
 
 #dll = ctypes.windll.LoadLibrary(DLL_NAME)
 dll = ctypes.CDLL(DLL_NAME)
