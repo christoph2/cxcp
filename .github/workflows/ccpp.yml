@@ -1,5 +1,8 @@
 name: C/C++ CI
 
+env:
+  COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS }}
+
 on:
   push:
     branches: [ master ]
@@ -19,13 +22,10 @@ jobs:
         python-version: 3.8
     - name: install deps
       run: |
-          pwd
-          ls -l
           pip install -r tests/requirements.txt
-    - name: change dir [tests]
-      run: cd tests
     - name: run tests
       run: |
+            cd tests
             python builder.py
             pytest -svv
     - name: upload to coverallz
