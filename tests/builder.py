@@ -21,7 +21,7 @@ class Builder:
 
     def run(self, cmd, *args):
         line = cmd + " " + " ".join(args)
-        print("CMD:", line)
+        #print("CMD:", line)
         return subprocess.check_call(line, shell = True)
 
     def build_objs(self, *objs):
@@ -32,7 +32,6 @@ class Builder:
 
     def build_so(self, so, *objs):
         self.run("gcc", CFLAGS_SO, " ".join(objs), "-o {}".format(so), "-ftest-coverage -fprofile-arcs")
-        self.run("ls", "-lhR")
 
 
 def main():
