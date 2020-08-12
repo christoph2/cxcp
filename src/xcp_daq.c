@@ -141,7 +141,7 @@ Xcp_ReturnType XcpDaq_Free(void)
         XcpUtl_MemSet(XcpDaq_Entities, UINT8(0), UINT32(sizeof(XcpDaq_EntityType) * UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)));
         XcpDaq_AllocState = XCP_AFTER_FREE_DAQ;
     } else {
-        result = ERR_SEQUENCE;
+        result = ERR_SEQUENCE;  /* Never touched; function always succeeds. */
     }
     return result;
 }
@@ -843,3 +843,22 @@ bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerT
     *firstPID = tmp;
     return result;
 }
+
+
+/*
+**  Debugging / Testing interface.
+*/
+#if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
+void XcpDaq_GetCounts(uint16_t * entityCount, uint16_t * listCount, uint16_t * odtCount)
+{
+    *entityCount = XcpDaq_EntityCount;
+    *listCount = XcpDaq_ListCount;
+    *odtCount = XcpDaq_OdtCount;
+}
+
+uint16_t XcpDaq_TotalDynamicEntityCount(void)
+{
+    return UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES);
+}
+
+#endif // XCP_BUILD_TYPE

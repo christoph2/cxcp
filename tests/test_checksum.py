@@ -4,7 +4,6 @@ import ctypes
 
 DLL_NAME = "./test_cs.so"
 
-#dll = ctypes.windll.LoadLibrary(DLL_NAME)
 dll = ctypes.CDLL(DLL_NAME)
 calc = dll.Xcp_CalculateChecksum
 
@@ -16,20 +15,10 @@ TEST = [
 ]
 
 
-DATA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-#DATA = (ctypes.c_uint8 * 3)(1,2,3)
-arr = ctypes.c_char_p(bytes(DATA))
-print(arr)
-
-#res = calc(ctypes.byref(arr), 10, 0, 1)
-res = calc(arr, 10, 0, 1)
-print(hex(res))
-
 def calculate_checksum(data, initial = 0, first = 1):
     arr = ctypes.c_char_p(bytes(data))
     return calc(arr, len(data), initial, first)
 
-print(hex(calculate_checksum(DATA)))
 print(hex(calculate_checksum(TEST)))
 
 """

@@ -5,8 +5,9 @@ from glob import glob
 import os
 import subprocess
 
-CFLAGS_OBJ = "-Wall -g -std=c11 -O3 -fPIC -shared -c -I../inc -I."
+CFLAGS_OBJ = "-Wall -g -std=c11 -O0 -fPIC -shared -c -I../inc -I."
 CFLAGS_SO = "-shared"
+GCOV = ""
 
 class Builder:
 

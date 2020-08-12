@@ -820,6 +820,14 @@ extern XcpDaq_ListStateType XcpDaq_PredefinedListsState[];
 
 extern const XcpDaq_EventType XcpDaq_Events[];
 
+/*
+** Debugging / Testing interface.
+*/
+#if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
+void XcpDaq_GetCounts(uint16_t * entityCount, uint16_t * listCount, uint16_t * odtCount);
+uint16_t XcpDaq_TotalDynamicEntityCount(void);
+#endif // XCP_BUILD_TYPE
+
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 
