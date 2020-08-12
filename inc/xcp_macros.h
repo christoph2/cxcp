@@ -102,6 +102,12 @@ extern "C"
 #endif
 #endif
 
+#if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
+#define XCP_GLOBAL_ON_DEBUG
+#else
+#define XCP_GLOBAL_ON_DEBUG static
+#endif // XCP_BUILD_TYPE
+
 #define XCP_ON_CAN_EXT_IDENTIFIER  (0x80000000)
 
 #if !defined(XCP_UNREFERENCED_PARAMETER)

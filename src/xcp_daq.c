@@ -95,26 +95,25 @@ static const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
 ** Local Variables.
 */
 
-static uint8_t XcpDaq_DtoBuffer[XCP_DAQ_DTO_BUFFER_SIZE + 1];
-static XcpDaq_DtoBufferStateType XcpDaq_DtoBufferState;
+XCP_GLOBAL_ON_DEBUG uint8_t XcpDaq_DtoBuffer[XCP_DAQ_DTO_BUFFER_SIZE + 1];
+XCP_GLOBAL_ON_DEBUG XcpDaq_DtoBufferStateType XcpDaq_DtoBufferState;
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-static XcpDaq_AllocStateType XcpDaq_AllocState;
-static XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
-static uint16_t XcpDaq_EntityCount = UINT16(0);
-static uint16_t XcpDaq_ListCount = UINT16(0);
-static uint16_t XcpDaq_OdtCount = UINT16(0);
+XCP_GLOBAL_ON_DEBUG XcpDaq_AllocStateType XcpDaq_AllocState;
+XCP_GLOBAL_ON_DEBUG XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
+XCP_GLOBAL_ON_DEBUG uint16_t XcpDaq_EntityCount = UINT16(0);
+XCP_GLOBAL_ON_DEBUG uint16_t XcpDaq_ListCount = UINT16(0);
+XCP_GLOBAL_ON_DEBUG uint16_t XcpDaq_OdtCount = UINT16(0);
 
-static XcpDaq_ListStateType XcpDaq_ListState ;
-static XcpDaq_ListConfigurationType XcpDaq_ListConfiguration;
+XCP_GLOBAL_ON_DEBUG XcpDaq_ListStateType XcpDaq_ListState ;
+XCP_GLOBAL_ON_DEBUG XcpDaq_ListConfigurationType XcpDaq_ListConfiguration;
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
-static uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
+XCP_GLOBAL_ON_DEBUG uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 #else
     #error XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT option currently not supported
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
-
 
 /*
 **
@@ -133,7 +132,6 @@ Xcp_ReturnType XcpDaq_Free(void)
     XcpDaq_EntityCount = UINT16(0);
     XcpDaq_ListCount = UINT16(0);
     XcpDaq_OdtCount = UINT16(0);
-
 
 #if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
     XcpUtl_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
