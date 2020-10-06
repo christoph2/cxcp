@@ -111,12 +111,10 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter);
 void XcpTl_PostQuitMessage(void);
 static void XcpTl_TriggerRecv(DWORD numBytes);
 static void XcpTl_Feed(DWORD numBytesReceived);
-
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
-static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
-static boolean Xcp_SetSocketOptionInt(SOCKET sock, int option, int value);
 
-static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
+
+static boolean Xcp_EnableSocketOption(SOCKET sock, int option)
 {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
     const char enable = 1;
@@ -131,32 +129,6 @@ static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
 #endif
     return XCP_TRUE;
 }
-
-
-static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
-{
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-    const char enable = 0;
-
-    if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-#else
-    if (setsockopt(sock, SOL_SOCKET, option, &(const char){0}, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-#endif
-    return XCP_TRUE;
-}
-
-static boolean Xcp_SetSocketOptionInt(SOCKET sock, int option, int value)
-{
-    if (setsockopt(sock, SOL_SOCKET, option, (const char*)&value, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-    return XCP_TRUE;
-}
-
 
 #define TL_WORKER_THREAD    (0)
 #define TL_ACCEPTOR_THREAD  (1)
@@ -307,6 +279,8 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter)
     DWORD error;
     int one = 1;
 
+    XCP_UNREFERENCED_PARAMETER(lpParameter);
+
     XCP_FOREVER {
         if (!XcpTl_Connection.xcpConnected) {
             fromLen = sizeof(From);
@@ -343,7 +317,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     DWORD bytesWritten;
     int addrLen;
 
-    sendOlap.wsabuf.buf = buf;
+    sendOlap.wsabuf.buf = (char*)buf;
     sendOlap.wsabuf.len = len;
     sendOlap.opcode = IoWrite;
 
@@ -517,6 +491,8 @@ static void XcpTl_TriggerRecv(DWORD numBytes)
     DWORD err = 0;
     int addrLen;
 
+    XCP_UNREFERENCED_PARAMETER(numBytes);
+
     SecureZeroMemory(&recvOlap.overlapped, sizeof(OVERLAPPED));
 
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
@@ -567,7 +543,7 @@ static void XcpTl_Feed(DWORD numBytesReceived)
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.xcpConnected || (XcpTl_VerifyConnection())) {
             Xcp_PduIn.len = dlc;
-            Xcp_PduIn.data = recvOlap.wsabuf.buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+            Xcp_PduIn.data = (uint8_t *)(recvOlap.wsabuf.buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
             Xcp_DispatchCommand(&Xcp_PduIn);
         }
         if (numBytesReceived < 5) {

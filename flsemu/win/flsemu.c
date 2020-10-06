@@ -69,7 +69,6 @@ typedef enum tagFlsEmu_OpenCreateType {
 */
 static FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, DWORD size, FlsEmu_PersistentArrayType * persistentArray);
 static bool FlsEmu_Flush(uint8_t segmentIdx);
-static void FlsEmu_CloseFileView(FlsEmu_HwFileViewType * fileView);
 static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray);
 static bool FlsEmu_MapView(FlsEmu_SegmentType * config, uint32_t offset, uint32_t length);
 static void MemoryInfo(void * address);
@@ -376,13 +375,6 @@ static void MemoryInfo(void * address)
 
     VirtualQuery(address, &info, sizeof(MEMORY_BASIC_INFORMATION));
 }
-
-
-static void FlsEmu_CloseFileView(FlsEmu_HwFileViewType * fileView)
-{
-    CloseHandle(fileView->mappingHandle);
-}
-
 
 #if defined(_WIN32)
 void FlsEmu_Info(void)
