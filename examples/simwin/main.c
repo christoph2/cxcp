@@ -26,6 +26,7 @@ DWORD Xcp_MainTask(LPVOID param);
 #define FLS_PAGE_ADDR           ((uint16_t)0x8000U)
 #define FLS_PAGE_SIZE           ((uint32_t)0x4000U)
 
+uint8_t Xcp_CalRam[4096] = {0};
 
 static FlsEmu_SegmentType S12D512_PagedFlash = {
     "XCPSIM_Flash",
@@ -144,6 +145,8 @@ bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
     result->length = 4;
     result->data = (uint8_t*)&seed;
 
+    XCP_UNREFERENCED_PARAMETER(resource);
+
     return XCP_TRUE;
 }
 
@@ -154,17 +157,18 @@ bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
 
 //    printf("\tKEY [%u]: ", key->length);
 //    Xcp_Hexdump(key->data, key->length);
+    XCP_UNREFERENCED_PARAMETER(resource);
 
     return XcpUtl_MemCmp(&secret, key->data, XCP_ARRAY_SIZE(secret));
 }
 
-/*
-ADDR = 0x4000
-LENGTH = 0x1000
-*/
 bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming)
 {
-    //mta.address
+    XCP_UNREFERENCED_PARAMETER(mta);
+    XCP_UNREFERENCED_PARAMETER(length);
+    XCP_UNREFERENCED_PARAMETER(access);
+    XCP_UNREFERENCED_PARAMETER(programming);
+
     return XCP_TRUE;
 }
 
@@ -245,6 +249,87 @@ XCP_DAQ_END_EVENTS
 /////////////////////////
 /////////////////////////
 
+#define T_LOW_LIMIT     (70.0)
+#define T_HIGH_LIMIT    (85.0)
+#define T_STEP_SIZE     (1.5)
+
+
+/** @brief
+ *
+ * @return Random selection of {-1, 0 , 1} values.
+ *
+ */
+int8_t randomSlope(void)
+{
+    return (rand() % 3) - 1;
+}
+
+double t_env_func(void)
+{
+    static double t_prev = -273.15;
+
+    t_prev = t_prev + (T_STEP_SIZE * randomSlope());
+    t_prev = XCP_MIN(t_prev, T_HIGH_LIMIT);
+    t_prev = XCP_MAX(t_prev, T_LOW_LIMIT);
+
+    return t_prev;
+
+#if 0
+FUNC (void, Environment_CODE) envRE_func (void)
+{
+    /* read parameters for simulation of the temperature profile */
+    float32 lLowLimit = Rte_Prm_EnvParamsRPP_env_TLowLimit();
+    float32 lStepSize = Rte_Prm_EnvParamsRPP_env_TStepSize();
+
+    /* retrieve internal state */
+    uint32 lSeed = Rte_IrvIRead_envRE_Seed();
+    float32 lTEnv = Rte_IrvIRead_envRE_TEnv();
+    float32 direction = (float32)(lSeed % 3) - 1.0;
+
+    /* calc high limit with parameter, store for measurement */
+    *Rte_Pim_THighLimit() = lLowLimit + Rte_Prm_EnvParamsRPP_env_THighLimitDistance();
+
+    /* update state for pseudo random number generation */
+    lSeed = (8253729 * lSeed + 2396403);
+
+    /* calculate environment temperature */
+    lTEnv += lStepSize * direction;
+
+    /* saturating environment temperature at the bounds */
+
+    if (lTEnv < lLowLimit) { lTEnv = lLowLimit; }
+
+    if( lTEnv > *Rte_Pim_THighLimit()) {
+        lTEnv = * Rte_Pim_THighLimit();
+    }
+
+    /* Store internal state */
+    Rte_IrvIWrite_envRE_Seed(lSeed);
+    Rte_IrvIWrite_envRE_TEnv(lTEnv);
+
+    /* write output */
+    Rte_IWrite_envRE_EnvTemperaturePPP_T(lTEnv);
+}
+#endif
+}
+
+double plant_func(void)
+{
+//    q_plant = t_n * 1 * (j / k);
+//    t_n = q_plant_n / (1 * (j / k));
+}
+
+double controller_func(void)
+{
+
+}
+
+
+/////////////////////////
+/////////////////////////
+/////////////////////////
+
+
 DWORD Xcp_MainTask(LPVOID param)
 {
     HANDLE * quit_event = (HANDLE *)param;
@@ -296,7 +381,7 @@ DWORD AppTask(LPVOID param)
                     }
                 }
                 randomValue = (uint16_t)rand();
-
+                printf("T: %0.2f ", t_env_func());
                 //printf("\t\t\tTRI [%u]\n", triangle.value);
                 XcpDaq_TriggerEvent(1);
             }
