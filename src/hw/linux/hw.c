@@ -23,13 +23,14 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#define  _GNU_C_SOURCE
 
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <pthread.h>
-#include <semaphore.h>
+//#include <semaphore.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>

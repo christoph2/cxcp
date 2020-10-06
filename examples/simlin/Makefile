@@ -6,7 +6,7 @@ xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/linux/hw.c hw/linux/t
 INCLUDE= -I . -I ../../inc -I ../../flsemu
 CPPFLAGS += $(INCLUDE)
 
-CFLAGS +=  -Wall -Wextra -Wno-unused-parameter -Wno-unused-function  -ffunction-sections
+CFLAGS +=  -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function  -ffunction-sections
 LDFLAGS=  -Wl,-Map=$(xcp_sim_TARGET).map -Wl,--cref -Wl,-gc-sections -lpthread -lrt -lncurses
 ifeq ($(PROFILE),1)
 CFLAGS += -pg -fprofile-arcs -ftest-coverage --coverage
