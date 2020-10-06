@@ -228,7 +228,7 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
 
 static bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition)
 {
-    printf("STATE: %u TRANSITION: %u\n", XcpDaq_AllocState, transition);
+    /* printf("STATE: %u TRANSITION: %u\n", XcpDaq_AllocState, transition); */
     if (XcpDaq_AllocTransitionTable[XcpDaq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
         return (bool)XCP_TRUE;
     } else {
@@ -269,7 +269,7 @@ XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, X
     XcpDaq_ODTType const * odt;
     XcpDaq_ODTIntegerType idx;
 
-    printf("XcpDaq_GetOdtEntry(()\n");
+    /* printf("XcpDaq_GetOdtEntry(()\n"); */
 
     /* TODO: Range checking. */
     odt = XcpDaq_GetOdt(daqListNumber, odtNumber);
@@ -315,9 +315,9 @@ XcpDaq_ListStateType * XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber)
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 
 
-#endif // XCP_DAQ_ENABLE_DYNAMIC_LISTS
+#endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
-    printf("XcpDaq_GetListState() number: %u\n", daqListNumber);
+    /* printf("XcpDaq_GetListState() number: %u\n", daqListNumber); */
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
     return &XcpDaq_ListState;
@@ -849,6 +849,7 @@ bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerT
 **  Debugging / Testing interface.
 */
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
+#if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 void XcpDaq_GetCounts(uint16_t * entityCount, uint16_t * listCount, uint16_t * odtCount)
 {
     *entityCount = XcpDaq_EntityCount;
@@ -860,5 +861,16 @@ uint16_t XcpDaq_TotalDynamicEntityCount(void)
 {
     return UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES);
 }
+
+XcpDaq_EntityType * XcpDaq_GetDynamicEntities(void)
+{
+    return &XcpDaq_Entities[0];
+}
+
+XcpDaq_EntityType XcpDaq_GetDynamicEntity(uint16_t num)
+{
+    return XcpDaq_Entities[num];
+}
+#endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #endif // XCP_BUILD_TYPE

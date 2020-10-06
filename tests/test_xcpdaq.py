@@ -3,8 +3,13 @@
 
 import ctypes
 import enum
+import os
 from pprint import pprint
 import pytest
+
+def libname(name):
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), name))
+
 
 FUNCS = """XcpDaq_Alloc
 XcpDaq_AllocOdt
@@ -26,8 +31,11 @@ XcpDaq_TriggerEvent
 XcpDaq_ValidateList
 XcpDaq_ValidateOdtEntry
 XcpDaq_GetCounts
+XcpDaq_GetDynamicEntities
 XcpDaq_TotalDynamicEntityCount
 Xcp_Init
+XcpDaq_GetDynamicEntity
+XcpDaq_GetDynamicEntities
 """
 
 class Xcp_ReturnType(enum.IntEnum):
@@ -55,6 +63,45 @@ class Xcp_ReturnType(enum.IntEnum):
     ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = 0x33
 
     ERR_SUCCESS             = 0xff
+
+
+class XcpDaq_MtaType(ctypes.Structure):
+    _fields_ = [
+        ("address", ctypes.c_uint32),
+    ]
+
+class XcpDaq_ODTEntryType(ctypes.Structure):
+    _fields_ = [
+        ("mta", XcpDaq_MtaType),
+        ("length", ctypes.c_int32),
+    ]
+
+class XcpDaq_ODTType(ctypes.Structure):
+    _fields_ = [
+        ("numOdtEntries", ctypes.c_uint8),
+        ("firstOdtEntry", ctypes.c_uint16),
+    ]
+
+class XcpDaq_DynamicListType(ctypes.Structure):
+    _fields_ = [
+        ("numOdts", ctypes.c_uint8),
+        ("firstOdt", ctypes.c_uint16),
+        ("uint8_t", ctypes.c_uint8),
+    ]
+
+class XcpDaq_EntityUnionType(ctypes.Structure):
+    _fields_ = [
+        ("odtEntry", XcpDaq_ODTEntryType),
+        ("odt", XcpDaq_ODTType),
+        ("daqList", XcpDaq_DynamicListType),
+    ]
+
+class XcpDaq_EntityType(ctypes.Structure):
+    _fields_ = [
+        ("kind", ctypes.c_uint8),
+        ("entity", XcpDaq_EntityUnionType),
+    ]
+
 
 DLL_NAME = "./test_daq.so"
 
@@ -96,6 +143,22 @@ def xcpdaq_allocodt(daq_list_num: int, odt_count: int) -> int:
 
 def xcpdaq_allocodt_entry(daq_list_num: int, odt_num: int, entry_count: int) -> int:
     return FUNCTIONS["XcpDaq_AllocOdtEntry"](daq_list_num, odt_num, entry_count)
+
+def xcpdaq_total_dynamic_entity_count():
+    return FUNCTIONS["XcpDaq_TotalDynamicEntityCount"]()
+
+def xcpdaq_get_dynamic_entities():
+    EP = ctypes.POINTER(XcpDaq_EntityType)
+    ep = EP()
+    #xp = XcpDaq_EntityType()
+    vp = ctypes.c_void_p()
+    vp = FUNCTIONS["XcpDaq_GetDynamicEntities"]()
+    #print("EP-RES:", dir(vp))
+    xxx = ctypes.cast(vp, XcpDaq_EntityType)
+    print("EP-RES:", ep)
+
+def xcpdaq_get_dynamic_entity(num):
+    return  FUNCTIONS["XcpDaq_GetDynamicEntity"](num)
 
 
 ##
@@ -208,3 +271,7 @@ def test_basic_alloc3(daq):
     assert xcpdaq_allocodt_entry(0, 1, 3) == Xcp_ReturnType.ERR_SUCCESS
     assert xcpdaq_get_counts() == (9, 2, 2)
 
+def test_xxx():
+    for idx in range(20):
+        res = xcpdaq_get_dynamic_entity(idx)
+        print(idx, res)
