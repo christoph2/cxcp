@@ -70,6 +70,7 @@ static void centered_text(WINDOW * win, int row, char const * text, int attrs)
     int maxX, maxY;
 
     getmaxyx(win, maxY, maxX);
+    XCP_UNREFERENCED_PARAMETER(maxY);
     attron(attrs);
     mvprintw(row, (maxX - strlen(text)) / 2, text);
     attroff(attrs);
@@ -102,7 +103,6 @@ static void destroy_win(WINDOW *local_win)
 
 void XcpTui_Init(void)
 {
-    int maxX, maxY;
     bool ext;
     char buf[128];
     WINDOW *my_win;
@@ -112,8 +112,6 @@ void XcpTui_Init(void)
     raw();
     keypad(stdscr, TRUE);
     noecho();
-    getmaxyx(stdscr, maxY, maxX);
-
     start_color(); /* Start color */
     init_pair(1, COLOR_BLUE, COLOR_BLACK);
 

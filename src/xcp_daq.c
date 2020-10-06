@@ -327,7 +327,6 @@ XcpDaq_ListStateType * XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber)
     return &XcpDaq_PredefinedListsState[daqListNumber];
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
-    printf("dyn and PD\n");
     if (daqListNumber >= XcpDaq_PredefinedListCount) {
         XcpDaq_DynamicListType * dl = &XcpDaq_Entities[daqListNumber].entity.daqList;
 
@@ -352,7 +351,6 @@ void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerTy
 
 bool XcpDaq_ValidateConfiguration(void)
 {
-    printf("XcpDaq_ValidateConfiguration(()\n");
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
     return (bool)((XcpDaq_EntityCount > UINT16(0)) && (XcpDaq_ListCount > UINT16(0)) &&  (XcpDaq_OdtCount > UINT16(0)));
@@ -782,8 +780,6 @@ static XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber
 {
     XcpDaq_ListConfigurationType const * dl;
     XcpDaq_ODTIntegerType idx;
-
-    printf("XcpDaq_GetOdt(()\n");
 
     dl = XcpDaq_GetListConfiguration(daqListNumber);
     idx = (XcpDaq_ODTIntegerType)dl->firstOdt + odtNumber;
