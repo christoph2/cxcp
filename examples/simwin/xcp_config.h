@@ -38,7 +38,7 @@
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
 #define XCP_ENABLE_SLAVE_BLOCKMODE                  XCP_ON
-#define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_OFF
+#define XCP_ENABLE_MASTER_BLOCKMODE                 XCP_ON
 
 #define XCP_ENABLE_STIM                             XCP_OFF
 
@@ -53,7 +53,7 @@
 
 #define XCP_ENABLE_STATISTICS                       XCP_ON
 
-#define XCP_MAX_BS                                  (0)
+#define XCP_MAX_BS                                  (8)
 #define XCP_MIN_ST                                  (0)
 #define XCP_QUEUE_SIZE                              (0)
 
@@ -61,7 +61,7 @@
 /*
 ** Resource Protection.
 */
-#define XCP_PROTECT_CAL                             XCP_ON
+#define XCP_PROTECT_CAL                             XCP_OFF
 #define XCP_PROTECT_PAG                             XCP_ON
 #define XCP_PROTECT_DAQ                             XCP_OFF
 #define XCP_PROTECT_STIM                            XCP_ON
@@ -70,9 +70,9 @@
 /*
 **  DAQ Settings.
 */
-#define XCP_DAQ_CONFIG_TYPE                         XCP_DAQ_CONFIG_TYPE_NONE
+#define XCP_DAQ_CONFIG_TYPE                         XCP_DAQ_CONFIG_TYPE_DYNAMIC
 #define XCP_DAQ_DTO_BUFFER_SIZE                     (40)
-#define XCP_DAQ_ENABLE_PREDEFINED_LISTS             XCP_ON
+#define XCP_DAQ_ENABLE_PREDEFINED_LISTS             XCP_OFF
 #define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
 #define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
 #define XCP_DAQ_ENABLE_PRESCALER                    XCP_OFF
@@ -120,8 +120,8 @@
 
 #define XCP_ENABLE_CAL_COMMANDS                     XCP_ON
 
-    #define XCP_ENABLE_DOWNLOAD_NEXT                XCP_OFF
-    #define XCP_ENABLE_DOWNLOAD_MAX                 XCP_OFF
+    #define XCP_ENABLE_DOWNLOAD_NEXT                XCP_ON
+    #define XCP_ENABLE_DOWNLOAD_MAX                 XCP_ON
     #define XCP_ENABLE_SHORT_DOWNLOAD               XCP_ON
     #define XCP_ENABLE_MODIFY_BITS                  XCP_ON
 
