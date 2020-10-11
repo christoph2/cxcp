@@ -2,12 +2,12 @@ Configuration Options
 =====================
 
 
-Configuration options need to be supplied in a file named `xcp_config.h`. Typically one uses a file from the examples
+Configuration options need to be supplied in a file named **xcp_config.h**. Typically one uses a file from the examples
 directory as a starting point.
 
 .. Note::
-   - `bool` is either `XCP_ON` or `XCP_OFF`.
-   - Options starting with `XCP_ENABLE_` are of type `bool` to enable resp. disable some functionality.
+   - **bool** is either **XCP_ON** or **XCP_OFF** .
+   - Options starting with **XCP_ENABLE_** are of type **bool** to enable/disable some functionality.
 
 
 General Options
@@ -16,10 +16,12 @@ General Options
     .. c:macro:: XCP_STATION_ID
 
         A short description of your node (this is usually the name of an A2L file).
+        This is the return value of **GET_ID(1)** .
 
     .. c:macro:: XCP_BUILD_TYPE
 
-        Build type is either `XCP_DEBUG_BUILD` or `XCP_RELEASE_BUILD`.
+        Build type is either **XCP_DEBUG_BUILD** or **XCP_RELEASE_BUILD**.
+        Most useful if you need to debug your application or your're a contributor to **BlueParrotXCP**.
 
     .. c:macro:: XCP_ENABLE_EXTERN_C_GUARDS
 
@@ -45,29 +47,85 @@ General Options
 
     .. c:macro:: XCP_ENABLE_SLAVE_BLOCKMODE
 
-            if enabled, slave may use block transfer mode.
+            If enabled, slave may use block transfer mode.
 
 
     .. c:macro:: XCP_ENABLE_MASTER_BLOCKMODE
 
             If enabled, master may use block transfer mode. In this case, options :c:macro:`XCP_MAX_BS` and :c:macro:`XCP_MIN_ST` apply.
 
-    .. c:macro:: XCP_ENABLE_STIM                             `bool`
+    .. c:macro:: XCP_ENABLE_STIM                             **bool**
+            STIM is currently not implemented.
 
-    .. c:macro:: XCP_CHECKSUM_METHOD                         XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
-    .. c:macro:: XCP_CHECKSUM_CHUNKED_CALCULATION            `bool`
-    .. c:macro:: XCP_CHECKSUM_CHUNK_SIZE                     (64)
-    .. c:macro:: XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE             (0)     /* 0 ==> unlimited */
+    .. c:macro:: XCP_CHECKSUM_METHOD
 
-    .. c:macro:: XCP_BYTE_ORDER                              XCP_BYTE_ORDER_INTEL
-    .. c:macro:: XCP_ADDRESS_GRANULARITY                     XCP_ADDRESS_GRANULARITY_BYTE
+            Choose one of:
+
+           * XCP_CHECKSUM_METHOD_XCP_ADD_11
+           * XCP_CHECKSUM_METHOD_XCP_ADD_12
+           * XCP_CHECKSUM_METHOD_XCP_ADD_14
+           * XCP_CHECKSUM_METHOD_XCP_ADD_22
+           * XCP_CHECKSUM_METHOD_XCP_ADD_24
+           * XCP_CHECKSUM_METHOD_XCP_ADD_44
+           * XCP_CHECKSUM_METHOD_XCP_CRC_16
+           * XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
+           * XCP_CHECKSUM_METHOD_XCP_CRC_32
+
+           **XCP_USER_DEFINED** not supported yet.
 
 
-    .. c:macro:: XCP_MAX_BS                                  (0)
-    .. c:macro:: XCP_MIN_ST                                  (0)
-    .. c:macro:: XCP_QUEUE_SIZE                              (0)
+    .. c:macro:: XCP_CHECKSUM_CHUNKED_CALCULATION            **bool**
 
-    .. c:macro:: XCP_DAQ_MAX_DYNAMIC_ENTITIES
+            If **XCP_FALSE** checksums are completely calculated for requested memory blocks,
+            otherwise chunked in a periodically called MainFunction.
+
+    .. c:macro:: XCP_CHECKSUM_CHUNK_SIZE
+
+            Chunk size in bytes.
+            s. :c:macro:`XCP_CHECKSUM_CHUNKED_CALCULATION`
+
+    .. c:macro:: XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE
+
+            You may want to limit maximum checksum block size (in bytes), **0** means unlimited (4294967295 to be exact).
+
+    .. c:macro:: XCP_BYTE_ORDER
+
+            Byteorder / endianess of your platform, choose either **XCP_BYTE_ORDER_INTEL** or **XCP_BYTE_ORDER_MOTOROLA**
+
+    .. c:macro:: XCP_ADDRESS_GRANULARITY
+
+
+            Choose **XCP_ADDRESS_GRANULARITY_BYTE**, **XCP_ADDRESS_GRANULARITY_WORD** and **XCP_ADDRESS_GRANULARITY_DWORD**
+            are not supported yet.
+
+    .. c:macro:: XCP_ENABLE_STATISTICS
+
+
+            If enabled collect some statistics like traffic and so on.
+
+    .. c:macro:: XCP_MAX_BS
+
+            Indicates the maximum allowed block size as the number of consecutive command packets (**DOWNLOAD_NEXT**) in a block sequence.
+
+    .. c:macro:: XCP_MIN_ST
+
+            Indicates the required minimum separation time between the packets of a block transfer from the master 
+            device to the slave device in units of 100 microseconds.
+
+    .. c:macro:: XCP_QUEUE_SIZE
+
+            Applies to **INTERLEAVED_MODE**, which is currently not supported.
+
+Resource Protection Options
+---------------------------
+
+    These option determine the initial per-session resource protection state.
+
+   .. c:macro:: XCP_PROTECT_CAL         **bool**
+   .. c:macro:: XCP_PROTECT_PAG         **bool**
+   .. c:macro:: XCP_PROTECT_DAQ         **bool**
+   .. c:macro:: XCP_PROTECT_STIM        **bool**
+   .. c:macro:: XCP_PROTECT_PGM         **bool**
 
 Optional Services
 -----------------
