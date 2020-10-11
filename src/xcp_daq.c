@@ -68,20 +68,20 @@ typedef enum tagXcpDaq_ListTransitionType {
 /*
 ** Local Function Prototypes.
 */
-static XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber);
+XCP_STATIC XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber);
 void XcpDaq_PrintDAQDetails(void);
-static void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition);
-static void XcpDaq_InitMessageQueue(void);
+XCP_STATIC void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition);
+XCP_STATIC void XcpDaq_InitMessageQueue(void);
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-static bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition);
-static XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
+XCP_STATIC bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition);
+XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 /*
 ** Local Constants.
 */
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-static const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
+XCP_STATIC const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
                             /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT             ALLOC_ODT_ENTRY    */
 /* ALLOC_IDLE*/             {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
 /* AFTER_FREE_DAQ  */       {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK) , UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
@@ -95,22 +95,22 @@ static const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
 ** Local Variables.
 */
 
-XCP_GLOBAL_ON_DEBUG uint8_t XcpDaq_DtoBuffer[XCP_DAQ_DTO_BUFFER_SIZE + 1];
-XCP_GLOBAL_ON_DEBUG XcpDaq_DtoBufferStateType XcpDaq_DtoBufferState;
+XCP_STATIC uint8_t XcpDaq_DtoBuffer[XCP_DAQ_DTO_BUFFER_SIZE + 1];
+XCP_STATIC XcpDaq_DtoBufferStateType XcpDaq_DtoBufferState;
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-XCP_GLOBAL_ON_DEBUG XcpDaq_AllocStateType XcpDaq_AllocState;
-XCP_GLOBAL_ON_DEBUG XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
-XCP_GLOBAL_ON_DEBUG uint16_t XcpDaq_EntityCount = UINT16(0);
-XCP_GLOBAL_ON_DEBUG uint16_t XcpDaq_ListCount = UINT16(0);
-XCP_GLOBAL_ON_DEBUG uint16_t XcpDaq_OdtCount = UINT16(0);
+XCP_STATIC XcpDaq_AllocStateType XcpDaq_AllocState;
+XCP_STATIC XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
+XCP_STATIC uint16_t XcpDaq_EntityCount = UINT16(0);
+XCP_STATIC uint16_t XcpDaq_ListCount = UINT16(0);
+XCP_STATIC uint16_t XcpDaq_OdtCount = UINT16(0);
 
-XCP_GLOBAL_ON_DEBUG XcpDaq_ListStateType XcpDaq_ListState ;
-XCP_GLOBAL_ON_DEBUG XcpDaq_ListConfigurationType XcpDaq_ListConfiguration;
+XCP_STATIC XcpDaq_ListStateType XcpDaq_ListState ;
+XCP_STATIC XcpDaq_ListConfigurationType XcpDaq_ListConfiguration;
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
-XCP_GLOBAL_ON_DEBUG uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
+XCP_STATIC uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 #else
     #error XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT option currently not supported
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
@@ -226,7 +226,7 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
 }
 
 
-static bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition)
+XCP_STATIC bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition)
 {
     /* printf("STATE: %u TRANSITION: %u\n", XcpDaq_AllocState, transition); */
     if (XcpDaq_AllocTransitionTable[XcpDaq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
@@ -237,7 +237,7 @@ static bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition)
 }
 
 
-static XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void)
+XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void)
 {
     return (XcpDaq_ListIntegerType)XcpDaq_ListCount;
 }
@@ -258,6 +258,7 @@ void XcpDaq_Init(void)
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
+    printf("XcpDaq_GetDynamicEntities: %p\n", XcpDaq_GetDynamicEntities());
     XcpDaq_AllocState = XCP_ALLOC_IDLE;
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -503,7 +504,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
  *
  *
  */
-static void XcpDaq_InitMessageQueue(void)
+XCP_STATIC void XcpDaq_InitMessageQueue(void)
 {
     XCP_DAQ_ENTER_CRITICAL();
     XcpDaq_DtoBufferState.numEntries = UINT16(0);
@@ -776,7 +777,7 @@ void XcpDaq_StopAllLists(void)
 /*
 ** Local Functions.
 */
-static XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber)
+XCP_STATIC XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber)
 {
     XcpDaq_ListConfigurationType const * dl;
     XcpDaq_ODTIntegerType idx;
@@ -794,7 +795,7 @@ static XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber
 #endif
 }
 
-static void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition)
+XCP_STATIC void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition)
 {
     XcpDaq_ListIntegerType idx;
     XcpDaq_ListStateType * entry;

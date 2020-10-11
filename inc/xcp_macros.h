@@ -103,10 +103,10 @@ extern "C"
 #endif
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-#define XCP_GLOBAL_ON_DEBUG
+#define XCP_STATIC          /**< Static only on DEBUG builds. Rationale: (unit-) testing. */
 #else
-#define XCP_GLOBAL_ON_DEBUG static
-#endif // XCP_BUILD_TYPE
+#define XCP_STATIC static
+#endif /* XCP_BUILD_TYPE */
 
 #define XCP_ON_CAN_EXT_IDENTIFIER  (0x80000000)
 
