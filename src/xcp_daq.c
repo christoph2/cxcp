@@ -258,7 +258,6 @@ void XcpDaq_Init(void)
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-    printf("XcpDaq_GetDynamicEntities: %p\n", XcpDaq_GetDynamicEntities());
     XcpDaq_AllocState = XCP_ALLOC_IDLE;
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -864,10 +863,16 @@ XcpDaq_EntityType * XcpDaq_GetDynamicEntities(void)
     return &XcpDaq_Entities[0];
 }
 
-XcpDaq_EntityType XcpDaq_GetDynamicEntity(uint16_t num)
+XcpDaq_EntityType * XcpDaq_GetDynamicEntity(uint16_t num)
 {
-    return XcpDaq_Entities[num];
+    return &XcpDaq_Entities[num];
 }
+
+uint8_t * XcpDaq_GetDtoBuffer(void)
+{
+    return &XcpDaq_DtoBuffer[0];
+}
+
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #endif // XCP_BUILD_TYPE
