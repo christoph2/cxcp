@@ -152,6 +152,9 @@ Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
     Xcp_ReturnType result = ERR_SUCCESS;
 
     if (!XcpDaq_AllocValidateTransition(XCP_CALL_ALLOC_DAQ)) {
+#if XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR == XCP_ON
+        XcpDaq_Init();
+#endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
         DBG_PRINT1("Xcp_AllocDaq() not allowed.\n");
     } else {
@@ -177,6 +180,9 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
     Xcp_ReturnType result = ERR_SUCCESS;
 
     if (!XcpDaq_AllocValidateTransition(XCP_CALL_ALLOC_ODT)) {
+#if XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR == XCP_ON
+        XcpDaq_Init();
+#endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
         DBG_PRINT1("Xcp_AllocOdt() not allowed.\n");
     } else {
@@ -205,6 +211,9 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
     Xcp_ReturnType result = ERR_SUCCESS;
 
     if (!XcpDaq_AllocValidateTransition(XCP_CALL_ALLOC_ODT_ENTRY)) {
+#if XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR == XCP_ON
+        XcpDaq_Init();
+#endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
         DBG_PRINT1("Xcp_AllocOdtEntry() not allowed.\n");
     } else {
