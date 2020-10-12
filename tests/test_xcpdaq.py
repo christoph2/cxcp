@@ -36,6 +36,7 @@ XcpDaq_TotalDynamicEntityCount
 Xcp_Init
 XcpDaq_GetDynamicEntity
 XcpDaq_GetDynamicEntities
+XcpDaq_GetDtoBuffer
 """
 
 class Xcp_ReturnType(enum.IntEnum):
@@ -64,25 +65,34 @@ class Xcp_ReturnType(enum.IntEnum):
 
     ERR_SUCCESS             = 0xff
 
+class XcpDaq_EntityKindType(enum.IntEnum):
+    XCP_ENTITY_UNUSED       = 0
+    XCP_ENTITY_DAQ_LIST     = 1
+    XCP_ENTITY_ODT          = 2
+    XCP_ENTITY_ODT_ENTRY    = 3
 
 class XcpDaq_MtaType(ctypes.Structure):
+    _pack_ = 1
     _fields_ = [
         ("address", ctypes.c_uint32),
     ]
 
 class XcpDaq_ODTEntryType(ctypes.Structure):
+    _pack_ = 1
     _fields_ = [
         ("mta", XcpDaq_MtaType),
         ("length", ctypes.c_int32),
     ]
 
 class XcpDaq_ODTType(ctypes.Structure):
+    _pack_ = 1
     _fields_ = [
         ("numOdtEntries", ctypes.c_uint8),
         ("firstOdtEntry", ctypes.c_uint16),
     ]
 
 class XcpDaq_DynamicListType(ctypes.Structure):
+    _pack_ = 1
     _fields_ = [
         ("numOdts", ctypes.c_uint8),
         ("firstOdt", ctypes.c_uint16),
@@ -90,6 +100,7 @@ class XcpDaq_DynamicListType(ctypes.Structure):
     ]
 
 class XcpDaq_EntityUnionType(ctypes.Structure):
+    _pack_ = 1
     _fields_ = [
         ("odtEntry", XcpDaq_ODTEntryType),
         ("odt", XcpDaq_ODTType),
@@ -97,6 +108,7 @@ class XcpDaq_EntityUnionType(ctypes.Structure):
     ]
 
 class XcpDaq_EntityType(ctypes.Structure):
+    _pack_ = 1
     _fields_ = [
         ("kind", ctypes.c_uint8),
         ("entity", XcpDaq_EntityUnionType),
@@ -112,12 +124,10 @@ for func in FUNCS.splitlines():
     func = func.strip()
     FUNCTIONS[func] = getattr(dll, func)
 
-
 @pytest.fixture
 def daq():
     xcp_init()
     xcpdaq_init()
-    xcpdaq_free()
 
 def xcp_init():
     FUNCTIONS["Xcp_Init"]()
@@ -148,18 +158,35 @@ def xcpdaq_total_dynamic_entity_count():
     return FUNCTIONS["XcpDaq_TotalDynamicEntityCount"]()
 
 def xcpdaq_get_dynamic_entities():
-    EP = ctypes.POINTER(XcpDaq_EntityType)
-    ep = EP()
-    #xp = XcpDaq_EntityType()
-    vp = ctypes.c_void_p()
     vp = FUNCTIONS["XcpDaq_GetDynamicEntities"]()
-    #print("EP-RES:", dir(vp))
-    xxx = ctypes.cast(vp, XcpDaq_EntityType)
-    print("EP-RES:", ep)
+    return vp
+
+def xcpdaq_get_dto_buffer():
+    return FUNCTIONS["XcpDaq_GetDtoBuffer"]()
 
 def xcpdaq_get_dynamic_entity(num):
-    return  FUNCTIONS["XcpDaq_GetDynamicEntity"](num)
+    vp = FUNCTIONS["XcpDaq_GetDynamicEntity"](num)
+    return vp
 
+def xcpdaq_get_dynamic_entity_content(num):
+    addr = xcpdaq_get_dynamic_entity(num)
+    entry = ctypes.cast(addr, ctypes.POINTER(XcpDaq_EntityType))
+    kind = entry.contents.kind
+    entity = entry.contents.entity
+
+    # Function is polymorphic on return.
+    if kind == XcpDaq_EntityKindType.XCP_ENTITY_UNUSED:
+        result = None
+    elif kind == XcpDaq_EntityKindType.XCP_ENTITY_DAQ_LIST:
+        result = entity.daqList
+    elif kind == XcpDaq_EntityKindType.XCP_ENTITY_ODT:
+        result = entity.odt
+    elif kind == XcpDaq_EntityKindType.XCP_ENTITY_ODT_ENTRY:
+        result = entity.odtEntry
+    return XcpDaq_EntityKindType(kind), result
+
+def xcpdaq_check_unused_entries(start_idx: int = 0):
+    pass
 
 ##
 ## Test XcpDaq_AllocTransitionTable
@@ -237,6 +264,10 @@ def test_allocodt_after_allocodt_entry(daq):
     assert xcpdaq_allocodt_entry(0, 0, 1) == Xcp_ReturnType.ERR_SUCCESS
     assert xcpdaq_allocodt(1, 3) == Xcp_ReturnType.ERR_SEQUENCE
 
+    #for idx in range(8):
+    #    ent = xcpdaq_get_dynamic_entity_content(idx)
+    #    print(ent)
+
 ##
 ##  Memory Overflows.
 ##
@@ -270,8 +301,3 @@ def test_basic_alloc3(daq):
     assert xcpdaq_allocodt_entry(0, 0, 2) == Xcp_ReturnType.ERR_SUCCESS
     assert xcpdaq_allocodt_entry(0, 1, 3) == Xcp_ReturnType.ERR_SUCCESS
     assert xcpdaq_get_counts() == (9, 2, 2)
-
-def test_xxx():
-    for idx in range(20):
-        res = xcpdaq_get_dynamic_entity(idx)
-        print(idx, res)
