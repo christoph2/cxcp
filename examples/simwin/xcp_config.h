@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -22,6 +22,11 @@
  *
  * s. FLOSS-EXCEPTION.txt
  */
+
+/*
+ *  For details on options refer to `documentation <https://github.com/christoph2/cxcp/docs/options.rst>`_
+ */
+
 
 #if !defined(__XCP_CONFIG_H)
 #define __XCP_CONFIG_H
@@ -49,7 +54,6 @@
 
 #define XCP_BYTE_ORDER                              XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY                     XCP_ADDRESS_GRANULARITY_BYTE
-
 
 #define XCP_ENABLE_STATISTICS                       XCP_ON
 
@@ -81,9 +85,7 @@
 #define XCP_DAQ_ENABLE_PRIORITIZATION               XCP_OFF
 #define XCP_DAQ_ENABLE_ALTERNATING                  XCP_OFF
 #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          XCP_ON
-
-#define XCP_DAQ_ENABLE_DTO_PADDING                  XCP_OFF
-
+#define XCP_DAQ_ENABLE_WRITE_THROUGH                XCP_OFF
 #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (100)
 #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
 #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT XCP_OFF
