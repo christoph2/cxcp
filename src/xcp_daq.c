@@ -248,6 +248,9 @@ void XcpDaq_Init(void)
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     XcpDaq_ListIntegerType idx;
 
+    XcpDaq_StopAllLists();
+    XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
+
     for (idx = (XcpDaq_ListIntegerType)0; idx < XcpDaq_PredefinedListCount; ++idx) {
         XcpDaq_PredefinedListsState[idx].mode = UINT8(0);
 #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
@@ -261,6 +264,7 @@ void XcpDaq_Init(void)
     XcpDaq_AllocState = XCP_ALLOC_IDLE;
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
+    (void)XcpDaq_Free();
     XcpDaq_InitMessageQueue();
 }
 

@@ -665,8 +665,7 @@ void Xcp_Disconnect(void)
 {
     XcpTl_ReleaseConnection();
     Xcp_DefaultResourceProtection();
-    XcpDaq_StopAllLists();
-    XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
+    XcpDaq_Init();
 }
 
 
