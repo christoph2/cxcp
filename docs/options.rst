@@ -119,13 +119,117 @@ General Options
 Resource Protection Options
 ---------------------------
 
-    These option determine the initial per-session resource protection state.
+These option determine the initial per-session resource protection state.
 
    .. c:macro:: XCP_PROTECT_CAL         **bool**
    .. c:macro:: XCP_PROTECT_PAG         **bool**
    .. c:macro:: XCP_PROTECT_DAQ         **bool**
    .. c:macro:: XCP_PROTECT_STIM        **bool**
    .. c:macro:: XCP_PROTECT_PGM         **bool**
+
+
+DAQ Options
+-----------
+
+   .. c:macro:: XCP_DAQ_CONFIG_TYPE
+
+       - XCP_DAQ_CONFIG_TYPE_NONE
+             No DAQ lists at all.
+
+       - XCP_DAQ_CONFIG_TYPE_STATIC
+             Only static DAQ lists.
+
+       - XCP_DAQ_CONFIG_TYPE_DYNAMIC
+             Only dynamic DAQ lists.
+
+   .. c:macro:: XCP_DAQ_DTO_BUFFER_SIZE
+
+        Size of DTO message buffer (in bytes).
+
+   .. c:macro:: XCP_DAQ_ENABLE_PREDEFINED_LISTS
+
+        Enable support for predefined DAQ lists.
+
+   .. c:macro:: XCP_DAQ_TIMESTAMP_UNIT
+
+       Choose:
+
+          *  XCP_DAQ_TIMESTAMP_UNIT_1NS
+          *  XCP_DAQ_TIMESTAMP_UNIT_10NS
+          *  XCP_DAQ_TIMESTAMP_UNIT_100NS
+          *  XCP_DAQ_TIMESTAMP_UNIT_1US
+          *  XCP_DAQ_TIMESTAMP_UNIT_10US
+          *  XCP_DAQ_TIMESTAMP_UNIT_100US
+          *  XCP_DAQ_TIMESTAMP_UNIT_1MS
+          *  XCP_DAQ_TIMESTAMP_UNIT_10MS
+          *  XCP_DAQ_TIMESTAMP_UNIT_100MS
+          *  XCP_DAQ_TIMESTAMP_UNIT_1S
+          *  XCP_DAQ_TIMESTAMP_UNIT_1PS
+          *  XCP_DAQ_TIMESTAMP_UNIT_10PS
+          *  XCP_DAQ_TIMESTAMP_UNIT_100PS
+
+   .. c:macro:: XCP_DAQ_TIMESTAMP_SIZE
+
+       Timestamps could be either 1, 2, or 4 bytes in size:
+
+           * XCP_DAQ_TIMESTAMP_SIZE_1
+           * XCP_DAQ_TIMESTAMP_SIZE_2
+           * XCP_DAQ_TIMESTAMP_SIZE_4
+
+   .. c:macro:: XCP_DAQ_ENABLE_PRESCALER            **bool**
+
+           DAQ list prescaling is currently not supported.
+
+   .. c:macro:: XCP_DAQ_ENABLE_ADDR_EXT             **bool**
+
+           Measurement quantities can't have an address extension yet.
+
+   .. c:macro:: XCP_DAQ_ENABLE_BIT_OFFSET           **bool**
+
+           Bit offsets are currently not supported.
+
+   .. c:macro:: XCP_DAQ_ENABLE_PRIORITIZATION       **bool**
+
+           DAQ list prioritization not supported yet.
+
+   .. c:macro:: XCP_DAQ_ENABLE_ALTERNATING          **bool**
+
+           Alternating display mode not supported yet.
+
+   .. c:macro:: XCP_DAQ_ENABLE_WRITE_THROUGH        **bool**
+
+           **XCP_OFF**: Disable internal buffering of **DTO** messages, in this case buffering must be handled by your network/socket stack.
+
+   .. c:macro:: XCP_DAQ_MAX_DYNAMIC_ENTITIES
+
+       The maximum number of allocatable DAQ entities -- DAQ lists, ODTs, and ODT entries.
+       Multiply by sizeof(`XcpDaq_EntityType`) on your platform to get memory usage.
+
+   .. c:macro:: XCP_DAQ_MAX_EVENT_CHANNEL
+
+       Number of available event channels.
+
+   .. c:macro:: XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT **bool**
+
+       Enable/disable support for multiple DAQ list per event.
+
+   .. c:macro:: XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR   **bool**
+
+       Expert option:   If **XCP_ON**, re-initialize dynamic DAQ structures.
+
+   .. c:macro:: XCP_DAQ_LIST_TYPE                           uint8_t
+
+           Choose: **uint8_t**, **uint16_t**, or **uint32_t**.
+
+   .. c:macro:: XCP_DAQ_ODT_TYPE                            uint8_t
+
+           Choose: **uint8_t**, **uint16_t**, or **uint32_t**.
+
+   .. c:macro:: XCP_DAQ_ODT_ENTRY_TYPE                      uint8_t
+
+           Choose: **uint8_t**, **uint16_t**, or **uint32_t**.
+
+
 
 Optional Services
 -----------------
@@ -211,9 +315,6 @@ Customization options
 Platform specific options
 -------------------------
 
- :abbr:`LIFO (last-in, first-out)`.
-
- :menuselection:`Start --> Programs`
 
 .. _my-reference-label:
 
