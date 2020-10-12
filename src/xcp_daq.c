@@ -271,9 +271,9 @@ void XcpDaq_Init(void)
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
     XcpDaq_AllocState = XCP_ALLOC_IDLE;
+    (void)XcpDaq_Free();
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
-    (void)XcpDaq_Free();
     XcpDaq_InitMessageQueue();
 }
 
