@@ -9,6 +9,10 @@ from xcp_types import (
     XcpDaq_ProcessorStateType, XcpDaq_ProcessorType, XcpDaq_MessageType, XcpDaq_EntityType
 )
 
+class XCP(API):
+    FUNCTIONS = (
+        Function("Xcp_Init"),
+    )
 
 class DAQ(API):
     FUNCTIONS = (
