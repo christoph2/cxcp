@@ -9,13 +9,12 @@ from xcp_types import (
     XcpDaq_ProcessorStateType, XcpDaq_ProcessorType, XcpDaq_MessageType, XcpDaq_EntityType
 )
 
+
 class XCP(API):
     FUNCTIONS = (
         Function("Xcp_Init"),
-    )
 
-class DAQ(API):
-    FUNCTIONS = (
+
         Function("XcpDaq_Init"),
         Function("XcpDaq_Free", Xcp_ReturnType),
         Function("XcpDaq_Alloc", Xcp_ReturnType, [XcpDaq_ListIntegerType]),
@@ -49,6 +48,12 @@ class DAQ(API):
         #Function("", ),
     )
 
+    def get_daq_counts(self):
+        entityCount = ctypes.c_uint16()
+        listCount = ctypes.c_uint16()
+        odtCount = ctypes.c_uint16()
+        self.XcpDaq_GetCounts(ctypes.byref(entityCount), ctypes.byref(listCount), ctypes.byref(odtCount))
+        return (entityCount.value, listCount.value, odtCount.value, )
 """
 /*
 **  Predefined DAQ constants.

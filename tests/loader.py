@@ -79,10 +79,7 @@ class API:
                 setattr(self, fun.alias, inst)
 
 
-class XCP(API):
-    FUNCTIONS = (
-        Function("Xcp_Init"),
-    )
+
 
 
 
