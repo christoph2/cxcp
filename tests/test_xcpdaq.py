@@ -39,81 +39,6 @@ XcpDaq_GetDynamicEntities
 XcpDaq_GetDtoBuffer
 """
 
-class Xcp_ReturnType(enum.IntEnum):
-    ERR_CMD_SYNCH           = 0x00
-
-    ERR_CMD_BUSY            = 0x10
-    ERR_DAQ_ACTIVE          = 0x11
-    ERR_PGM_ACTIVE          = 0x12
-
-    ERR_CMD_UNKNOWN         = 0x20
-    ERR_CMD_SYNTAX          = 0x21
-    ERR_OUT_OF_RANGE        = 0x22
-    ERR_WRITE_PROTECTED     = 0x23
-    ERR_ACCESS_DENIED       = 0x24
-    ERR_ACCESS_LOCKED       = 0x25
-    ERR_PAGE_NOT_VALID      = 0x26
-    ERR_MODE_NOT_VALID      = 0x27
-    ERR_SEGMENT_NOT_VALID   = 0x28
-    ERR_SEQUENCE            = 0x29
-    ERR_DAQ_CONFIG          = 0x2A
-
-    ERR_MEMORY_OVERFLOW     = 0x30
-    ERR_GENERIC             = 0x31
-    ERR_VERIFY              = 0x32
-    ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = 0x33
-
-    ERR_SUCCESS             = 0xff
-
-class XcpDaq_EntityKindType(enum.IntEnum):
-    XCP_ENTITY_UNUSED       = 0
-    XCP_ENTITY_DAQ_LIST     = 1
-    XCP_ENTITY_ODT          = 2
-    XCP_ENTITY_ODT_ENTRY    = 3
-
-class XcpDaq_MtaType(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("address", ctypes.c_uint32),
-    ]
-
-class XcpDaq_ODTEntryType(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("mta", XcpDaq_MtaType),
-        ("length", ctypes.c_int32),
-    ]
-
-class XcpDaq_ODTType(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("numOdtEntries", ctypes.c_uint8),
-        ("firstOdtEntry", ctypes.c_uint16),
-    ]
-
-class XcpDaq_DynamicListType(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("numOdts", ctypes.c_uint8),
-        ("firstOdt", ctypes.c_uint16),
-        ("uint8_t", ctypes.c_uint8),
-    ]
-
-class XcpDaq_EntityUnionType(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("odtEntry", XcpDaq_ODTEntryType),
-        ("odt", XcpDaq_ODTType),
-        ("daqList", XcpDaq_DynamicListType),
-    ]
-
-class XcpDaq_EntityType(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("kind", ctypes.c_uint8),
-        ("entity", XcpDaq_EntityUnionType),
-    ]
-
 
 DLL_NAME = "./test_daq.so"
 
@@ -185,8 +110,10 @@ def xcpdaq_get_dynamic_entity_content(num):
         result = entity.odtEntry
     return XcpDaq_EntityKindType(kind), result
 
-def xcpdaq_check_unused_entries(start_idx: int = 0):
-    pass
+def xcpdaq_check_entries_are_unused(start_idx: int = 0):
+    for idx in range(start_idx, xcpdaq_total_dynamic_entity_count()):
+        ent = xcpdaq_get_dynamic_entity_content(idx)
+        assert ent == (XcpDaq_EntityKindType.XCP_ENTITY_UNUSED, None)
 
 ##
 ## Test XcpDaq_AllocTransitionTable
@@ -201,7 +128,15 @@ def test_allocodt_entry_seq_err(daq):
     assert xcpdaq_allocodt_entry(0, 1, 2) == Xcp_ReturnType.ERR_SEQUENCE
 
 def test_alloc_ok(daq):
+    xcpdaq_check_entries_are_unused()
     assert xcpdaq_alloc(5) == Xcp_ReturnType.ERR_SUCCESS
+    ec, _, _ = xcpdaq_get_counts()
+    for idx in range(0, ec):
+        state, ent = xcpdaq_get_dynamic_entity_content(idx)
+
+        print("ENT", state, ent.numOdts, ent.firstOdt, ent.mode)
+
+    xcpdaq_check_entries_are_unused(5)
 
 def test_allocodt_ok(daq):
     assert xcpdaq_alloc(1) == Xcp_ReturnType.ERR_SUCCESS

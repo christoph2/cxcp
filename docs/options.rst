@@ -215,7 +215,7 @@ DAQ Options
 
    .. c:macro:: XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR   **bool**
 
-       Expert option:   If **XCP_ON**, re-initialize dynamic DAQ structures.
+       Expert option:   If **XCP_ON**, re-initialize dynamic DAQ structures after an **ERR_SEQUENCE**.
 
    .. c:macro:: XCP_DAQ_LIST_TYPE                           uint8_t
 

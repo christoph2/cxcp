@@ -156,7 +156,6 @@ Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
         XcpDaq_Init();
 #endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
-        DBG_PRINT1("Xcp_AllocDaq() not allowed.\n");
     } else {
         if ((XcpDaq_EntityCount + daqCount) <= UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)) {
             XcpDaq_AllocState = XCP_AFTER_ALLOC_DAQ;
@@ -168,7 +167,6 @@ Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
             XcpDaq_EntityCount += UINT16(daqCount);
         } else {
             result = ERR_MEMORY_OVERFLOW;
-            DBG_PRINT1("Xcp_AllocDaq(): not enough memory.\n");
         }
     }
     return result;
@@ -184,7 +182,6 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
         XcpDaq_Init();
 #endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
-        DBG_PRINT1("Xcp_AllocOdt() not allowed.\n");
     } else {
         if ((XcpDaq_EntityCount + odtCount) <= UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)) {
             XcpDaq_AllocState = XCP_AFTER_ALLOC_ODT;
@@ -197,7 +194,6 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
             XcpDaq_EntityCount += UINT16(odtCount);
         } else {
             result = ERR_MEMORY_OVERFLOW;
-            DBG_PRINT1("Xcp_AllocOdt(): not enough memory.\n");
         }
 
     }
@@ -215,7 +211,6 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
         XcpDaq_Init();
 #endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
-        DBG_PRINT1("Xcp_AllocOdtEntry() not allowed.\n");
     } else {
         if ((XcpDaq_EntityCount + odtEntriesCount) <= UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)) {
             XcpDaq_AllocState = XCP_AFTER_ALLOC_ODT_ENTRY;
@@ -228,7 +223,6 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
             XcpDaq_EntityCount += UINT16(odtEntriesCount);
         } else {
             result = ERR_MEMORY_OVERFLOW;
-            DBG_PRINT1("Xcp_AllocOdtEntry(): not enough memory.\n");
         }
     }
     return result;
@@ -655,12 +649,12 @@ void XcpDaq_PrintDAQDetails(void)
         total = UINT16(0);
         XcpDaq_GetFirstPid(listIdx, &firstPid);
 #if XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_DYNAMIC
-        printf("DAQ-List #%d [%s] firstPid: %d mode: ", (listIdx < XCP_MIN_DAQ) ? "predefined" : "dynamic",
-               listIdx, firstPid
+        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "dynamic",
+               firstPid
         );
 #elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_STATIC
-        printf("DAQ-List #%d [%s] firstPid: %d mode: ", (listIdx < XCP_MIN_DAQ) ? "predefined" : "static",
-               listIdx, firstPid
+        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "static",
+               firstPid
         );
 #elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE
     printf("DAQ-List #%d [predefined] firstPid: %d mode: ", listIdx, firstPid);
