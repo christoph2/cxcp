@@ -221,6 +221,14 @@ extern "C"
     #define XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR   XCP_OFF
 #endif
 
+#if XCP_DAQ_MAX_DYNAMIC_ENTITIES < 256
+#define XCP_DAQ_ENTITY_TYPE                         uint8_t
+#elif XCP_DAQ_MAX_DYNAMIC_ENTITIES < 65536
+#define XCP_DAQ_ENTITY_TYPE                         uint16_t
+#else
+#define XCP_DAQ_ENTITY_TYPE                         uint32_t
+#endif
+
 
 #if !defined(XCP_MAX_BS)
     #define XCP_MAX_BS      (0)
@@ -288,7 +296,7 @@ extern "C"
 #define XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ      ((uint8_t)0x04)
 #define XCP_DAQ_EVENT_CHANNEL_TYPE_STIM     ((uint8_t)0x08)
 
-/* DAQ Consistancy */
+/* DAQ Consistency */
 #define XCP_DAQ_CONSISTENCY_DAQ_LIST        ((uint8_t)0x40)
 #define XCP_DAQ_CONSISTENCY_EVENT_CHANNEL   ((uint8_t)0x80)
 
@@ -366,9 +374,9 @@ extern "C"
 */
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-typedef XCP_DAQ_LIST_TYPE XcpDaq_ListIntegerType;
-typedef XCP_DAQ_ODT_TYPE XcpDaq_ODTIntegerType;
-typedef XCP_DAQ_ODT_ENTRY_TYPE XcpDaq_ODTEntryIntegerType;
+typedef XCP_DAQ_ENTITY_TYPE XcpDaq_ListIntegerType;
+typedef XCP_DAQ_ENTITY_TYPE XcpDaq_ODTIntegerType;
+typedef XCP_DAQ_ENTITY_TYPE XcpDaq_ODTEntryIntegerType;
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 typedef enum tagXcp_CommandType {

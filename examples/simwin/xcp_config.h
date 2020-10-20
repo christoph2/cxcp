@@ -90,10 +90,6 @@
 #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
 #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT XCP_OFF
 
-#define XCP_DAQ_LIST_TYPE                           uint8_t
-#define XCP_DAQ_ODT_TYPE                            uint8_t
-#define XCP_DAQ_ODT_ENTRY_TYPE                      uint8_t
-
 
 /*
 **  PGM Settings.
