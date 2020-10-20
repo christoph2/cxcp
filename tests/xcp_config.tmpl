@@ -1,0 +1,98 @@
+/*
+ * BlueParrot XCP
+ *
+ * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ *                                      cpu12.gems@googlemail.com>
+ *
+ * All Rights Reserved
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * s. FLOSS-EXCEPTION.txt
+ */
+
+/*
+ *  For details on options refer to `documentation <https://github.com/christoph2/cxcp/docs/options.rst>`_
+ */
+
+#if !defined(__XCP_CONFIG_H)
+#define __XCP_CONFIG_H
+
+
+#define XCP_STATION_ADDRESS                         ${cfg.station_address}
+#define XCP_STATION_ID                              ${cfg.station_id}
+
+#define XCP_BUILD_TYPE                              ${cfg.build_type}
+
+#define XCP_EXTERN_C_GUARDS                         ${cfg.extern_c_guards}
+
+#define XCP_ENABLE_SLAVE_BLOCKMODE                  ${cfg.enable_slave_block_mode}
+#define XCP_ENABLE_MASTER_BLOCKMODE                 ${cfg.enable_master_block_mode}
+
+#define XCP_ENABLE_STIM                             ${cfg.enable_stim}
+
+#define XCP_CHECKSUM_METHOD                         ${cfg.checksum_method}
+#define XCP_CHECKSUM_CHUNKED_CALCULATION            ${cfg.checksum_chunked_calculation}
+#define XCP_CHECKSUM_CHUNK_SIZE                     ${cfg.checksum_chunk_size}
+#define XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE             ${cfg.checksum_maximum_block_size}
+
+#define XCP_BYTE_ORDER                              ${cfg.byte_order}
+#define XCP_ADDRESS_GRANULARITY                     ${cfg.address_granularity}
+
+#define XCP_MAX_CTO                                 ${cfg.max_cto}
+#define XCP_MAX_DTO                                 ${cfg.max_dto}
+
+#define XCP_ENABLE_DAQ_COMMANDS                     ${cfg.enable_daq_commands}
+
+/*
+ * **  DAQ Settings.
+ * */
+#define XCP_DAQ_CONFIG_TYPE                         ${cfg.daq_config_type}
+#define XCP_DAQ_DTO_BUFFER_SIZE                     ${cfg.daq_dto_buffer_size}
+#define XCP_DAQ_ENABLE_PREDEFINED_LISTS             ${cfg.daq_enable_predefined_lists}
+#define XCP_DAQ_TIMESTAMP_UNIT                      ${cfg.daq_timestamp_unit}
+#define XCP_DAQ_TIMESTAMP_SIZE                      ${cfg.daq_timestamp_size}
+#define XCP_DAQ_ENABLE_PRESCALER                    ${cfg.daq_enable_prescaler}
+#define XCP_DAQ_ENABLE_ADDR_EXT                     ${cfg.daq_enable_addr_ext}
+#define XCP_DAQ_ENABLE_BIT_OFFSET                   ${cfg.daq_enable_bit_offset}
+#define XCP_DAQ_ENABLE_PRIORITIZATION               ${cfg.daq_enable_prioritization}
+#define XCP_DAQ_ENABLE_ALTERNATING                  ${cfg.daq_enable_alternating}
+#define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          ${cfg.daq_enable_clock_access_always}
+#define XCP_DAQ_ENABLE_WRITE_THROUGH                ${cfg.daq_enable_write_through}
+#define XCP_DAQ_MAX_DYNAMIC_ENTITIES                ${cfg.daq_max_dynamic_entities}
+#define XCP_DAQ_MAX_EVENT_CHANNEL                   ${cfg.daq_max_event_channel}
+#define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT ${cfg.daq_enable_multiple_daq_lists_per_event}
+
+
+/*
+ * **  Platform Specific Options.
+ * */
+#define XCP_ENTER_CRITICAL()
+#define XCP_LEAVE_CRITICAL()
+#define XCP_TL_ENTER_CRITICAL()
+#define XCP_TL_LEAVE_CRITICAL()
+#define XCP_DAQ_ENTER_CRITICAL()
+#define XCP_DAQ_LEAVE_CRITICAL()
+#define XCP_STIM_ENTER_CRITICAL()
+#define XCP_STIM_LEAVE_CRITICAL()
+#define XCP_PGM_ENTER_CRITICAL()
+#define XCP_PGM_LEAVE_CRITICAL()
+#define XCP_CAL_ENTER_CRITICAL()
+#define XCP_CAL_LEAVE_CRITICAL()
+#define XCP_PAG_ENTER_CRITICAL()
+#define XCP_PAG_LEAVE_CRITICAL()
+
+#endif /* __XCP_CONFIG_H */
+
