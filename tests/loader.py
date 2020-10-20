@@ -72,24 +72,11 @@ class API:
 
     def loadFunctions(self):
         for fun in self.FUNCTIONS:
-
-            inst = self.functionFactory(self.dll, fun.function_name, fun.result_type, fun.arg_types, fun.error_checker)
-            setattr(self, fun.function_name, inst)
-            if fun.alias:
-                setattr(self, fun.alias, inst)
-
-
-
-
-
-
-"""
-DLL_NAME = "./test_daq.so"
-
-dll = ctypes.CDLL(DLL_NAME)
-
-xcp = XCP(dll)
-daq = DAQ(dll)
-print(xcp.Xcp_Init())
-"""
-
+            try:
+                inst = self.functionFactory(self.dll, fun.function_name, fun.result_type, fun.arg_types, fun.error_checker)
+            except AttributeError:
+                pass
+            else:
+                setattr(self, fun.function_name, inst)
+                if fun.alias:
+                    setattr(self, fun.alias, inst)

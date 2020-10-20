@@ -5,7 +5,16 @@ import ctypes
 import enum
 import os
 from pprint import pprint
+import random
 import pytest
+
+from hypothesis import (
+    assume, event, example, given, infer, note, reject, register_random, reproduce_failure, settings,
+    Verbosity
+)
+from hypothesis.strategies import (
+    booleans, integers, lists, text, characters, builds, composite, tuples, randoms
+)
 
 from xcp_if import XCP
 
@@ -24,6 +33,12 @@ DLL_NAME = "./test_daq.so"
 
 dll = ctypes.CDLL(DLL_NAME)
 
+MAX_DAQ_ENTITIES = 100
+
+daq_entity_int = integers(min_value = 0, max_value = MAX_DAQ_ENTITIES * 2)
+
+def choose(size):
+    return random.choice(range(size - 1)) if size > 1 else 0
 
 @pytest.fixture
 def xcp():
@@ -148,12 +163,12 @@ def test_alloc_out_of_mem(xcp):
 
 def test_allocodt_out_of_mem(xcp):
     assert xcp.XcpDaq_Alloc(1) == Xcp_ReturnType.ERR_SUCCESS
-    assert xcp.XcpDaq_AllocOdt(0, 100) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
+    assert xcp.XcpDaq_AllocOdt(0, MAX_DAQ_ENTITIES) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
 
 def test_allocodt_entry_out_of_mem(xcp):
     assert xcp.XcpDaq_Alloc(1) == Xcp_ReturnType.ERR_SUCCESS
     assert xcp.XcpDaq_AllocOdt(0, 2) == Xcp_ReturnType.ERR_SUCCESS
-    assert xcp.XcpDaq_AllocOdtEntry(0, 1, 100) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
+    assert xcp.XcpDaq_AllocOdtEntry(0, 1, MAX_DAQ_ENTITIES) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
 
 ##
 ##
@@ -173,3 +188,51 @@ def test_basic_alloc3(xcp):
     assert xcp.XcpDaq_AllocOdtEntry(0, 0, 2) == Xcp_ReturnType.ERR_SUCCESS
     assert xcp.XcpDaq_AllocOdtEntry(0, 1, 3) == Xcp_ReturnType.ERR_SUCCESS
     assert xcp.get_daq_counts() == (9, 2, 2)
+
+
+##
+## Hypothesis tests.
+##
+@given(num = daq_entity_int)
+@settings(max_examples = 1000)
+def test_hy_alloc(xcp, num):
+    if num > MAX_DAQ_ENTITIES:
+        assert xcp.XcpDaq_Alloc(num) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
+        count = 0
+    else:
+        assert xcp.XcpDaq_Alloc(num) == Xcp_ReturnType.ERR_SUCCESS
+        count = num
+    ec, lc, _ = xcp.get_daq_counts()
+    assert ec == count
+    assert lc == count
+    xcp.XcpDaq_Free()
+
+@given(daq_entity_int, daq_entity_int, daq_entity_int)
+@settings(max_examples = 1000)
+@example(0, 0, 0)
+#@settings(verbosity = Verbosity.verbose)
+def test_hy_alloc_odt_entities(xcp, n0, n1, n2):
+    if n0 > MAX_DAQ_ENTITIES:
+        assert xcp.XcpDaq_Alloc(n0) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
+    else:
+        assert xcp.XcpDaq_Alloc(n0) == Xcp_ReturnType.ERR_SUCCESS
+        if n0 == 0:
+            xcp.XcpDaq_Free()
+            return
+        else:
+            daq_list = choose(n0)
+        if (n0 + n1) > MAX_DAQ_ENTITIES:
+            assert xcp.XcpDaq_AllocOdt(daq_list, n1) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
+        else:
+            assert xcp.XcpDaq_AllocOdt(daq_list, n1) == Xcp_ReturnType.ERR_SUCCESS
+            if n1 == 0:
+                xcp.XcpDaq_Free()
+                return
+            else:
+                daq_list = choose(n0)
+                odt = choose(n1)
+                if (n0 + n1 + n2) > MAX_DAQ_ENTITIES:
+                    assert xcp.XcpDaq_AllocOdtEntry(n0, n1, n2) == Xcp_ReturnType.ERR_MEMORY_OVERFLOW
+                else:
+                    assert xcp.XcpDaq_AllocOdtEntry(n0, n1, n2) == Xcp_ReturnType.ERR_SUCCESS
+    xcp.XcpDaq_Free()

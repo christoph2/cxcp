@@ -27,6 +27,6 @@ jobs:
       run: |
             cd tests
             python builder.py
-            pytest -svv
+            pytest -svv  --hypothesis-show-statistics
     - name: upload to coverallz
       run:  cpp-coveralls
