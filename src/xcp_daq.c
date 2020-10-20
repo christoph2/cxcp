@@ -101,9 +101,9 @@ XCP_STATIC XcpDaq_DtoBufferStateType XcpDaq_DtoBufferState;
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC XcpDaq_AllocStateType XcpDaq_AllocState;
 XCP_STATIC XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
-XCP_STATIC uint16_t XcpDaq_EntityCount = UINT16(0);
-XCP_STATIC uint16_t XcpDaq_ListCount = UINT16(0);
-XCP_STATIC uint16_t XcpDaq_OdtCount = UINT16(0);
+XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_EntityCount = (XCP_DAQ_ENTITY_TYPE)0;
+XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_ListCount = (XCP_DAQ_ENTITY_TYPE)0;
+XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_OdtCount = (XCP_DAQ_ENTITY_TYPE)0;
 
 XCP_STATIC XcpDaq_ListStateType XcpDaq_ListState ;
 XCP_STATIC XcpDaq_ListConfigurationType XcpDaq_ListConfiguration;
@@ -129,16 +129,16 @@ Xcp_ReturnType XcpDaq_Free(void)
 {
     Xcp_ReturnType result = ERR_SUCCESS;
 
-    XcpDaq_EntityCount = UINT16(0);
-    XcpDaq_ListCount = UINT16(0);
-    XcpDaq_OdtCount = UINT16(0);
+    XcpDaq_EntityCount = (XCP_DAQ_ENTITY_TYPE)0;
+    XcpDaq_ListCount = (XCP_DAQ_ENTITY_TYPE)0;
+    XcpDaq_OdtCount = (XCP_DAQ_ENTITY_TYPE)0;
 
 #if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
     XcpUtl_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 
     if (XcpDaq_AllocValidateTransition(XCP_CALL_FREE_DAQ)) {
-        XcpUtl_MemSet(XcpDaq_Entities, UINT8(0), UINT32(sizeof(XcpDaq_EntityType) * UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)));
+        XcpUtl_MemSet(XcpDaq_Entities, UINT8(0), UINT32(sizeof(XcpDaq_EntityType) * (XCP_DAQ_ENTITY_TYPE)XCP_DAQ_MAX_DYNAMIC_ENTITIES));
         XcpDaq_AllocState = XCP_AFTER_FREE_DAQ;
     } else {
         result = ERR_SEQUENCE;  /* Never touched; function always succeeds. */
@@ -148,7 +148,7 @@ Xcp_ReturnType XcpDaq_Free(void)
 
 Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
 {
-    uint16_t idx;
+    XCP_DAQ_ENTITY_TYPE idx;
     Xcp_ReturnType result = ERR_SUCCESS;
 
     if (!XcpDaq_AllocValidateTransition(XCP_CALL_ALLOC_DAQ)) {
@@ -157,14 +157,14 @@ Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
 #endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
     } else {
-        if ((XcpDaq_EntityCount + daqCount) <= UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)) {
+        if ((XcpDaq_EntityCount + daqCount) <= (XCP_DAQ_ENTITY_TYPE)XCP_DAQ_MAX_DYNAMIC_ENTITIES) {
             XcpDaq_AllocState = XCP_AFTER_ALLOC_DAQ;
             for (idx = XcpDaq_EntityCount; idx < (XcpDaq_EntityCount + daqCount); ++idx) {
                 XcpDaq_Entities[idx].kind = UINT8(XCP_ENTITY_DAQ_LIST);
                 XcpDaq_Entities[idx].entity.daqList.numOdts = (XcpDaq_ODTIntegerType)0;
             }
-            XcpDaq_ListCount += UINT16(daqCount);
-            XcpDaq_EntityCount += UINT16(daqCount);
+            XcpDaq_ListCount += (XCP_DAQ_ENTITY_TYPE)daqCount;
+            XcpDaq_EntityCount += (XCP_DAQ_ENTITY_TYPE)daqCount;
         } else {
             result = ERR_MEMORY_OVERFLOW;
         }
@@ -174,7 +174,7 @@ Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
 
 Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtCount)
 {
-    uint16_t idx;
+    XCP_DAQ_ENTITY_TYPE idx;
     Xcp_ReturnType result = ERR_SUCCESS;
 
     if (!XcpDaq_AllocValidateTransition(XCP_CALL_ALLOC_ODT)) {
@@ -183,15 +183,15 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
 #endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
     } else {
-        if ((XcpDaq_EntityCount + odtCount) <= UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)) {
+        if ((XcpDaq_EntityCount + odtCount) <= (XCP_DAQ_ENTITY_TYPE)XCP_DAQ_MAX_DYNAMIC_ENTITIES) {
             XcpDaq_AllocState = XCP_AFTER_ALLOC_ODT;
             for (idx = XcpDaq_EntityCount; idx < (XcpDaq_EntityCount + odtCount); ++idx) {
                 XcpDaq_Entities[idx].kind = UINT8(XCP_ENTITY_ODT);
             }
             XcpDaq_Entities[daqListNumber].entity.daqList.numOdts += odtCount;
             XcpDaq_Entities[daqListNumber].entity.daqList.firstOdt = XcpDaq_EntityCount;
-            XcpDaq_OdtCount += UINT16(odtCount);
-            XcpDaq_EntityCount += UINT16(odtCount);
+            XcpDaq_OdtCount += (XCP_DAQ_ENTITY_TYPE)odtCount;
+            XcpDaq_EntityCount += (XCP_DAQ_ENTITY_TYPE)odtCount;
         } else {
             result = ERR_MEMORY_OVERFLOW;
         }
@@ -202,7 +202,7 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
 
 Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntriesCount)
 {
-    uint16_t idx;
+    XCP_DAQ_ENTITY_TYPE idx;
     XcpDaq_ODTIntegerType odt;
     Xcp_ReturnType result = ERR_SUCCESS;
 
@@ -212,7 +212,7 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
 #endif /* XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR */
         result = ERR_SEQUENCE;
     } else {
-        if ((XcpDaq_EntityCount + odtEntriesCount) <= UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES)) {
+        if ((XcpDaq_EntityCount + odtEntriesCount) <= (XCP_DAQ_ENTITY_TYPE)XCP_DAQ_MAX_DYNAMIC_ENTITIES) {
             XcpDaq_AllocState = XCP_AFTER_ALLOC_ODT_ENTRY;
             for (idx = XcpDaq_EntityCount; idx < (XcpDaq_EntityCount + odtEntriesCount); ++idx) {
                 XcpDaq_Entities[idx].kind = UINT8(XCP_ENTITY_ODT_ENTRY);
@@ -220,7 +220,7 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
             odt = (XcpDaq_ODTIntegerType)(XcpDaq_Entities[daqListNumber].entity.daqList.firstOdt + UINT16(odtNumber));
             XcpDaq_Entities[odt].entity.odt.firstOdtEntry = XcpDaq_EntityCount;
             XcpDaq_Entities[odt].entity.odt.numOdtEntries = odtEntriesCount;
-            XcpDaq_EntityCount += UINT16(odtEntriesCount);
+            XcpDaq_EntityCount += (XCP_DAQ_ENTITY_TYPE)odtEntriesCount;
         } else {
             result = ERR_MEMORY_OVERFLOW;
         }
@@ -360,7 +360,7 @@ bool XcpDaq_ValidateConfiguration(void)
 {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    return (bool)((XcpDaq_EntityCount > UINT16(0)) && (XcpDaq_ListCount > UINT16(0)) &&  (XcpDaq_OdtCount > UINT16(0)));
+    return (bool)((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&  (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
     return (bool)XCP_TRUE;
@@ -853,7 +853,7 @@ bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerT
 */
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-void XcpDaq_GetCounts(uint16_t * entityCount, uint16_t * listCount, uint16_t * odtCount)
+void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE * entityCount, XCP_DAQ_ENTITY_TYPE * listCount, XCP_DAQ_ENTITY_TYPE * odtCount)
 {
     *entityCount = XcpDaq_EntityCount;
     *listCount = XcpDaq_ListCount;

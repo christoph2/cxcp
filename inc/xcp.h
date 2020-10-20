@@ -841,7 +841,7 @@ extern const XcpDaq_EventType XcpDaq_Events[];
 ** Debugging / Testing interface.
 */
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-void XcpDaq_GetCounts(uint16_t * entityCount, uint16_t * listCount, uint16_t * odtCount);
+void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE * entityCount, XCP_DAQ_ENTITY_TYPE * listCount, XCP_DAQ_ENTITY_TYPE * odtCount);
 uint16_t XcpDaq_TotalDynamicEntityCount(void);
 XcpDaq_EntityType *  XcpDaq_GetDynamicEntities(void);
 XcpDaq_EntityType * XcpDaq_GetDynamicEntity(uint16_t num);
