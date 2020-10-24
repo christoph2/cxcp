@@ -75,7 +75,7 @@ extern "C"
 #endif
 
 #if !defined(XCP_MAKEDWORD)
-#define XCP_MAKEDWORD(h, l)  ((((uint32)((h) & ((uint16)0xffffu))) << (uint32)16) | ((uint32)((l) & ((uint16)0xffffu)))) /**< Make double-word from high and low words. */
+#define XCP_MAKEDWORD(h, l)  ((((uint32_t)((h) & ((uint16_t)0xffffu))) << (uint32_t)16) | ((uint32_t)((l) & ((uint16_t)0xffffu)))) /**< Make double-word from high and low words. */
 #endif
 
 #if !defined(XCP_MAX)
