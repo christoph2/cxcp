@@ -249,14 +249,17 @@ extern "C"
 #define XCP_DOWNLOAD_PAYLOAD_LENGTH     ((XCP_MAX_CTO) - 2)
 
 /*
-**  Available Resources.
-*/
+ *  Available Resources.
+ */
 #define XCP_RESOURCE_PGM        ((uint8_t)16)
 #define XCP_RESOURCE_STIM       ((uint8_t)8)
 #define XCP_RESOURCE_DAQ        ((uint8_t)4)
 #define XCP_RESOURCE_CAL_PAG    ((uint8_t)1)
 
 
+/*
+ * Comm Mode Basic.
+ */
 #define XCP_BYTE_ORDER_INTEL    ((uint8_t)0)
 #define XCP_BYTE_ORDER_MOTOROLA ((uint8_t)1)
 
@@ -273,6 +276,15 @@ extern "C"
 
 #define XCP_MASTER_BLOCK_MODE           ((uint8_t)1)
 #define XCP_INTERLEAVED_MODE            ((uint8_t)2)
+
+/*
+ * Current Session Status.
+ */
+#define RESUME          0x80
+#define DAQ_RUNNING     0x40
+#define CLEAR_DAQ_REQ   0x08
+#define STORE_DAQ_REQ   0x04
+#define STORE_CAL_REQ   0x01
 
 /* DAQ List Modes. */
 #define XCP_DAQ_LIST_MODE_ALTERNATING   ((uint8_t)0x01)
