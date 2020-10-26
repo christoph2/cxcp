@@ -65,10 +65,10 @@
 /*
 ** Resource Protection.
 */
-#define XCP_PROTECT_CAL                             XCP_ON
-#define XCP_PROTECT_PAG                             XCP_ON
+#define XCP_PROTECT_CAL                             XCP_OFF
+#define XCP_PROTECT_PAG                             XCP_OFF
 #define XCP_PROTECT_DAQ                             XCP_OFF
-#define XCP_PROTECT_STIM                            XCP_ON
+#define XCP_PROTECT_STIM                            XCP_OFF
 #define XCP_PROTECT_PGM                             XCP_OFF
 
 /*
