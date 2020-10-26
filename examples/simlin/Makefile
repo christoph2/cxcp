@@ -12,7 +12,7 @@ ifeq ($(PROFILE),1)
 CFLAGS += -pg -fprofile-arcs -ftest-coverage --coverage
 endif
 ifeq ($(DEBUG),1)
-CFLAGS += -ggdb -O0
+CFLAGS += -ggdb -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check
 else
 CFLAGS += -O3
 endif
