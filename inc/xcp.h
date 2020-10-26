@@ -278,21 +278,44 @@ extern "C"
 #define XCP_INTERLEAVED_MODE            ((uint8_t)2)
 
 /*
+ * GetID Mode.
+ */
+#define XCP_COMPRESSED_ENCRYPTED        (2)
+#define XCP_TRANSFER_MODE               (1)
+
+/*
  * Current Session Status.
  */
-#define RESUME          0x80
-#define DAQ_RUNNING     0x40
-#define CLEAR_DAQ_REQ   0x08
-#define STORE_DAQ_REQ   0x04
-#define STORE_CAL_REQ   0x01
+#define RESUME                          (0x80)
+#define DAQ_RUNNING                     (0x40)
+#define CLEAR_DAQ_REQ                   (0x08)
+#define STORE_DAQ_REQ                   (0x04)
+#define STORE_CAL_REQ                   (0x01)
+
+/*
+ * SetRequest Mode.
+ */
+#define XCP_CLEAR_DAQ_REQ               (8)
+#define XCP_STORE_DAQ_REQ_RESUME        (4)
+#define XCP_STORE_DAQ_REQ_NO_RESUME     (2)
+#define XCP_STORE_CAL_REQ               (1)
+
+/*
+ * SetCalPage Mode.
+ */
+#define XCP_SET_CAL_PAGE_ALL            (0x80)
+#define XCP_SET_CAL_PAGE_XCP            (0x02)
+#define XCP_SET_CAL_PAGE_ECU            (0x01)
+
+
 
 /* DAQ List Modes. */
-#define XCP_DAQ_LIST_MODE_ALTERNATING   ((uint8_t)0x01)
-#define XCP_DAQ_LIST_MODE_DIRECTION     ((uint8_t)0x02)
-#define XCP_DAQ_LIST_MODE_TIMESTAMP     ((uint8_t)0x10)
-#define XCP_DAQ_LIST_MODE_PID_OFF       ((uint8_t)0x20)
-#define XCP_DAQ_LIST_MODE_SELECTED      ((uint8_t)0x40)
-#define XCP_DAQ_LIST_MODE_STARTED       ((uint8_t)0x80)
+#define XCP_DAQ_LIST_MODE_ALTERNATING       ((uint8_t)0x01)
+#define XCP_DAQ_LIST_MODE_DIRECTION         ((uint8_t)0x02)
+#define XCP_DAQ_LIST_MODE_TIMESTAMP         ((uint8_t)0x10)
+#define XCP_DAQ_LIST_MODE_PID_OFF           ((uint8_t)0x20)
+#define XCP_DAQ_LIST_MODE_SELECTED          ((uint8_t)0x40)
+#define XCP_DAQ_LIST_MODE_STARTED           ((uint8_t)0x80)
 
 /* DAQ Properties */
 #define XCP_DAQ_PROP_OVERLOAD_EVENT         ((uint8_t)0x80)
@@ -353,6 +376,22 @@ extern "C"
         (cycle),                                            \
     }
 
+
+/*
+ * PAG Processor Properties.
+ */
+#define XCP_PAG_PROCESSOR_FREEZE_SUPPORTED  (1)
+
+
+/*
+ * Page Properties.
+ */
+#define XCP_WRITE_ACCESS_WITH_ECU           (32)
+#define XCP_WRITE_ACCESS_WITHOUT_ECU        (16)
+#define XCP_READ_ACCESS_WITH_ECU            (8)
+#define XCP_READ_ACCESS_WITHOUT_ECU         (4)
+#define ECU_ACCESS_WITH_XCP                 (2)
+#define ECU_ACCESS_WITHOUT_XCP              (1)
 
 /*
 **  PGM Capabilities.
@@ -871,6 +910,9 @@ uint8_t * XcpDaq_GetDtoBuffer(void);
 void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state);
 #endif /* ENABLE_PGM_COMMANDS */
 
+/*
+ * Checksum Methods.
+ */
 #define XCP_CHECKSUM_METHOD_XCP_ADD_11      (1)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_12      (2)
 #define XCP_CHECKSUM_METHOD_XCP_ADD_14      (3)
@@ -880,6 +922,7 @@ void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state);
 #define XCP_CHECKSUM_METHOD_XCP_CRC_16      (7)
 #define XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT (8)
 #define XCP_CHECKSUM_METHOD_XCP_CRC_32      (9)
+#define XCP_CHECKSUM_METHOD_XCP_USER_DEFINED    (0xff)
 
 #define XCP_DAQ_TIMESTAMP_UNIT_1NS          (0)
 #define XCP_DAQ_TIMESTAMP_UNIT_10NS         (1)
