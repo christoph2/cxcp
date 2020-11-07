@@ -1,7 +1,8 @@
 Hook Functions
 ==============
 
-Hook functions are used to...
+Hook functions are used to customize the behaviour of **Blueparrot XCP**.
+
 
 .. c:function::  bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
 

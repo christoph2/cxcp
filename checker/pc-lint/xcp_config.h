@@ -34,7 +34,8 @@
 /*
 **  General Options.
 */
-#define XCP_STATION_ID                              "XCP running on Linux"
+#define XCP_GET_ID_0                                "BlueParrot XCP tests"
+#define XCP_GET_ID_1                                "Example_Project"
 
 //#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD // XCP_RELEASE_BUILD
 #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD

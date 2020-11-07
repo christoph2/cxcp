@@ -57,7 +57,8 @@ XCP_STATIC Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 XCP_STATIC Xcp_StateType Xcp_State;
 
 XCP_STATIC Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)XCP_NULL;
-XCP_STATIC const Xcp_StationIDType Xcp_StationID = { UINT16(sizeof(XCP_STATION_ID) - UINT16(1)), (uint8_t const *)XCP_STATION_ID };
+XCP_STATIC const Xcp_GetIdType Xcp_GetId0 = XCP_SET_ID(XCP_GET_ID_0);
+XCP_STATIC const Xcp_GetIdType Xcp_GetId1 = XCP_SET_ID(XCP_GET_ID_1);
 
 XCP_STATIC void Xcp_PositiveResponse(void);
 XCP_STATIC void Xcp_ErrorResponse(uint8_t errorCode);
@@ -1054,38 +1055,39 @@ XCP_STATIC void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
 XCP_STATIC void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t idType = Xcp_GetByte(pdu, UINT8(1));
-
-#if 0
-0 BYTE Packet ID: 0xFF
-1 BYTE Mode
-2 WORD Reserved
-4 DWORD Length [BYTE]
----------------------
-0           ASCII text
-1           ASAM-MC2 filename without path and extension
-2           ASAM-MC2 filename with path and extension
-3           URL where the ASAM-MC2 file can be found
-4           ASAM-MC2 file to upload
-128..255    User defined
-#endif
+    static char * response = XCP_NULL;
+    uint32_t response_len = UINT32(0);
 
     DBG_TRACE2("GET_ID [type: 0x%02x]\n", idType);
 
-    if (idType == UINT8(1)) {
-        Xcp_SetMta(Xcp_GetNonPagedAddress(Xcp_StationID.name));
-        Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(Xcp_StationID.len), UINT8(0), UINT8(0), UINT8(0));
+    if (idType == UINT8(0)) {
+        response = Xcp_GetId0.name;
+        response_len = Xcp_GetId0.len;
+    } else if (idType == UINT8(1)) {
+        response = Xcp_GetId1.name;
+        response_len = Xcp_GetId1.len;
     }
 #if XCP_ENABLE_GET_ID_HOOK == XCP_ON
     else {
-        Xcp_HookFunction_GetId(idType);
+        if (!Xcp_HookFunction_GetId(idType, &response, &response_len)) {
+            Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+            return;
+        }
     }
 #else
     else {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
     }
 #endif /* XCP_ENABLE_GET_ID_HOOK */
 
-
+    Xcp_SetMta(Xcp_GetNonPagedAddress(response));
+    Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0),
+        XCP_LOBYTE(XCP_LOWORD(response_len)),
+        XCP_HIBYTE(XCP_LOWORD(response_len)),
+        XCP_LOBYTE(XCP_HIWORD(response_len)),
+        XCP_HIBYTE(XCP_HIWORD(response_len))
+    );
 }
 #endif /* XCP_ENABLE_GET_ID */
 

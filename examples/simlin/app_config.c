@@ -1,4 +1,8 @@
 
+
+#include <assert.h>
+#include <string.h>
+
 #include "xcp.h"
 #include "app_config.h"
 
@@ -149,14 +153,24 @@ Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xc
     return FlsEmu_MemoryMapper(dst, src);
 }
 
-#if 0
-bool Xcp_HookFunction_GetId(uint8_t idType)
+/*
+ *
+ * Example GET_ID hook function.
+ *
+ */
+bool Xcp_HookFunction_GetId(uint8_t id_type, char ** result, uint32_t * result_length)
 {
-    if (idType == 4) {
-        Xcp_SetMta(Xcp_GetNonPagedAddress(a2lFile.view.mappingAddress));
-        Xcp_Send8(8, 0xff, 0, 0, 0, XCP_LOBYTE(XCP_LOWORD(a2lFile.size)), XCP_HIBYTE(XCP_LOWORD(a2lFile.size)), XCP_LOBYTE(XCP_HIWORD(a2lFile.size)), XCP_HIBYTE(XCP_HIWORD(a2lFile.size)));
+    FILE * fp;
+    static char get_id_result[256];
+
+    if (id_type == 0x80) { /* First user-defined identification type. */
+        fp = popen("uname -a ", "r");
+        assert(fp != NULL);
+        fgets(get_id_result, sizeof(get_id_result), fp);
+        *result = get_id_result;
+        *result_length = strlen(get_id_result) - 1; /* Get rid of trailing '\n'. */
         return XCP_TRUE;
+    } else {
+        return XCP_FALSE;
     }
-    return XCP_FALSE;
 }
-#endif // 0

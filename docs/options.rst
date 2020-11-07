@@ -13,9 +13,15 @@ directory as a starting point.
 General Options
 ---------------
 
-    .. c:macro:: XCP_STATION_ID
+    .. c:macro:: XCP_GET_ID_0
 
-        A short description of your node (this is usually the name of an A2L file).
+        A short description of your node.
+        This is the return value of **GET_ID(0)** .
+
+    .. c:macro:: XCP_GET_ID_1
+
+
+        A2L filename without path and extension.
         This is the return value of **GET_ID(1)** .
 
     .. c:macro:: XCP_BUILD_TYPE

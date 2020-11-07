@@ -30,9 +30,8 @@
 #if !defined(__XCP_CONFIG_H)
 #define __XCP_CONFIG_H
 
-
-#define XCP_STATION_ADDRESS                         (1)
-#define XCP_STATION_ID                              "description_of_test_ecu.a2l"
+#define XCP_GET_ID_0                                "BlueParrot XCP tests"
+#define XCP_GET_ID_1                                "Example_Project"
 
 #define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
 

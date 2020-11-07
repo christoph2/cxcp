@@ -34,10 +34,11 @@
 /*
 **  General Options.
 */
-#define XCP_STATION_ID                              "XCP running on Linux"
+#define XCP_GET_ID_0                                "BlueParrot XCP running on Linux"
+#define XCP_GET_ID_1                                "Example_Project"
 
-//#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
-#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
+#define XCP_BUILD_TYPE                              XCP_DEBUG_BUILD
+//#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 
 #define XCP_ENABLE_EXTERN_C_GUARDS                  XCP_OFF
 
@@ -181,8 +182,8 @@
     #define XCP_ON_CAN_BROADCAST_IDENTIFIER             (0x103)
     #define XCP_ENABLE_CAN_FD                           XCP_OFF
 
-    #define XCP_MAX_CTO                                 (40)
-    #define XCP_MAX_DTO                                 (40)
+    #define XCP_MAX_CTO                                 (64)
+    #define XCP_MAX_DTO                                 (64)
 #elif defined(ETHER)
     #define XCP_TRANSPORT_LAYER                         XCP_ON_ETHERNET
 
@@ -203,7 +204,7 @@
 #define XCP_ENABLE_CHECK_MEMORY_ACCESS              XCP_ON
 #define XCP_REPLACE_STD_COPY_MEMORY                 XCP_OFF
 
-#define XCP_ENABLE_GET_ID_HOOK                      XCP_OFF
+#define XCP_ENABLE_GET_ID_HOOK                      XCP_ON
 
 
 /*

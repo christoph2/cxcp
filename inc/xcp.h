@@ -229,6 +229,7 @@ extern "C"
 #define XCP_DAQ_ENTITY_TYPE                         uint32_t
 #endif
 
+#define XCP_SET_ID(name) { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
 
 #if !defined(XCP_MAX_BS)
     #define XCP_MAX_BS      (0)
@@ -689,10 +690,10 @@ typedef struct tagXcp_PDUType {
 } Xcp_PDUType;
 
 
-typedef struct tagXcp_StationIDType {
+typedef struct tagXcp_GetIdType {
     uint16_t len;
     uint8_t const * name;
-} Xcp_StationIDType;
+} Xcp_GetIdType;
 
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
@@ -986,7 +987,7 @@ void XcpTl_PrintConnectionInformation(void);
 /*
 **  Customization Stuff.
 */
-bool Xcp_HookFunction_GetId(uint8_t idType);
+bool Xcp_HookFunction_GetId(uint8_t id_type, char ** result, uint32_t * result_length);
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result);
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key);
 
