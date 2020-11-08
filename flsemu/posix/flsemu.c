@@ -44,16 +44,15 @@
 #define handle_error(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
 #define FLSEMU_ERASED_VALUE (0xff) /**< Value of an erased Flash/EEPROM cell. */
 
-static int FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size, FlsEmu_PersistentArrayType * persistentArray);
 static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray, uint32_t size);
 static void FlsEmu_UnmapAddress(void * addr, uint32_t size);
 static void FlsEmu_MapAddress(void * mappingAddress, int offset, uint32_t size, int fd);
 static bool FlsEmu_Flush(uint8_t segmentIdx);
 
 
-uint32_t FlsEmu_GetPageSize(void)
+uint32_t FlsEmu_GetAllocationGranularity(void)
 {
-    return sysconf(_SC_PAGE_SIZE);
+    return sysconf(_SC_PAGE_SIZE); /* don't use getpagesize() for portable appz */
 }
 
 void FlsEmu_Close(uint8_t segmentIdx)
@@ -87,6 +86,7 @@ static bool FlsEmu_Flush(uint8_t segmentIdx)
     return XCP_TRUE;
 }
 
+#if 0
 void FlsEmu_OpenCreate(uint8_t segmentIdx)
 {
     int result;
@@ -112,6 +112,7 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx)
     }
 
 }
+#endif
 
 static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray, uint32_t size)
 {
@@ -138,10 +139,12 @@ static void FlsEmu_UnmapAddress(void * addr, uint32_t size)
     }
 }
 
-static int FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size, FlsEmu_PersistentArrayType * persistentArray)
+FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size, FlsEmu_PersistentArrayType * persistentArray)
 {
     int fd;
     void * addr;
+    FlsEmu_OpenCreateResultType result;
+    bool newFile = FALSE;
 
     fd = open(fileName, O_RDWR | O_DIRECT | O_DSYNC, 0666);
     if (fd == -1) {
@@ -149,17 +152,20 @@ static int FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size,
             fd = open(fileName, O_RDWR | O_CREAT | O_TRUNC | O_EXCL | O_DIRECT | O_DSYNC, 0666);
             if (fd == -1) {
                 handle_error("creat");
-                return -1;
+                return OPEN_ERROR;
             } else {
                 if (fallocate(fd, 0, 0, size) == -1) {
                     handle_error("fallocate");
-                    return -1;
+                    return OPEN_ERROR;
                 }
+                newFile = TRUE;
             }
         } else {
             handle_error("open");
-            return -1;
+            return OPEN_ERROR;
         }
+    } else {
+        newFile = FALSE;
     }
     persistentArray->fileHandle = (MEM_HANDLE)fd;
 
@@ -173,7 +179,12 @@ static int FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size,
     persistentArray->mappingHandle = NULL;
     persistentArray->currentPage = 0;
 
-    return 1;
+    if (newFile) {
+        result = NEW_FILE;
+    } else {
+        result = OPEN_EXSISTING;
+    }
+    return result;
 }
 
 
@@ -200,69 +211,4 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
     }
 */
 }
-
-#if 0
-///
-/// TESTING
-///
-#define FLS_SECTOR_SIZE (256)
-
-#define FLS_PAGE_ADDR           ((uint16_t)0x8000U)
-#define FLS_PAGE_SIZE           ((uint32_t)0x4000U)
-
-
-static FlsEmu_SegmentType S12D512_PagedFlash = {
-    "XCPSIM_Flash",
-    FLSEMU_KB(512),
-    2,
-    FLS_SECTOR_SIZE,
-    FLS_PAGE_SIZE,
-    4,
-    0x8000,
-    XCP_NULL,
-    0,
-};
-
-static FlsEmu_SegmentType S12D512_EEPROM = {
-    "XCPSIM_EEPROM",
-    FLSEMU_KB(4),
-    2,
-    4,
-    FLSEMU_KB(4),
-    1,
-    0x4000,
-    XCP_NULL,
-    0,
-};
-
-static FlsEmu_SegmentType const * segments[] = {
-    &S12D512_PagedFlash,
-    &S12D512_EEPROM,
-};
-
-static const FlsEmu_ConfigType FlsEmu_Config = {
-    2,
-    (FlsEmu_SegmentType**)segments,
-};
-
-int main(void)
-{
-    int pageSize = FlsEmu_GetPageSize();
-    void * ptr;
-
-    printf("PAGE_SIZE: %u\n", pageSize);
-
-    FlsEmu_Init(&FlsEmu_Config);
-
-    for (int i = 0; i < 32; ++i) {
-        FlsEmu_SelectPage(0, i);
-        ptr = FlsEmu_BasePointer(0);
-        //printf("\tBP: %p\n", ptr);
-        XcpUtl_MemSet(ptr, i, 16 * 1024);
-    }
-
-    FlsEmu_DeInit();
-    return 0;
-}
-#endif
 

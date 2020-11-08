@@ -24,6 +24,9 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "flsemu.h"
 
 /*
@@ -47,7 +50,7 @@ typedef enum tagFlsEmu_MemoryTypeType {
  *
  */
 typedef struct tagFlsEmu_SystemMemoryType {
-    uint32_t pageSize;
+    uint32_t AllocationGranularity;
 } FlsEmu_SystemMemoryType;
 
 /*
@@ -57,11 +60,9 @@ static FlsEmu_ModuleStateType FlsEmu_ModuleState = FLSEMU_UNINIT; /**< Module-st
 static FlsEmu_SystemMemoryType FlsEmu_SystemMemory;     /**< System memory configuration. */
 static FlsEmu_ConfigType const * FlsEmu_Config = XCP_NULL;  /**< Segment configuration. */
 
-
 /*
 **  Global Functions.
 */
-
 
 /** @brief Initializes flash-emulator system.
  *
@@ -71,14 +72,12 @@ void FlsEmu_Init(FlsEmu_ConfigType const * config)
 {
     uint8_t idx;
 
-    FlsEmu_SystemMemory.pageSize = FlsEmu_GetPageSize();
+    FlsEmu_SystemMemory.AllocationGranularity = FlsEmu_GetAllocationGranularity();
     FlsEmu_Config = config;
     FlsEmu_ModuleState = FLSEMU_INIT;
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
-        //printf("FlsEmu_Init-SEG-NAME: %s\n", FlsEmu_Config->segments[idx]->name);
         FlsEmu_OpenCreate(idx);
     }
-
 }
 
 
@@ -93,6 +92,43 @@ void FlsEmu_DeInit(void)
     FlsEmu_ModuleState = FLSEMU_UNINIT;
 }
 
+void FlsEmu_OpenCreate(uint8_t segmentIdx)
+{
+    int length;
+    char rom[1024];
+    FlsEmu_SegmentType * segment;
+    FlsEmu_OpenCreateResultType result;
+    uint32_t fillerSize;
+    void * offset;
+    uint16_t numPages;
+    uint16_t pageIdx = 0U;
+
+    FLSEMU_ASSERT_INITIALIZED();
+    if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
+        return;
+    }
+    segment = FlsEmu_GetConfig()->segments[segmentIdx];
+    segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
+    segment->currentPage = 0x00;
+    segment->alloctedPageSize = FlsEmu_AllocatedSize(segmentIdx);
+    length = strlen(segment->name);
+    strncpy((char *)rom, (char *)segment->name, length);
+    rom[length] = '\x00';
+    strcat((char *)rom, ".rom");
+    numPages = FlsEmu_NumPages(segmentIdx);
+    result = FlsEmu_OpenCreatePersitentArray(rom, segment->alloctedPageSize * numPages, segment->persistentArray);
+    if (result == OPEN_ERROR) {
+
+    } else if (result == NEW_FILE) {
+        fillerSize = segment->alloctedPageSize - segment->pageSize;
+        for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
+            offset = segment->persistentArray->mappingAddress + (pageIdx * segment->alloctedPageSize);
+            XcpUtl_MemSet(offset, FLSEMU_ERASED_VALUE, segment->pageSize);
+            XcpUtl_MemSet(offset + segment->pageSize, FLSEMU_FILLER_VALUE, fillerSize);
+        }
+    }
+}
+
 
 void * FlsEmu_BasePointer(uint8_t segmentIdx)
 {
@@ -104,7 +140,6 @@ void * FlsEmu_BasePointer(uint8_t segmentIdx)
         return (void*)XCP_NULL;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
-    //
     return segment->persistentArray->mappingAddress;
 }
 
@@ -205,6 +240,26 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType * dst, Xcp_MtaType c
         }
     }
     return XCP_MEMORY_NOT_MAPPED;
+}
+
+
+/*!
+ *  Align emulated page-size to OS allocation granularity.
+ */
+uint32_t FlsEmu_AllocatedSize(uint8_t segmentIdx)
+{
+    FlsEmu_SegmentType const * segment;
+    FLSEMU_ASSERT_INITIALIZED();
+
+    if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
+        return (uint32_t)0;
+    }
+    segment = FlsEmu_GetConfig()->segments[segmentIdx];
+
+    return FlsEmu_SystemMemory.AllocationGranularity * (
+        (segment->pageSize / FlsEmu_SystemMemory.AllocationGranularity) +
+        ((segment->pageSize % FlsEmu_SystemMemory.AllocationGranularity) != 0) ? 1 : 0
+    );
 }
 
 FlsEmu_ConfigType const * FlsEmu_GetConfig(void)
