@@ -328,6 +328,16 @@ extern "C"
 #define XCP_DAQ_PROP_PRESCALER_SUPPORTED    ((uint8_t)0x02)
 #define XCP_DAQ_PROP_DAQ_CONFIG_TYPE        ((uint8_t)0x01)
 
+/* DAQ Key Byte */
+#define XCP_DAQ_KEY_IDENTIFICATION_FIELD_TYPE_1 ((uint8_t)0x80)
+#define XCP_DAQ_KEY_IDENTIFICATION_FIELD_TYPE_0 ((uint8_t)0x40)
+#define XCP_DAQ_KEY_ADDRESS_EXTENSION_DAQ       ((uint8_t)0x20)
+#define XCP_DAQ_KEY_ADDRESS_EXTENSION_ODT       ((uint8_t)0x10)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_3         ((uint8_t)0x08)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_2         ((uint8_t)0x04)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_1         ((uint8_t)0x02)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_0         ((uint8_t)0x01)
+
 /* DAQ Event Channel Properties */
 #define XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ      ((uint8_t)0x04)
 #define XCP_DAQ_EVENT_CHANNEL_TYPE_STIM     ((uint8_t)0x08)
@@ -356,6 +366,16 @@ extern "C"
 #define DAQ_LIST_PROPERTY_DAQ           (4)
 #define DAQ_LIST_PROPERTY_EVENT_FIXED   (2)
 #define DAQ_LIST_PROPERTY_PREDEFINED    (1)
+
+/*
+ * DAQ List Mode
+ */
+#define DAQ_CURRENT_LIST_MODE_RESUME            (0x80)
+#define DAQ_CURRENT_LIST_MODE_RUNNING           (0x40)
+#define DAQ_CURRENT_LIST_MODE_PID_OFF           (0x20)
+#define DAQ_CURRENT_LIST_MODE_TIMESTAMP         (0x10)
+#define DAQ_CURRENT_LIST_MODE_DIRECTION         (0x02)
+#define DAQ_CURRENT_LIST_MODE_SELECTED          (0x01)
 
 #define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 

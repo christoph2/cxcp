@@ -51,24 +51,22 @@ Xcp_PDUType Xcp_PduOut;
 
 
 /*
+ *  Local Constants.
+ */
+XCP_STATIC const Xcp_GetIdType Xcp_GetId0 = XCP_SET_ID(XCP_GET_ID_0);
+XCP_STATIC const Xcp_GetIdType Xcp_GetId1 = XCP_SET_ID(XCP_GET_ID_1);
+
+/*
 ** Local Variables.
 */
 XCP_STATIC Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 XCP_STATIC Xcp_StateType Xcp_State;
 
 XCP_STATIC Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)XCP_NULL;
-XCP_STATIC const Xcp_GetIdType Xcp_GetId0 = XCP_SET_ID(XCP_GET_ID_0);
-XCP_STATIC const Xcp_GetIdType Xcp_GetId1 = XCP_SET_ID(XCP_GET_ID_1);
 
-XCP_STATIC void Xcp_PositiveResponse(void);
-XCP_STATIC void Xcp_ErrorResponse(uint8_t errorCode);
-XCP_STATIC void Xcp_BusyResponse(void);
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
-XCP_STATIC uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
-XCP_STATIC Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_MtaType * dst);
-XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len);
 
 /*
 ** Local Macros.
@@ -137,6 +135,12 @@ XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len);
 /*
 ** Local Function Prototypes.
 */
+XCP_STATIC uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
+XCP_STATIC Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_MtaType * dst);
+XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len);
+XCP_STATIC void Xcp_PositiveResponse(void);
+XCP_STATIC void Xcp_ErrorResponse(uint8_t errorCode);
+XCP_STATIC void Xcp_BusyResponse(void);
 XCP_STATIC bool Xcp_IsProtected(uint8_t resource);
 XCP_STATIC void Xcp_DefaultResourceProtection(void);
 
