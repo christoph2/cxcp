@@ -42,7 +42,6 @@ static FlsEmu_SegmentType S12D512_EEPROM = {
     0,
 };
 
-
 static FlsEmu_SegmentType const * segments[] = {
     &S12D512_PagedFlash,
     &S12D512_EEPROM,
@@ -52,11 +51,11 @@ const FlsEmu_ConfigType FlsEmu_Config = {
     2,
     (FlsEmu_SegmentType**)segments,
 };
+
 const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
     XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
     XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
 };
-
 
 const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {
     {

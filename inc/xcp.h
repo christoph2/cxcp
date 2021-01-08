@@ -380,9 +380,9 @@ extern "C"
 #define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
 /* DAQ Implementation Macros */
-#define XCP_DAQ_DEFINE_ODT_ENTRY(meas)              \
-    {                                               \
-        {(uint32_t)&(meas)},      sizeof((meas))    \
+#define XCP_DAQ_DEFINE_ODT_ENTRY(meas)                      \
+    {                                                       \
+        {(const uint32_t)&(meas)},      sizeof((meas))      \
     }
 
 /* DAQ Event Implementation Macros */
