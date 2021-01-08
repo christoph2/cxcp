@@ -95,7 +95,7 @@ extern Xcp_PDUType Xcp_PduOut;
 static bool Xcp_EnableSocketOption(int sock, int option);
 static bool Xcp_DisableSocketOption(int sock, int option);
 static void * XcpTl_WorkerThread(void * param);
-static void XcpTl_Feed(char * buf);
+static void XcpTl_Feed(uint8_t * buf);
 
 
 static  bool Xcp_EnableSocketOption(int sock, int option)
@@ -285,7 +285,7 @@ void XcpTl_RxHandler(void)
     }
 }
 
-static void XcpTl_Feed(char * buf)
+static void XcpTl_Feed(uint8_t * buf)
 {
     uint16_t dlc;
 

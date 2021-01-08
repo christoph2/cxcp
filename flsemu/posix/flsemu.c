@@ -86,34 +86,6 @@ static bool FlsEmu_Flush(uint8_t segmentIdx)
     return XCP_TRUE;
 }
 
-#if 0
-void FlsEmu_OpenCreate(uint8_t segmentIdx)
-{
-    int result;
-    int length;
-    char rom[1024];
-    FlsEmu_SegmentType * segment;
-
-    FLSEMU_ASSERT_INITIALIZED();
-    if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
-        return;
-    }
-    segment = FlsEmu_GetConfig()->segments[segmentIdx];
-    segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
-    segment->currentPage = 0x00;
-    length = strlen(segment->name);
-    strncpy((char *)rom, (char *)segment->name, length);
-    rom[length] = '\x00';
-    strcat((char *)rom, ".rom");
-
-    result = FlsEmu_OpenCreatePersitentArray(rom, segment->memSize, segment->persistentArray);
-    if (result) {
-        XcpUtl_MemSet(segment->persistentArray->mappingAddress, FLSEMU_ERASED_VALUE, segment->memSize);
-    }
-
-}
-#endif
-
 static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray, uint32_t size)
 {
     FLSEMU_ASSERT_INITIALIZED();
@@ -144,7 +116,7 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileNam
     int fd;
     void * addr;
     FlsEmu_OpenCreateResultType result;
-    bool newFile = FALSE;
+    bool newFile = XCP_FALSE;
 
     fd = open(fileName, O_RDWR | O_DIRECT | O_DSYNC, 0666);
     if (fd == -1) {
@@ -158,14 +130,14 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileNam
                     handle_error("fallocate");
                     return OPEN_ERROR;
                 }
-                newFile = TRUE;
+                newFile = XCP_TRUE;
             }
         } else {
             handle_error("open");
             return OPEN_ERROR;
         }
     } else {
-        newFile = FALSE;
+        newFile = XCP_FALSE;
     }
     persistentArray->fileHandle = (MEM_HANDLE)fd;
 
