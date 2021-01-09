@@ -28,6 +28,7 @@ static FlsEmu_SegmentType S12D512_PagedFlash = {
     0x8000,
     XCP_NULL,
     0,
+    0,
 };
 
 static FlsEmu_SegmentType S12D512_EEPROM = {
@@ -39,6 +40,7 @@ static FlsEmu_SegmentType S12D512_EEPROM = {
     1,
     0x4000,
     XCP_NULL,
+    0,
     0,
 };
 
