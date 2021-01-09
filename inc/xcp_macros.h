@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -59,7 +59,7 @@ extern "C"
 #endif
 
 #if !defined(XCP_HIBYTE)
-#define XCP_HIBYTE(w)   ((uint8_t)(((w)  & (uint16_t)0xff00) >> 8)) /**< Get the high-byte from a word. */
+#define XCP_HIBYTE(w)   ((uint8_t)(((w)  & (uint16_t)0xff00U) >> 8U)) /**< Get the high-byte from a word. */
 #endif
 
 #if !defined(XCP_LOWORD)
@@ -67,7 +67,7 @@ extern "C"
 #endif
 
 #if !defined(XCP_HIWORD)
-#define XCP_HIWORD(w)   ((uint16_t)(((w)  & (uint32_t)0xffff0000) >> 16))   /**< Get the high-word from a doubleword. */
+#define XCP_HIWORD(w)   ((uint16_t)(((w)  & (uint32_t)0xffff0000) >> 16U))   /**< Get the high-word from a doubleword. */
 #endif
 
 #if !defined(XCP_MAKEWORD)
@@ -165,7 +165,7 @@ extern "C"
     #define DBG_TRACE6(a, b, c, d, e, f)
 #endif /* XCP_BUILD_TYPE == XCP_DEBUG_BUILD */
 
-#define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr[0])))  /**< Calculates the number of elements of \a arr */
+#define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr)[0]))  /**< Calculates the number of elements of \a arr */
 
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON

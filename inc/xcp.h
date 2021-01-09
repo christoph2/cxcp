@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -281,32 +281,32 @@ extern "C"
 /*
  * GetID Mode.
  */
-#define XCP_COMPRESSED_ENCRYPTED        (2)
-#define XCP_TRANSFER_MODE               (1)
+#define XCP_COMPRESSED_ENCRYPTED        UINT8(2)
+#define XCP_TRANSFER_MODE               UINT8(1)
 
 /*
  * Current Session Status.
  */
-#define RESUME                          (0x80)
-#define DAQ_RUNNING                     (0x40)
-#define CLEAR_DAQ_REQ                   (0x08)
-#define STORE_DAQ_REQ                   (0x04)
-#define STORE_CAL_REQ                   (0x01)
+#define RESUME                          UINT8(0x80)
+#define DAQ_RUNNING                     UINT8(0x40)
+#define CLEAR_DAQ_REQ                   UINT8(0x08)
+#define STORE_DAQ_REQ                   UINT8(0x04)
+#define STORE_CAL_REQ                   UINT8(0x01)
 
 /*
  * SetRequest Mode.
  */
-#define XCP_CLEAR_DAQ_REQ               (8)
-#define XCP_STORE_DAQ_REQ_RESUME        (4)
-#define XCP_STORE_DAQ_REQ_NO_RESUME     (2)
-#define XCP_STORE_CAL_REQ               (1)
+#define XCP_CLEAR_DAQ_REQ               UINT8(8)
+#define XCP_STORE_DAQ_REQ_RESUME        UINT8(4)
+#define XCP_STORE_DAQ_REQ_NO_RESUME     UINT8(2)
+#define XCP_STORE_CAL_REQ               UINT8(1)
 
 /*
  * SetCalPage Mode.
  */
-#define XCP_SET_CAL_PAGE_ALL            (0x80)
-#define XCP_SET_CAL_PAGE_XCP            (0x02)
-#define XCP_SET_CAL_PAGE_ECU            (0x01)
+#define XCP_SET_CAL_PAGE_ALL            UINT8(0x80)
+#define XCP_SET_CAL_PAGE_XCP            UINT8(0x02)
+#define XCP_SET_CAL_PAGE_ECU            UINT8(0x01)
 
 
 
@@ -362,20 +362,20 @@ extern "C"
 #define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_100PS  UINT8(12)
 
 /* DAQ list properties */
-#define DAQ_LIST_PROPERTY_STIM          (8)
-#define DAQ_LIST_PROPERTY_DAQ           (4)
-#define DAQ_LIST_PROPERTY_EVENT_FIXED   (2)
-#define DAQ_LIST_PROPERTY_PREDEFINED    (1)
+#define DAQ_LIST_PROPERTY_STIM          UINT8(8)
+#define DAQ_LIST_PROPERTY_DAQ           UINT8(4)
+#define DAQ_LIST_PROPERTY_EVENT_FIXED   UINT8(2)
+#define DAQ_LIST_PROPERTY_PREDEFINED    UINT8(1)
 
 /*
  * DAQ List Mode
  */
-#define DAQ_CURRENT_LIST_MODE_RESUME            (0x80)
-#define DAQ_CURRENT_LIST_MODE_RUNNING           (0x40)
-#define DAQ_CURRENT_LIST_MODE_PID_OFF           (0x20)
-#define DAQ_CURRENT_LIST_MODE_TIMESTAMP         (0x10)
-#define DAQ_CURRENT_LIST_MODE_DIRECTION         (0x02)
-#define DAQ_CURRENT_LIST_MODE_SELECTED          (0x01)
+#define DAQ_CURRENT_LIST_MODE_RESUME            UINT8(0x80)
+#define DAQ_CURRENT_LIST_MODE_RUNNING           UINT8(0x40)
+#define DAQ_CURRENT_LIST_MODE_PID_OFF           UINT8(0x20)
+#define DAQ_CURRENT_LIST_MODE_TIMESTAMP         UINT8(0x10)
+#define DAQ_CURRENT_LIST_MODE_DIRECTION         UINT8(0x02)
+#define DAQ_CURRENT_LIST_MODE_SELECTED          UINT8(0x01)
 
 #define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
@@ -401,18 +401,18 @@ extern "C"
 /*
  * PAG Processor Properties.
  */
-#define XCP_PAG_PROCESSOR_FREEZE_SUPPORTED  (1)
+#define XCP_PAG_PROCESSOR_FREEZE_SUPPORTED  UINT8(1)
 
 
 /*
  * Page Properties.
  */
-#define XCP_WRITE_ACCESS_WITH_ECU           (32)
-#define XCP_WRITE_ACCESS_WITHOUT_ECU        (16)
-#define XCP_READ_ACCESS_WITH_ECU            (8)
-#define XCP_READ_ACCESS_WITHOUT_ECU         (4)
-#define ECU_ACCESS_WITH_XCP                 (2)
-#define ECU_ACCESS_WITHOUT_XCP              (1)
+#define XCP_WRITE_ACCESS_WITH_ECU           UINT8(32)
+#define XCP_WRITE_ACCESS_WITHOUT_ECU        UINT8(16)
+#define XCP_READ_ACCESS_WITH_ECU            UINT8(8)
+#define XCP_READ_ACCESS_WITHOUT_ECU         UINT8(4)
+#define ECU_ACCESS_WITH_XCP                 UINT8(2)
+#define ECU_ACCESS_WITHOUT_XCP              UINT8(1)
 
 /*
 **  PGM Capabilities.
@@ -435,11 +435,11 @@ extern "C"
 /*
 **
 */
-#define XCP_HW_LOCK_XCP     (0)
-#define XCP_HW_LOCK_TL      (1)
-#define XCP_HW_LOCK_DAQ     (2)
+#define XCP_HW_LOCK_XCP     UINT8(0)
+#define XCP_HW_LOCK_TL      UINT8(1)
+#define XCP_HW_LOCK_DAQ     UINT8(2)
 
-#define XCP_HW_LOCK_COUNT   (3)
+#define XCP_HW_LOCK_COUNT   UINT8(3)
 
 /*
 ** Global Types.

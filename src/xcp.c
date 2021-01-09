@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -783,6 +783,8 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
         case 1:
             dataOut[0] = b0;
             break;
+        default:
+            break;
     }
 
     Xcp_SendPdu();
@@ -1059,16 +1061,16 @@ XCP_STATIC void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
 XCP_STATIC void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t idType = Xcp_GetByte(pdu, UINT8(1));
-    static char * response = XCP_NULL;
+    static uint8_t * response = XCP_NULL;
     uint32_t response_len = UINT32(0);
 
     DBG_TRACE2("GET_ID [type: 0x%02x]\n", idType);
 
     if (idType == UINT8(0)) {
-        response = Xcp_GetId0.name;
+        response = (uint8_t*)Xcp_GetId0.name;
         response_len = Xcp_GetId0.len;
     } else if (idType == UINT8(1)) {
-        response = Xcp_GetId1.name;
+        response = (uint8_t*)Xcp_GetId1.name;
         response_len = Xcp_GetId1.len;
     }
 #if XCP_ENABLE_GET_ID_HOOK == XCP_ON
@@ -1351,7 +1353,6 @@ XCP_STATIC void Xcp_UserCmd_Res(Xcp_PDUType const * const pdu)
 XCP_STATIC void Xcp_Download_Res(Xcp_PDUType const * const pdu)
 {
     uint8_t len = Xcp_GetByte(pdu, UINT8(1));
-    Xcp_MtaType src = {0};
 
     DBG_TRACE2("DOWNLOAD [len: %u]\n", len);
 
@@ -2173,16 +2174,16 @@ INLINE uint8_t Xcp_GetByte(Xcp_PDUType const * const pdu, uint8_t offs)
 
 INLINE uint16_t Xcp_GetWord(Xcp_PDUType const * const pdu, uint8_t offs)
 {
-  return (*(pdu->data + offs)) | ((*(pdu->data + 1 + offs)) << 8);
+  return (*(pdu->data + offs)) | ((*(pdu->data + UINT8(1) + offs)) << UINT8(8));
 }
 
 INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
 {
-    uint16_t h;
-    uint16_t l;
+    uint16_t h = UINT16(0);
+    uint16_t l = UINT16(0);
 
-    l = (*(pdu->data + offs)) | ((*(pdu->data + 1 + offs)) << 8);
-    h = (*(pdu->data + 2 + offs)) | ((*(pdu->data + 3 + offs)) << 8);
+    l = (*(pdu->data + offs)) | ((*(pdu->data + UINT8(1) + offs)) << UINT8(8));
+    h = (*(pdu->data + UINT8(2) + offs)) | ((*(pdu->data + UINT8(3) + offs)) << UINT8(8));
     /* l = Xcp_GetWord(pdu, 0); */
     /* h = Xcp_GetWord(pdu, 2); */
 
@@ -2196,16 +2197,16 @@ INLINE void Xcp_SetByte(Xcp_PDUType const * const pdu, uint8_t offs, uint8_t val
 
 INLINE void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value)
 {
-    (*(pdu->data + offs)) = value & 0xff;
-    (*(pdu->data + 1 + offs)) = (value & 0xff00) >> 8;
+    (*(pdu->data + offs)) = value & UINT8(0xff);
+    (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
 }
 
 INLINE void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value)
 {
-    (*(pdu->data + offs)) = value & 0xff;
-    (*(pdu->data + 1 + offs)) = (value & 0xff00) >> 8;
-    (*(pdu->data + 2 + offs)) = (value & 0xff0000) >> 16;
-    (*(pdu->data + 3 + offs)) = (value & 0xff000000) >> 24;
+    (*(pdu->data + offs)) = value & UINT8(0xff);
+    (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
+    (*(pdu->data + UINT8(2) + offs)) = (value & UINT32(0xff0000)) >> UINT8(16);
+    (*(pdu->data + UINT8(3) + offs)) = (value & UINT32(0xff000000)) >> UINT8(24);
 }
 
 XCP_STATIC uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag)
@@ -2239,7 +2240,7 @@ bool Xcp_IsBusy(void)
 
 Xcp_StateType * Xcp_GetState(void)
 {
-    Xcp_StateType * tState;
+    Xcp_StateType * tState = XCP_NULL;
 
     XCP_DAQ_ENTER_CRITICAL();
     tState = &Xcp_State;
