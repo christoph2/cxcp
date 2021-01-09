@@ -112,9 +112,9 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx)
     segment->currentPage = 0x00;
     segment->alloctedPageSize = FlsEmu_AllocatedSize(segmentIdx);
     length = strlen(segment->name);
-    strncpy_s((char *)rom, 1024, (char *)segment->name, length);
+    strncpy((char *)rom, (char *)segment->name, length);
     rom[length] = '\x00';
-    strcat_s((char *)rom, 1024, ".rom");
+    strcat((char *)rom, ".rom");
     numPages = FlsEmu_NumPages(segmentIdx);
     result = FlsEmu_OpenCreatePersitentArray(rom, segment->alloctedPageSize * numPages, segment->persistentArray);
     if (result == OPEN_ERROR) {

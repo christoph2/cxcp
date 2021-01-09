@@ -137,7 +137,7 @@ void XcpTl_Init(void)
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
-    sprintf_s(port, 16, "%d", Xcp_Options.port);
+    sprintf(port, "%d", Xcp_Options.port);
     hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;
     hints.ai_socktype = XcpTl_Connection.socketType;
     hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
