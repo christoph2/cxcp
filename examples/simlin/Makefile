@@ -16,7 +16,9 @@ CFLAGS += -ggdb -O0 -D_FORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer
 else
 CFLAGS += -O3
 endif
-
+ifeq ($(shell getconf LONG_BIT),64)
+CFLAGS += -m32 	# XCP doesn't supports 64bit architectures.
+endif
 #ifeq ($(strip $(TARGET)), kvaser)
 #KV_BASE_DIR = f:/kvaser/Canlib
 #xcp_sim_SRC+=tl/can/kvaser.c
