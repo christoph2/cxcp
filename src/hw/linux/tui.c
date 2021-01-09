@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -67,7 +67,8 @@ static const char TITLE[] = "Blueparrot XCP";
 
 static void centered_text(WINDOW * win, int row, char const * text, int attrs)
 {
-    int maxX, maxY;
+    unsigned int maxX = 0;
+    unsigned int maxY = 0;
 
     getmaxyx(win, maxY, maxX);
     XCP_UNREFERENCED_PARAMETER(maxY);
@@ -85,7 +86,7 @@ static WINDOW * centered_window(int height, int width)
 
 static WINDOW *create_newwin(int height, int width, int starty, int startx)
 {
-    WINDOW *local_win;
+    WINDOW *local_win = NULL;
     local_win = newwin(height, width, starty, startx);
     box(local_win, 0 , 0); /* 0, 0 gives default characters
                               * for the vertical and horizontal
@@ -103,10 +104,13 @@ static void destroy_win(WINDOW *local_win)
 
 void XcpTui_Init(void)
 {
-    bool ext;
+    bool ext = FALSE;
     char buf[128];
-    WINDOW *my_win;
-    int startx, starty, width, height;
+    WINDOW * my_win = NULL;
+    unsigned int startx = 0U;
+    unsigned int starty = 0U;
+    unsigned int width = 0U;
+    unsigned int height = 0U;
 
     initscr();
     raw();

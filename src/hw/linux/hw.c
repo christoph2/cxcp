@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -30,7 +30,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <pthread.h>
-//#include <semaphore.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -83,8 +82,6 @@ static void DeinitTUI(void);
 */
 
 void endwin(void);  /* We don't want to include ncurses.h */
-
-void XcpTl_PrintConnectionInformation(void);
 
 static void DisplayHelp(void);
 static void SystemInformation(void);
@@ -161,6 +158,8 @@ static void termination_handler(int sig)
         case SIGSEGV:
             printf("SIGSEGV");
             break;
+        default:
+            printf("Signal: %u", sig);
     }
     printf(".\n");
     exit(9);
@@ -266,7 +265,7 @@ void XcpHw_Deinit(void)
 
 void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
 {
-    int status;
+    int status = 0;
 
     status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
@@ -290,7 +289,7 @@ void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
 
 void XcpHw_ResetApplicationState(uint32_t mask)
 {
-    int status;
+    int status = 0;
 
     status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
@@ -305,7 +304,7 @@ void XcpHw_ResetApplicationState(uint32_t mask)
 
 void XcpHw_CondResetApplicationState(uint32_t mask)
 {
-    uint8_t idx;
+    uint8_t idx = 0;
 
     for (idx = 0; idx < 31; ++idx) {
         //printf("idx: %u mask: %u\n");
@@ -318,7 +317,7 @@ void XcpHw_CondResetApplicationState(uint32_t mask)
 
 uint32_t XcpHw_WaitApplicationState(uint32_t mask)
 {
-    int status;
+    int status = 0;
     int match = 0;
 #if 0
     struct timespec timeout;
@@ -364,7 +363,7 @@ uint32_t XcpHw_GetTimerCounter(void)
 {
     struct timespec now = {0};
     struct timespec dt = {0};
-    unsigned long long timestamp;
+    unsigned long long timestamp = 0ULL;
 
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &now) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
@@ -481,7 +480,7 @@ static void DisplayHelp(void)
 static void SystemInformation(void)
 {
 #if XCP_ENABLE_STATISTICS == XCP_ON
-    Xcp_StateType * state;
+    Xcp_StateType * state = NULL;
 #endif /* XCP_ENABLE_STATISTICS */
 
     printf("\nSystem-Information\n");

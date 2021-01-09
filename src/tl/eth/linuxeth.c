@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -78,19 +78,11 @@ typedef struct tagXcpTl_ConnectionType {
 extern pthread_t XcpHw_ThreadID[4];
 
 unsigned char buf[XCP_COMM_BUFLEN];
-int addrSize = sizeof(struct sockaddr_storage);
+socklen_t addrSize = sizeof(struct sockaddr_storage);
 
 static XcpTl_ConnectionType XcpTl_Connection;
-extern Xcp_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
-
-
-void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
-
-
-extern Xcp_PDUType Xcp_PduIn;
-extern Xcp_PDUType Xcp_PduOut;
 
 static bool Xcp_EnableSocketOption(int sock, int option);
 static bool Xcp_DisableSocketOption(int sock, int option);
@@ -134,11 +126,12 @@ static bool Xcp_DisableSocketOption(int sock, int option)
 
 void XcpTl_Init(void)
 {
-    struct addrinfo hints, *addr_info;
+    struct addrinfo hints;
+    struct addrinfo * addr_info = NULL;
     char * address = NULL;
     char port[16];
-    int sock;
-    int ret;
+    int sock = 0;
+    int ret = 0;
 
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
@@ -186,7 +179,7 @@ void XcpTl_Init(void)
 
 static void * XcpTl_WorkerThread(void * param)
 {
-    int status;
+    int status = 0;
 
     while(1) {
         XcpTl_RxHandler();
@@ -215,9 +208,9 @@ void * get_in_addr(struct sockaddr *sa)
 
 void XcpTl_RxHandler(void)
 {
-    int recv_len;
-    uint16_t dlc;
-    int FromLen;
+    int recv_len = 0;
+    uint16_t dlc = 0;
+    socklen_t FromLen = 0;
     struct sockaddr_storage From;
     char hostname[NI_MAXHOST];
 
@@ -287,7 +280,7 @@ void XcpTl_RxHandler(void)
 
 static void XcpTl_Feed(uint8_t * buf)
 {
-    uint16_t dlc;
+    uint16_t dlc = 0;
 
 #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
     dlc = (uint16_t)buf[0];

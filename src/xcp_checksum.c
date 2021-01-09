@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -262,11 +262,11 @@ static uint32_t reflect(uint32_t data, uint8_t nBits)
 
 Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const * ptr, uint32_t length, Xcp_ChecksumType startValue, bool isFirstCall)
 {
-    Xcp_ChecksumType result;
-    uint32_t idx;
+    Xcp_ChecksumType result = 0;
+    uint32_t idx = 0UL;
 #if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT) || \
     (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32)
-    uint8_t data;
+    uint8_t data = 0;
 
     if (isFirstCall) {
         result = XCP_CRC_INITIAL_VALUE;

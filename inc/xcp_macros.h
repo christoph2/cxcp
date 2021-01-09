@@ -79,11 +79,11 @@ extern "C"
 #endif
 
 #if !defined(XCP_MAX)
-#define XCP_MAX(l, r) ((l) > (r) ? (l) : (r))   /**< Computes the maximum of \a l and \a r. */
+#define XCP_MAX(l, r) (((l) > (r)) ? (l) : (r))   /**< Computes the maximum of \a l and \a r. */
 #endif
 
 #if !defined(XCP_MIN)
-#define XCP_MIN(l, r) ((l) < (r) ? (l) : (r))   /**< Computes the minimum of \a l and \a r. */
+#define XCP_MIN(l, r) (((l) < (r)) ? (l) : (r))   /**< Computes the minimum of \a l and \a r. */
 #endif
 
 #if !defined(XCP_TRUE)

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -31,17 +31,12 @@
 #include "xcp_util.h"
 
 
-#define XCP_SXI_MAKEWORD(buf, offs)  (*(buf+offs)) | (( *(buf+offs+1) << 8))
+#define XCP_SXI_MAKEWORD(buf, offs)  ((*((buf) + (offs))) | (( *((buf) + (offs) + 1) << 8)))
 
-
-void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 void XcpTl_SignalTimeout(void);
 
 static void XcpTl_ResetSM(void);
-
-extern Xcp_PDUType Xcp_PduIn;
-extern Xcp_PDUType Xcp_PduOut;
 
 static uint8_t Xcp_PduOutBuffer[XCP_COMM_BUFLEN] = {0};
 

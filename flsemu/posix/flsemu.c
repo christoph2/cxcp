@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -57,7 +57,7 @@ uint32_t FlsEmu_GetAllocationGranularity(void)
 
 void FlsEmu_Close(uint8_t segmentIdx)
 {
-    FlsEmu_SegmentType const * segment;
+    FlsEmu_SegmentType const * segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
@@ -71,7 +71,7 @@ void FlsEmu_Close(uint8_t segmentIdx)
 
 static bool FlsEmu_Flush(uint8_t segmentIdx)
 {
-    FlsEmu_SegmentType const * segment;
+    FlsEmu_SegmentType const * segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
 
@@ -96,7 +96,7 @@ static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persis
 
 static void FlsEmu_MapAddress(void * mappingAddress, int offset, uint32_t size, int fd)
 {
-    void * res;
+    void * res = XCP_NULL;
 
     res = mmap(mappingAddress, size, PROT_READ | PROT_WRITE,  MAP_SHARED, fd, offset);
     if (res == MAP_FAILED) {
@@ -113,9 +113,9 @@ static void FlsEmu_UnmapAddress(void * addr, uint32_t size)
 
 FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size, FlsEmu_PersistentArrayType * persistentArray)
 {
-    int fd;
-    void * addr;
-    FlsEmu_OpenCreateResultType result;
+    int fd = 0;
+    void * addr = XCP_NULL;
+    FlsEmu_OpenCreateResultType result = 0;
     bool newFile = XCP_FALSE;
 
     fd = open(fileName, O_RDWR | O_DIRECT | O_DSYNC, 0666);
@@ -162,8 +162,8 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileNam
 
 void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
 {
-    uint32_t offset;
-    FlsEmu_SegmentType * segment;
+    uint32_t offset = 0UL;
+    FlsEmu_SegmentType * segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {

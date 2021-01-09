@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -72,19 +72,11 @@ typedef struct tagXcpTl_ConnectionType {
 
 unsigned char buf[XCP_COMM_BUFLEN];
 
-
 static XcpTl_ConnectionType XcpTl_Connection;
-extern Xcp_OptionsType Xcp_Options;
 
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 
-
-void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
-
 extern void endwin(void);
-
-extern Xcp_PDUType Xcp_PduIn;
-extern Xcp_PDUType Xcp_PduOut;
 
 
 int locate_interface(int socket, char const * name)
@@ -156,7 +148,7 @@ void XcpTl_MainFunction(void)
 void XcpTl_RxHandler(void)
 {
     struct canfd_frame frame;
-    int nbytes;
+    int nbytesi = 0;
 
     nbytes = read(XcpTl_Connection.can_socket, &frame, CANFD_MTU);
 
