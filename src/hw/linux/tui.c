@@ -121,11 +121,11 @@ void XcpTui_Init(void)
 
 #if defined(SOCKET_CAN)
     ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER);
-    sprintf(buf, "XCPonCAN listening on 0x%04x [%s]\n",
+    sprintf_s(buf, 128, "XCPonCAN listening on 0x%04x [%s]\n",
         XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
     );
 #elif defined(ETHER)
-    sprintf(buf, "XCPonEth -- Listening on port %d / %s [%s]",
+    sprintf_s(buf, 128, "XCPonEth -- Listening on port %d / %s [%s]",
             Xcp_Options.port, Xcp_Options.tcp ? "TCP" : "UDP",Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
 #endif
