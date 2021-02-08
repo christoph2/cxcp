@@ -143,6 +143,7 @@ XCP_STATIC void Xcp_ErrorResponse(uint8_t errorCode);
 XCP_STATIC void Xcp_BusyResponse(void);
 XCP_STATIC bool Xcp_IsProtected(uint8_t resource);
 XCP_STATIC void Xcp_DefaultResourceProtection(void);
+XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, uint32_t address);
 
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
 XCP_STATIC bool Xcp_SlaveBlockTransferIsActive(void);
@@ -1525,13 +1526,12 @@ XCP_STATIC void Xcp_SetDaqPtr_Res(Xcp_PDUType const * const pdu)
 
 XCP_STATIC void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
 {
-    XcpDaq_ODTEntryType * entry = XCP_NULL;
     const uint8_t bitOffset = Xcp_GetByte(pdu, UINT8(1));
     const uint8_t elemSize  = Xcp_GetByte(pdu, UINT8(2));
     const uint8_t adddrExt  = Xcp_GetByte(pdu, UINT8(3));
     const uint32_t address  = Xcp_GetDWord(pdu, UINT8(4));
 
-    DBG_TRACE5("WRITE_DAQ [address: 0x%08x ext: 0x%02x size: %u offset: %u]\n", address, adddrExt, elemSize, bitOffset);
+    DBG_TRACE1("WRITE_DAQ\n");
 
     XCP_ASSERT_DAQ_STOPPED();
     XCP_ASSERT_PGM_IDLE();
@@ -1542,26 +1542,49 @@ XCP_STATIC void Xcp_WriteDaq_Res(Xcp_PDUType const * const pdu)
         Xcp_SendResult(ERR_WRITE_PROTECTED);
         return;
     }
-
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
-
-    entry = XcpDaq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
-
-#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
-    entry->bitOffset = bitOffset;
-#endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
-    entry->length = elemSize;
-    entry->mta.address = address;
-#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
-    entry->mta.ext = adddrExt;
-#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
-
-    /* Advance ODT entry pointer within  one  and  the same ODT. After writing to the
-    last ODT entry of an ODT, the value of the DAQ pointer is undefined! */
-    Xcp_State.daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;
-
+    Xcp_WriteDaqEntry(bitOffset, elemSize,adddrExt, address);
     Xcp_PositiveResponse();
 }
+
+#if XCP_ENABLE_WRITE_DAQ_MULTIPLE == XCP_ON
+XCP_STATIC void Xcp_WriteDaqMultiple_Res(Xcp_PDUType const * const pdu)
+{
+    uint8_t numElements = Xcp_GetByte(pdu, UINT8(1));
+    uint8_t bitOffset = UINT8(0);
+    uint8_t elemSize  = UINT8(0);
+    uint8_t adddrExt  = UINT8(0);
+    uint32_t address  = UINT32(0);
+    uint8_t daq_offset = UINT8(0);
+    uint8_t idx = UINT8(0);
+
+    if (((numElements * UINT8(8)) + UINT8(2)) > XCP_MAX_CTO) {
+        // To many ODT entries to fit into one XCP frame.
+        Xcp_SendResult(ERR_OUT_OF_RANGE);
+        return;
+    }
+    DBG_TRACE2("WRITE_DAQ_MULTIPLE [numElements: 0x%08x]\n", numElements);
+    XCP_ASSERT_DAQ_STOPPED();
+    XCP_ASSERT_PGM_IDLE();
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+    /* WRITE_DAQ is only possible for elements in configurable DAQ lists. */
+    if (Xcp_State.daqPointer.daqList < XcpDaq_PredefinedListCount) {
+        Xcp_SendResult(ERR_WRITE_PROTECTED);
+        return;
+    }
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+    for (idx = UINT8(0); idx < numElements; ++idx) {
+        daq_offset = (idx * UINT8(8)) + UINT8(2);
+        bitOffset = Xcp_GetByte(pdu, daq_offset + UINT8(0));
+        elemSize  = Xcp_GetByte(pdu, daq_offset + UINT8(1));
+        address  = Xcp_GetDWord(pdu, daq_offset + UINT8(2));
+        adddrExt  = Xcp_GetByte(pdu, daq_offset + UINT8(6));
+        Xcp_WriteDaqEntry(bitOffset, elemSize,adddrExt, address);
+    }
+    Xcp_PositiveResponse();
+}
+#endif // XCP_ENABLE_WRITE_DAQ_MULTIPLE
 
 XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PDUType const * const pdu)
 {
@@ -1785,28 +1808,6 @@ XCP_STATIC void Xcp_GetDaqListInfo_Res(Xcp_PDUType const * const pdu)
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 }
 #endif /* XCP_ENABLE_GET_DAQ_LIST_INFO */
-
-
-#if XCP_ENABLE_WRITE_DAQ_MULTIPLE == XCP_ON
-XCP_STATIC void Xcp_WriteDaqMultiple_Res(Xcp_PDUType const * const pdu)
-{
-    XcpDaq_ODTEntryType * entry = XCP_NULL;
-
-    uint8_t numElements = Xcp_GetByte(pdu, UINT8(1));
-/*
-    const uint8_t bitOffset = Xcp_GetByte(pdu, UINT8(1));
-    const uint8_t elemSize  = Xcp_GetByte(pdu, UINT8(2));
-    const uint8_t adddrExt  = Xcp_GetByte(pdu, UINT8(3));
-    const uint32_t address  = Xcp_GetDWord(pdu, UINT8(4));
-*/
-
-    DBG_TRACE2("WRITE_DAQ_MULTIPLE [numElements: 0x%08x]\n", numElements);
-
-    XCP_ASSERT_DAQ_STOPPED();
-    XCP_ASSERT_PGM_IDLE();
-    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-}
-#endif // XCP_ENABLE_WRITE_DAQ_MULTIPLE
 
 
 #if XCP_ENABLE_FREE_DAQ == XCP_ON
@@ -2304,6 +2305,30 @@ void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state)
     XCP_PGM_LEAVE_CRITICAL();
 }
 #endif /* ENABLE_PGM_COMMANDS */
+
+XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, uint32_t address)
+{
+    XcpDaq_ODTEntryType * entry = XCP_NULL;
+
+    DBG_TRACE5("\tentry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n", address, adddrExt, elemSize, bitOffset);
+
+    entry = XcpDaq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
+
+#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+    entry->bitOffset = bitOffset;
+#endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
+    entry->length = elemSize;
+    entry->mta.address = address;
+#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
+    entry->mta.ext = adddrExt;
+#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
+
+    /* Advance ODT entry pointer within one and the same ODT.
+     * After writing to the last ODT entry of an ODT, the value
+     * of the DAQ pointer is undefined!
+     */
+    Xcp_State.daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;
+}
 
 #if defined(_WIN32)
 void Xcp_DisplayInfo(void)

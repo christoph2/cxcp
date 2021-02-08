@@ -192,6 +192,10 @@ extern "C"
     #endif /* XCP_ENABLE_ALLOC_ODT_ENTRY */
 #endif
 
+#if (XCP_ENABLE_WRITE_DAQ_MULTIPLE == XCP_ON) && (XCP_MAX_CTO < 10)
+    #error XCP_ENABLE_WRITE_DAQ_MULTIPLE requires XCP_MAX_CTO of at least 10
+#endif
+
 #define XCP_DAQ_ODT_ENTRY_OFFSET ((1) + (1))    /* Currently fixed (only abs. ODT numbers supported). */
 #define XCP_DAQ_MAX_ODT_ENTRY_SIZE  (XCP_MAX_DTO - XCP_DAQ_ODT_ENTRY_OFFSET)    /* Max. payload. */
 
