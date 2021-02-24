@@ -5,7 +5,7 @@ from glob import glob
 import os
 import subprocess
 
-CFLAGS_OBJ = "-Wall -g -std=c11 -O0 -fPIC -shared -c -I../inc -I."
+CFLAGS_OBJ = "-Wall -g -std=c11 -O0 -fPIC -shared -c -I../inc -I. -I../flsemu"
 CFLAGS_SO = "-shared"
 GCOV = ""
 
@@ -39,9 +39,11 @@ def main():
     builder = Builder()
     builder.clean()
     #print(builder.run("ls", "-l", "-S", "-R", "*py"))
-    builder.build_objs("checksum_mocks.c", "xcp_init.c", "../src/xcp_checksum.c", "../src/xcp_daq.c", "../src/xcp_util.c")
+    builder.build_objs("checksum_mocks.c", "xcp_init.c", "../src/xcp_checksum.c", "../src/xcp_daq.c", "../src/xcp_util.c",
+            "../flsemu/common.c", "fls_mocks.c")
     builder.build_so("test_cs.so", "checksum_mocks.o", "xcp_checksum.o")
     builder.build_so("test_daq.so", "xcp_daq.o", "xcp_util.o", "xcp_init.o")
+    builder.build_so("test_fls.so", "common.o", "xcp_util.o", "fls_mocks.o")
 
 if __name__ == '__main__':
     main()
