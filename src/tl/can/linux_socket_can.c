@@ -148,7 +148,7 @@ void XcpTl_MainFunction(void)
 void XcpTl_RxHandler(void)
 {
     struct canfd_frame frame;
-    int nbytesi = 0;
+    int nbytes = 0;
 
     nbytes = read(XcpTl_Connection.can_socket, &frame, CANFD_MTU);
 
