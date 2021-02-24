@@ -141,6 +141,9 @@ XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len);
 XCP_STATIC void Xcp_PositiveResponse(void);
 XCP_STATIC void Xcp_ErrorResponse(uint8_t errorCode);
 XCP_STATIC void Xcp_BusyResponse(void);
+#if (XCP_ENABLE_SERVICE_REQUEST_API == XCP_ON) || (XCP_ENABLE_EVENT_PACKET_API)
+XCP_STATIC void Xcp_SendSpecialPacket(uint8_t packetType, uint8_t code, uint8_t const * const data, uint8_t dataLength);
+#endif
 XCP_STATIC bool Xcp_IsProtected(uint8_t resource);
 XCP_STATIC void Xcp_DefaultResourceProtection(void);
 XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, uint32_t address);
@@ -755,7 +758,7 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
     len = XCP_MAX_CTO;
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
 
-    Xcp_SetPduOutLen((uint16_t)len);
+    Xcp_SetPduOutLen(UINT16(len));
 
     /* MISRA 2004 violation Rule 15.2               */
     /* Controlled fall-through (copy optimization)  */
@@ -987,7 +990,7 @@ XCP_STATIC void Xcp_Connect_Res(Xcp_PDUType const * const pdu)
 
     XcpTl_SaveConnection();
 
-    Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(resource), UINT8(commModeBasic), UINT8(XCP_MAX_CTO),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(resource), UINT8(commModeBasic), UINT8(XCP_MAX_CTO),
               XCP_LOBYTE(XCP_MAX_DTO), XCP_HIBYTE(XCP_MAX_DTO), UINT8(XCP_PROTOCOL_VERSION_MAJOR), UINT8(XCP_TRANSPORT_LAYER_VERSION_MAJOR)
     );
     /*DBG_PRINT("MAX-DTO: %04X H: %02X L: %02X\n", XCP_MAX_DTO, HIBYTE(XCP_MAX_DTO), LOBYTE(XCP_MAX_DTO)); */
@@ -1008,7 +1011,7 @@ XCP_STATIC void Xcp_GetStatus_Res(Xcp_PDUType const * const pdu)
 {
     DBG_TRACE1("GET_STATUS\n");
 
-    Xcp_Send8(UINT8(6), UINT8(0xff),
+    Xcp_Send8(UINT8(6), UINT8(XCP_PACKET_IDENTIFIER_RES),
         UINT8(0),     /* Current session status */
 #if XCP_ENABLE_RESOURCE_PROTECTION == XCP_ON
         Xcp_State.resourceProtection,  /* Current resource protection status */
@@ -1045,7 +1048,7 @@ XCP_STATIC void Xcp_GetCommModeInfo_Res(Xcp_PDUType const * const pdu)
     commModeOptional |= XCP_INTERLEAVED_MODE;
 #endif /* XCP_ENABLE_INTERLEAVED_MODE */
 
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
         UINT8(0),     /* Reserved */
         commModeOptional,
         UINT8(0),     /* Reserved */
@@ -1089,7 +1092,7 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PDUType const * const pdu)
 #endif /* XCP_ENABLE_GET_ID_HOOK */
 
     Xcp_SetMta(Xcp_GetNonPagedAddress(response));
-    Xcp_Send8(UINT8(8), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0),
         XCP_LOBYTE(XCP_LOWORD(response_len)),
         XCP_HIBYTE(XCP_LOWORD(response_len)),
         XCP_LOBYTE(XCP_HIWORD(response_len)),
@@ -1185,7 +1188,7 @@ XCP_STATIC void Xcp_Unlock_Res(Xcp_PDUType const * const pdu)
 
     if (Xcp_HookFunction_Unlock(Xcp_State.seedRequested, &key)) {   /* User supplied callout. */
         Xcp_State.resourceProtection &= UINT8(~(Xcp_State.seedRequested)); /* OK, unlock. */
-        Xcp_Send8(UINT8(2), UINT8(0xff),
+        Xcp_Send8(UINT8(2), UINT8(XCP_PACKET_IDENTIFIER_RES),
             Xcp_State.resourceProtection,  /* Current resource protection status. */
             UINT8(0), UINT8(0), UINT8(0),
             UINT8(0), UINT8(0), UINT8(0)
@@ -1260,7 +1263,7 @@ XCP_STATIC void Xcp_SetMta_Res(Xcp_PDUType const * const pdu)
 #if XCP_ENABLE_BUILD_CHECKSUM == XCP_ON
 void Xcp_SendChecksumPositiveResponse(Xcp_ChecksumType checksum)
 {
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
         UINT8(XCP_CHECKSUM_METHOD),
         UINT8(0),
         UINT8(0),
@@ -1273,7 +1276,7 @@ void Xcp_SendChecksumPositiveResponse(Xcp_ChecksumType checksum)
 
 void Xcp_SendChecksumOutOfRangeResponse(void)
 {
-    Xcp_Send8(UINT8(8), UINT8(0xfe),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_ERR),
         UINT8(ERR_OUT_OF_RANGE),
         UINT8(0),
         UINT8(0),
@@ -1654,13 +1657,6 @@ XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
     const uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
     XcpDaq_ODTIntegerType firstPid = (XcpDaq_ODTIntegerType)0;
     const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
-#if 0
-1  BYTE  Mode
-    00 = stop
-    01 = start
-    02 = select
-2  WORD  DAQ_LIST_NUMBER [0,1,..MAX_DAQ-1]
-#endif /* 0 */
 
     DBG_TRACE3("START_STOP_DAQ_LIST [mode: 0x%02x daq: %03u]\n", mode, daqListNumber);
     XCP_ASSERT_PGM_IDLE();
@@ -1685,7 +1681,7 @@ XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PDUType const * const pdu)
 
     XcpDaq_GetFirstPid(daqListNumber, &firstPid);
 
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
         firstPid,
         UINT8(0),
         UINT8(0),
@@ -1741,17 +1737,7 @@ XCP_STATIC void Xcp_GetDaqProcessorInfo_Res(Xcp_PDUType const * const pdu)
     XcpDaq_GetProperties(&properties);
     listCount = XcpDaq_GetListCount();
 
-
-    #if 0
-    0  BYTE  Packet ID: 0xFF
-    1  BYTE  DAQ_PROPERTIES     General properties of DAQ lists
-    2  WORD  MAX_DAQ            Total number of available DAQ lists
-    4  WORD  MAX_EVENT_CHANNEL  Total number of available event channels
-
-    6  BYTE  MIN_DAQ            Total number of predefined DAQ lists
-    7  BYTE  DAQ_KEY_BYTE
-    #endif /* 0 */
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
         properties,
         XCP_LOBYTE(listCount),
         XCP_HIBYTE(listCount),
@@ -1794,7 +1780,7 @@ XCP_STATIC void Xcp_GetDaqListInfo_Res(Xcp_PDUType const * const pdu)
     properties |= DAQ_LIST_PROPERTY_DAQ;            /* "                " */
 
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
         properties,
         listConf->numOdts,
         0,  /* Hardcoded for now. */
@@ -1877,7 +1863,7 @@ XCP_STATIC void Xcp_GetDaqClock_Res(Xcp_PDUType const * const pdu)
 
     timestamp = XcpHw_GetTimerCounter();
     DBG_TRACE2("GET_DAQ_CLOCK [timestamp: %u]\n", timestamp);
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
         UINT8(0), UINT8(0), UINT8(0),
         XCP_LOBYTE(XCP_LOWORD(timestamp)), XCP_HIBYTE(XCP_LOWORD(timestamp)), XCP_LOBYTE(XCP_HIWORD(timestamp)), XCP_HIBYTE(XCP_HIWORD(timestamp))
     );
@@ -1892,7 +1878,7 @@ XCP_STATIC void Xcp_GetDaqResolutionInfo_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
 
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
       UINT8(1),                             /* Granularity for size of ODT entry (DIRECTION = DAQ) */
       UINT8(XCP_DAQ_MAX_ODT_ENTRY_SIZE),    /* Maximum size of ODT entry (DIRECTION = DAQ) */
       UINT8(1),                             /* Granularity for size of ODT entry (DIRECTION = STIM) */
@@ -1927,7 +1913,7 @@ XCP_STATIC void Xcp_GetDaqEventInfo_Res(Xcp_PDUType const * const pdu)
         Xcp_SetMta(Xcp_GetNonPagedAddress(event->name));
     }
 
-    Xcp_Send8(UINT8(7), UINT8(0xff),
+    Xcp_Send8(UINT8(7), UINT8(XCP_PACKET_IDENTIFIER_RES),
       UINT8(event->properties), /* DAQ_EVENT_PROPERTIES */
       UINT8(1),                 /* maximum number of DAQ lists in this event channel */
       UINT8(nameLen),           /* EVENT_CHANNEL_NAME_LENGTH in bytes 0 – If not available */
@@ -1953,16 +1939,8 @@ XCP_STATIC void Xcp_ProgramStart_Res(Xcp_PDUType const * const pdu)
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_PGM);
     XCP_ASSERT_DAQ_STOPPED();
     XcpPgm_SetProcessorState(XCP_PGM_ACTIVE);
-#if 0
-0 BYTE Packet ID: 0xFF
-1 BYTE Reserved
-2 BYTE COMM_MODE_PGM
-3 BYTE MAX_CTO_PGM [BYTES]Maximum CTO size for PGM
-4 BYTE MAX_BS_PGM
-5 BYTE MIN_ST_PGM
-6 BYTE QUEUE_SIZE_PGM
-#endif
-    Xcp_Send8(UINT8(7), UINT8(0xff),
+
+    Xcp_Send8(UINT8(7), UINT8(XCP_PACKET_IDENTIFIER_RES),
       UINT8(0),                 /* Reserved */
       UINT8(0),                 /* COMM_MODE_PGM */
       UINT8(XCP_MAX_CTO),       /* MAX_CTO_PGM [BYTES]Maximum CTO size for PGM */
@@ -2015,7 +1993,7 @@ XCP_STATIC void Xcp_GetPgmProcessorInfo_Res(Xcp_PDUType const * const pdu)
     DBG_TRACE1("GET_PGM_PROCESSOR_INFO\n");
     /* XCP_ASSERT_UNLOCKED(XCP_RESOURCE_PGM); */
 
-    Xcp_Send8(UINT8(3), UINT8(0xff),
+    Xcp_Send8(UINT8(3), UINT8(XCP_PACKET_IDENTIFIER_RES),
       XCP_PGM_PROPERIES,    /* PGM_PROPERTIES */
       XCP_MAX_SECTOR_PGM,   /* MAX_SECTOR */
       UINT8(0),
@@ -2051,7 +2029,7 @@ XCP_STATIC void Xcp_GetSectorInfo_Res(Xcp_PDUType const * const pdu)
         return;
     }
 
-    Xcp_Send8(UINT8(8), UINT8(0xff),
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES),
       UINT8(sectorNumber * 2),          /* Clear Sequence Number */
       UINT8((sectorNumber * 2) + 1),    /* Program Sequence Number */
       UINT8(0),                         /* Programming method */
@@ -2252,12 +2230,12 @@ Xcp_StateType * Xcp_GetState(void)
 
 XCP_STATIC void Xcp_PositiveResponse(void)
 {
-    Xcp_Send8(UINT8(1), UINT8(0xff), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
+    Xcp_Send8(UINT8(1), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
 }
 
 XCP_STATIC void Xcp_ErrorResponse(uint8_t errorCode)
 {
-    Xcp_Send8(UINT8(2), UINT8(0xfe), UINT8(errorCode), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
+    Xcp_Send8(UINT8(2), UINT8(XCP_PACKET_IDENTIFIER_ERR), UINT8(errorCode), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
 }
 
 XCP_STATIC void Xcp_BusyResponse(void)
@@ -2267,6 +2245,49 @@ XCP_STATIC void Xcp_BusyResponse(void)
     #endif /* XCP_ENABLE_STATISTICS */
     Xcp_ErrorResponse(ERR_CMD_BUSY);
 }
+
+#if (XCP_ENABLE_SERVICE_REQUEST_API == XCP_ON) || (XCP_ENABLE_EVENT_PACKET_API)
+XCP_STATIC void Xcp_SendSpecialPacket(uint8_t packetType, uint8_t code, uint8_t const * const data, uint8_t dataLength)
+{
+    uint8_t * dataOut = Xcp_GetOutPduPtr();
+    uint8_t frameLength = UINT8(0);
+    uint8_t idx = UINT8(0);
+
+    dataLength = XCP_MIN(XCP_MAX_CTO - 2, dataLength);    /* Silently truncate. */
+
+#if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
+    frameLength = XCP_MAX_CTO;
+#else
+    frameLength = dataLength + 2;
+#endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
+    Xcp_SetPduOutLen(UINT16(frameLength));
+    printf("dl: %u fl: %u\n", dataLength, frameLength);
+    dataOut[0] = packetType;
+    dataOut[1] = code;
+    if (dataLength) {
+
+        for (idx = UINT8(0); idx < dataLength; ++idx) {
+            dataOut[2 + idx] = data[idx];
+        }
+    }
+    Xcp_SendPdu();
+}
+#endif
+
+#if XCP_ENABLE_EVENT_PACKET_API == XCP_ON
+void Xcp_SendEventPacket(uint8_t eventCode, uint8_t const * const eventInfo, uint8_t eventInfoLength)
+{
+    Xcp_SendSpecialPacket(XCP_PACKET_IDENTIFIER_EV, eventCode, eventInfo, eventInfoLength);
+}
+#endif /* XCP_ENABLE_EVENT_PACKET_API */
+
+#if XCP_ENABLE_SERVICE_REQUEST_API == XCP_ON
+void Xcp_SendServiceRequestPacket(uint8_t serviceRequestCode, uint8_t const * const serviceRequest, uint8_t serviceRequestLength)
+{
+    Xcp_SendSpecialPacket(XCP_PACKET_IDENTIFIER_SERV, serviceRequestCode, serviceRequest, serviceRequestLength);
+}
+#endif /* XCP_ENABLE_SERVICE_REQUEST_API */
+
 
 #if 0
 XCP_STATIC Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const * src, Xcp_MtaType * dst)

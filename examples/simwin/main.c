@@ -350,7 +350,6 @@ DWORD Xcp_MainTask(LPVOID param)
 
         Xcp_MainFunction();
         XcpTl_MainFunction();
-
         if (WaitForSingleObject(*quit_event, INFINITE) == WAIT_OBJECT_0) {
             break;
         }
@@ -374,7 +373,6 @@ DWORD AppTask(LPVOID param)
     liDueTime.QuadPart=-500;
     period = 150;
     SetWaitableTimer(userTimer, &liDueTime, period, NULL, NULL, 0);
-
 
     XCP_FOREVER {
         currentTS = XcpHw_GetTimerCounter() / 1000;

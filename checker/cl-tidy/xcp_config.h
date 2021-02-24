@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -158,6 +158,9 @@
     #define XCP_ENABLE_PROGRAM_NEXT                 XCP_OFF
     #define XCP_ENABLE_PROGRAM_MAX                  XCP_OFF
     #define XCP_ENABLE_PROGRAM_VERIFY               XCP_OFF
+
+#define XCP_ENABLE_EVENT_PACKET_API                 XCP_OFF
+#define XCP_ENABLE_SERVICE_REQUEST_API              XCP_OFF
 
 /*
 **  Transport-Layer specific Options (may not apply to every Transport).

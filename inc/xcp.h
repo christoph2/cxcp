@@ -251,104 +251,112 @@ extern "C"
     #define  XCP_MIN_ST_PGM (0)
 #endif  /* XCP_MIN_ST_PGM */
 
-#define XCP_DOWNLOAD_PAYLOAD_LENGTH     ((XCP_MAX_CTO) - 2)
+#define XCP_DOWNLOAD_PAYLOAD_LENGTH         ((XCP_MAX_CTO) - 2)
+
+/*
+ * Packet Identifiers.
+ */
+#define XCP_PACKET_IDENTIFIER_RES           UINT8(0xFF)
+#define XCP_PACKET_IDENTIFIER_ERR           UINT8(0xFE)
+#define XCP_PACKET_IDENTIFIER_EV            UINT8(0xFD)
+#define XCP_PACKET_IDENTIFIER_SERV          UINT8(0xFC)
 
 /*
  *  Available Resources.
  */
-#define XCP_RESOURCE_PGM        ((uint8_t)16)
-#define XCP_RESOURCE_STIM       ((uint8_t)8)
-#define XCP_RESOURCE_DAQ        ((uint8_t)4)
-#define XCP_RESOURCE_CAL_PAG    ((uint8_t)1)
+#define XCP_RESOURCE_PGM                    UINT8(16)
+#define XCP_RESOURCE_STIM                   UINT8(8)
+#define XCP_RESOURCE_DAQ                    UINT8(4)
+#define XCP_RESOURCE_CAL_PAG                UINT8(1)
 
 
 /*
  * Comm Mode Basic.
  */
-#define XCP_BYTE_ORDER_INTEL    ((uint8_t)0)
-#define XCP_BYTE_ORDER_MOTOROLA ((uint8_t)1)
+#define XCP_BYTE_ORDER_INTEL                UINT8(0)
+#define XCP_BYTE_ORDER_MOTOROLA             UINT8(1)
 
-#define XCP_SLAVE_BLOCK_MODE    ((uint8_t)0x40)
+#define XCP_SLAVE_BLOCK_MODE                UINT8(0x40)
 
-#define XCP_ADDRESS_GRANULARITY_0   ((uint8_t)2)
-#define XCP_ADDRESS_GRANULARITY_1   ((uint8_t)4)
+#define XCP_ADDRESS_GRANULARITY_0           UINT8(2)
+#define XCP_ADDRESS_GRANULARITY_1           UINT8(4)
 
-#define XCP_ADDRESS_GRANULARITY_BYTE    ((uint8_t)0)
-#define XCP_ADDRESS_GRANULARITY_WORD    (XCP_ADDRESS_GRANULARITY_0)
-#define XCP_ADDRESS_GRANULARITY_DWORD   (XCP_ADDRESS_GRANULARITY_1)
+#define XCP_ADDRESS_GRANULARITY_BYTE        UINT8(0)
+#define XCP_ADDRESS_GRANULARITY_WORD        (XCP_ADDRESS_GRANULARITY_0)
+#define XCP_ADDRESS_GRANULARITY_DWORD       (XCP_ADDRESS_GRANULARITY_1)
 
-#define XCP_OPTIONAL_COMM_MODE          ((uint8_t)0x80)
+#define XCP_OPTIONAL_COMM_MODE              UINT8(0x80)
 
-#define XCP_MASTER_BLOCK_MODE           ((uint8_t)1)
-#define XCP_INTERLEAVED_MODE            ((uint8_t)2)
+#define XCP_MASTER_BLOCK_MODE               UINT8(1)
+#define XCP_INTERLEAVED_MODE                UINT8(2)
 
 /*
  * GetID Mode.
  */
-#define XCP_COMPRESSED_ENCRYPTED        UINT8(2)
-#define XCP_TRANSFER_MODE               UINT8(1)
+#define XCP_COMPRESSED_ENCRYPTED            UINT8(2)
+#define XCP_TRANSFER_MODE                   UINT8(1)
 
 /*
  * Current Session Status.
  */
-#define RESUME                          UINT8(0x80)
-#define DAQ_RUNNING                     UINT8(0x40)
-#define CLEAR_DAQ_REQ                   UINT8(0x08)
-#define STORE_DAQ_REQ                   UINT8(0x04)
-#define STORE_CAL_REQ                   UINT8(0x01)
+#define RESUME                              UINT8(0x80)
+#define DAQ_RUNNING                         UINT8(0x40)
+#define CLEAR_DAQ_REQ                       UINT8(0x08)
+#define STORE_DAQ_REQ                       UINT8(0x04)
+#define STORE_CAL_REQ                       UINT8(0x01)
 
 /*
  * SetRequest Mode.
  */
-#define XCP_CLEAR_DAQ_REQ               UINT8(8)
-#define XCP_STORE_DAQ_REQ_RESUME        UINT8(4)
-#define XCP_STORE_DAQ_REQ_NO_RESUME     UINT8(2)
-#define XCP_STORE_CAL_REQ               UINT8(1)
+#define XCP_CLEAR_DAQ_REQ                   UINT8(8)
+#define XCP_STORE_DAQ_REQ_RESUME            UINT8(4)
+#define XCP_STORE_DAQ_REQ_NO_RESUME         UINT8(2)
+#define XCP_STORE_CAL_REQ                   UINT8(1)
 
 /*
  * SetCalPage Mode.
  */
-#define XCP_SET_CAL_PAGE_ALL            UINT8(0x80)
-#define XCP_SET_CAL_PAGE_XCP            UINT8(0x02)
-#define XCP_SET_CAL_PAGE_ECU            UINT8(0x01)
+#define XCP_SET_CAL_PAGE_ALL                UINT8(0x80)
+#define XCP_SET_CAL_PAGE_XCP                UINT8(0x02)
+#define XCP_SET_CAL_PAGE_ECU                UINT8(0x01)
 
 
 
 /* DAQ List Modes. */
-#define XCP_DAQ_LIST_MODE_ALTERNATING       ((uint8_t)0x01)
-#define XCP_DAQ_LIST_MODE_DIRECTION         ((uint8_t)0x02)
-#define XCP_DAQ_LIST_MODE_TIMESTAMP         ((uint8_t)0x10)
-#define XCP_DAQ_LIST_MODE_PID_OFF           ((uint8_t)0x20)
-#define XCP_DAQ_LIST_MODE_SELECTED          ((uint8_t)0x40)
-#define XCP_DAQ_LIST_MODE_STARTED           ((uint8_t)0x80)
+#define XCP_DAQ_LIST_MODE_ALTERNATING       UINT8(0x01)
+#define XCP_DAQ_LIST_MODE_DIRECTION         UINT8(0x02)
+#define XCP_DAQ_LIST_MODE_TIMESTAMP         UINT8(0x10)
+#define XCP_DAQ_LIST_MODE_PID_OFF           UINT8(0x20)
+#define XCP_DAQ_LIST_MODE_SELECTED          UINT8(0x40)
+#define XCP_DAQ_LIST_MODE_STARTED           UINT8(0x80)
 
 /* DAQ Properties */
-#define XCP_DAQ_PROP_OVERLOAD_EVENT         ((uint8_t)0x80)
-#define XCP_DAQ_PROP_OVERLOAD_MSB           ((uint8_t)0x40)
-#define XCP_DAQ_PROP_PID_OFF_SUPPORTED      ((uint8_t)0x20)
-#define XCP_DAQ_PROP_TIMESTAMP_SUPPORTED    ((uint8_t)0x10)
-#define XCP_DAQ_PROP_BIT_STIM_SUPPORTED     ((uint8_t)0x08)
-#define XCP_DAQ_PROP_RESUME_SUPPORTED       ((uint8_t)0x04)
-#define XCP_DAQ_PROP_PRESCALER_SUPPORTED    ((uint8_t)0x02)
-#define XCP_DAQ_PROP_DAQ_CONFIG_TYPE        ((uint8_t)0x01)
+#define XCP_DAQ_PROP_OVERLOAD_EVENT         UINT8(0x80)
+#define XCP_DAQ_PROP_OVERLOAD_MSB           UINT8(0x40)
+#define XCP_DAQ_PROP_PID_OFF_SUPPORTED      UINT8(0x20)
+#define XCP_DAQ_PROP_TIMESTAMP_SUPPORTED    UINT8(0x10)
+#define XCP_DAQ_PROP_BIT_STIM_SUPPORTED     UINT8(0x08)
+#define XCP_DAQ_PROP_RESUME_SUPPORTED       UINT8(0x04)
+#define XCP_DAQ_PROP_PRESCALER_SUPPORTED    UINT8(0x02)
+#define XCP_DAQ_PROP_DAQ_CONFIG_TYPE        UINT8(0x01)
 
 /* DAQ Key Byte */
-#define XCP_DAQ_KEY_IDENTIFICATION_FIELD_TYPE_1 ((uint8_t)0x80)
-#define XCP_DAQ_KEY_IDENTIFICATION_FIELD_TYPE_0 ((uint8_t)0x40)
-#define XCP_DAQ_KEY_ADDRESS_EXTENSION_DAQ       ((uint8_t)0x20)
-#define XCP_DAQ_KEY_ADDRESS_EXTENSION_ODT       ((uint8_t)0x10)
-#define XCP_DAQ_KEY_OPTIMISATION_TYPE_3         ((uint8_t)0x08)
-#define XCP_DAQ_KEY_OPTIMISATION_TYPE_2         ((uint8_t)0x04)
-#define XCP_DAQ_KEY_OPTIMISATION_TYPE_1         ((uint8_t)0x02)
-#define XCP_DAQ_KEY_OPTIMISATION_TYPE_0         ((uint8_t)0x01)
+#define XCP_DAQ_KEY_IDENTIFICATION_FIELD_TYPE_1 UINT8(0x80)
+#define XCP_DAQ_KEY_IDENTIFICATION_FIELD_TYPE_0 UINT8(0x40)
+#define XCP_DAQ_KEY_ADDRESS_EXTENSION_DAQ       UINT8(0x20)
+#define XCP_DAQ_KEY_ADDRESS_EXTENSION_ODT       UINT8(0x10)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_3         UINT8(0x08)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_2         UINT8(0x04)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_1         UINT8(0x02)
+#define XCP_DAQ_KEY_OPTIMISATION_TYPE_0         UINT8(0x01)
 
 /* DAQ Event Channel Properties */
-#define XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ      ((uint8_t)0x04)
-#define XCP_DAQ_EVENT_CHANNEL_TYPE_STIM     ((uint8_t)0x08)
+#define XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ      UINT8(0x04)
+#define XCP_DAQ_EVENT_CHANNEL_TYPE_STIM     UINT8(0x08)
 
 /* DAQ Consistency */
-#define XCP_DAQ_CONSISTENCY_DAQ_LIST        ((uint8_t)0x40)
-#define XCP_DAQ_CONSISTENCY_EVENT_CHANNEL   ((uint8_t)0x80)
+#define XCP_DAQ_CONSISTENCY_DAQ_LIST        UINT8(0x40)
+#define XCP_DAQ_CONSISTENCY_EVENT_CHANNEL   UINT8(0x80)
 
 /* DAQ Time Units */
 #define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1NS    UINT8(0)
@@ -366,20 +374,63 @@ extern "C"
 #define XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_100PS  UINT8(12)
 
 /* DAQ list properties */
-#define DAQ_LIST_PROPERTY_STIM          UINT8(8)
-#define DAQ_LIST_PROPERTY_DAQ           UINT8(4)
-#define DAQ_LIST_PROPERTY_EVENT_FIXED   UINT8(2)
-#define DAQ_LIST_PROPERTY_PREDEFINED    UINT8(1)
+#define DAQ_LIST_PROPERTY_STIM              UINT8(8)
+#define DAQ_LIST_PROPERTY_DAQ               UINT8(4)
+#define DAQ_LIST_PROPERTY_EVENT_FIXED       UINT8(2)
+#define DAQ_LIST_PROPERTY_PREDEFINED        UINT8(1)
 
 /*
  * DAQ List Mode
  */
-#define DAQ_CURRENT_LIST_MODE_RESUME            UINT8(0x80)
-#define DAQ_CURRENT_LIST_MODE_RUNNING           UINT8(0x40)
-#define DAQ_CURRENT_LIST_MODE_PID_OFF           UINT8(0x20)
-#define DAQ_CURRENT_LIST_MODE_TIMESTAMP         UINT8(0x10)
-#define DAQ_CURRENT_LIST_MODE_DIRECTION         UINT8(0x02)
-#define DAQ_CURRENT_LIST_MODE_SELECTED          UINT8(0x01)
+#define DAQ_CURRENT_LIST_MODE_RESUME        UINT8(0x80)
+#define DAQ_CURRENT_LIST_MODE_RUNNING       UINT8(0x40)
+#define DAQ_CURRENT_LIST_MODE_PID_OFF       UINT8(0x20)
+#define DAQ_CURRENT_LIST_MODE_TIMESTAMP     UINT8(0x10)
+#define DAQ_CURRENT_LIST_MODE_DIRECTION     UINT8(0x02)
+#define DAQ_CURRENT_LIST_MODE_SELECTED      UINT8(0x01)
+
+/*
+ * XCP Event Codes
+ */
+#define EV_RESUME_MODE                      UINT8(0x00)
+#define EV_CLEAR_DAQ                        UINT8(0x01)
+#define EV_STORE_DAQ                        UINT8(0x02)
+#define EV_STORE_CAL                        UINT8(0x03)
+#define EV_CMD_PENDING                      UINT8(0x05)
+#define EV_DAQ_OVERLOAD                     UINT8(0x06)
+#define EV_SESSION_TERMINATED               UINT8(0x07)
+#define EV_TIME_SYNC                        UINT8(0x08)
+#define EV_STIM_TIMEOUT                     UINT8(0x09)
+#define EV_SLEEP                            UINT8(0x0A)
+#define EV_WAKE_UP                          UINT8(0x0B)
+#define EV_USER                             UINT8(0xFE)
+#define EV_TRANSPORT                        UINT8(0xFF)
+
+/* Function-like Macros for Events. */
+#define XcpEvent_ResumeMode()               Xcp_SendEventPacket(EV_RESUME_MODE, XCP_NULL, UINT8(0))
+#define XcpEvent_ClearDaq()                 Xcp_SendEventPacket(EV_CLEAR_DAQ, XCP_NULL, UINT8(0))
+#define XcpEvent_StoreDaq()                 Xcp_SendEventPacket(EV_STORE_DAQ, XCP_NULL, UINT8(0))
+#define XcpEvent_StoreCal()                 Xcp_SendEventPacket(EV_STORE_CAL, XCP_NULL, UINT8(0))
+#define XcpEvent_CmdPending()               Xcp_SendEventPacket(EV_CMD_PENDING, XCP_NULL, UINT8(0))
+#define XcpEvent_DaqOverload()              Xcp_SendEventPacket(EV_DAQ_OVERLOAD, XCP_NULL, UINT8(0))
+#define XcpEvent_SessionTerminated()        Xcp_SendEventPacket(EV_SESSION_TERMINATED, XCP_NULL, UINT8(0))
+#define XcpEvent_TimeSync()                 Xcp_SendEventPacket(EV_TIME_SYNC, XCP_NULL, UINT8(0))
+#define XcpEvent_StimTimeout()              Xcp_SendEventPacket(EV_STIM_TIMEOUT, XCP_NULL, UINT8(0))
+#define XcpEvent_Sleep()                    Xcp_SendEventPacket(EV_SLEEP, XCP_NULL, UINT8(0))
+#define XcpEvent_WakeUp()                   Xcp_SendEventPacket(EV_WAKE_UP, XCP_NULL, UINT8(0))
+#define XcpEvent_User(data, len)            Xcp_SendEventPacket(EV_USER, (data), (len))
+#define XcpEvent_Transport(data, len)       Xcp_SendEventPacket(EV_TRANSPORT, (data), (len))
+
+/*
+ * XCP Service Request Codes
+ */
+#define SERV_RESET                          UINT8(0x00)
+#define SERV_TEXT                           UINT8(0x01)
+
+/* Function-like Macros for Service Requests. */
+#define XcpService_Reset()                  Xcp_SendServiceRequestPacket(SERV_RESET, XCP_NULL, UINT8(0))
+#define XcpService_Text(txt, txt_len)       Xcp_SendServiceRequestPacket(SERV_TEXT, (txt), (txt_len))
+
 
 #define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
@@ -439,11 +490,11 @@ extern "C"
 /*
 **
 */
-#define XCP_HW_LOCK_XCP     UINT8(0)
-#define XCP_HW_LOCK_TL      UINT8(1)
-#define XCP_HW_LOCK_DAQ     UINT8(2)
+#define XCP_HW_LOCK_XCP                     UINT8(0)
+#define XCP_HW_LOCK_TL                      UINT8(1)
+#define XCP_HW_LOCK_DAQ                     UINT8(2)
 
-#define XCP_HW_LOCK_COUNT   UINT8(3)
+#define XCP_HW_LOCK_COUNT                   UINT8(3)
 
 /*
 ** Global Types.
@@ -974,6 +1025,12 @@ void Xcp_SendPdu(void);
 uint8_t * Xcp_GetOutPduPtr(void);
 void Xcp_SetPduOutLen(uint16_t len);
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
+#if XCP_ENABLE_EVENT_PACKET_API == XCP_ON
+void Xcp_SendEventPacket(uint8_t eventCode, uint8_t const * const eventInfo, uint8_t eventInfoLength);
+#endif /* XCP_ENABLE_EVENT_PACKET_API */
+#if XCP_ENABLE_SERVICE_REQUEST_API == XCP_ON
+void Xcp_SendServiceRequestPacket(uint8_t serviceRequestCode, uint8_t const * const serviceRequest, uint8_t serviceRequestLength);
+#endif /* XCP_ENABLE_SERVICE_REQUEST_API */
 
 /*
 **  Helpers.
