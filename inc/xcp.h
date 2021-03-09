@@ -273,8 +273,8 @@ extern "C"
 /*
  * Comm Mode Basic.
  */
-#define XCP_BYTE_ORDER_INTEL                UINT8(0)
-#define XCP_BYTE_ORDER_MOTOROLA             UINT8(1)
+#define XCP_BYTE_ORDER_INTEL                (0)
+#define XCP_BYTE_ORDER_MOTOROLA             (1)
 
 #define XCP_SLAVE_BLOCK_MODE                UINT8(0x40)
 

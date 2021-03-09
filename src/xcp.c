@@ -2153,7 +2153,11 @@ INLINE uint8_t Xcp_GetByte(Xcp_PDUType const * const pdu, uint8_t offs)
 
 INLINE uint16_t Xcp_GetWord(Xcp_PDUType const * const pdu, uint8_t offs)
 {
-  return (*(pdu->data + offs)) | ((*(pdu->data + UINT8(1) + offs)) << UINT8(8));
+#if XCP_BYTE_ORDER == XCP_BYTE_ORDER_INTEL
+  return ((*(pdu->data + offs)) & UINT8(0xff)) | (((*(pdu->data + UINT8(1) + offs)) & UINT8(0xff)) << UINT8(8));
+#elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
+  return (((*(pdu->data + offs)) & UINT8(0xff)) << UINT8(8)) | ((*(pdu->data + UINT8(1) + offs)) & UINT8(0xff));
+#endif
 }
 
 INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
@@ -2161,11 +2165,13 @@ INLINE uint32_t Xcp_GetDWord(Xcp_PDUType const * const pdu, uint8_t offs)
     uint16_t h = UINT16(0);
     uint16_t l = UINT16(0);
 
-    l = (*(pdu->data + offs)) | ((*(pdu->data + UINT8(1) + offs)) << UINT8(8));
-    h = (*(pdu->data + UINT8(2) + offs)) | ((*(pdu->data + UINT8(3) + offs)) << UINT8(8));
-    /* l = Xcp_GetWord(pdu, 0); */
-    /* h = Xcp_GetWord(pdu, 2); */
-
+#if XCP_BYTE_ORDER == XCP_BYTE_ORDER_INTEL
+    l = Xcp_GetWord(pdu, offs + 0);
+    h = Xcp_GetWord(pdu, offs + 2);
+#elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
+    h = Xcp_GetWord(pdu, offs + 0);
+    l = Xcp_GetWord(pdu, offs + 2);
+#endif
     return (uint32_t)(h * 0x10000 ) + l;
 }
 
@@ -2176,16 +2182,24 @@ INLINE void Xcp_SetByte(Xcp_PDUType const * const pdu, uint8_t offs, uint8_t val
 
 INLINE void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value)
 {
+#if XCP_BYTE_ORDER == XCP_BYTE_ORDER_INTEL
     (*(pdu->data + offs)) = value & UINT8(0xff);
     (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
+#elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
+    (*(pdu->data + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
+    (*(pdu->data + UINT8(1) + offs)) = value & UINT8(0xff);
+#endif
 }
 
 INLINE void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value)
 {
-    (*(pdu->data + offs)) = value & UINT8(0xff);
-    (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
-    (*(pdu->data + UINT8(2) + offs)) = (value & UINT32(0xff0000)) >> UINT8(16);
-    (*(pdu->data + UINT8(3) + offs)) = (value & UINT32(0xff000000)) >> UINT8(24);
+#if XCP_BYTE_ORDER == XCP_BYTE_ORDER_INTEL
+    Xcp_SetWord(pdu, offs + 2, (value & UINT32(0xffff0000)) >> UINT8(16));
+    Xcp_SetWord(pdu, offs + 0, value & UINT32(0x0000ffff));
+#elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
+    Xcp_SetWord(pdu, offs + 0, (value & UINT32(0xffff0000)) >> UINT8(16));
+    Xcp_SetWord(pdu, offs + 2, value & UINT32(0x0000ffff));
+#endif
 }
 
 XCP_STATIC uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag)
@@ -2261,7 +2275,6 @@ XCP_STATIC void Xcp_SendSpecialPacket(uint8_t packetType, uint8_t code, uint8_t 
     frameLength = dataLength + 2;
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
     Xcp_SetPduOutLen(UINT16(frameLength));
-    printf("dl: %u fl: %u\n", dataLength, frameLength);
     dataOut[0] = packetType;
     dataOut[1] = code;
     if (dataLength) {
