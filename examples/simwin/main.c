@@ -95,13 +95,20 @@ void memimnfo(void * ptr)
 #define NUM_THREADS (3)
 
 HANDLE threads[NUM_THREADS];
-
 HANDLE quit_event;
-
 HANDLE userTimer;
-
-
 Xcp_OptionsType Xcp_Options;
+
+typedef struct {
+    uint8_t value;
+    bool down;
+    uint32_t dummy;
+} triangle_type;
+
+triangle_type triangle = {0};
+uint16_t randomValue;
+float sine_wave = 1.0;
+
 
 int main(int argc, char **argv)
 {
@@ -202,35 +209,30 @@ bool Xcp_HookFunction_GetId(uint8_t idType)
 }
 #endif // 0
 
-typedef struct {
-    uint8_t value;
-    bool down;
-    uint32_t dummy;
-} triangle_type;
-
-triangle_type triangle = {0};
-uint16_t randomValue;
 
 /////////////////////////
 /////////////////////////
 /////////////////////////
 
 const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
-    XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
+    XCP_DAQ_DEFINE_ODT_ENTRY(triangle.value),
     XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
+    XCP_DAQ_DEFINE_ODT_ENTRY(sine_wave),
 };
 
 
 const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {
     {
         2, 0
+    }, {
+        1, 2,
     }
 };
 
 
 const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[] = {
     {
-        1, 0
+        2, 0
     }
 };
 

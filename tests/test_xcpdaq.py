@@ -22,7 +22,7 @@ from xcp_types import (
     Xcp_ReturnType, XcpDaq_ListIntegerType, XcpDaq_ODTIntegerType, XcpDaq_ODTEntryIntegerType,
     XcpDaq_ListConfigurationType, XcpDaq_ListStateType, XcpDaq_ODTEntryType, XcpDaq_EventType,
     XcpDaq_ProcessorStateType, XcpDaq_ProcessorType, XcpDaq_MessageType, XcpDaq_EntityType,
-    XcpDaq_EntityKindType
+    XcpDaq_EntityKindType, XcpDaq_QueueType
 )
 
 def libname(name):
@@ -188,6 +188,52 @@ def test_basic_alloc3(xcp):
     assert xcp.XcpDaq_AllocOdtEntry(0, 0, 2) == Xcp_ReturnType.ERR_SUCCESS
     assert xcp.XcpDaq_AllocOdtEntry(0, 1, 3) == Xcp_ReturnType.ERR_SUCCESS
     assert xcp.get_daq_counts() == (9, 2, 2)
+
+##
+## DAQ queue tests.
+##
+def test_daq_queue_init(xcp):
+    xcp.XcpDaq_QueueInit()
+    var = xcp.get_daq_queue_var()
+    assert var.head == 0
+    assert var.tail == 0
+
+def test_daq_queue_enq_deq_with_wraparound(xcp):
+    RESULTS = (
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        (4, 4),
+        (0, 0),
+        (1, 1),
+    )
+    xcp.XcpDaq_QueueInit()
+    for idx in range(6):
+        xcp.daq_enqueue(b"test data")
+        xcp.daq_dequeue()
+        var = xcp.get_daq_queue_var()
+        head, tail = RESULTS[idx]
+        assert var.head == head
+        assert var.tail == tail
+
+def test_daq_queue_empty(xcp):
+    xcp.XcpDaq_QueueInit()
+    assert xcp.daq_dequeue() == (False, b'', )
+
+def test_daq_queue_full(xcp):
+    xcp.XcpDaq_QueueInit()
+    for _ in range(4):
+        assert xcp.daq_enqueue(b"test data") == True
+    assert xcp.daq_enqueue(b"test data") == False
+
+def test_daq_queue_push_pop_seq(xcp):
+    for idx in range(4):
+        data = bytes(chr(ord('0') + idx) * 8, encoding = "ascii")
+        xcp.daq_enqueue(data)
+    for idx in range(4):
+        res, data = xcp.daq_dequeue()
+        assert res == True
+        assert data == bytes(chr(ord('0') + idx) * 8, encoding = "ascii")
 
 
 ##

@@ -847,14 +847,6 @@ typedef struct tagXcpDaq_EventType {
 } XcpDaq_EventType;
 
 
-typedef struct tagXcpDaq_DtoBufferStateType {
-    uint16_t numEntries;
-    uint16_t front;
-    uint16_t back;
-    uint16_t allocated;
-} XcpDaq_DtoBufferStateType;
-
-
 typedef struct tagXcpDaq_MessageType {
     uint8_t dlc;
     uint8_t const * data;

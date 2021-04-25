@@ -6,14 +6,14 @@ from loader import API, Function, Variable
 from xcp_types import (
     Xcp_ReturnType, XcpDaq_ListIntegerType, XcpDaq_ODTIntegerType, XcpDaq_ODTEntryIntegerType,
     XcpDaq_ListConfigurationType, XcpDaq_ListStateType, XcpDaq_ODTEntryType, XcpDaq_EventType,
-    XcpDaq_ProcessorStateType, XcpDaq_ProcessorType, XcpDaq_MessageType, XcpDaq_EntityType
+    XcpDaq_ProcessorStateType, XcpDaq_ProcessorType, XcpDaq_MessageType, XcpDaq_EntityType,
+    XcpDaq_QueueType
 )
 
 
 class XCP(API):
     FUNCTIONS = (
         Function("Xcp_Init"),
-
 
         Function("XcpDaq_Init"),
         Function("XcpDaq_Free", Xcp_ReturnType),
@@ -43,9 +43,12 @@ class XCP(API):
         Function("XcpDaq_TotalDynamicEntityCount", ctypes.c_uint16),
         Function("XcpDaq_GetDynamicEntities", ctypes.POINTER(XcpDaq_EntityType)),
         Function("XcpDaq_GetDynamicEntity", ctypes.POINTER(XcpDaq_EntityType), [ctypes.c_uint16]),
-        Function("XcpDaq_GetDtoBuffer", ctypes.POINTER(ctypes.c_uint8)),
-        #Function("", ),
-        #Function("", ),
+        Function("XcpDaq_QueueInit"),
+        Function("XcpDaq_QueueFull", ctypes.c_bool),
+        Function("XcpDaq_QueueEmpty", ctypes.c_bool),
+        Function("XcpDaq_QueueEnqueue", ctypes.c_bool, [ctypes.c_uint16, ctypes.POINTER(ctypes.c_uint8)]),
+        Function("XcpDaq_QueueDequeue", ctypes.c_bool, [ctypes.POINTER(ctypes.c_uint16), ctypes.POINTER(ctypes.c_uint8)]),
+        Function("XcpDaq_QueueGetVar", None, [ctypes.POINTER(XcpDaq_QueueType)]),
     )
 
     def get_daq_counts(self):
@@ -54,16 +57,19 @@ class XCP(API):
         odtCount = ctypes.c_uint16()
         self.XcpDaq_GetCounts(ctypes.byref(entityCount), ctypes.byref(listCount), ctypes.byref(odtCount))
         return (entityCount.value, listCount.value, odtCount.value, )
-"""
-/*
-**  Predefined DAQ constants.
-*/
-#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
-extern const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[];
-extern const XcpDaq_ODTType XcpDaq_PredefinedOdts[];
-extern const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[];
-extern const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount;
-extern XcpDaq_ListStateType XcpDaq_PredefinedListsState[];
-#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
-extern const XcpDaq_EventType XcpDaq_Events[];
-"""
+
+    def get_daq_queue_var(self):
+        queue = XcpDaq_QueueType()
+        self.XcpDaq_QueueGetVar(ctypes.byref(queue))
+        return queue
+
+    def daq_enqueue(self, data: bytes):
+        u8_array = ctypes.c_uint8 * len(data)
+        return self.XcpDaq_QueueEnqueue(len(data), u8_array.from_buffer(bytearray(data)))
+
+    def daq_dequeue(self):
+        length = ctypes.c_uint16()
+        data = (ctypes.c_uint8 * 256)()
+        res = self.XcpDaq_QueueDequeue(ctypes.byref(length), data)
+        return res, bytes(data[ : length.value])
+

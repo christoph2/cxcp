@@ -3,6 +3,7 @@
 
 static Xcp_StateType Xcp_State;
 
+#if 0
 XCP_DAQ_BEGIN_EVENTS
     XCP_DAQ_DEFINE_EVENT("EVT 100ms",
         XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
@@ -20,6 +21,7 @@ XCP_DAQ_BEGIN_EVENTS
         10
     ),
 XCP_DAQ_END_EVENTS
+#endif
 
 void Xcp_Init(void)
 {

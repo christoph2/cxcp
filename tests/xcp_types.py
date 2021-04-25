@@ -166,3 +166,10 @@ class XcpDaq_PointerType(ctypes.Structure):
         ("odt", XcpDaq_ODTIntegerType),
         ("odtEntry", XcpDaq_ODTEntryIntegerType),
     ]
+
+class XcpDaq_QueueType(ctypes.Structure):
+    _fields_ = [
+        ("head", ctypes.c_uint8),
+        ("tail", ctypes.c_uint8),
+        ("overload", ctypes.c_bool),
+    ]
