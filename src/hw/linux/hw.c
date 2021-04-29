@@ -206,12 +206,12 @@ void XcpHw_Init(void)
 
     XcpHw_FreeRunningCounter = 0ULL;
 
-    if (clock_getres(CLOCK_MONOTONIC_RAW, &XcpHw_TimerResolution) == -1) {
+    if (clock_getres(CLOCK_MONOTONIC, &XcpHw_TimerResolution) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
     }
 
-    if (clock_gettime(CLOCK_MONOTONIC_RAW, &HwState.StartingTime) == -1) {
-        XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
+    if (clock_gettime(CLOCK_MONOTONIC, &HwState.StartingTime) == -1) {
+        XcpHw_ErrorMsg("XcpHw_Init::clock_gettime()", errno);
     }
     fflush(stdout);
 #if 0
