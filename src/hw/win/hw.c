@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -89,6 +89,7 @@ void exitFunc(void);
 */
 static HwStateType HwState = {0};
 static CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
+static HANDLE XcpHw_TransmissionEvent;
 
 /*
 **  Global Functions.
@@ -100,11 +101,13 @@ void XcpHw_Init(void)
     //_setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
     XcpHw_InitLocks();
+    XcpHw_TransmissionEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
 void XcpHw_Deinit(void)
 {
     XcpHw_DeinitLocks();
+    CloseHandle(XcpHw_TransmissionEvent);
 }
 
 uint32_t XcpHw_GetTimerCounter(void)
@@ -314,6 +317,16 @@ void XcpHw_ParseCommandLineOptions(int argc, char ** argv, Xcp_OptionsType * opt
         }
     }
 #endif
+}
+
+void XcpHw_SignalTransmitRequest(void)
+{
+    SetEvent(XcpHw_TransmissionEvent);
+}
+
+void XcpHw_WaitTransmitRequest(void)
+{
+    WaitForSingleObject(XcpHw_TransmissionEvent, INFINITE);
 }
 
 static void DisplayHelp(void)

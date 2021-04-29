@@ -127,6 +127,9 @@ static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
 
 static XcpHw_ApplicationStateType XcpHw_ApplicationState = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0, {0}};
 
+static pthread_cond_t XcpHw_TransmissionEvent;
+static pthread_mutex_t XcpHw_TransmissionMutex = {PTHREAD_MUTEX_INITIALIZER};
+
 /*
 **  Global Functions.
 */
@@ -255,12 +258,14 @@ void XcpHw_Init(void)
         XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
     }
     XcpTui_Init();
+    pthread_cond_init(&XcpHw_TransmissionEvent, NULL);
 }
 
 void XcpHw_Deinit(void)
 {
     XcpTui_Deinit();
     XcpHw_DeinitLocks();
+    pthread_cond_destroy(&XcpHw_TransmissionEvent);
 }
 
 void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
@@ -444,6 +449,17 @@ void XcpHw_ReleaseLock(uint8_t lockIdx)
         return;
     }
     pthread_mutex_unlock(&XcpHw_Locks[lockIdx]);
+}
+
+void XcpHw_SignalTransmitRequest(void)
+{
+    pthread_mutex_lock(&XcpHw_TransmissionMutex);
+    pthread_cond_signal(&XcpHw_TransmissionEvent);
+}
+
+void XcpHw_WaitTransmitRequest(void)
+{
+    pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
 }
 
 #if 0
