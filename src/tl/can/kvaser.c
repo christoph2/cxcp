@@ -49,7 +49,7 @@ typedef struct tagXcpTl_ConnectionType {
     int handle;
  } XcpTl_ConnectionType;
 
-extern Xcp_PDUType Xcp_PduIn;
+extern Xcp_PDUType Xcp_CtoIn;
 extern Xcp_PDUType Xcp_CtoOut;
 
 static XcpTl_ConnectionType XcpTl_Connection;
@@ -127,9 +127,9 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
 #endif
             if (dlc > 0) {
                 if (XcpTl_MatchingAddress(XCP_ON_CAN_INBOUND_IDENTIFIER, id, flag)) {
-                    Xcp_PduIn.len = dlc;
-                    Xcp_PduIn.data = msg + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-                    Xcp_DispatchCommand(&Xcp_PduIn);
+                    Xcp_CtoIn.len = dlc;
+                    Xcp_CtoIn.data = msg + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+                    Xcp_DispatchCommand(&Xcp_CtoIn);
                 } else if (XcpTl_MatchingAddress(XCP_ON_CAN_BROADCAST_IDENTIFIER, id, flag)) {
                     printf("BROADCAST request!!!\n");
                 }

@@ -133,9 +133,9 @@ void XcpTl_FeedReceiver(uint8_t octet)
 
             XcpTl_ResetSM();
 
-            Xcp_PduIn.len = XcpTl_Receiver.Dlc;
-            Xcp_PduIn.data = XcpTl_Receiver.Buffer + 4;
-            Xcp_DispatchCommand(&Xcp_PduIn);
+            Xcp_CtoIn.len = XcpTl_Receiver.Dlc;
+            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
+            Xcp_DispatchCommand(&Xcp_CtoIn);
         }
     }
     if (XcpTl_Receiver.State != XCP_RCV_IDLE) {

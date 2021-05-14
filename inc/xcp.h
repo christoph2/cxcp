@@ -1083,7 +1083,7 @@ void XcpHw_AcquireLock(uint8_t lockIdx);
 void XcpHw_ReleaseLock(uint8_t lockIdx);
 void XcpHw_TransmitDtos(void);
 
-extern Xcp_PDUType Xcp_PduIn;
+extern Xcp_PDUType Xcp_CtoIn;
 extern Xcp_PDUType Xcp_CtoOut;
 
 

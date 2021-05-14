@@ -72,7 +72,7 @@ static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 
-extern Xcp_PDUType Xcp_PduIn;
+extern Xcp_PDUType Xcp_CtoIn;
 extern Xcp_PDUType Xcp_CtoOut;
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
@@ -275,9 +275,9 @@ void XcpTl_RxHandler(void)
         //dlc = (uint16_t)*(buf + 0);
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
-            Xcp_PduIn.len = dlc;
-            Xcp_PduIn.data = buf + XCP_TRANPORT_LAYER_BUFFER_OFFSET;
-            Xcp_DispatchCommand(&Xcp_PduIn);
+            Xcp_CtoIn.len = dlc;
+            Xcp_CtoIn.data = buf + XCP_TRANPORT_LAYER_BUFFER_OFFSET;
+            Xcp_DispatchCommand(&Xcp_CtoIn);
         }
         if (recv_len < 5) {
             DBG_PRINT2("Error: frame to short: %d\n", recv_len);

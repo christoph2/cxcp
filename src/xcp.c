@@ -46,7 +46,7 @@
 /*
 **  Global Variables.
 */
-Xcp_PDUType Xcp_PduIn;
+Xcp_PDUType Xcp_CtoIn;
 Xcp_PDUType Xcp_CtoOut;
 
 

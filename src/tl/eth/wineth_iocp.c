@@ -101,7 +101,7 @@ static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 
-extern Xcp_PDUType Xcp_PduIn;
+extern Xcp_PDUType Xcp_CtoIn;
 extern Xcp_PDUType Xcp_CtoOut;
 
 static HANDLE XcpTl_CreateIOCP(void);
@@ -542,9 +542,9 @@ static void XcpTl_Feed(DWORD numBytesReceived)
         dlc = MAKEWORD(recvOlap.wsabuf.buf[0], recvOlap.wsabuf.buf[1]);
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.xcpConnected || (XcpTl_VerifyConnection())) {
-            Xcp_PduIn.len = dlc;
-            Xcp_PduIn.data = (uint8_t *)(recvOlap.wsabuf.buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
-            Xcp_DispatchCommand(&Xcp_PduIn);
+            Xcp_CtoIn.len = dlc;
+            Xcp_CtoIn.data = (uint8_t *)(recvOlap.wsabuf.buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+            Xcp_DispatchCommand(&Xcp_CtoIn);
         }
         if (numBytesReceived < 5) {
             DBG_PRINT2("Error: frame to short: %ld\n", numBytesReceived);
