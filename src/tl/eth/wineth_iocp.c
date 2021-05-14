@@ -96,11 +96,11 @@ int addrSize = sizeof(SOCKADDR_STORAGE);
 static XcpTl_ConnectionType XcpTl_Connection;
 
 
-void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
+void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
 
 
-extern Xcp_PDUType Xcp_CtoIn;
-extern Xcp_PDUType Xcp_CtoOut;
+extern Xcp_PduType Xcp_CtoIn;
+extern Xcp_PduType Xcp_CtoOut;
 
 static HANDLE XcpTl_CreateIOCP(void);
 static bool XcpTl_RegisterIOCPHandle(HANDLE port, HANDLE object, ULONG_PTR key);

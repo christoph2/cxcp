@@ -49,8 +49,8 @@ typedef struct tagXcpTl_ConnectionType {
     int handle;
  } XcpTl_ConnectionType;
 
-extern Xcp_PDUType Xcp_CtoIn;
-extern Xcp_PDUType Xcp_CtoOut;
+extern Xcp_PduType Xcp_CtoIn;
+extern Xcp_PduType Xcp_CtoOut;
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
@@ -340,7 +340,7 @@ void XcpTl_FeedReceiver(uint8_t octet)
 
 }
 
-void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu)
+void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu)
 {
 
 }

@@ -66,11 +66,11 @@ int addrSize = sizeof(SOCKADDR_STORAGE);
 static XcpTl_ConnectionType XcpTl_Connection;
 static Xcp_OptionsType Xcp_Options;
 
-void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
+void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
 
 
-extern Xcp_PDUType Xcp_CtoIn;
-extern Xcp_PDUType Xcp_CtoOut;
+extern Xcp_PduType Xcp_CtoIn;
+extern Xcp_PduType Xcp_CtoOut;
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);

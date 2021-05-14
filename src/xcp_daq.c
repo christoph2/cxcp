@@ -809,7 +809,7 @@ XCP_STATIC void XcpDaq_QueueInit(void)
     XcpDaq_Queue.head = XcpDaq_Queue.tail = UINT8(0);
     XcpDaq_Queue.overload = (bool)XCP_FALSE;
     for (idx = UINT8(0); idx < UINT8(XCP_DAQ_QUEUE_SIZE); ++idx) {
-        XcpUtl_ZeroMem(&XcpDaq_QueueDTOs[idx], sizeof(Xcp_PDUType));
+        XcpUtl_ZeroMem(&XcpDaq_QueueDTOs[idx], sizeof(Xcp_PduType));
     }
 }
 

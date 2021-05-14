@@ -762,7 +762,7 @@ typedef enum tagXcp_SlaveAccessType {
 typedef struct tagXcp_PDUType {
     uint16_t len;
     uint8_t * data;
-} Xcp_PDUType;
+} Xcp_PduType;
 
 
 typedef struct tagXcp_GetIdType {
@@ -867,8 +867,8 @@ typedef enum tagXcp_MemoryMappingResultType {
 } Xcp_MemoryMappingResultType;
 
 
-typedef void(*Xcp_SendCalloutType)(Xcp_PDUType const * pdu);
-typedef void (*Xcp_ServerCommandType)(Xcp_PDUType const * const pdu);
+typedef void(*Xcp_SendCalloutType)(Xcp_PduType const * pdu);
+typedef void (*Xcp_ServerCommandType)(Xcp_PduType const * const pdu);
 
 
 typedef struct tagXcp_1DArrayType {
@@ -901,7 +901,7 @@ void Xcp_MainFunction(void);
 */
 extern Xcp_OptionsType Xcp_Options;
 
-void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
+void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
 
 void Xcp_Disconnect(void);
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
@@ -1037,13 +1037,13 @@ void Xcp_DisplayInfo(void);
 
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len);
 
-uint8_t Xcp_GetByte(Xcp_PDUType const * const value, uint8_t offs);
-uint16_t Xcp_GetWord(Xcp_PDUType const * const value, uint8_t offs);
-uint32_t Xcp_GetDWord(Xcp_PDUType const * const value, uint8_t offs);
+uint8_t Xcp_GetByte(Xcp_PduType const * const value, uint8_t offs);
+uint16_t Xcp_GetWord(Xcp_PduType const * const value, uint8_t offs);
+uint32_t Xcp_GetDWord(Xcp_PduType const * const value, uint8_t offs);
 
-void Xcp_SetByte(Xcp_PDUType const * const pdu, uint8_t offs, uint8_t value);
-void Xcp_SetWord(Xcp_PDUType const * const pdu, uint8_t offs, uint16_t value);
-void Xcp_SetDWord(Xcp_PDUType const * const pdu, uint8_t offs, uint32_t value);
+void Xcp_SetByte(Xcp_PduType const * const pdu, uint8_t offs, uint8_t value);
+void Xcp_SetWord(Xcp_PduType const * const pdu, uint8_t offs, uint16_t value);
+void Xcp_SetDWord(Xcp_PduType const * const pdu, uint8_t offs, uint32_t value);
 
 /*
 **  Transport Layer Stuff.
@@ -1060,7 +1060,7 @@ void XcpTl_SaveConnection(void);
 void XcpTl_ReleaseConnection(void);
 bool XcpTl_VerifyConnection(void);
 void XcpTl_FeedReceiver(uint8_t octet);
-void XcpTl_TransportLayerCmd_Res(Xcp_PDUType const * const pdu);
+void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu);
 void XcpTl_PrintConnectionInformation(void);
 
 /*
@@ -1083,8 +1083,8 @@ void XcpHw_AcquireLock(uint8_t lockIdx);
 void XcpHw_ReleaseLock(uint8_t lockIdx);
 void XcpHw_TransmitDtos(void);
 
-extern Xcp_PDUType Xcp_CtoIn;
-extern Xcp_PDUType Xcp_CtoOut;
+extern Xcp_PduType Xcp_CtoIn;
+extern Xcp_PduType Xcp_CtoOut;
 
 
 #if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT)
