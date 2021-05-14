@@ -1019,9 +1019,9 @@ void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state);
 /*
 **
 */
-void Xcp_SendPdu(void);
-uint8_t * Xcp_GetOutPduPtr(void);
-void Xcp_SetPduOutLen(uint16_t len);
+void Xcp_SendCto(void);
+uint8_t * Xcp_GetCtoOutPtr(void);
+void Xcp_SetCtoOutLen(uint16_t len);
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
 #if XCP_ENABLE_EVENT_PACKET_API == XCP_ON
 void Xcp_SendEventPacket(uint8_t eventCode, uint8_t const * const eventInfo, uint8_t eventInfoLength);

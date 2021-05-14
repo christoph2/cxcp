@@ -705,7 +705,7 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
     return mta;
 }
 
-void Xcp_SendPdu(void)
+void Xcp_SendCto(void)
 {
 #if XCP_TRANSPORT_LAYER_LENGTH_SIZE != 0
     const uint16_t len = Xcp_CtoOut.len;
@@ -735,12 +735,12 @@ void Xcp_SendPdu(void)
 }
 
 
-uint8_t * Xcp_GetOutPduPtr(void)
+uint8_t * Xcp_GetCtoOutPtr(void)
 {
     return &(Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_BUFFER_OFFSET]);
 }
 
-void Xcp_SetPduOutLen(uint16_t len)
+void Xcp_SetCtoOutLen(uint16_t len)
 {
     Xcp_CtoOut.len = len;
 }
@@ -748,13 +748,13 @@ void Xcp_SetPduOutLen(uint16_t len)
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
 {
 
-    uint8_t * dataOut = Xcp_GetOutPduPtr();
+    uint8_t * dataOut = Xcp_GetCtoOutPtr();
 
 #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
     len = XCP_MAX_CTO;
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
 
-    Xcp_SetPduOutLen(UINT16(len));
+    Xcp_SetCtoOutLen(UINT16(len));
 
     /* MISRA 2004 violation Rule 15.2               */
     /* Controlled fall-through (copy optimization)  */
@@ -787,7 +787,7 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint
             break;
     }
 
-    Xcp_SendPdu();
+    Xcp_SendCto();
 }
 
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
@@ -815,7 +815,7 @@ void Xcp_UploadSingleBlock(void)
     if (!Xcp_SlaveBlockTransferIsActive()) {
         return;
     }
-    dataOut = Xcp_GetOutPduPtr();
+    dataOut = Xcp_GetCtoOutPtr();
     dataOut[0] = (uint8_t)ERR_SUCCESS;
     dst.address = (uint32_t)(dataOut + 1);
     dst.ext = (uint8_t)0;
@@ -824,9 +824,9 @@ void Xcp_UploadSingleBlock(void)
         length = Xcp_State.slaveBlockModeState.remaining;
 
         #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
-        Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+        Xcp_SetCtoOutLen(UINT16(XCP_MAX_CTO));
         #else
-        Xcp_SetPduOutLen(length + UINT16(1));
+        Xcp_SetCtoOutLen(length + UINT16(1));
         #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
 
         //printf("PART BLOCK: %08x LEN% 02x\n", Xcp_State.mta.address, length);
@@ -834,14 +834,14 @@ void Xcp_UploadSingleBlock(void)
         XCP_INCREMENT_MTA(length);
         Xcp_State.slaveBlockModeState.remaining -= length;
     } else {
-        Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+        Xcp_SetCtoOutLen(UINT16(XCP_MAX_CTO));
         //printf("FULL BLOCK: %08x\n", Xcp_State.mta.address);
         Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)(XCP_MAX_CTO - 1));
         XCP_INCREMENT_MTA((XCP_MAX_CTO - 1));
         Xcp_State.slaveBlockModeState.remaining -= (XCP_MAX_CTO - 1);
     }
 
-    Xcp_SendPdu();
+    Xcp_SendCto();
     if (Xcp_State.slaveBlockModeState.remaining == UINT8(0)) {
         Xcp_SlaveBlockTransferSetActive((bool)XCP_FALSE);
         //printf("FINISHED.\n");
@@ -853,7 +853,7 @@ void Xcp_UploadSingleBlock(void)
 
 XCP_STATIC void Xcp_Upload(uint8_t len)
 {
-    uint8_t * dataOut = Xcp_GetOutPduPtr();
+    uint8_t * dataOut = Xcp_GetCtoOutPtr();
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_OFF
     Xcp_MtaType dst = {0};
     dataOut[0] = (uint8_t)ERR_SUCCESS;
@@ -863,11 +863,11 @@ XCP_STATIC void Xcp_Upload(uint8_t len)
     Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)len);
     XCP_INCREMENT_MTA(len);
 #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
-    Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+    Xcp_SetCtoOutLen(UINT16(XCP_MAX_CTO));
 #else
-    Xcp_SetPduOutLen(len + UINT16(1));
+    Xcp_SetCtoOutLen(len + UINT16(1));
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
-    Xcp_SendPdu();
+    Xcp_SendCto();
 #else
     Xcp_State.slaveBlockModeState.remaining = len;
 
@@ -1105,7 +1105,7 @@ XCP_STATIC void Xcp_GetSeed_Res(Xcp_PDUType const * const pdu)
     uint8_t resource = Xcp_GetByte(pdu, UINT8(2));
     Xcp_1DArrayType seed = {0};
     uint8_t length = UINT8(0);
-    uint8_t * dataOut = Xcp_GetOutPduPtr();
+    uint8_t * dataOut = Xcp_GetCtoOutPtr();
 
     DBG_TRACE3("GET_SEED [mode: %02x resource: %02x]\n", mode, resource);
 
@@ -1156,11 +1156,11 @@ XCP_STATIC void Xcp_GetSeed_Res(Xcp_PDUType const * const pdu)
     dataOut[0] = UINT8(ERR_SUCCESS);
     dataOut[1] = length;
 #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
-    Xcp_SetPduOutLen(UINT16(XCP_MAX_CTO));
+    Xcp_SetCtoOutLen(UINT16(XCP_MAX_CTO));
 #else
-    Xcp_SetPduOutLen(length + UINT16(2));
+    Xcp_SetCtoOutLen(length + UINT16(2));
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
-    Xcp_SendPdu();
+    Xcp_SendCto();
 }
 #endif /* XCP_ENABLE_GET_SEED */
 
@@ -2259,7 +2259,7 @@ XCP_STATIC void Xcp_BusyResponse(void)
 #if (XCP_ENABLE_SERVICE_REQUEST_API == XCP_ON) || (XCP_ENABLE_EVENT_PACKET_API)
 XCP_STATIC void Xcp_SendSpecialPacket(uint8_t packetType, uint8_t code, uint8_t const * const data, uint8_t dataLength)
 {
-    uint8_t * dataOut = Xcp_GetOutPduPtr();
+    uint8_t * dataOut = Xcp_GetCtoOutPtr();
     uint8_t frameLength = UINT8(0);
     uint8_t idx = UINT8(0);
 
@@ -2270,7 +2270,7 @@ XCP_STATIC void Xcp_SendSpecialPacket(uint8_t packetType, uint8_t code, uint8_t 
 #else
     frameLength = dataLength + 2;
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
-    Xcp_SetPduOutLen(UINT16(frameLength));
+    Xcp_SetCtoOutLen(UINT16(frameLength));
     dataOut[0] = packetType;
     dataOut[1] = code;
     if (dataLength) {
@@ -2279,7 +2279,7 @@ XCP_STATIC void Xcp_SendSpecialPacket(uint8_t packetType, uint8_t code, uint8_t 
             dataOut[2 + idx] = data[idx];
         }
     }
-    Xcp_SendPdu();
+    Xcp_SendCto();
 }
 #endif
 

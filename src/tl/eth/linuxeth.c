@@ -134,7 +134,7 @@ void XcpTl_Init(void)
     int ret = 0;
 
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     sprintf(port, "%d", Xcp_Options.port);
