@@ -102,7 +102,7 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 
 extern Xcp_PDUType Xcp_PduIn;
-extern Xcp_PDUType Xcp_PduOut;
+extern Xcp_PDUType Xcp_CtoOut;
 
 static HANDLE XcpTl_CreateIOCP(void);
 static bool XcpTl_RegisterIOCPHandle(HANDLE port, HANDLE object, ULONG_PTR key);
@@ -160,7 +160,7 @@ void XcpTl_Init(void)
     SetThreadPriority(XcpTl_Threads[TL_WORKER_THREAD], THREAD_PRIORITY_ABOVE_NORMAL);
     SetProcessAffinityMask(XcpTl_Threads[TL_WORKER_THREAD], 1UL);
 
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
     ZeroMemory(&Hints, sizeof(Hints));
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {

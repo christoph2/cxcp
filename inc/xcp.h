@@ -1084,7 +1084,7 @@ void XcpHw_ReleaseLock(uint8_t lockIdx);
 void XcpHw_TransmitDtos(void);
 
 extern Xcp_PDUType Xcp_PduIn;
-extern Xcp_PDUType Xcp_PduOut;
+extern Xcp_PDUType Xcp_CtoOut;
 
 
 #if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT)

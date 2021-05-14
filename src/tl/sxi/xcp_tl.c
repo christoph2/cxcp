@@ -64,7 +64,7 @@ void XcpTl_Init(void)
 {
     XcpTl_ResetSM();
 
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
 }
 
 void XcpTl_DeInit(void)

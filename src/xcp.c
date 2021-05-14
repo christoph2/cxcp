@@ -47,7 +47,7 @@
 **  Global Variables.
 */
 Xcp_PDUType Xcp_PduIn;
-Xcp_PDUType Xcp_PduOut;
+Xcp_PDUType Xcp_CtoOut;
 
 
 /*
@@ -708,22 +708,22 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const * const ptr)
 void Xcp_SendPdu(void)
 {
 #if XCP_TRANSPORT_LAYER_LENGTH_SIZE != 0
-    const uint16_t len = Xcp_PduOut.len;
+    const uint16_t len = Xcp_CtoOut.len;
 #endif /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
 
 #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-    Xcp_PduOut.data[0] = XCP_LOBYTE(len);
+    Xcp_CtoOut.data[0] = XCP_LOBYTE(len);
 #elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-    Xcp_PduOut.data[0] = XCP_LOBYTE(len);
-    Xcp_PduOut.data[1] = XCP_HIBYTE(len);
+    Xcp_CtoOut.data[0] = XCP_LOBYTE(len);
+    Xcp_CtoOut.data[1] = XCP_HIBYTE(len);
 #endif /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
 
 #if XCP_TRANSPORT_LAYER_COUNTER_SIZE == 1
-    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
-    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
 
@@ -731,18 +731,18 @@ void Xcp_SendPdu(void)
     Xcp_State.statistics.crosSend++;
 #endif /* XCP_ENABLE_STATISTICS */
 
-    XcpTl_Send(Xcp_PduOut.data, Xcp_PduOut.len + (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+    XcpTl_Send(Xcp_CtoOut.data, Xcp_CtoOut.len + (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
 }
 
 
 uint8_t * Xcp_GetOutPduPtr(void)
 {
-    return &(Xcp_PduOut.data[XCP_TRANSPORT_LAYER_BUFFER_OFFSET]);
+    return &(Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_BUFFER_OFFSET]);
 }
 
 void Xcp_SetPduOutLen(uint16_t len)
 {
-    Xcp_PduOut.len = len;
+    Xcp_CtoOut.len = len;
 }
 
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)

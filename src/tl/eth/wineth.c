@@ -73,7 +73,7 @@ void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 
 extern Xcp_PDUType Xcp_PduIn;
-extern Xcp_PDUType Xcp_PduOut;
+extern Xcp_PDUType Xcp_CtoOut;
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
@@ -128,7 +128,7 @@ void XcpTl_Init(void)
     /* unsigned long ul = 1; */
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
     memset(&Hints, 0, sizeof(Hints));
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {

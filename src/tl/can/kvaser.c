@@ -50,7 +50,7 @@ typedef struct tagXcpTl_ConnectionType {
  } XcpTl_ConnectionType;
 
 extern Xcp_PDUType Xcp_PduIn;
-extern Xcp_PDUType Xcp_PduOut;
+extern Xcp_PDUType Xcp_CtoOut;
 
 static XcpTl_ConnectionType XcpTl_Connection;
 static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
@@ -180,7 +180,7 @@ void XcpTl_Init(void)
     //int ext;
     int hnd;
 
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
+    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
     canInitializeLibrary();
     hnd = canOpenChannel(0, canOPEN_ACCEPT_VIRTUAL | canOPEN_NO_INIT_ACCESS /* | canOPEN_ACCEPT_LARGE_DLC*/);
     if(hnd < 0){
