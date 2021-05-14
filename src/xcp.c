@@ -680,10 +680,6 @@ void Xcp_Disconnect(void)
 
 void Xcp_MainFunction(void)
 {
-#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    XcpDaq_MainFunction();
-#endif /* XCP_ENABLE_DAQ_COMMANDS */
-
 #if 0
     #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
         Xcp_UploadSingleBlock();

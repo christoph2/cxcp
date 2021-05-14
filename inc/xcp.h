@@ -437,7 +437,7 @@ extern "C"
 /* DAQ Implementation Macros */
 #define XCP_DAQ_DEFINE_ODT_ENTRY(meas)                      \
     {                                                       \
-        {(uint32_t)&(meas)},      sizeof((meas))            \
+        {(const uint32_t)&(meas)},      sizeof((meas))      \
     }
 
 /* DAQ Event Implementation Macros */
@@ -929,7 +929,6 @@ XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, X
 bool XcpDaq_ValidateConfiguration(void);
 bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber);
 bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntry);
-void XcpDaq_MainFunction(void);
 void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t eventChannelNumber);
 void XcpDaq_CopyMemory(void * dst, void * src, uint32_t len);
 XcpDaq_EventType const * XcpDaq_GetEventConfiguration(uint16_t eventChannelNumber);
@@ -941,8 +940,15 @@ void XcpDaq_StartSelectedLists(void);
 void XcpDaq_StopSelectedLists(void);
 void XcpDaq_StopAllLists(void);
 bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType * firstPID);
-bool XcpDaq_DequeueMessage(XcpDaq_MessageType * msg);
 void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber);
+
+#if XCP_DAQ_ENABLE_QUEUING == XCP_ON
+void XcpDaq_QueueInit(void);
+bool XcpDaq_QueueFull(void);
+bool XcpDaq_QueueEmpty(void);
+bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data);
+#endif /* XCP_DAQ_ENABLE_QUEUING */
+
 /*
 **  Predefined DAQ constants.
 */
@@ -1075,9 +1081,7 @@ void XcpHw_Deinit(void);
 uint32_t XcpHw_GetTimerCounter(void);
 void XcpHw_AcquireLock(uint8_t lockIdx);
 void XcpHw_ReleaseLock(uint8_t lockIdx);
-void XcpHw_SignalTransmitRequest(void);
-void XcpHw_WaitTransmitRequest(void);
-
+void XcpHw_TransmitDtos(void);
 
 extern Xcp_PDUType Xcp_PduIn;
 extern Xcp_PDUType Xcp_PduOut;

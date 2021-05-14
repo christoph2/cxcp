@@ -89,7 +89,7 @@ void exitFunc(void);
 */
 static HwStateType HwState = {0};
 static CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
-static HANDLE XcpHw_TransmissionEvent;
+HANDLE quit_event;
 
 /*
 **  Global Functions.
@@ -101,13 +101,11 @@ void XcpHw_Init(void)
     //_setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
     XcpHw_InitLocks();
-    XcpHw_TransmissionEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
 void XcpHw_Deinit(void)
 {
     XcpHw_DeinitLocks();
-    CloseHandle(XcpHw_TransmissionEvent);
 }
 
 uint32_t XcpHw_GetTimerCounter(void)
@@ -319,15 +317,19 @@ void XcpHw_ParseCommandLineOptions(int argc, char ** argv, Xcp_OptionsType * opt
 #endif
 }
 
-void XcpHw_SignalTransmitRequest(void)
+void XcpHw_TransmitDtos(void)
 {
-    SetEvent(XcpHw_TransmissionEvent);
+    uint16_t len;
+    uint8_t data[XCP_MAX_DTO];
+
+    while (!XcpDaq_QueueEmpty()) {
+        XcpDaq_QueueDequeue(&len, &data);
+        //printf("\tDTO -- len: %d data: \t", len);
+        //XcpUtl_Hexdump(data, len);
+        //printf("\n");
+    }
 }
 
-void XcpHw_WaitTransmitRequest(void)
-{
-    WaitForSingleObject(XcpHw_TransmissionEvent, INFINITE);
-}
 
 static void DisplayHelp(void)
 {

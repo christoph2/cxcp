@@ -97,11 +97,7 @@ XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-XCP_STATIC void XcpDaq_QueueInit(void);
-XCP_STATIC bool XcpDaq_QueueFull(void);
-XCP_STATIC bool XcpDaq_QueueEmpty(void);
 XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const * data);
-XCP_STATIC bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data);
 #endif /* XCP_DAQ_ENABLE_QUEUING */
 
 /*
@@ -275,6 +271,7 @@ XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void)
     return (XcpDaq_ListIntegerType)XcpDaq_ListCount;
 }
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
+
 
 void XcpDaq_Init(void)
 {
@@ -464,24 +461,6 @@ bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTInt
     return result;
 }
 
-void XcpDaq_MainFunction(void)
-{
-    Xcp_StateType const * Xcp_State = XCP_NULL;
-    XcpDaq_ListIntegerType listCount = 0;
-
-    Xcp_State = Xcp_GetState();
-    if (Xcp_State->daqProcessor.state == XCP_DAQ_STATE_RUNNING) {
-        //listCount = XcpDaq_GetListCount();   /* Check global state for DAQ/STIM running. */
-        /* printf("%u Active DAQ list(s).\n", listCount); */
-        // printf("DaqMainFunction\n");
-        XCP_DAQ_ENTER_CRITICAL();
-        while (!XcpDaq_QueueEmpty()) {
-            //XcpDaq_QueueDequeue();
-        }
-        XCP_DAQ_LEAVE_CRITICAL();
-    }
-}
-
 XcpDaq_EventType const * XcpDaq_GetEventConfiguration(uint16_t eventChannelNumber)
 {
     if (eventChannelNumber >= UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)) {
@@ -555,6 +534,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
         XcpDaq_QueueEnqueue(offset, data);
         XcpUtl_Hexdump(data, offset);
     }
+    XcpHw_TransmitDtos();
 }
 
 
@@ -875,7 +855,8 @@ XCP_STATIC bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data)
 **  Debugging / Testing interface.
 */
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-void XcpDaq_QueueGetVar(XcpDaq_QueueType * var) {
+void XcpDaq_QueueGetVar(XcpDaq_QueueType * var)
+{
     XcpUtl_MemCopy(var, &XcpDaq_Queue, sizeof(XcpDaq_QueueType));
 }
 #endif

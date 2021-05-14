@@ -88,14 +88,13 @@ void memimnfo(void * ptr)
 #endif
 
 #define XCP_THREAD  (0)
-//#define IOCP_THREAD (1)
 #define UI_THREAD   (1)
 #define APP_THREAD  (2)
 
 #define NUM_THREADS (3)
 
 HANDLE threads[NUM_THREADS];
-HANDLE quit_event;
+extern HANDLE quit_event;
 HANDLE userTimer;
 Xcp_OptionsType Xcp_Options;
 
