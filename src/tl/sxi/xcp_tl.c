@@ -38,8 +38,6 @@ void XcpTl_SignalTimeout(void);
 
 static void XcpTl_ResetSM(void);
 
-static uint8_t Xcp_PduOutBuffer[XCP_COMM_BUFLEN] = {0};
-
 typedef enum tagXcpTl_ReceiverStateType {
     XCP_RCV_IDLE,
     XCP_RCV_UNTIL_LENGTH,
@@ -63,8 +61,6 @@ static XcpTl_ReceiverType XcpTl_Receiver;
 void XcpTl_Init(void)
 {
     XcpTl_ResetSM();
-
-    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
 }
 
 void XcpTl_DeInit(void)

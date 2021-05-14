@@ -46,8 +46,11 @@
 /*
 **  Global Variables.
 */
-Xcp_PDUType Xcp_CtoIn;
-Xcp_PDUType Xcp_CtoOut;
+
+static uint8_t Xcp_CtoOutBuffer[XCP_MAX_CTO] = {0};
+
+Xcp_PDUType Xcp_CtoIn = {0, XCP_NULL};
+Xcp_PDUType Xcp_CtoOut = {0, &Xcp_CtoOutBuffer};
 
 
 /*

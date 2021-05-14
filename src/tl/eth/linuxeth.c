@@ -82,8 +82,6 @@ socklen_t addrSize = sizeof(struct sockaddr_storage);
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
-static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
-
 static bool Xcp_EnableSocketOption(int sock, int option);
 static bool Xcp_DisableSocketOption(int sock, int option);
 static void * XcpTl_WorkerThread(void * param);
@@ -134,7 +132,6 @@ void XcpTl_Init(void)
     int ret = 0;
 
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
-    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     sprintf(port, "%d", Xcp_Options.port);

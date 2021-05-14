@@ -53,7 +53,6 @@ extern Xcp_PDUType Xcp_CtoIn;
 extern Xcp_PDUType Xcp_CtoOut;
 
 static XcpTl_ConnectionType XcpTl_Connection;
-static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
 
 static uint16_t XcpTl_SetDLC(uint16_t len);
 static void XcpTl_SetCANFilter(void);
@@ -180,7 +179,6 @@ void XcpTl_Init(void)
     //int ext;
     int hnd;
 
-    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
     canInitializeLibrary();
     hnd = canOpenChannel(0, canOPEN_ACCEPT_VIRTUAL | canOPEN_NO_INIT_ACCESS /* | canOPEN_ACCEPT_LARGE_DLC*/);
     if(hnd < 0){

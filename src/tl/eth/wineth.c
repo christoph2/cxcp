@@ -66,9 +66,6 @@ int addrSize = sizeof(SOCKADDR_STORAGE);
 static XcpTl_ConnectionType XcpTl_Connection;
 static Xcp_OptionsType Xcp_Options;
 
-static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
-
-
 void Xcp_DispatchCommand(Xcp_PDUType const * const pdu);
 
 
@@ -128,7 +125,6 @@ void XcpTl_Init(void)
     /* unsigned long ul = 1; */
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
-    Xcp_CtoOut.data = &Xcp_PduOutBuffer[0];
     memset(&Hints, 0, sizeof(Hints));
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
