@@ -74,10 +74,7 @@ unsigned char buf[XCP_COMM_BUFLEN];
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
-static uint8_t Xcp_PduOutBuffer[XCP_MAX_CTO] = {0};
-
 extern void endwin(void);
-
 
 int locate_interface(int socket, char const * name)
 {
@@ -99,7 +96,6 @@ void XcpTl_Init(void)
 
 
     memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
-    Xcp_PduOut.data = &Xcp_PduOutBuffer[0];
 
     XcpTl_Connection.can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (XcpTl_Connection.can_socket== -1){
@@ -162,9 +158,9 @@ void XcpTl_RxHandler(void)
     }
     //printf("#%d bytes received from '%04x' DLC: %d .\n", nbytes, frame.can_id, frame.can_dlc);
     if (frame.len > 0) {
-        Xcp_PduIn.len = frame.len;
-        Xcp_PduIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-        Xcp_DispatchCommand(&Xcp_PduIn);
+        Xcp_CtoIn.len = frame.len;
+        Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+        Xcp_DispatchCommand(&Xcp_CtoIn);
     }
 }
 
