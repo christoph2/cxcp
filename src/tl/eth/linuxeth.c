@@ -262,9 +262,9 @@ void XcpTl_RxHandler(void)
         //dlc = (uint16_t)*(buf + 0);
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
-            Xcp_PduIn.len = dlc;
-            Xcp_PduIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-            Xcp_DispatchCommand(&Xcp_PduIn);
+            Xcp_CtoIn.len = dlc;
+            Xcp_CtoIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+            Xcp_DispatchCommand(&Xcp_CtoIn);
         }
         if (recv_len < 5) {
             DBG_PRINT2("Error: frame to short: %d\n", recv_len);
@@ -285,9 +285,9 @@ static void XcpTl_Feed(uint8_t * buf)
     dlc = XCP_MAKEWORD(buf[0], buf[1]);
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
     if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
-        Xcp_PduIn.len = dlc;
-        Xcp_PduIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-        Xcp_DispatchCommand(&Xcp_PduIn);
+        Xcp_CtoIn.len = dlc;
+        Xcp_CtoIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+        Xcp_DispatchCommand(&Xcp_CtoIn);
     }
 }
 
