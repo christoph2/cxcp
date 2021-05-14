@@ -326,6 +326,7 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
+    XCP_TL_ENTER_CRITICAL();
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
             (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
@@ -337,6 +338,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
             closesocket(XcpTl_Connection.connectedSocket);
         }
     }
+    XCP_TL_LEAVE_CRITICAL();
 }
 
 

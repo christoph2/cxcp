@@ -148,6 +148,7 @@ void XcpTl_FeedReceiver(uint8_t octet)
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
+    XCP_TL_ENTER_CRITICAL();
 #if defined(ARDUINO)
     Serial.write(buf, len);
 #endif
@@ -160,6 +161,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
         /* fputs(" ", stdout); */
     }
     /* fputs("\n", stdout); */
+    XCP_TL_LEAVE_CRITICAL();
 }
 
 void XcpTl_SaveConnection(void)

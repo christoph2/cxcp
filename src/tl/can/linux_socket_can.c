@@ -186,6 +186,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     struct can_frame frame = {0};
     struct canfd_frame frame_fd = {0};
 
+    XCP_TL_ENTER_CRITICAL();
     if (Xcp_Options.fd) {
         frame_fd.len = len;
         frame_fd.can_id = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
@@ -197,6 +198,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
         memcpy(frame.data, buf, len);
         (void)write(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
     }
+    XCP_TL_LEAVE_CRITICAL();
 }
 
 

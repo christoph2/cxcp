@@ -282,7 +282,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     int flag;
     char msg_buf[256];
 
-
+    XCP_TL_ENTER_CRITICAL();
     if (len > KV_MAX_DLC) {
         sprintf(msg_buf, "XcpTl_Send -- at most %d bytes supported, got %d.\n", KV_MAX_DLC, len);
         Kv_Error((const char *)msg_buf);
@@ -294,6 +294,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     flag = ext ? canMSG_EXT : canMSG_STD;
     stat = canWrite(XcpTl_Connection.handle, id, (void*)buf, len, flag);
     Kv_Check("canWrite", stat);
+    XCP_TL_LEAVE_CRITICAL();
 }
 
 
