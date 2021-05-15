@@ -58,6 +58,11 @@ static uint8_t Xcp_CtoOutBuffer[XCP_MAX_CTO] = {0};
 Xcp_PduType Xcp_CtoIn = {0, XCP_NULL};
 Xcp_PduType Xcp_CtoOut = {0, &Xcp_CtoOutBuffer};
 
+#if XCP_ENABLE_DAQ_COMMANDS  == XCP_ON
+static uint8_t Xcp_DtoOutBuffer[XCP_MAX_DTO] = {0};
+static Xcp_PduType Xcp_DtoOut = {0, &Xcp_DtoOutBuffer};
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
+
 
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count);
 void Xcp_ReadMemory(void * dest, void * src, uint16_t count);
@@ -727,6 +732,47 @@ void Xcp_SendCto(void)
 
     XcpTl_Send(Xcp_CtoOut.data, Xcp_CtoOut.len + (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
 }
+
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+void Xcp_SendDto(void)
+{
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE != 0
+    const uint16_t len = Xcp_DtoOut.len;
+#endif /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
+
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
+    Xcp_DtoOut.data[0] = XCP_LOBYTE(len);
+#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
+    Xcp_DtoOut.data[0] = XCP_LOBYTE(len);
+    Xcp_DtoOut.data[1] = XCP_HIBYTE(len);
+#endif /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
+
+#if XCP_TRANSPORT_LAYER_COUNTER_SIZE == 1
+    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_State.counter++;
+#elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
+    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
+    Xcp_State.counter++;
+#endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
+
+#if XCP_ENABLE_STATISTICS == XCP_ON
+    Xcp_State.statistics.crosSend++;
+#endif /* XCP_ENABLE_STATISTICS */
+
+    XcpTl_Send(Xcp_DtoOut.data, Xcp_DtoOut.len + (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+}
+
+uint8_t * Xcp_GetDtoOutPtr(void)
+{
+    return &(Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_BUFFER_OFFSET]);
+}
+
+void Xcp_SetDtoOutLen(uint16_t len)
+{
+    Xcp_DtoOut.len = len;
+}
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 
 uint8_t * Xcp_GetCtoOutPtr(void)

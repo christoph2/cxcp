@@ -1021,6 +1021,13 @@ void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state);
 */
 void Xcp_SendCto(void);
 uint8_t * Xcp_GetCtoOutPtr(void);
+
+#if XCP_ENABLE_DAQ_COMMANDS  == XCP_ON
+void Xcp_SendDto(void);
+uint8_t * Xcp_GetDtoOutPtr(void);
+void Xcp_SetDtoOutLen(uint16_t len);
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
+
 void Xcp_SetCtoOutLen(uint16_t len);
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
 #if XCP_ENABLE_EVENT_PACKET_API == XCP_ON
@@ -1029,6 +1036,7 @@ void Xcp_SendEventPacket(uint8_t eventCode, uint8_t const * const eventInfo, uin
 #if XCP_ENABLE_SERVICE_REQUEST_API == XCP_ON
 void Xcp_SendServiceRequestPacket(uint8_t serviceRequestCode, uint8_t const * const serviceRequest, uint8_t serviceRequestLength);
 #endif /* XCP_ENABLE_SERVICE_REQUEST_API */
+
 
 /*
 **  Helpers.
