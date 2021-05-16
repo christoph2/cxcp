@@ -495,20 +495,6 @@ DWORD XcpHw_UIThread()
 }
 #endif
 
-void XcpTl_PostQuitMessage();
-
-void XcpHw_TransmitDtos(void)
-{
-    uint16_t len;
-    uint8_t data[XCP_MAX_DTO];
-
-    while (!XcpDaq_QueueEmpty()) {
-        XcpDaq_QueueDequeue(&len, &data);
-        //printf("\tDTO -- len: %d data: \t", len);
-        //XcpUtl_Hexdump(data, len);
-        //printf("\n");
-    }
-}
 
 static void DisplayHelp(void)
 {
