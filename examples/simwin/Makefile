@@ -1,7 +1,7 @@
 vpath %.c ../../src
 vpath %.h ../..inc . ../../flsemu
 
-xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/win/hw.c  main.c ../flsemu/win/flsemu.c ../flsemu/common.c
+xcp_sim_SRC = xcp.c xcp_checksum.c xcp_daq.c xcp_util.c hw/win/hw.c  main.c ../flsemu/win/flsemu.c ../flsemu/common.c app_config.c
 
 INCLUDE= -I . -I ../../inc -I ../../flsemu
 CPPFLAGS += $(INCLUDE)
