@@ -321,12 +321,13 @@ void XcpHw_TransmitDtos(void)
 {
     uint16_t len;
     uint8_t data[XCP_MAX_DTO];
+    uint8_t * dataOut = Xcp_GetDtoOutPtr();
 
     while (!XcpDaq_QueueEmpty()) {
-        XcpDaq_QueueDequeue(&len, &data);
+        XcpDaq_QueueDequeue(&len, dataOut);
         //printf("\tDTO -- len: %d data: \t", len);
-        //XcpUtl_Hexdump(data, len);
-        //printf("\n");
+        Xcp_SetDtoOutLen(len);
+        Xcp_SendDto();
     }
 }
 

@@ -417,6 +417,21 @@ uint32_t XcpHw_GetTimerCounter(void)
     return (uint32_t)timestamp;
 }
 
+void XcpHw_TransmitDtos(void)
+{
+    uint16_t len;
+    uint8_t data[XCP_MAX_DTO];
+    uint8_t * dataOut = Xcp_GetDtoOutPtr();
+
+    while (!XcpDaq_QueueEmpty()) {
+        XcpDaq_QueueDequeue(&len, dataOut);
+        //printf("\tDTO -- len: %d data: \t", len);
+        Xcp_SetDtoOutLen(len);
+        Xcp_SendDto();
+    }
+}
+
+
 static void XcpHw_InitLocks(void)
 {
     uint8_t idx = UINT8(0);
