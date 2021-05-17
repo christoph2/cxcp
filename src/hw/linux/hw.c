@@ -29,7 +29,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <pthread.h>
+#include <threads.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -98,7 +98,7 @@ void exitFunc(void);
 /*
 ** Global Variables.
 */
-pthread_t XcpHw_ThreadID[4];
+thrd_t XcpHw_ThreadID[4];
 
 
 /*
@@ -107,8 +107,8 @@ pthread_t XcpHw_ThreadID[4];
 #define XCPHW_APPLICATION_STATES    (32)
 
 typedef struct tagXcpHw_ApplicationStateType {
-    pthread_mutex_t stateMutex;
-    pthread_cond_t stateCond;
+    mtx_t stateMutex;
+    cnd_t stateCond;
     volatile uint32_t stateBitmap;
     volatile uint8_t counter[XCPHW_APPLICATION_STATES];
 } XcpHw_ApplicationStateType;
@@ -118,17 +118,17 @@ typedef struct tagXcpHw_ApplicationStateType {
 **  Local Variables.
 */
 static HwStateType HwState = {0};
-static pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT] = {PTHREAD_MUTEX_INITIALIZER};
+static mtx_t XcpHw_Locks[XCP_HW_LOCK_COUNT];
 
 
 static struct timespec XcpHw_TimerResolution = {0};
 static timer_t XcpHw_AppMsTimer;
 static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
 
-static XcpHw_ApplicationStateType XcpHw_ApplicationState = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0, {0}};
+static XcpHw_ApplicationStateType XcpHw_ApplicationState = {0};
 
-static pthread_cond_t XcpHw_TransmissionEvent;
-static pthread_mutex_t XcpHw_TransmissionMutex = {PTHREAD_MUTEX_INITIALIZER};
+static cnd_t XcpHw_TransmissionEvent;
+static mtx_t XcpHw_TransmissionMutex;
 
 /*
 **  Global Functions.
@@ -258,37 +258,51 @@ void XcpHw_Init(void)
         XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
     }
     XcpTui_Init();
-    pthread_cond_init(&XcpHw_TransmissionEvent, NULL);
+
+    cnd_init(&XcpHw_TransmissionEvent);
+    cnd_init(&XcpHw_ApplicationState.stateCond);
+    mtx_init(&XcpHw_ApplicationState.stateMutex, mtx_recursive);
+    mtx_init(&XcpHw_TransmissionMutex, mtx_recursive);
+    for (size_t idx = 0; idx < XCP_HW_LOCK_COUNT; ++idx) {
+        mtx_init(&XcpHw_Locks[idx], mtx_recursive);
+    }
+
 }
 
 void XcpHw_Deinit(void)
 {
     XcpTui_Deinit();
     XcpHw_DeinitLocks();
-    pthread_cond_destroy(&XcpHw_TransmissionEvent);
+    cnd_destroy(&XcpHw_TransmissionEvent);
+    cnd_destroy(&XcpHw_ApplicationState.stateCond);
+    mtx_destroy(&XcpHw_ApplicationState.stateMutex);
+    mtx_destroy(&XcpHw_TransmissionMutex);
+    for (size_t idx = 0; idx < XCP_HW_LOCK_COUNT; ++idx) {
+        mtx_destroy(&XcpHw_Locks[idx]);
+    }
 }
 
 void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
 {
     int status = 0;
 
-    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
+    status = mtx_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_mutex_lock()", status);
+        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::mtx_lock()", status);
     }
     XcpHw_ApplicationState.stateBitmap = state;
 
     if (signal_all) {
-        status = pthread_cond_broadcast(&XcpHw_ApplicationState.stateCond);
+        status = cnd_broadcast(&XcpHw_ApplicationState.stateCond);
     } else {
-        status = pthread_cond_signal(&XcpHw_ApplicationState.stateCond);
+        status = cnd_signal(&XcpHw_ApplicationState.stateCond);
     }
     if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_cond_signal()", status);
+        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::cnd_signal()", status);
     }
-    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
+    status = mtx_unlock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_mutex_unlock()", status);
+        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::mtx_unlock()", status);
     }
 }
 
@@ -296,14 +310,14 @@ void XcpHw_ResetApplicationState(uint32_t mask)
 {
     int status = 0;
 
-    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
+    status = mtx_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::pthread_mutex_lock()", status);
+        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::mtx_lock()", status);
     }
     XcpHw_ApplicationState.stateBitmap &= ~mask;
-    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
+    status = mtx_unlock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::pthread_mutex_unlock()", status);
+        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::mtx_unlock()", status);
     }
 }
 
@@ -330,22 +344,22 @@ uint32_t XcpHw_WaitApplicationState(uint32_t mask)
     timeout.tv_sec = time(NULL) + 2;
     timeout.tv_nsec = 0;
 #endif
-    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
+    status = mtx_lock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_mutex_lock()", status);
+        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::mtx_lock()", status);
     }
 
     while ((XcpHw_ApplicationState.stateBitmap == 0) && (!match)) {
-        status = pthread_cond_wait(&XcpHw_ApplicationState.stateCond, &XcpHw_ApplicationState.stateMutex);
+        status = cnd_wait(&XcpHw_ApplicationState.stateCond, &XcpHw_ApplicationState.stateMutex);
         if (status != 0) {
-            XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_cond_wait()", status);
+            XcpHw_ErrorMsg("XcpHw_WaitApplicationState::cnd_wait()", status);
         }
         //match = (XcpHw_ApplicationState.stateBitmap & mask) != 0x00;
         match = (XcpHw_ApplicationState.stateBitmap & mask) == mask;
     }
-    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
+    status = mtx_unlock(&XcpHw_ApplicationState.stateMutex);
     if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_mutex_unlock()", status);
+        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::mtx_unlock()", status);
     }
     return XcpHw_ApplicationState.stateBitmap;
 }
@@ -437,7 +451,7 @@ static void XcpHw_InitLocks(void)
     uint8_t idx = UINT8(0);
 
     for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
-        pthread_mutex_init(&XcpHw_Locks[idx], NULL);
+        mtx_init(&XcpHw_Locks[idx], mtx_recursive);
     }
 }
 
@@ -446,7 +460,7 @@ static void XcpHw_DeinitLocks(void)
     uint8_t idx = UINT8(0);
 
     for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
-        pthread_mutex_destroy(&XcpHw_Locks[idx]);
+        mtx_destroy(&XcpHw_Locks[idx]);
     }
 }
 
@@ -455,7 +469,7 @@ void XcpHw_AcquireLock(uint8_t lockIdx)
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
-    pthread_mutex_lock(&XcpHw_Locks[lockIdx]);
+    mtx_lock(&XcpHw_Locks[lockIdx]);
 }
 
 void XcpHw_ReleaseLock(uint8_t lockIdx)
@@ -463,18 +477,18 @@ void XcpHw_ReleaseLock(uint8_t lockIdx)
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
-    pthread_mutex_unlock(&XcpHw_Locks[lockIdx]);
+    mtx_unlock(&XcpHw_Locks[lockIdx]);
 }
 
 void XcpHw_SignalTransmitRequest(void)
 {
-    pthread_mutex_lock(&XcpHw_TransmissionMutex);
-    pthread_cond_signal(&XcpHw_TransmissionEvent);
+    mtx_lock(&XcpHw_TransmissionMutex);
+    cnd_signal(&XcpHw_TransmissionEvent);
 }
 
 void XcpHw_WaitTransmitRequest(void)
 {
-    pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
+    cnd_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
 }
 
 #if 0
