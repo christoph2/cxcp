@@ -92,6 +92,9 @@ void XcpDaq_PrintDAQDetails();
 
 void * XcpHw_MainFunction();
 
+bool XcpDaq_QueueEmpty(void);
+bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data);
+
 void exitFunc(void);
 
 
@@ -118,17 +121,13 @@ typedef struct tagXcpHw_ApplicationStateType {
 **  Local Variables.
 */
 static HwStateType HwState = {0};
-static mtx_t XcpHw_Locks[XCP_HW_LOCK_COUNT];
-
-
+pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT];
 static struct timespec XcpHw_TimerResolution = {0};
 static timer_t XcpHw_AppMsTimer;
 static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
-
-static XcpHw_ApplicationStateType XcpHw_ApplicationState = {0};
-
-static cnd_t XcpHw_TransmissionEvent;
-static mtx_t XcpHw_TransmissionMutex;
+static XcpHw_ApplicationStateType XcpHw_ApplicationState;
+static pthread_cond_t XcpHw_TransmissionEvent;
+static pthread_mutex_t XcpHw_TransmissionMutex;
 
 /*
 **  Global Functions.
@@ -259,26 +258,26 @@ void XcpHw_Init(void)
     }
     XcpTui_Init();
 
-    cnd_init(&XcpHw_TransmissionEvent);
-    cnd_init(&XcpHw_ApplicationState.stateCond);
-    mtx_init(&XcpHw_ApplicationState.stateMutex, mtx_recursive);
-    mtx_init(&XcpHw_TransmissionMutex, mtx_recursive);
+    pthread_cond_init(&XcpHw_TransmissionEvent, NULL);
+    pthread_cond_init(&XcpHw_ApplicationState.stateCond, NULL);
+    pthread_mutex_init(&XcpHw_ApplicationState.stateMutex, NULL);
+    pthread_mutex_init(&XcpHw_TransmissionMutex, NULL);
     for (size_t idx = 0; idx < XCP_HW_LOCK_COUNT; ++idx) {
-        mtx_init(&XcpHw_Locks[idx], mtx_recursive);
+        pthread_mutex_init(&XcpHw_Locks[idx], NULL);
     }
-
 }
 
 void XcpHw_Deinit(void)
 {
     XcpTui_Deinit();
     XcpHw_DeinitLocks();
-    cnd_destroy(&XcpHw_TransmissionEvent);
-    cnd_destroy(&XcpHw_ApplicationState.stateCond);
-    mtx_destroy(&XcpHw_ApplicationState.stateMutex);
-    mtx_destroy(&XcpHw_TransmissionMutex);
+    pthread_cond_destroy(&XcpHw_TransmissionEvent);
+    pthread_cond_destroy(&XcpHw_TransmissionEvent);
+    pthread_cond_destroy(&XcpHw_ApplicationState.stateCond);
+    pthread_mutex_destroy(&XcpHw_ApplicationState.stateMutex);
+    pthread_mutex_destroy(&XcpHw_TransmissionMutex);
     for (size_t idx = 0; idx < XCP_HW_LOCK_COUNT; ++idx) {
-        mtx_destroy(&XcpHw_Locks[idx]);
+        pthread_mutex_destroy(&XcpHw_Locks[idx]);
     }
 }
 
