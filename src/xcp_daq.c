@@ -296,7 +296,9 @@ void XcpDaq_Init(void)
     (void)XcpDaq_Free();
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
+#if XCP_DAQ_ENABLE_QUEUING == XCP_ON
     XcpDaq_QueueInit();
+#endif
 }
 
 XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber)
@@ -803,7 +805,7 @@ XcpDaq_EntityType * XcpDaq_GetDynamicEntity(uint16_t num)
 
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-XCP_STATIC void XcpDaq_QueueInit(void)
+void XcpDaq_QueueInit(void)
 {
     uint8_t idx;
 

@@ -90,6 +90,7 @@
 #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (100)
 #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
 #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT XCP_OFF
+#define XCP_DAQ_ENABLE_QUEUING                      XCP_ON
 
 /*
 **  PGM Settings.
