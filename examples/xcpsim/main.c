@@ -38,20 +38,15 @@
 
 
 pthread_t threads[NUM_THREADS];
-
 Xcp_OptionsType Xcp_Options = {0};
 
+void parse_options(int argc, char ** argv, Xcp_OptionsType * options);
 //////////////
 
 
 int main(int argc, char **argv)
 {
-//    size_t idx;
-//    int res;
-
-
-//    XcpHw_ParseCommandLineOptions(argc, argv, &options);
-//    XcpTl_SetOptions(&options);
+    parse_options(argc, argv, &Xcp_Options);
 
     FlsEmu_Init(&FlsEmu_Config);
 

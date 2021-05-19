@@ -193,44 +193,6 @@ void XcpHw_ErrorMsg(char * const fun, int errorCode)
     fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
 }
 
-
-void XcpHw_ParseCommandLineOptions(int argc, char ** argv, Xcp_OptionsType * options)
-{
-    int idx;
-    char * arg;
-#if !defined(KVASER_CAN)
-    options->ipv6 = XCP_FALSE;
-    options->tcp = XCP_TRUE;
-
-    if (argc >= 2) {
-        for(idx = 1; idx < argc; ++idx) {
-            arg = argv[idx];
-            if ((arg[0] != '/') && (arg[0] != '-')) {
-                continue;
-            }
-            switch (arg[1]) {
-                case '4':
-                    options->ipv6 = XCP_FALSE;
-                    break;
-                case '6':
-                    options->ipv6 = XCP_TRUE;
-                    break;
-                case 'u':
-                    options->tcp = XCP_FALSE;
-                    break;
-                case 't':
-                    options->tcp = XCP_TRUE;
-                    break;
-                case 'h':
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-#endif
-}
-
 void XcpHw_TransmitDtos(void)
 {
     uint16_t len;
