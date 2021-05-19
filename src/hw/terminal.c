@@ -124,6 +124,7 @@ static void set_options(void)
     term.c_lflag &= ~(ECHO | ISIG | IEXTEN);
     term.c_iflag &= ~(IXON | ICRNL | ISTRIP | BRKINT | INPCK);
     term.c_cflag |= CS8;
+    term.c_oflag |= OPOST;
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 }
 
