@@ -40,9 +40,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include <threads.h>
-
-#include <ncurses.h>
+#include <pthread.h>
 
 #define err_abort(code,text) do { \
         fprintf (stderr, "%s at \"%s\":%d: %s\n", \
@@ -75,7 +73,7 @@ typedef struct tagXcpTl_ConnectionType {
  } XcpTl_ConnectionType;
 
 
-extern thrd_t XcpHw_ThreadID[4];
+extern pthread_t XcpHw_ThreadID[4];
 
 unsigned char buf[XCP_COMM_BUFLEN];
 socklen_t addrSize = sizeof(struct sockaddr_storage);
@@ -167,7 +165,7 @@ void XcpTl_Init(void)
         XcpHw_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", errno);
     }
 
-    ret = thrd_create(&XcpHw_ThreadID[0], &XcpTl_WorkerThread, NULL);
+    ret = pthread_create(&XcpHw_ThreadID[0], NULL, &XcpTl_WorkerThread, NULL);
     if (ret != 0) {
         err_abort(ret, "Create worker thread");
     }
@@ -337,13 +335,10 @@ bool XcpTl_VerifyConnection(void)
 
 void XcpTl_PrintConnectionInformation(void)
 {
-    attron(A_BOLD);
-    mvprintw(2, 40, "XCPonEth -- Listening on port %s / %s [%s]\n",
+    printf("XCPonEth -- Listening on port %s / %s [%s]\n",
         DEFAULT_PORT,
         Xcp_Options.tcp ? "TCP" : "UDP",
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
-    attroff(A_BOLD);
-    refresh();
 }
 
