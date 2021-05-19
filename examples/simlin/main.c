@@ -1,5 +1,5 @@
 
-#include <threads.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +21,7 @@ void * TlTask(void * param);
 
 void * AppTask(void * param);
 
-extern thrd_t XcpHw_ThreadID[4];
+extern pthread_t XcpHw_ThreadID[4];
 
 #define XCP_THREAD  (0)
 #define UI_THREAD   (1)
@@ -122,11 +122,11 @@ int main(int argc, char **argv)
     FlsEmu_Init(&FlsEmu_Config);
     Xcp_Init();
 
-    res = thrd_create(&XcpHw_ThreadID[1], &AppTask, NULL);
-    res = thrd_create(&XcpHw_ThreadID[2], &XcpTui_MainFunction, NULL);
-    res = thrd_create(&XcpHw_ThreadID[3], &TlTask, NULL);
+    res = pthread_create(&XcpHw_ThreadID[1], NULL, &AppTask, NULL);
+    res = pthread_create(&XcpHw_ThreadID[2], NULL, &XcpTui_MainFunction, NULL);
+    res = pthread_create(&XcpHw_ThreadID[3], NULL, &TlTask, NULL);
 
-    thrd_join(XcpHw_ThreadID[2], &res);
+    pthread_join(XcpHw_ThreadID[2], NULL);
 
     XcpHw_Deinit();
     XcpTl_DeInit();
