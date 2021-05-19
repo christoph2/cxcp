@@ -335,7 +335,7 @@ bool XcpTl_VerifyConnection(void)
 
 void XcpTl_PrintConnectionInformation(void)
 {
-    printf("XCPonEth -- Listening on port %s / %s [%s]\n",
+    printf("XCPonEth -- Listening on port %s / %s [%s]\n\r",
         DEFAULT_PORT,
         Xcp_Options.tcp ? "TCP" : "UDP",
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"

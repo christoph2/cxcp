@@ -202,59 +202,59 @@ static void SystemInformation(void)
     Xcp_StateType * state;
 #endif /* XCP_ENABLE_STATISTICS */
 
-    printf("\nSystem-Information\n");
-    printf("------------------\n");
+    printf("\n\rSystem-Information\n\r");
+    printf("------------------\n\r");
     XcpTl_PrintConnectionInformation();
-    printf("MAX_CTO         : %d    MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
-    printf("Slave-Blockmode : %s\n", (XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON) ? "Yes" : "No");
-    printf("Master-Blockmode: %s\n", (XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON) ? "Yes" : "No");
+    printf("MAX_CTO         : %d    MAX_DTO: %d\n\r", XCP_MAX_CTO, XCP_MAX_DTO);
+    printf("Slave-Blockmode : %s\n\r", (XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON) ? "Yes" : "No");
+    printf("Master-Blockmode: %s\n\r", (XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON) ? "Yes" : "No");
 
 #if XCP_ENABLE_CAL_COMMANDS == XCP_ON
-    printf("Calibration     : Yes   Protected: %s\n", (XCP_PROTECT_CAL == XCP_ON)  ? "Yes" : "No");
+    printf("Calibration     : Yes   Protected: %s\n\r", (XCP_PROTECT_CAL == XCP_ON)  ? "Yes" : "No");
 #else
-    printf("Calibration     : No\n");
+    printf("Calibration     : No\n\r");
 #endif /* XCP_ENABLE_CAL_COMMANDS */
 
 #if XCP_ENABLE_PAG_COMMANDS == XCP_ON
-    printf("Paging          : Yes   Protected: %s\n", (XCP_PROTECT_PAG == XCP_ON)  ? "Yes" : "No");
+    printf("Paging          : Yes   Protected: %s\n\r", (XCP_PROTECT_PAG == XCP_ON)  ? "Yes" : "No");
 #else
-    printf("Paging          : No\n");
+    printf("Paging          : No\n\r");
 #endif /* XCP_ENABLE_PAG_COMMANDS */
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    printf("DAQ             : Yes   Protected: [DAQ: %s STIM: %s]\n", (XCP_PROTECT_DAQ == XCP_ON)  ?
+    printf("DAQ             : Yes   Protected: [DAQ: %s STIM: %s]\n\r", (XCP_PROTECT_DAQ == XCP_ON)  ?
            "Yes" : "No", (XCP_PROTECT_STIM == XCP_ON)  ? "Yes" : "No"
     );
 #else
-    printf("DAQ             : No\n");
+    printf("DAQ             : No\n\r");
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 #if XCP_ENABLE_PGM_COMMANDS
-    printf("Programming     : Yes   Protected: %s\n", (XCP_PROTECT_PGM == XCP_ON)  ? "Yes" : "No");
+    printf("Programming     : Yes   Protected: %s\n\r", (XCP_PROTECT_PGM == XCP_ON)  ? "Yes" : "No");
 #else
-    printf("Programming     : No\n");
+    printf("Programming     : No\n\r");
 #endif /* XCP_ENABLE_PGM_COMMANDS */
-    printf("\n");
+    printf("\n\r");
     XcpDaq_Info();
     FlsEmu_Info();
 
 #if XCP_ENABLE_STATISTICS == XCP_ON
     state = Xcp_GetState();
-    printf("\nStatistics\n");
-    printf("----------\n");
-    printf("CTOs rec'd      : %d\n", state->statistics.ctosReceived);
-    printf("CROs busy       : %d\n", state->statistics.crosBusy);
-    printf("CROs send       : %d\n", state->statistics.crosSend);
+    printf("\n\rStatistics\n\r");
+    printf("----------\n\r");
+    printf("CTOs rec'd      : %d\n\r", state->statistics.ctosReceived);
+    printf("CROs busy       : %d\n\r", state->statistics.crosBusy);
+    printf("CROs send       : %d\n\r", state->statistics.crosSend);
 #endif /* XCP_ENABLE_STATISTICS */
-    printf("-------------------------------------------------------------------------------\n");
+    printf("-------------------------------------------------------------------------------\n\r");
 }
 
 static void DisplayHelp(void)
 {
-    printf("\nh\t\tshow this help message\n");
-    printf("<ESC> or q\texit\n");
-    printf("i\t\tsystem information\n");
-    printf("d\t\tDAQ configuration\n");
+    printf("\n\rh\t\tshow this help message\n\r");
+    printf("<ESC> or q\texit\n\r");
+    printf("i\t\tsystem information\n\r");
+    printf("d\t\tDAQ configuration\n\r");
     /* printf("d\t\tReset connection\n"); */
 }
 
@@ -264,22 +264,22 @@ void FlsEmu_Info(void)
     uint8_t * ptr;
     FlsEmu_SegmentType * segment;
 
-    printf("\nFlash-Emulator\n");
-    printf("--------------\n");
-    printf("Segment              Mapped     Virtual    Size(KB) Pagesize(KB) #Pages\n");
+    printf("\n\rFlash-Emulator\n\r");
+    printf("--------------\n\r");
+    printf("Segment              Mapped     Virtual    Size(KB) Pagesize(KB) #Pages\n\r");
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
         ptr = FlsEmu_BasePointer(idx);
         segment = FlsEmu_GetConfig()->segments[idx];
-        printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n", segment->name, (void*)segment->baseAddress, ptr, segment->memSize / 1024, segment->pageSize / 1024, FlsEmu_NumPages(idx));
+        printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n\r", segment->name, (void*)segment->baseAddress, ptr, segment->memSize / 1024, segment->pageSize / 1024, FlsEmu_NumPages(idx));
     }
-    printf("\n");
+    printf("\n\r");
 
 }
 
 void Xcp_DisplayInfo(void)
 {
     XcpTl_PrintConnectionInformation();
-    printf("Press h for help.\n");
+    printf("Press h for help.\n\r");
     fflush(stdout);
 }
 
@@ -296,8 +296,8 @@ void XcpDaq_PrintDAQDetails(void)
     uint32_t total;
     XcpDaq_ODTIntegerType firstPid;
 
-    printf("\nDAQ configuration\n");
-    printf("-----------------\n");
+    printf("\n\rDAQ configuration\n\r");
+    printf("-----------------\n\r");
     for (listIdx = (XcpDaq_ListIntegerType)0; listIdx < XcpDaq_GetListCount(); ++listIdx) {
         listState = XcpDaq_GetListState(listIdx);
         listConf = XcpDaq_GetListConfiguration(listIdx);
@@ -336,20 +336,20 @@ void XcpDaq_PrintDAQDetails(void)
         if (mode & XCP_DAQ_LIST_MODE_TIMESTAMP) {
             printf("TIMESTAMP ");
         }
-        printf("\n");
+        printf("\n\r");
         for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < listConf->numOdts; ++odtIdx) {
             odt = XcpDaq_GetOdt(listIdx, odtIdx);
-            printf("    ODT #%d\n", odtIdx);
+            printf("    ODT #%d\n\r", odtIdx);
             for (odtEntriyIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntriyIdx < odt->numOdtEntries; ++odtEntriyIdx) {
                 entry = XcpDaq_GetOdtEntry(listIdx, odtIdx, odtEntriyIdx);
-                printf("        Entry #%d [0x%08x] %d Byte(s)\n", odtEntriyIdx, entry->mta.address, entry->length);
+                printf("        Entry #%d [0x%08x] %d Byte(s)\n\r", odtEntriyIdx, entry->mta.address, entry->length);
                 total += entry->length;
             }
         }
-        printf("                          -------------\n");
-        printf("                          %-5d Byte(s)\n", total);
+        printf("                          -------------\n\r");
+        printf("                          %-5d Byte(s)\n\r", total);
     }
-    printf("-------------------------------------------------------------------------------\n");
+    printf("-------------------------------------------------------------------------------\n\r");
 }
 
 void XcpDaq_Info(void)
@@ -358,7 +358,7 @@ void XcpDaq_Info(void)
 
     Xcp_State = Xcp_GetState();
 
-    printf("DAQ\n---\n");
+    printf("DAQ\n\r---\n\r");
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     printf("Processor state       : ");
     switch (Xcp_State->daqProcessor.state) {
@@ -378,13 +378,13 @@ void XcpDaq_Info(void)
             printf("Running");
             break;
     }
-    printf("\n");
+    printf("\n\r");
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-    printf("Allocated DAQ entities: %d of %d\n", XcpDaq_EntityCount, XCP_DAQ_MAX_DYNAMIC_ENTITIES);
+    printf("Allocated DAQ entities: %d of %d\n\r", XcpDaq_EntityCount, XCP_DAQ_MAX_DYNAMIC_ENTITIES);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #else
-    printf("\tfunctionality not supported.\n");
+    printf("\tfunctionality not supported.\n\r");
 #endif
 }
 
