@@ -311,22 +311,3 @@ static void MemoryInfo(void * address)
     VirtualQuery(address, &info, sizeof(MEMORY_BASIC_INFORMATION));
 }
 
-#if defined(_WIN32)
-void FlsEmu_Info(void)
-{
-    uint8_t idx;
-    uint8_t * ptr;
-    FlsEmu_SegmentType * segment;
-
-    printf("\nFlash-Emulator\n");
-    printf("--------------\n");
-    printf("Segment              Mapped     Virtual    Size(KB) Pagesize(KB) #Pages\n");
-    for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
-        ptr = FlsEmu_BasePointer(idx);
-        segment = FlsEmu_GetConfig()->segments[idx];
-        printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n", segment->name, (void*)segment->baseAddress, ptr, segment->memSize / 1024, segment->pageSize / 1024, FlsEmu_NumPages(idx));
-    }
-    printf("\n");
-
-}
-#endif

@@ -38,7 +38,6 @@
 
 #include "xcp.h"
 #include "xcp_hw.h"
-#include "xcp_tui.h"
 
 /*
 **  Local Types.
@@ -80,15 +79,6 @@ static void DeinitTUI(void);
 /*
 **  External Function Prototypes.
 */
-
-void endwin(void);  /* We don't want to include ncurses.h */
-
-static void DisplayHelp(void);
-static void SystemInformation(void);
-
-void FlsEmu_Info(void);
-void XcpDaq_Info(void);
-void XcpDaq_PrintDAQDetails();
 
 void * XcpHw_MainFunction();
 
@@ -135,8 +125,6 @@ static pthread_mutex_t XcpHw_TransmissionMutex;
 
 static void termination_handler(int sig)
 {
-    endwin();
-
     printf("Terminating due to ");
     switch (sig) {
         case SIGKILL:
@@ -256,7 +244,6 @@ void XcpHw_Init(void)
     if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
     }
-    XcpTui_Init();
     XcpHw_InitLocks();
     pthread_cond_init(&XcpHw_TransmissionEvent, NULL);
     pthread_cond_init(&XcpHw_ApplicationState.stateCond, NULL);
@@ -266,7 +253,6 @@ void XcpHw_Init(void)
 
 void XcpHw_Deinit(void)
 {
-    XcpTui_Deinit();
     XcpHw_DeinitLocks();
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
@@ -438,7 +424,6 @@ void XcpHw_TransmitDtos(void)
     }
 }
 
-
 static void XcpHw_InitLocks(void)
 {
     uint8_t idx = UINT8(0);
@@ -484,85 +469,8 @@ void XcpHw_WaitTransmitRequest(void)
     pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
 }
 
-#if 0
-DWORD XcpHw_UIThread()
+void XcpHw_ErrorMsg(char * const fun, int errorCode)
 {
-    HANDLE * quit_event = (HANDLE *)param;
-
-    XCP_FOREVER {
-        if (!XcpHw_MainFunction(quit_event)) {
-            break;
-        }
-        if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
-            break;
-        }
-    }
-    ExitThread(0);
-    }
-}
-#endif
-
-
-static void DisplayHelp(void)
-{
-    printf("\nh\t\tshow this help message\n");
-    //printf("<ESC> or q\texit %s\n", __argv[0]);
-    printf("<ESC> or q\texit \n");
-    printf("i\t\tsystem information\n");
-    printf("d\t\tDAQ configuration\n");
-    /* printf("d\t\tReset connection\n"); */
-}
-
-static void SystemInformation(void)
-{
-#if XCP_ENABLE_STATISTICS == XCP_ON
-    Xcp_StateType * state = NULL;
-#endif /* XCP_ENABLE_STATISTICS */
-
-    printf("\nSystem-Information\n");
-    printf("------------------\n");
-    XcpTl_PrintConnectionInformation();
-    printf("MAX_CTO         : %d    MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
-    printf("Slave-Blockmode : %s\n", (XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON) ? "Yes" : "No");
-    printf("Master-Blockmode: %s\n", (XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON) ? "Yes" : "No");
-
-#if XCP_ENABLE_CAL_COMMANDS == XCP_ON
-    printf("Calibration     : Yes   Protected: %s\n", (XCP_PROTECT_CAL == XCP_ON)  ? "Yes" : "No");
-#else
-    printf("Calibration     : No\n");
-#endif /* XCP_ENABLE_CAL_COMMANDS */
-
-#if XCP_ENABLE_PAG_COMMANDS == XCP_ON
-    printf("Paging          : Yes   Protected: %s\n", (XCP_PROTECT_PAG == XCP_ON)  ? "Yes" : "No");
-#else
-    printf("Paging          : No\n");
-#endif /* XCP_ENABLE_PAG_COMMANDS */
-
-#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    printf("DAQ             : Yes   Protected: [DAQ: %s STIM: %s]\n", (XCP_PROTECT_DAQ == XCP_ON)  ?
-           "Yes" : "No", (XCP_PROTECT_STIM == XCP_ON)  ? "Yes" : "No"
-    );
-#else
-    printf("DAQ             : No\n");
-#endif /* XCP_ENABLE_DAQ_COMMANDS */
-
-#if XCP_ENABLE_PGM_COMMANDS
-    printf("Programming     : Yes   Protected: %s\n", (XCP_PROTECT_PGM == XCP_ON)  ? "Yes" : "No");
-#else
-    printf("Programming     : No\n");
-#endif /* XCP_ENABLE_PGM_COMMANDS */
-    printf("\n");
-    XcpDaq_Info();
-    FlsEmu_Info();
-
-#if XCP_ENABLE_STATISTICS == XCP_ON
-    state = Xcp_GetState();
-    printf("\nStatistics\n");
-    printf("----------\n");
-    printf("CTOs rec'd      : %d\n", state->statistics.ctosReceived);
-    printf("CROs busy       : %d\n", state->statistics.crosBusy);
-    printf("CROs send       : %d\n", state->statistics.crosSend);
-#endif /* XCP_ENABLE_STATISTICS */
-    printf("-------------------------------------------------------------------------------\n");
+    fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
 }
 
