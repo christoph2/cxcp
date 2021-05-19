@@ -39,6 +39,8 @@
 
 pthread_t threads[NUM_THREADS];
 
+Xcp_OptionsType Xcp_Options = {0};
+
 //////////////
 
 
