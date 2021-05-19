@@ -26,9 +26,23 @@
 #include "terminal.h"
 
 #if defined(_WIN32)
-#include <windows.h>
+    #include <windows.h>
 #else
+    #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
+    #include <sys/select.h>
+    #include <termios.h>
+#endif
 
+#if !defined(_WIN32)
+struct termios orig_termios;
+
+static void reset_terminal_mode(void);
+static void set_options(void);
+static void set_raw_terminal_mode(void);
+static int kbhit(void);
+static int getch(void);
 #endif
 
 
@@ -96,9 +110,88 @@ void * XcpTerm_Thread(void * param)
     }
 }
 #else
+static void reset_terminal_mode(void)
+{
+    tcsetattr(0, TCSANOW, &orig_termios);
+}
+
+static void set_options(void)
+{
+    struct termios term;
+
+    tcgetattr(STDIN_FILENO, &term);
+    term.c_lflag &= ~(ECHO | ISIG | IEXTEN);
+    term.c_iflag &= ~(IXON | ICRNL | ISTRIP | BRKINT | INPCK);
+    term.c_cflag |= CS8;
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
+}
+
+static void set_raw_terminal_mode(void)
+{
+    struct termios new_termios;
+
+    tcgetattr(0, &orig_termios);
+    memcpy(&new_termios, &orig_termios, sizeof(new_termios));
+
+    atexit(reset_terminal_mode);
+    cfmakeraw(&new_termios);
+    set_options();
+    tcsetattr(0, TCSANOW, &new_termios);
+}
+
+static int kbhit(void)
+{
+    struct timeval tv = { 0L, 0L };
+    fd_set fds;
+
+    FD_ZERO(&fds);
+    FD_SET(0, &fds);
+    return select(1, &fds, NULL, NULL, &tv);
+}
+
+static int getch(void)
+{
+    int len;
+    unsigned char buf[256];
+
+    if ((len = read(0, &buf, sizeof(buf))) < 0) {
+        return -1;
+    } else {
+        // printf("%d %x %c\n", len, buf[0], buf[0]);
+        if (len == 1) {
+            // Only plain chars for now.
+            return buf[0];
+        } else {
+            return -1;
+        }
+    }
+}
+
 void * XcpTerm_Thread(void * param)
 {
+    int key = 0;
 
+    set_raw_terminal_mode();
+    while (1) {
+        while(!kbhit()) {
+        }
+        key = getch();
+        if (key != -1 ) {
+            switch (tolower(key)) {
+                case 'q':
+                    pthread_exit(NULL);
+                case 'h':
+                    DisplayHelp();
+                    break;
+                case 'i':
+                    SystemInformation();
+                    break;
+                case 'd':
+                    XcpDaq_PrintDAQDetails();
+                    break;
+            }
+        }
+    }
 }
 #endif // defined
 
