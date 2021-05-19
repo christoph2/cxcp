@@ -6,6 +6,8 @@
 #define _WIN32_WINNT    0x601
 #include <Windows.h>
 
+#include <pthread.h>
+
 #include "xcp.h"
 #include "xcp_hw.h"
 
@@ -16,33 +18,12 @@ void XcpOnCan_Init(void);
 #define SIZE    (4096)
 uint8_t puffer[SIZE];
 
-DWORD XcpHw_UIThread(LPVOID param);
+void * XcpHw_UIThread(void * param);
+void * AppTask(void * param);
+void * Xcp_MainTask(void * param);
+
 void XcpTl_SetOptions(Xcp_OptionsType const * options);
 
-DWORD AppTask(LPVOID param);
-DWORD Xcp_MainTask(LPVOID param);
-
-#if 0
-void memimnfo(void * ptr)
-{
-    /*
-    ** mainly a debugging/bug reporting aid.
-    */
-
-    MEMORY_BASIC_INFORMATION info;
-    SYSTEM_INFO si;
-    size_t res;
-
-    GetSystemInfo(&si);
-    res = VirtualQuery(ptr, &info, sizeof(MEMORY_BASIC_INFORMATION));
-    if (!res) {
-        XcpHw_ErrorMsg("memimnfo::VirtualQuery()", GetLastError());
-    } else {
-        printf("%p %p %d %08x %08x %08x\n", info.BaseAddress, info.AllocationBase, info.RegionSize / 1024,
-               info.AllocationProtect, info.Protect, info.Type);
-    }
-}
-#endif
 
 #define XCP_THREAD  (0)
 #define UI_THREAD   (1)
@@ -50,8 +31,7 @@ void memimnfo(void * ptr)
 
 #define NUM_THREADS (3)
 
-HANDLE threads[NUM_THREADS];
-extern HANDLE quit_event;
+pthread_t threads[NUM_THREADS];
 HANDLE userTimer;
 Xcp_OptionsType Xcp_Options;
 
@@ -62,6 +42,7 @@ int main(int argc, char **argv)
 {
     size_t idx;
     Xcp_OptionsType options;
+    int res;
 
     srand(23);
 
@@ -77,9 +58,14 @@ int main(int argc, char **argv)
 
     userTimer = CreateWaitableTimer(NULL, FALSE, NULL);
 
-    threads[XCP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Xcp_MainTask, &quit_event, 0, NULL);
-    threads[UI_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)XcpHw_UIThread, &quit_event, 0, NULL);
-    threads[APP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AppTask, &quit_event, 0, NULL);
+    pthread_create(&threads[APP_THREAD], NULL, &AppTask, NULL);
+    pthread_create(&threads[XCP_THREAD], NULL, &Xcp_MainTask, NULL);
+    pthread_create(&threads[UI_THREAD], NULL, &XcpHw_UIThread, NULL);
+
+    //threads[APP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AppTask, &quit_event, 0, NULL);
+    //threads[XCP_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Xcp_MainTask, &quit_event, 0, NULL);
+    //threads[UI_THREAD] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)XcpHw_UIThread, &quit_event, 0, NULL);
+
 
     WaitForMultipleObjects(NUM_THREADS, threads, TRUE, INFINITE);
     for (idx = 0; idx < NUM_THREADS; ++idx) {
@@ -96,21 +82,19 @@ int main(int argc, char **argv)
 }
 
 
-DWORD Xcp_MainTask(LPVOID param)
+void * Xcp_MainTask(void * param)
 {
-    HANDLE * quit_event = (HANDLE *)param;
     XCP_FOREVER {
-
         Xcp_MainFunction();
         XcpTl_MainFunction();
-        if (WaitForSingleObject(*quit_event, INFINITE) == WAIT_OBJECT_0) {
-            break;
-        }
+//        if (WaitForSingleObject(*quit_event, INFINITE) == WAIT_OBJECT_0) {
+//            break;
+//        }
     }
-    ExitThread(0);
+    pthread_exit(NULL);
 }
 
-DWORD AppTask(LPVOID param)
+void * AppTask(void * param)
 {
     static uint32_t currentTS = 0UL;
     static uint32_t previousTS = 0UL;
@@ -119,7 +103,6 @@ DWORD AppTask(LPVOID param)
 
     LARGE_INTEGER liDueTime;
     LONG period;
-    HANDLE handles[2] = {*quit_event, userTimer};
     DWORD res;
 
     //liDueTime.QuadPart=-10 0 000 000;
@@ -152,13 +135,13 @@ DWORD AppTask(LPVOID param)
             ticker++;
             previousTS =  XcpHw_GetTimerCounter() / 1000;
         }
-        res = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-        if (res == WAIT_OBJECT_0) {
-            break;
-        }
+//        res = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+//        if (res == WAIT_OBJECT_0) {
+//            break;
+//        }
         //if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
         //    break;
         //}
     }
-    ExitThread(0);
+    pthread_exit(NULL);
 }

@@ -46,7 +46,7 @@
 #define DEFAULT_SOCKTYPE   SOCK_STREAM //
 #define DEFAULT_PORT       "5555"
 
-void XcpHw_ErrorMsg(char * const function, unsigned errorCode);
+void XcpHw_ErrorMsg(char * const function, int errorCode);
 
 
 typedef struct tagXcpTl_ConnectionType {
@@ -64,7 +64,7 @@ int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
 static XcpTl_ConnectionType XcpTl_Connection;
-static Xcp_OptionsType Xcp_Options;
+Xcp_OptionsType Xcp_Options;
 
 void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
 
@@ -272,7 +272,7 @@ void XcpTl_RxHandler(void)
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
             Xcp_CtoIn.len = dlc;
-            Xcp_CtoIn.data = buf + XCP_TRANPORT_LAYER_BUFFER_OFFSET;
+            Xcp_CtoIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
             Xcp_DispatchCommand(&Xcp_CtoIn);
         }
         if (recv_len < 5) {

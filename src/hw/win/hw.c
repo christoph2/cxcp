@@ -80,7 +80,7 @@ void FlsEmu_Info(void);
 void XcpDaq_Info(void);
 void XcpDaq_PrintDAQDetails();
 
-bool XcpHw_MainFunction(HANDLE * quit_event);
+void XcpHw_MainFunction(void);
 
 void exitFunc(void);
 
@@ -88,8 +88,7 @@ void exitFunc(void);
 **  Local Variables.
 */
 static HwStateType HwState = {0};
-static CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
-HANDLE quit_event;
+CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
 
 /*
 **  Global Functions.
@@ -194,91 +193,6 @@ void XcpHw_ErrorMsg(char * const fun, int errorCode)
     fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
 }
 
-DWORD XcpHw_UIThread(LPVOID param)
-{
-    HANDLE * quit_event = (HANDLE *)param;
-
-    XCP_FOREVER {
-        if (!XcpHw_MainFunction(quit_event)) {
-            break;
-        }
-        if (WaitForSingleObject(*quit_event, 0) == WAIT_OBJECT_0) {
-            break;
-        }
-    }
-    ExitThread(0);
-}
-
-
-void XcpTl_PostQuitMessage();
-
-bool XcpHw_MainFunction(HANDLE * quit_event)
-{
-    HANDLE hStdin;
-    DWORD cNumRead, fdwMode, idx;
-    INPUT_RECORD irInBuf[128];
-    KEY_EVENT_RECORD key;
-
-    hStdin = GetStdHandle(STD_INPUT_HANDLE);
-    if (hStdin == INVALID_HANDLE_VALUE) {
-        XcpHw_ErrorMsg("GetStdHandle", GetLastError());
-    }
-
-    fdwMode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-    if (!SetConsoleMode(hStdin, fdwMode)) {
-        XcpHw_ErrorMsg("SetConsoleMode", GetLastError());
-    }
-
-    WaitForSingleObject(hStdin, 1000);
-
-    if (!GetNumberOfConsoleInputEvents (hStdin, &cNumRead)) {
-        XcpHw_ErrorMsg("PeekConsoleInput", GetLastError());
-    } else {
-        if (cNumRead) {
-            if (!ReadConsoleInput(hStdin, irInBuf, 128, &cNumRead)) {
-                XcpHw_ErrorMsg("ReadConsoleInput", GetLastError());
-            }
-            for (idx = 0; idx < cNumRead; ++idx) {
-            switch(irInBuf[idx].EventType) {
-                    case KEY_EVENT:
-                        key = irInBuf[idx].Event.KeyEvent;
-//                        printf("KeyEvent: %x %x %x %u\n", key.wVirtualKeyCode, key.wVirtualScanCode, key.dwControlKeyState, key.bKeyDown);
-                        if (key.bKeyDown) {
-                            if (key.wVirtualKeyCode == VK_ESCAPE) {
-                                SetEvent(*quit_event);
-                                XcpTl_PostQuitMessage();
-                                return XCP_FALSE;
-                            }
-                            if (key.wVirtualKeyCode == VK_F9) {
-//                                printf("\tF9\n");
-                            }
-                            switch (tolower(key.uChar.AsciiChar)) {
-                                case 'q':
-                                    SetEvent(*quit_event);
-                                    XcpTl_PostQuitMessage();
-                                    return XCP_FALSE;
-                                case 'h':
-                                    DisplayHelp();
-                                    break;
-                                case 'i':
-                                    SystemInformation();
-                                    break;
-                                case 'd':
-                                    XcpDaq_PrintDAQDetails();
-                                    break;
-                            }
-                        }
-                        break;
-                    default:
-                        //MyErrorExit("unknown event type");
-                        break;
-                }
-            }
-        }
-    }
-    return XCP_TRUE;
-}
-
 
 void XcpHw_ParseCommandLineOptions(int argc, char ** argv, Xcp_OptionsType * options)
 {
@@ -332,64 +246,3 @@ void XcpHw_TransmitDtos(void)
 }
 
 
-static void DisplayHelp(void)
-{
-    printf("\nh\t\tshow this help message\n");
-    printf("<ESC> or q\texit %s\n", __argv[0]);
-    printf("i\t\tsystem information\n");
-    printf("d\t\tDAQ configuration\n");
-    /* printf("d\t\tReset connection\n"); */
-}
-
-static void SystemInformation(void)
-{
-#if XCP_ENABLE_STATISTICS == XCP_ON
-    Xcp_StateType * state;
-#endif /* XCP_ENABLE_STATISTICS */
-
-    printf("\nSystem-Information\n");
-    printf("------------------\n");
-    XcpTl_PrintConnectionInformation();
-    printf("MAX_CTO         : %d    MAX_DTO: %d\n", XCP_MAX_CTO, XCP_MAX_DTO);
-    printf("Slave-Blockmode : %s\n", (XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON) ? "Yes" : "No");
-    printf("Master-Blockmode: %s\n", (XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON) ? "Yes" : "No");
-
-#if XCP_ENABLE_CAL_COMMANDS == XCP_ON
-    printf("Calibration     : Yes   Protected: %s\n", (XCP_PROTECT_CAL == XCP_ON)  ? "Yes" : "No");
-#else
-    printf("Calibration     : No\n");
-#endif /* XCP_ENABLE_CAL_COMMANDS */
-
-#if XCP_ENABLE_PAG_COMMANDS == XCP_ON
-    printf("Paging          : Yes   Protected: %s\n", (XCP_PROTECT_PAG == XCP_ON)  ? "Yes" : "No");
-#else
-    printf("Paging          : No\n");
-#endif /* XCP_ENABLE_PAG_COMMANDS */
-
-#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    printf("DAQ             : Yes   Protected: [DAQ: %s STIM: %s]\n", (XCP_PROTECT_DAQ == XCP_ON)  ?
-           "Yes" : "No", (XCP_PROTECT_STIM == XCP_ON)  ? "Yes" : "No"
-    );
-#else
-    printf("DAQ             : No\n");
-#endif /* XCP_ENABLE_DAQ_COMMANDS */
-
-#if XCP_ENABLE_PGM_COMMANDS
-    printf("Programming     : Yes   Protected: %s\n", (XCP_PROTECT_PGM == XCP_ON)  ? "Yes" : "No");
-#else
-    printf("Programming     : No\n");
-#endif /* XCP_ENABLE_PGM_COMMANDS */
-    printf("\n");
-    XcpDaq_Info();
-    FlsEmu_Info();
-
-#if XCP_ENABLE_STATISTICS == XCP_ON
-    state = Xcp_GetState();
-    printf("\nStatistics\n");
-    printf("----------\n");
-    printf("CTOs rec'd      : %d\n", state->statistics.ctosReceived);
-    printf("CROs busy       : %d\n", state->statistics.crosBusy);
-    printf("CROs send       : %d\n", state->statistics.crosSend);
-#endif /* XCP_ENABLE_STATISTICS */
-    printf("-------------------------------------------------------------------------------\n");
-}
