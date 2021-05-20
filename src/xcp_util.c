@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -80,7 +80,7 @@ void XcpUtl_Hexdump(/*@in@*/uint8_t const * buf, uint16_t sz)
     for (idx = UINT16(0); idx < sz; ++idx) {
         DBG_PRINT2("%02X ", buf[idx]);
     }
-    DBG_PRINT1("\n");
+    DBG_PRINT1("\n\r");
 }
 
 void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t * buf)

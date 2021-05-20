@@ -118,7 +118,7 @@ extern "C"
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
     #define INLINE
-    #if defined(_WIN32)
+    #if defined(_WIN32) || defined(__unix__)
         #define DBG_PRINT1(A)                   printf(A)
         #define DBG_PRINT2(A, B)                printf(A, B)
         #define DBG_PRINT3(A, B, C)             printf(A, B, C)

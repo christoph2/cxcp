@@ -243,7 +243,7 @@ void XcpTl_RxHandler(void)
             }
         }
         if (recv_len == 0) {
-            DBG_PRINT1("Client closed connection\n");
+            DBG_PRINT1("Client closed connection\n\r");
             close(XcpTl_Connection.connectedSocket);
             Xcp_Disconnect();
             return;
@@ -274,7 +274,7 @@ void XcpTl_RxHandler(void)
             Xcp_DispatchCommand(&Xcp_CtoIn);
         }
         if (recv_len < 5) {
-            DBG_PRINT2("Error: frame to short: %d\n", recv_len);
+            DBG_PRINT2("Error: frame to short: %d\n\r", recv_len);
         } else {
 
         }
