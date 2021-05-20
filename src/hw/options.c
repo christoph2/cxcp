@@ -23,6 +23,8 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <stdlib.h>
+
 #include "xcp.h"
 
 #if defined(_WIN32)
@@ -38,6 +40,7 @@ static const char OPTION_STR[] = "hi:f";
 
 #endif
 
+#define XCP_ETH_DEFAULT_PORT    (5555)
 
 #if defined(_WIN32)
 void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
@@ -77,6 +80,26 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 #endif
 }
 #else
+
+void usage(void)
+{
+    printf("\nparameter summary: \n");
+#if defined(ETHER)
+    printf("-h\t  this message.\n");
+    printf("-t\t  TCP\t\t  default: TRUE\n");
+    printf("-u\t  UDP\t\t  default: FALSE\n");
+    printf("-4\t  IPv4\t\t  default: TRUE\n");
+    printf("-6\t  IPv6\t\t  default: FALSE\n");
+    printf("-p <port> port to listen  default: 5555\n");
+#elif defined(SOCKET_CAN)
+    printf("-h\tthis message.\n");
+    printf("-f\t\tuse CAN-FD\t\tdefault: FALSE\n");
+    printf("-i <if-name>\tinterface to use\tdefault: vcan0\n");
+#endif
+    exit(0);
+}
+
+
 void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 {
     int opt;
@@ -86,13 +109,13 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
     int p_assigned = 0;
     int v_assigned = 0;
 
-    Xcp_Options->tcp = XCP_TRUE;
-    Xcp_Options->ipv6 = XCP_FALSE;
-    Xcp_Options->port = XCP_ETH_DEFAULT_PORT;
+    options->tcp = XCP_TRUE;
+    options->ipv6 = XCP_FALSE;
+    options->port = XCP_ETH_DEFAULT_PORT;
 #elif defined(SOCKET_CAN)
     int if_assigned = 0;
 
-    Xcp_Options.fd = XCP_FALSE;
+    options.fd = XCP_FALSE;
 #endif
 
     while ((opt = getopt(argc, argv, OPTION_STR)) != -1) {
@@ -108,7 +131,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
                     exit(1);
                 }
                 p_assigned = XCP_TRUE;
-                Xcp_Options->tcp = XCP_TRUE;
+                options->tcp = XCP_TRUE;
                 break;
             case 'u':
                 if (p_assigned) {
@@ -116,7 +139,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
                     exit(1);
                 }
                 p_assigned = XCP_TRUE;
-                Xcp_Options->tcp = XCP_FALSE;
+                options->tcp = XCP_FALSE;
                 break;
             case '4':
                 if (v_assigned) {
@@ -124,7 +147,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
                     exit(1);
                 }
                 v_assigned = XCP_TRUE;
-                Xcp_Options->ipv6 = XCP_FALSE;
+                options->ipv6 = XCP_FALSE;
                 break;
             case '6':
                 if (v_assigned) {
@@ -132,17 +155,17 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
                     exit(1);
                 }
                 v_assigned = XCP_TRUE;
-                Xcp_Options->ipv6 = XCP_TRUE;
+                options->ipv6 = XCP_TRUE;
                 break;
             case 'p':
-                Xcp_Options->port = atoi(optarg);
+                options->port = atoi(optarg);
 #elif defined(SOCKET_CAN)
             case 'f':
-                Xcp_Options->fd = XCP_TRUE;
+                options->fd = XCP_TRUE;
                 break;
             case 'i':
                 if_assigned = 1;
-                strcpy(Xcp_Options->interface, optarg);
+                strcpy(options->interface, optarg);
                 break;
 #endif
         }
@@ -150,9 +173,10 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 
 #if defined(SOCKET_CAN)
     if (!if_assigned) {
-        strcpy(Xcp_Options.interface, DEFAULT_CAN_IF);
+        strcpy(options.interface, DEFAULT_CAN_IF);
     }
 #endif
 
 }
 #endif
+

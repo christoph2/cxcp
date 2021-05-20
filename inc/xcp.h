@@ -497,6 +497,11 @@ extern "C"
 #define XCP_HW_LOCK_COUNT                   UINT8(3)
 
 /*
+ * XcponEth specific.
+ *
+#define XCP_ETH_DEFAULT_PORT    (5555)
+
+/*
 ** Global Types.
 */
 
