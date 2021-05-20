@@ -48,9 +48,7 @@ elseif(UNIX)
     )
 endif(WIN32)
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-    add_definitions(-D_GNU_SOURCE)
-endif()
+add_definitions(-D_GNU_SOURCE)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable  -ffunction-sections")
 
@@ -68,7 +66,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         endif()
     endif()
 else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -fltoi -fomit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -flto -fomit-frame-pointer")
 endif()
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
