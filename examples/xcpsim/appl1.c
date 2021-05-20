@@ -112,5 +112,6 @@ double controller(double temperature)
     if (sum_of_errors < 0.0) {
         sum_of_errors = 0.0;
     }
+    current = sum_of_errors * prmKi;
     return current;
 }
