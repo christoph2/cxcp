@@ -23,10 +23,6 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include <unistd.h>
-#include <fcntl.h>
-
-#include <stdio.h>
 
 #include <pthread.h>
 
@@ -34,14 +30,16 @@
 #include "terminal.h"
 #include "app_config.h"
 
-//////////////
 
+//////////////
 
 pthread_t threads[NUM_THREADS];
 Xcp_OptionsType Xcp_Options = {0};
 
 void parse_options(int argc, char ** argv, Xcp_OptionsType * options);
 //////////////
+
+void * XcpTl_Thread(void * param);
 
 
 int main(int argc, char **argv)
@@ -54,7 +52,7 @@ int main(int argc, char **argv)
     Xcp_DisplayInfo();
 
     pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
-
+    pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
     pthread_join(threads[UI_THREAD], NULL);
 
 

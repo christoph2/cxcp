@@ -31,8 +31,9 @@
 #define XCP_THREAD  (0)
 #define UI_THREAD   (1)
 #define APP_THREAD  (2)
+#define TL_THREAD   (3)
 
-#define NUM_THREADS (3)
+#define NUM_THREADS (4)
 
 
 void * XcpTerm_Thread(void * param);

@@ -180,6 +180,7 @@ void * XcpTerm_Thread(void * param)
         key = getch();
         if (key != -1 ) {
             switch (tolower(key)) {
+                case '\x1b':
                 case 'q':
                     pthread_exit(NULL);
                 case 'h':
@@ -388,4 +389,3 @@ void XcpDaq_Info(void)
     printf("\tfunctionality not supported.\n\r");
 #endif
 }
-

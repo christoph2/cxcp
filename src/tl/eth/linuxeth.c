@@ -182,15 +182,24 @@ static void * XcpTl_WorkerThread(void * param)
     return NULL;
 }
 
-
 void XcpTl_DeInit(void)
 {
     close(XcpTl_Connection.boundSocket);
 }
 
+void * XcpTl_Thread(void * param)
+{
+    XCP_FOREVER {
+        XcpTl_MainFunction();
+    }
+    return NULL;
+}
 
 void XcpTl_MainFunction(void)
 {
+    if (XcpTl_FrameAvailable(0, 1000) > 0) {
+        XcpTl_RxHandler();
+    }
 }
 
 void * get_in_addr(struct sockaddr *sa)
@@ -289,12 +298,38 @@ static void XcpTl_Feed(uint8_t * buf)
     }
 }
 
-
 void XcpTl_TxHandler(void)
 {
 
 }
 
+int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
+{
+    struct timeval timeout;
+    fd_set fds;
+    int16_t res;
+
+    timeout.tv_sec = sec;
+    timeout.tv_usec = usec;
+
+    FD_ZERO(&fds);
+    FD_SET(XcpTl_Connection.boundSocket, &fds);
+
+    // Return value:
+    // -1: error occurred
+    // 0: timed out
+    // > 0: data ready to be read
+    if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
+        res = select(0, &fds, 0, 0, &timeout);
+        if (res == SOCKET_ERROR) {
+            XcpHw_ErrorMsg("XcpTl_FrameAvailable:select()", errno);
+            exit(2);
+        }
+        return res;
+    } else {
+        return 1;
+    }
+}
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {

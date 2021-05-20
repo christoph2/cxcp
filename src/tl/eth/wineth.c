@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -189,6 +189,15 @@ void XcpTl_DeInit(void)
 {
     closesocket(XcpTl_Connection.boundSocket);
     WSACleanup();
+}
+
+
+void * XcpTl_Thread(void * param)
+{
+    XCP_FOREVER {
+        XcpTl_MainFunction();
+    }
+    return NULL;
 }
 
 
