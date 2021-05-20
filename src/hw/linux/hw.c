@@ -100,9 +100,6 @@ pthread_t XcpHw_ThreadID[4];
 #define XCPHW_APPLICATION_STATES    (32)
 
 typedef struct tagXcpHw_ApplicationStateType {
-    pthread_mutex_t stateMutex;
-    pthread_cond_t stateCond;
-    volatile uint32_t stateBitmap;
     volatile uint8_t counter[XCPHW_APPLICATION_STATES];
 } XcpHw_ApplicationStateType;
 
@@ -167,7 +164,7 @@ static void handler(int sig, siginfo_t *si, void *uc)
 
     //print_siginfo(si);
     //signal(sig, SIG_IGN);
-    XcpHw_SignalApplicationState(2, XCP_TRUE);
+
 }
 
 void XcpHw_Init(void)
@@ -246,8 +243,6 @@ void XcpHw_Init(void)
     }
     XcpHw_InitLocks();
     pthread_cond_init(&XcpHw_TransmissionEvent, NULL);
-    pthread_cond_init(&XcpHw_ApplicationState.stateCond, NULL);
-    pthread_mutex_init(&XcpHw_ApplicationState.stateMutex, NULL);
     pthread_mutex_init(&XcpHw_TransmissionMutex, NULL);
 }
 
@@ -256,91 +251,7 @@ void XcpHw_Deinit(void)
     XcpHw_DeinitLocks();
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
-    pthread_cond_destroy(&XcpHw_ApplicationState.stateCond);
-    pthread_mutex_destroy(&XcpHw_ApplicationState.stateMutex);
     pthread_mutex_destroy(&XcpHw_TransmissionMutex);
-}
-
-void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all)
-{
-    int status = 0;
-
-    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
-    if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_mutex_lock()", status);
-    }
-    XcpHw_ApplicationState.stateBitmap = state;
-
-    if (signal_all) {
-        status = pthread_cond_broadcast(&XcpHw_ApplicationState.stateCond);
-    } else {
-        status = pthread_cond_signal(&XcpHw_ApplicationState.stateCond);
-    }
-    if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_cond_signal()", status);
-    }
-    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
-    if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_SignalApplicationState::pthread_mutex_unlock()", status);
-    }
-}
-
-void XcpHw_ResetApplicationState(uint32_t mask)
-{
-    int status = 0;
-
-    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
-    if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::pthread_mutex_lock()", status);
-    }
-    XcpHw_ApplicationState.stateBitmap &= ~mask;
-    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
-    if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_ResetApplicationState::pthread_mutex_unlock()", status);
-    }
-}
-
-void XcpHw_CondResetApplicationState(uint32_t mask)
-{
-    uint8_t idx = 0;
-
-    for (idx = 0; idx < 31; ++idx) {
-        //printf("idx: %u mask: %u\n");
-        if ((mask & 0x01) == 0x01) {
-
-        }
-        mask >>= 1;
-    }
-}
-
-uint32_t XcpHw_WaitApplicationState(uint32_t mask)
-{
-    int status = 0;
-    int match = 0;
-#if 0
-    struct timespec timeout;
-
-    timeout.tv_sec = time(NULL) + 2;
-    timeout.tv_nsec = 0;
-#endif
-    status = pthread_mutex_lock(&XcpHw_ApplicationState.stateMutex);
-    if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_lock()", status);
-    }
-
-    while ((XcpHw_ApplicationState.stateBitmap == 0) && (!match)) {
-        status = pthread_cond_wait(&XcpHw_ApplicationState.stateCond, &XcpHw_ApplicationState.stateMutex);
-        if (status != 0) {
-            XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_cond_wait()", status);
-        }
-        //match = (XcpHw_ApplicationState.stateBitmap & mask) != 0x00;
-        match = (XcpHw_ApplicationState.stateBitmap & mask) == mask;
-    }
-    status = pthread_mutex_unlock(&XcpHw_ApplicationState.stateMutex);
-    if (status != 0) {
-        XcpHw_ErrorMsg("XcpHw_WaitApplicationState::pthread_mutex_unlock()", status);
-    }
-    return XcpHw_ApplicationState.stateBitmap;
 }
 
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end)
