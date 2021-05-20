@@ -498,7 +498,7 @@ extern "C"
 
 /*
  * XcponEth specific.
- *
+ */
 #define XCP_ETH_DEFAULT_PORT    (5555)
 
 /*
