@@ -50,7 +50,7 @@ XCP_STATIC const Xcp_GetIdType Xcp_GetId1 = XCP_SET_ID(XCP_GET_ID_1);
 XCP_STATIC Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 XCP_STATIC Xcp_StateType Xcp_State;
 XCP_STATIC Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)XCP_NULL;
-static uint8_t Xcp_CtoOutBuffer[XCP_MAX_CTO] = {0};
+static uint8_t Xcp_CtoOutBuffer[XCP_MAX_CTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
 
 /*
 **  Global Variables.
@@ -59,7 +59,7 @@ Xcp_PduType Xcp_CtoIn = {0, XCP_NULL};
 Xcp_PduType Xcp_CtoOut = {0, &Xcp_CtoOutBuffer};
 
 #if XCP_ENABLE_DAQ_COMMANDS  == XCP_ON
-static uint8_t Xcp_DtoOutBuffer[XCP_MAX_DTO] = {0};
+static uint8_t Xcp_DtoOutBuffer[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
 static Xcp_PduType Xcp_DtoOut = {0, &Xcp_DtoOutBuffer};
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 

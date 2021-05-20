@@ -413,7 +413,7 @@ uint32_t XcpHw_GetTimerCounter(void)
 void XcpHw_TransmitDtos(void)
 {
     uint16_t len;
-    uint8_t data[XCP_MAX_DTO];
+    uint8_t data[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET];
     uint8_t * dataOut = Xcp_GetDtoOutPtr();
 
     while (!XcpDaq_QueueEmpty()) {
