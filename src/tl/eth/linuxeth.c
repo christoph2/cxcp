@@ -321,7 +321,7 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
     // > 0: data ready to be read
     if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
         res = select(0, &fds, 0, 0, &timeout);
-        if (res == SOCKET_ERROR) {
+        if (res == -1) {
             XcpHw_ErrorMsg("XcpTl_FrameAvailable:select()", errno);
             exit(2);
         }
