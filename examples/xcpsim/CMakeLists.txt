@@ -23,6 +23,7 @@ set(SOURCES
     ../../src/xcp_daq.c 
     ../../src/xcp_util.c 
     ../../src/hw/terminal.c 
+    ../../src/hw/options.c 
     ../../flsemu/common.c     
     app_config.c 
     appl1.c 
