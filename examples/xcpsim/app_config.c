@@ -157,7 +157,7 @@ Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType * dst, Xc
  * Example GET_ID hook function.
  *
  */
-bool Xcp_HookFunction_GetId(uint8_t id_type, char ** result, uint32_t * result_length)
+bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t ** result, uint32_t * result_length)
 {
     FILE * fp;
     static char get_id_result[256];
@@ -166,7 +166,7 @@ bool Xcp_HookFunction_GetId(uint8_t id_type, char ** result, uint32_t * result_l
         fp = popen("uname -a ", "r");
         assert(fp != NULL);
         fgets(get_id_result, sizeof(get_id_result), fp);
-        *result = get_id_result;
+        *result = (uint8_t*)&get_id_result[0];
         *result_length = strlen(get_id_result) - 1; /* Get rid of trailing '\n'. */
         return XCP_TRUE;
     } else {

@@ -94,6 +94,10 @@ extern "C"
     #endif /* XCP_ENABLE_DOWNLOAD_NEXT */
 #endif /* XCP_ENABLE_MASTER_BLOCKMODE */
 
+#if XCP_MAX_CTO > 0xff
+    #error XCP_MAX_CTO must be <= 255
+#endif
+
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
 #if (!defined(XCP_ENABLE_CAN_FD)) || (XCP_ENABLE_CAN_FD == XCP_OFF)
@@ -930,6 +934,7 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
 Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntriesCount);
 XcpDaq_ListStateType * XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber);
 XcpDaq_ListConfigurationType const * XcpDaq_GetListConfiguration(XcpDaq_ListIntegerType daqListNumber);
+XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber);
 XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber);
 bool XcpDaq_ValidateConfiguration(void);
 bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber);
@@ -1079,7 +1084,7 @@ void XcpTl_PrintConnectionInformation(void);
 /*
 **  Customization Stuff.
 */
-bool Xcp_HookFunction_GetId(uint8_t id_type, char ** result, uint32_t * result_length);
+bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t ** result, uint32_t * result_length);
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result);
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key);
 
