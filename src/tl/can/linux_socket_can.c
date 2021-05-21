@@ -48,23 +48,19 @@
 
 
 #define err_abort(code,text) do { \
-        endwin(); \
-        fprintf (stderr, "%s at \"%s\":%d: %s\n", \
+        fprintf (stderr, "%s at \"%s\":%d: %s\n\r", \
                         text, __FILE__, __LINE__, strerror (code)); \
         abort (); \
         } while (0)
 
 #define errno_abort(text) do { \
-        endwin(); \
-        fprintf (stderr, "%s at \"%s\":%d: %s\n", \
+        fprintf (stderr, "%s at \"%s\":%d: %s\n\r", \
                         text, __FILE__, __LINE__, strerror (errno)); \
         abort (); \
         } while (0)
 
 
 typedef struct tagXcpTl_ConnectionType {
-    uint32_t connectionAddress;
-    uint32_t currentAddress;
     int can_socket;
     bool connected;
  } XcpTl_ConnectionType;
@@ -73,8 +69,6 @@ typedef struct tagXcpTl_ConnectionType {
 unsigned char buf[XCP_COMM_BUFLEN];
 
 static XcpTl_ConnectionType XcpTl_Connection;
-
-extern void endwin(void);
 
 int locate_interface(int socket, char const * name)
 {
@@ -94,7 +88,6 @@ void XcpTl_Init(void)
     struct sockaddr_can addr;
     struct can_filter rfilter[2];
 
-
     memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
 
     XcpTl_Connection.can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -103,7 +96,7 @@ void XcpTl_Init(void)
     }
     if (Xcp_Options.fd) {
     	if (setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_sockopt, sizeof(enable_sockopt)) == -1) {
-            errno_abort("Your kernel doesn't supports CAN-FD.\n");
+            errno_abort("Your kernel doesn't supports CAN-FD.\n\r");
         }
     }
 	if (setsockopt(XcpTl_Connection.can_socket, SOL_SOCKET, SO_TIMESTAMP, &enable_sockopt, sizeof(enable_sockopt)) < 0) {
@@ -132,6 +125,14 @@ void XcpTl_DeInit(void)
     close(XcpTl_Connection.can_socket);
 }
 
+void * XcpTl_Thread(void * param)
+{
+    XCP_FOREVER {
+        XcpTl_MainFunction();
+    }
+    return NULL;
+}
+
 
 void XcpTl_MainFunction(void)
 {
@@ -149,14 +150,14 @@ void XcpTl_RxHandler(void)
     nbytes = read(XcpTl_Connection.can_socket, &frame, CANFD_MTU);
 
     if (nbytes == CANFD_MTU) {
-        //printf("got CAN FD frame with length %d\n", frame.len);
+        //printf("got CAN FD frame with length %d\n\r", frame.len);
         /* FD frame.flags could be used here */
     } else if (nbytes == CAN_MTU) {
         //printf("got legacy CAN frame with length %d\n", frame.len);
     } else {
         errno_abort("can raw socket read");
     }
-    //printf("#%d bytes received from '%04x' DLC: %d .\n", nbytes, frame.can_id, frame.can_dlc);
+    //printf("#%d bytes received from '%04x' DLC: %d .\n\r", nbytes, frame.can_id, frame.can_dlc);
     if (frame.len > 0) {
         Xcp_CtoIn.len = frame.len;
         Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
@@ -173,8 +174,34 @@ void XcpTl_TxHandler(void)
 
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 {
+#if 0
+    struct timeval timeout;
+    fd_set fds;
+    int16_t res;
+
+    timeout.tv_sec = sec;
+    timeout.tv_usec = usec;
+
+    FD_ZERO(&fds);
+    FD_SET(XcpTl_Connection.can_socket, &fds);
+
+    // Return value:
+    // -1: error occurred
+    // 0: timed out
+    // > 0: data ready to be read
+    res = select(0, &fds, 0, 0, &timeout);
+    if (res != 0) {
+        printf("sel: %d\r\n", res);
+    }
+    if (res == -1) {
+        XcpHw_ErrorMsg("XcpTl_FrameAvailable:select()", errno);
+        exit(2);
+    }
+    return res;
+#endif
     return 1;
 }
+
 
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
@@ -200,7 +227,6 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
 
 void XcpTl_SaveConnection(void)
 {
-//    CopyMemory(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE));
     XcpTl_Connection.connected = XCP_TRUE;
 }
 
@@ -213,14 +239,14 @@ void XcpTl_ReleaseConnection(void)
 
 bool XcpTl_VerifyConnection(void)
 {
-//    return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
     return XCP_TRUE;
 }
 
 void XcpTl_PrintConnectionInformation(void)
 {
+    printf("\n\rXCPonCan\n\r");
 #if 0
-    printf("\nXCPonCan -- Listening on port %s / %s [%s]\n",
+    printf("\nXCPonCan -- Listening on port %s / %s [%s]\n\r",
         DEFAULT_PORT,
         Xcp_Options.tcp ? "TCP" : "UDP",
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"
