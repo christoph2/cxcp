@@ -31,12 +31,15 @@
 
 #else
 #include <unistd.h>
+#include <string.h>
 
 #if defined(ETHER)
 static const char OPTION_STR[] = "htu46p:";
 #elif defined(SOCKET_CAN)
 static const char OPTION_STR[] = "hi:f";
 #endif
+
+#define DEFAULT_CAN_IF ("vcan0")
 
 #endif
 
@@ -114,8 +117,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
     options->port = XCP_ETH_DEFAULT_PORT;
 #elif defined(SOCKET_CAN)
     int if_assigned = 0;
-
-    options.fd = XCP_FALSE;
+    options->fd = XCP_FALSE;
 #endif
 
     while ((opt = getopt(argc, argv, OPTION_STR)) != -1) {
@@ -173,7 +175,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 
 #if defined(SOCKET_CAN)
     if (!if_assigned) {
-        strcpy(options.interface, DEFAULT_CAN_IF);
+        strcpy(options->interface, DEFAULT_CAN_IF);
     }
 #endif
 
