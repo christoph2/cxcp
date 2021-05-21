@@ -23,6 +23,10 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <ctype.h>
+#include <pthread.h>
+
+#include "xcp.h"
 #include "terminal.h"
 #include "flsemu.h"
 
