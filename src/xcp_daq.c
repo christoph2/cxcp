@@ -87,7 +87,6 @@ typedef struct tagXcpDaq_QueueType {
 /*
 ** Local Function Prototypes.
 */
-XCP_STATIC XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber);
 void XcpDaq_PrintDAQDetails(void);
 XCP_STATIC void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition);
 XCP_STATIC void XcpDaq_InitMessageQueue(void);
@@ -600,7 +599,7 @@ void XcpDaq_StopAllLists(void)
 /*
 ** Local Functions.
 */
-XCP_STATIC XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber)
+XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber)
 {
     XcpDaq_ListConfigurationType const * dl = XCP_NULL;
     XcpDaq_ODTIntegerType idx = 0;
