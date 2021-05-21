@@ -56,11 +56,11 @@ static uint8_t Xcp_CtoOutBuffer[XCP_MAX_CTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET]
 **  Global Variables.
 */
 Xcp_PduType Xcp_CtoIn = {0, XCP_NULL};
-Xcp_PduType Xcp_CtoOut = {0, &Xcp_CtoOutBuffer};
+Xcp_PduType Xcp_CtoOut = {0, (uint8_t*)&Xcp_CtoOutBuffer[0]};
 
 #if XCP_ENABLE_DAQ_COMMANDS  == XCP_ON
 static uint8_t Xcp_DtoOutBuffer[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
-static Xcp_PduType Xcp_DtoOut = {0, &Xcp_DtoOutBuffer};
+static Xcp_PduType Xcp_DtoOut = {0, (uint8_t*)&Xcp_DtoOutBuffer[0]};
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 
