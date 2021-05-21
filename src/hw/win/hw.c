@@ -73,12 +73,11 @@ static void XcpHw_DeinitLocks();
 */
 void XcpTl_PrintConnectionInformation(void);
 
-static void DisplayHelp(void);
-static void SystemInformation(void);
-
 void FlsEmu_Info(void);
 void XcpDaq_Info(void);
 void XcpDaq_PrintDAQDetails();
+bool XcpDaq_QueueEmpty(void);
+bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data);
 
 void XcpHw_MainFunction(void);
 
@@ -196,7 +195,6 @@ void XcpHw_ErrorMsg(char * const fun, int errorCode)
 void XcpHw_TransmitDtos(void)
 {
     uint16_t len;
-    uint8_t data[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET];
     uint8_t * dataOut = Xcp_GetDtoOutPtr();
     while (!XcpDaq_QueueEmpty()) {
         XcpDaq_QueueDequeue(&len, dataOut);

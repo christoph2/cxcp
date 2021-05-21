@@ -72,7 +72,9 @@ extern Xcp_PduType Xcp_CtoIn;
 extern Xcp_PduType Xcp_CtoOut;
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
+#if 0
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
+#endif
 
 
 static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
@@ -91,7 +93,7 @@ static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
     return XCP_TRUE;
 }
 
-
+#if 0
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
@@ -107,6 +109,7 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 #endif
     return XCP_TRUE;
 }
+#endif
 
 
 void XcpTl_Init(void)
@@ -194,6 +197,7 @@ void XcpTl_DeInit(void)
 
 void * XcpTl_Thread(void * param)
 {
+    XCP_UNREFERENCED_PARAMETER(param);
     XCP_FOREVER {
         XcpTl_MainFunction();
     }

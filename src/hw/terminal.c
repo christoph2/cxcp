@@ -27,6 +27,7 @@
 #include <pthread.h>
 
 #include "xcp.h"
+#include "xcp_hw.h"
 #include "terminal.h"
 #include "flsemu.h"
 
@@ -65,6 +66,8 @@ void * XcpTerm_Thread(void * param)
     DWORD cNumRead, fdwMode, idx;
     INPUT_RECORD irInBuf[128];
     KEY_EVENT_RECORD key;
+
+    XCP_UNREFERENCED_PARAMETER(param);
 
     hStdin = GetStdHandle(STD_INPUT_HANDLE);
     if (hStdin == INVALID_HANDLE_VALUE) {

@@ -118,6 +118,7 @@ bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
     result->length = 4;
     result->data = (uint8_t*)&seed;
 
+    XCP_UNREFERENCED_PARAMETER(resource);
     ts = XcpHw_GetTimerCounter();
     seed[0] = XCP_HIWORD(XCP_HIBYTE(ts));
     seed[1] = XCP_HIWORD(XCP_LOBYTE(ts));
@@ -134,6 +135,7 @@ bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType * result)
 
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const * key)
 {
+    XCP_UNREFERENCED_PARAMETER(resource);
     return XcpUtl_MemCmp(&unlock_key, key->data, 4);
 }
 

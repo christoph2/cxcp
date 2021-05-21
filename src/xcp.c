@@ -1797,7 +1797,7 @@ XCP_STATIC void Xcp_GetDaqListInfo_Res(Xcp_PduType const * const pdu)
 {
     const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     XcpDaq_ListConfigurationType const * listConf = XCP_NULL;
-    XcpDaq_ListStateType * listState = XCP_NULL;
+/*    XcpDaq_ListStateType * listState = XCP_NULL;*/
     uint8_t properties = UINT8(0x00);
 
     DBG_TRACE2("GET_DAQ_LIST_INFO [daq: %u] \n\r", daqListNumber);
@@ -1809,7 +1809,7 @@ XCP_STATIC void Xcp_GetDaqListInfo_Res(Xcp_PduType const * const pdu)
     }
 
     listConf = XcpDaq_GetListConfiguration(daqListNumber);
-    listState = XcpDaq_GetListState(daqListNumber);
+/*    listState = XcpDaq_GetListState(daqListNumber); */
 
     properties |= DAQ_LIST_PROPERTY_PREDEFINED;     /* Hardcoded for now. */
     properties |= DAQ_LIST_PROPERTY_EVENT_FIXED;    /* "                " */
