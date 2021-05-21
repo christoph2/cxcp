@@ -501,9 +501,10 @@ extern "C"
 #define XCP_HW_LOCK_COUNT                   UINT8(3)
 
 /*
- * XcponEth specific.
+ * Interface defaults.
  */
-#define XCP_ETH_DEFAULT_PORT    (5555)
+#define XCP_ETH_DEFAULT_PORT        (5555)
+#define XCP_SOCKET_CAN_DEFAULT_IF   ("vcan0")
 
 /*
 ** Global Types.

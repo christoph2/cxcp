@@ -39,11 +39,9 @@ static const char OPTION_STR[] = "htu46p:";
 static const char OPTION_STR[] = "hi:f";
 #endif
 
-#define DEFAULT_CAN_IF ("vcan0")
 
 #endif
 
-#define XCP_ETH_DEFAULT_PORT    (5555)
 
 #if defined(_WIN32)
 void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
@@ -175,7 +173,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 
 #if defined(SOCKET_CAN)
     if (!if_assigned) {
-        strcpy(options->interface, DEFAULT_CAN_IF);
+        strcpy(options->interface, XCP_SOCKET_CAN_DEFAULT_IF);
     }
 #endif
 
