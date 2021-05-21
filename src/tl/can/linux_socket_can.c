@@ -85,10 +85,12 @@ int locate_interface(int socket, char const * name)
 void XcpTl_Init(void)
 {
     int enable_sockopt = 1;
+    int flags;
     struct sockaddr_can addr;
     struct can_filter rfilter[2];
 
     memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
+
 
     XcpTl_Connection.can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (XcpTl_Connection.can_socket== -1){
@@ -99,6 +101,16 @@ void XcpTl_Init(void)
             errno_abort("Your kernel doesn't supports CAN-FD.\n\r");
         }
     }
+#if 0
+    flags = fcntl(XcpTl_Connection.can_socket, F_GETFL, 0);
+    if (flags == -1) {
+        errno_abort("fcntl(F_GETFL)");
+    }
+    flags |=  O_NONBLOCK;
+    if (fcntl(XcpTl_Connection.can_socket, F_SETFL, flags) == -1) {
+        errno_abort("fcntl(F_SETFL)");
+    }
+#endif
 	if (setsockopt(XcpTl_Connection.can_socket, SOL_SOCKET, SO_TIMESTAMP, &enable_sockopt, sizeof(enable_sockopt)) < 0) {
         // Enable precision timestamps.
 		errno_abort("setsockopt(SO_TIMESTAMP)");
