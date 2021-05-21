@@ -161,6 +161,7 @@ void XcpTl_RxHandler(void)
     if (frame.len > 0) {
         Xcp_CtoIn.len = frame.len;
         Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+        XcpUtl_MemCopy(Xcp_CtoIn.data, (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, recv_len - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
         Xcp_DispatchCommand(&Xcp_CtoIn);
     }
 }

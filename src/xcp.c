@@ -51,11 +51,12 @@ XCP_STATIC Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 XCP_STATIC Xcp_StateType Xcp_State;
 XCP_STATIC Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)XCP_NULL;
 static uint8_t Xcp_CtoOutBuffer[XCP_MAX_CTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
+static uint8_t Xcp_CtoInBuffer[XCP_MAX_CTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
 
 /*
 **  Global Variables.
 */
-Xcp_PduType Xcp_CtoIn = {0, XCP_NULL};
+Xcp_PduType Xcp_CtoIn = {0, (uint8_t*)&Xcp_CtoInBuffer[0]};
 Xcp_PduType Xcp_CtoOut = {0, (uint8_t*)&Xcp_CtoOutBuffer[0]};
 
 #if XCP_ENABLE_DAQ_COMMANDS  == XCP_ON

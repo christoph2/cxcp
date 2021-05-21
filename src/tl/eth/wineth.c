@@ -59,7 +59,7 @@ typedef struct tagXcpTl_ConnectionType {
  } XcpTl_ConnectionType;
 
 
-unsigned char buf[XCP_COMM_BUFLEN];
+unsigned char XcpTl_RxBuffer[XCP_COMM_BUFLEN];
 int addrSize = sizeof(SOCKADDR_STORAGE);
 
 
@@ -228,7 +228,7 @@ void XcpTl_RxHandler(void)
     SOCKADDR_STORAGE From;
     /* char hostname[NI_MAXHOST]; */
 
-    ZeroMemory(buf, XCP_COMM_BUFLEN);
+    ZeroMemory(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
 
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (!XcpTl_Connection.connected) {
@@ -249,7 +249,7 @@ void XcpTl_RxHandler(void)
 //        DBG_PRINT2("\nAccepted connection from %s\n\r", hostname);
 
         }
-        recv_len = recv(XcpTl_Connection.connectedSocket, (char*)buf, XCP_COMM_BUFLEN, 0);
+        recv_len = recv(XcpTl_Connection.connectedSocket, (char*)XcpTl_RxBuffer, XCP_COMM_BUFLEN, 0);
         if (recv_len == SOCKET_ERROR) {
             XcpHw_ErrorMsg("XcpTl_RxHandler::recv()", WSAGetLastError());
             closesocket(XcpTl_Connection.connectedSocket);
@@ -263,7 +263,7 @@ void XcpTl_RxHandler(void)
             return;
         }
     } else {
-        recv_len = recvfrom(XcpTl_Connection.boundSocket, (char*)buf, XCP_COMM_BUFLEN, 0,
+        recv_len = recvfrom(XcpTl_Connection.boundSocket, (char*)XcpTl_RxBuffer, XCP_COMM_BUFLEN, 0,
             (LPSOCKADDR)&XcpTl_Connection.currentAddress, &addrSize
         );
         if (recv_len == SOCKET_ERROR)
@@ -273,18 +273,18 @@ void XcpTl_RxHandler(void)
             exit(1);
         }
         //printf("Received %d bytes from client: ", recv_len);
-        //Xcp_Hexdump(buf, recv_len);
+        //Xcp_Hexdump(XcpTl_RxBuffer, recv_len);
     }
     if (recv_len > 0) {
 #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-        dlc = (uint16_t)buf[0];
+        dlc = (uint16_t)XcpTl_RxBuffer[0];
 #elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-        dlc = MAKEWORD(buf[0], buf[1]);
-        //dlc = (uint16_t)*(buf + 0);
+        dlc = MAKEWORD(XcpTl_RxBuffer[0], XcpTl_RxBuffer[1]);
+        //dlc = (uint16_t)*(XcpTl_RxBuffer + 0);
 #endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
             Xcp_CtoIn.len = dlc;
-            Xcp_CtoIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+            XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, recv_len - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
             Xcp_DispatchCommand(&Xcp_CtoIn);
         }
         if (recv_len < 5) {
