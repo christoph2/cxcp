@@ -107,12 +107,9 @@ static void FlsEmu_MapAddress(void * mappingAddress, int offset, uint32_t size, 
 
 static void FlsEmu_UnmapAddress(void * addr, uint32_t size)
 {
-    // FIXME: munmap segfaults -- why?
-#if 0
     if (munmap(addr, size) == -1) {
         handle_error("munmap");
     }
-#endif
 }
 
 FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const * fileName, uint32_t size, FlsEmu_PersistentArrayType * persistentArray)
