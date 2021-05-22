@@ -25,6 +25,7 @@ set(SOURCES
     ../../src/hw/terminal.c
     ../../src/hw/options.c
     ../../flsemu/common.c
+    ../../src/tl/eth/common.c
     app_config.c
     appl1.c
     main.c

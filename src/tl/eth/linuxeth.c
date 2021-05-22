@@ -25,55 +25,8 @@
 
 #include "xcp.h"
 #include "xcp_hw.h"
+#include "xcp_eth.h"
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <pthread.h>
-
-#define err_abort(code,text) do { \
-        fprintf (stderr, "%s at \"%s\":%d: %s\n", \
-                        text, __FILE__, __LINE__, strerror (code)); \
-        abort (); \
-        } while (0)
-
-#define errno_abort(text) do { \
-        fprintf (stderr, "%s at \"%s\":%d: %s\n", \
-                        text, __FILE__, __LINE__, strerror (errno)); \
-        abort (); \
-        } while (0)
-
-#define BUFFER_SIZE 1024
-
-#define XCP_COMM_PORT    (5555)
-
-#define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
-#define DEFAULT_SOCKTYPE   SOCK_STREAM
-#define DEFAULT_PORT       "5555"
-
-
-typedef struct tagXcpTl_ConnectionType {
-    struct sockaddr_storage connectionAddress;
-    struct sockaddr_storage currentAddress;
-    int boundSocket;
-    int connectedSocket;
-    bool connected;
-    int socketType;
- } XcpTl_ConnectionType;
-
-
-extern pthread_t XcpHw_ThreadID[4];
 
 unsigned char XcpTl_RxBuffer[XCP_COMM_BUFLEN];
 socklen_t addrSize = sizeof(struct sockaddr_storage);
@@ -83,8 +36,6 @@ static XcpTl_ConnectionType XcpTl_Connection;
 static bool Xcp_EnableSocketOption(int sock, int option);
 static bool Xcp_DisableSocketOption(int sock, int option);
 static void * XcpTl_WorkerThread(void * param);
-static void XcpTl_Feed(uint8_t * buf);
-
 
 static  bool Xcp_EnableSocketOption(int sock, int option)
 {
@@ -165,49 +116,11 @@ void XcpTl_Init(void)
         XcpHw_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", errno);
     }
 
-    ret = pthread_create(&XcpHw_ThreadID[0], NULL, &XcpTl_WorkerThread, NULL);
-    if (ret != 0) {
-        err_abort(ret, "Create worker thread");
-    }
-
-}
-
-static void * XcpTl_WorkerThread(void * param)
-{
-    int status = 0;
-
-    while(1) {
-        XcpTl_RxHandler();
-    }
-    return NULL;
 }
 
 void XcpTl_DeInit(void)
 {
     close(XcpTl_Connection.boundSocket);
-}
-
-void * XcpTl_Thread(void * param)
-{
-    XCP_FOREVER {
-        XcpTl_MainFunction();
-    }
-    return NULL;
-}
-
-void XcpTl_MainFunction(void)
-{
-    if (XcpTl_FrameAvailable(0, 1000) > 0) {
-        XcpTl_RxHandler();
-    }
-}
-
-void * get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 void XcpTl_RxHandler(void)
@@ -282,55 +195,6 @@ void XcpTl_RxHandler(void)
     }
 }
 
-static void XcpTl_Feed(uint8_t * buf)
-{
-    uint16_t dlc = 0;
-
-#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-    dlc = (uint16_t)buf[0];
-#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-    dlc = XCP_MAKEWORD(buf[0], buf[1]);
-#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
-    if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
-        Xcp_CtoIn.len = dlc;
-        Xcp_CtoIn.data = buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-        Xcp_DispatchCommand(&Xcp_CtoIn);
-    }
-}
-
-void XcpTl_TxHandler(void)
-{
-
-}
-
-int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
-{
-    struct timeval timeout;
-    fd_set fds;
-    int16_t res;
-
-    timeout.tv_sec = sec;
-    timeout.tv_usec = usec;
-
-    FD_ZERO(&fds);
-    FD_SET(XcpTl_Connection.boundSocket, &fds);
-
-    // Return value:
-    // -1: error occurred
-    // 0: timed out
-    // > 0: data ready to be read
-    if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
-        res = select(0, &fds, 0, 0, &timeout);
-        if (res == -1) {
-            XcpHw_ErrorMsg("XcpTl_FrameAvailable:select()", errno);
-            exit(2);
-        }
-        return res;
-    } else {
-        return 1;
-    }
-}
-
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
 
@@ -348,32 +212,5 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
         }
     }
     XCP_TL_LEAVE_CRITICAL();
-}
-
-void XcpTl_SaveConnection(void)
-{
-    XcpUtl_MemCopy(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_storage));
-    XcpTl_Connection.connected = true;
-}
-
-
-void XcpTl_ReleaseConnection(void)
-{
-    XcpTl_Connection.connected = false;
-}
-
-
-bool XcpTl_VerifyConnection(void)
-{
-    return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_storage)) == 0;
-}
-
-void XcpTl_PrintConnectionInformation(void)
-{
-    printf("XCPonEth -- Listening on port %s / %s [%s]\n\r",
-        DEFAULT_PORT,
-        Xcp_Options.tcp ? "TCP" : "UDP",
-        Xcp_Options.ipv6 ? "IPv6" : "IPv4"
-    );
 }
 

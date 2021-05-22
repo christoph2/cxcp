@@ -23,10 +23,6 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-
-#include <WinSock2.h>
-#include <Ws2tcpip.h>
-#include <Mstcpip.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -34,36 +30,24 @@
 
 #include "xcp.h"
 #include "xcp_hw.h"
+#include "xcp_eth.h"
 
 #if !defined(__GNUC__)
 #pragma comment(lib,"ws2_32.lib") // MSVC only.
 #endif
 
 
-#define XCP_COMM_PORT    (5555)
-
 #define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
 #define DEFAULT_SOCKTYPE   SOCK_STREAM //
-#define DEFAULT_PORT       "5555"
+
+#define ADDR_LEN    sizeof(SOCKADDR_STORAGE)
 
 void XcpHw_ErrorMsg(char * const function, int errorCode);
 
 
-typedef struct tagXcpTl_ConnectionType {
-    SOCKADDR_STORAGE connectionAddress;
-    SOCKADDR_STORAGE currentAddress;
-    SOCKET boundSocket;
-    SOCKET connectedSocket;
-    bool connected;
-    int socketType;
- } XcpTl_ConnectionType;
+uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
 
-
-unsigned char XcpTl_RxBuffer[XCP_COMM_BUFLEN];
-int addrSize = sizeof(SOCKADDR_STORAGE);
-
-
-static XcpTl_ConnectionType XcpTl_Connection;
+extern XcpTl_ConnectionType XcpTl_Connection;
 
 void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
 
@@ -117,7 +101,7 @@ void XcpTl_Init(void)
     WSADATA wsa;
     ADDRINFO Hints, *AddrInfo, *AI;
     char *Address = NULL;
-    char *Port = DEFAULT_PORT;
+    char * Port = "5555";
     SOCKET serverSockets[FD_SETSIZE];
     int boundSocketNum = -1;
     int ret;
@@ -176,8 +160,8 @@ void XcpTl_Init(void)
     freeaddrinfo(AddrInfo);
     if (boundSocketNum == -1) {
         fprintf(stderr, "Fatal error: unable to serve on any address.\nPerhaps" \
-            " a server is already running on port %s / %s [%s]?\n",
-            DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+            " a server is already running on port %u / %s [%s]?\n",
+            XCP_ETH_DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4"
         );
         WSACleanup();
         exit(2);
@@ -185,6 +169,10 @@ void XcpTl_Init(void)
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         XcpHw_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", WSAGetLastError());
     }
+#if 0
+    mode = 1;
+    ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &ul);
+#endif
 }
 
 
@@ -194,141 +182,110 @@ void XcpTl_DeInit(void)
     WSACleanup();
 }
 
-
-void * XcpTl_Thread(void * param)
+int XcpTl_Read(uint8_t * buffer, size_t offset)
 {
-    XCP_UNREFERENCED_PARAMETER(param);
-    XCP_FOREVER {
-        XcpTl_MainFunction();
-    }
-    return NULL;
-}
+    int nbytes;
 
+    if (XcpTl_Connection.socketType == SOCK_STREAM) {
+        if (!XcpTl_Connection.connected) {
+            XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, NULL);
+            if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
+                XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", WSAGetLastError());
+                exit(1);
+            }
 
-void XcpTl_MainFunction(void)
-{
-    if (XcpTl_FrameAvailable(0, 1000) > 0) {
-        XcpTl_RxHandler();
-    }
-}
+        }
+        nbytes = recv(XcpTl_Connection.connectedSocket, (char*)buffer + offset, XCP_COMM_BUFLEN, 0);
+        if (nbytes == SOCKET_ERROR) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler::recv()", WSAGetLastError());
+            closesocket(XcpTl_Connection.connectedSocket);
+            exit(1);
+        }
+        printf("len: %u\n\r", nbytes);
+        XcpUtl_Hexdump(XcpTl_RxBuffer + offset, nbytes);
 
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+        if (nbytes == 0) {
+            DBG_PRINT1("Client closed connection\n\r");
+            closesocket(XcpTl_Connection.connectedSocket);
+            Xcp_Disconnect();
+        }
+    } else {
+        nbytes = recvfrom(XcpTl_Connection.boundSocket, (char*)buffer + offset, XCP_COMM_BUFLEN, 0,
+            (LPSOCKADDR)&XcpTl_Connection.currentAddress, NULL
+        );
+        if (nbytes == SOCKET_ERROR)
+        {
+            XcpHw_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
+            exit(1);
+        }
     }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    return nbytes;
 }
 
 void XcpTl_RxHandler(void)
 {
-    int recv_len;
-    uint16_t dlc;
-    int FromLen;
-    SOCKADDR_STORAGE From;
-    /* char hostname[NI_MAXHOST]; */
+    int nbytes;
+    uint16_t dlc = 0U;
+    uint16_t counter = 0U;
+    static uint16_t offset = 0U;
+    static uint16_t bytes_to_read = 0U;
+    static uint8_t state = 0;
 
     ZeroMemory(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
 
-    if (XcpTl_Connection.socketType == SOCK_STREAM) {
-        if (!XcpTl_Connection.connected) {
-            FromLen = sizeof(From);
-            XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, &FromLen);
-            if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
-                XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", WSAGetLastError());
-                //WSACleanup();
-                exit(1);
-                return;
-            }
-        //inet_ntop(XcpTl_Connection.currentAddress.ss_family, get_in_addr((struct sockaddr *)&XcpTl_Connection.currentAddress), hostname, sizeof(hostname));
-//      printf("server: got connection from %s\n", s);
-//            if (getnameinfo(&From, FromLen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) != 0) {
-//                strcpy(hostname, "<unknown>");
-//                //Win_ErrorMsg("XcpTl_RxHandler::getnameinfo()", WSAGetLastError());
-//            }
-//        DBG_PRINT2("\nAccepted connection from %s\n\r", hostname);
+    XCP_FOREVER {
+        nbytes = XcpTl_Read(XcpTl_RxBuffer, 0);
+        if (nbytes == 0) {
+            return;
+        } else if (nbytes > 0) {
+            printf("nbytes: %u\n", nbytes);
+            offset += nbytes;
+            if (nbytes >= 2) {
+                dlc = MAKEWORD(XcpTl_RxBuffer[0], XcpTl_RxBuffer[1]);
+                Xcp_CtoIn.len = dlc;
+                printf("\tdlc: %u\n\r", dlc);
 
-        }
-        recv_len = recv(XcpTl_Connection.connectedSocket, (char*)XcpTl_RxBuffer, XCP_COMM_BUFLEN, 0);
-        if (recv_len == SOCKET_ERROR) {
-            XcpHw_ErrorMsg("XcpTl_RxHandler::recv()", WSAGetLastError());
-            closesocket(XcpTl_Connection.connectedSocket);
-            exit(1);
-            return;
-        }
-        if (recv_len == 0) {
-            DBG_PRINT1("Client closed connection\n\r");
-            closesocket(XcpTl_Connection.connectedSocket);
-            Xcp_Disconnect();
-            return;
-        }
-    } else {
-        recv_len = recvfrom(XcpTl_Connection.boundSocket, (char*)XcpTl_RxBuffer, XCP_COMM_BUFLEN, 0,
-            (LPSOCKADDR)&XcpTl_Connection.currentAddress, &addrSize
-        );
-        if (recv_len == SOCKET_ERROR)
-        {
-            XcpHw_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
-            fflush(stdout);
-            exit(1);
-        }
-        //printf("Received %d bytes from client: ", recv_len);
-        //Xcp_Hexdump(XcpTl_RxBuffer, recv_len);
-    }
-    if (recv_len > 0) {
-#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
-        dlc = (uint16_t)XcpTl_RxBuffer[0];
-#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-        dlc = MAKEWORD(XcpTl_RxBuffer[0], XcpTl_RxBuffer[1]);
-        //dlc = (uint16_t)*(XcpTl_RxBuffer + 0);
-#endif // XCP_TRANSPORT_LAYER_LENGTH_SIZE
-        if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
-            Xcp_CtoIn.len = dlc;
-            XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, recv_len - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
-            Xcp_DispatchCommand(&Xcp_CtoIn);
-        }
-        if (recv_len < 5) {
-            DBG_PRINT2("Error: frame to short: %d\n\r", recv_len);
+                if ((dlc + 4) <= nbytes) {
+                    printf("COMPLETE frame!!\n");
+                    XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, nbytes - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+                    Xcp_DispatchCommand(&Xcp_CtoIn);
+                }
+            }
         } else {
 
         }
-        fflush(stdout);
-    }
-}
-
-
-void XcpTl_TxHandler(void)
-{
-
-}
-
-
-int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
-{
-    struct timeval timeout;
-    fd_set fds;
-    int16_t res;
-
-    timeout.tv_sec = sec;
-    timeout.tv_usec = usec;
-
-    FD_ZERO(&fds);
-    FD_SET(XcpTl_Connection.boundSocket, &fds);
-
-    // Return value:
-    // -1: error occurred
-    // 0: timed out
-    // > 0: data ready to be read
-    if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
-        res = select(0, &fds, 0, 0, &timeout);
-        if (res == SOCKET_ERROR) {
-            XcpHw_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
-            exit(2);
+        if (nbytes < XCP_COMM_BUFLEN) {
+            break;
         }
-        return res;
-    } else {
-        return 1;
     }
+#if 0
+    if (nbytes > 0) {
+        printf("len: %u\n\r", nbytes);
+        XcpUtl_Hexdump(XcpTl_RxBuffer + offset, nbytes);
+        offset += nbytes;
+        if (state == 1) {
+            if (offset == 2) {
+
+                state = 2;
+                bytes_to_read = dlc + 2;    /* Consider counter. */
+            } else {
+                bytes_to_read = 1;          /* we got only a single byte. */
+            }
+            printf("\t\tcontinue with [%d] bytes\n\r",bytes_to_read);
+        } else if (state == 2) {
+            bytes_to_read -= nbytes;
+            if (bytes_to_read == 0) {
+                if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
+
+                    XcpUtl_Hexdump(XcpTl_RxBuffer, nbytes);
+
+                }
+            }
+        }
+    } else {
+
+    }
+#endif
 }
 
 
@@ -337,7 +294,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     XCP_TL_ENTER_CRITICAL();
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
-            (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, addrSize) == SOCKET_ERROR) {
+            (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, ADDR_LEN) == SOCKET_ERROR) {
             XcpHw_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
@@ -347,33 +304,5 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
         }
     }
     XCP_TL_LEAVE_CRITICAL();
-}
-
-
-void XcpTl_SaveConnection(void)
-{
-    CopyMemory(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE));
-    XcpTl_Connection.connected = XCP_TRUE;
-}
-
-
-void XcpTl_ReleaseConnection(void)
-{
-    XcpTl_Connection.connected = XCP_FALSE;
-}
-
-
-bool XcpTl_VerifyConnection(void)
-{
-    return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
-}
-
-void XcpTl_PrintConnectionInformation(void)
-{
-    printf("\nXCPonEth -- Listening on port %s / %s [%s]\n",
-        DEFAULT_PORT,
-        Xcp_Options.tcp ? "TCP" : "UDP",
-        Xcp_Options.ipv6 ? "IPv6" : "IPv4"
-    );
 }
 
