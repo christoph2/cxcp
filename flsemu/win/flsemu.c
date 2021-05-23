@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -40,7 +40,6 @@
 **  Local Defines.
 */
 
-#define handle_error(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 /*
 **  Local Types.
@@ -109,17 +108,17 @@ static bool FlsEmu_Flush(uint8_t segmentIdx)
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
 
     if (VirtualQuery(segment->persistentArray->mappingAddress, &info, sizeof(MEMORY_BASIC_INFORMATION)) == 0) {
-        handle_error("VirtualQuery()");
+        XcpHw_ErrorMsg("FlsEmu_Flush::VirtualQuery()", GetLastError());
         return FALSE;
     }
 
     if (!FlushViewOfFile(segment->persistentArray->mappingAddress, info.RegionSize)) {
-        handle_error("FlushViewOfFile()");
+        XcpHw_ErrorMsg("FlsEmu_Flush::FlushViewOfFile()", GetLastError());
         return FALSE;
     }
 
     if (!FlushFileBuffers(segment->persistentArray->fileHandle)) {
-        handle_error("FlushFileBuffers()");
+        XcpHw_ErrorMsg("FlsEmu_Flush::FlushFileBuffers()", GetLastError());
         return FALSE;
     }
 
@@ -147,26 +146,6 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
     }
 }
 
-#if 0
-static void FlsEmu_SelectBlock(uint8_t segmentIdx, uint8_t block)
-{
-    uint32_t offset, blockSize;
-    FlsEmu_SegmentType * segment;
-
-    FLSEMU_ASSERT_INITIALIZED();
-    if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
-        return;
-    }
-    segment = FlsEmu_GetConfig()->segments[segmentIdx];
-    blockSize = (segment->memSize / segment->blockCount);
-    offset = (blockSize * block);
-
-     if (FlsEmu_MapAddress(segment, offset, blockSize)) {
-
-    }
-}
-#endif
-
 
 /*
 **  Local Functions.
@@ -180,14 +159,14 @@ static bool FlsEmu_MapAddress(FlsEmu_SegmentType * config, uint32_t offset, uint
 
     error = UnmapViewOfFile(config->persistentArray->mappingAddress);
     if (error == 0UL) {
-        handle_error("UnmapViewOfFile()");
+        XcpHw_ErrorMsg("FlsEmu_MapAddress::UnmapViewOfFile()", GetLastError());
         CloseHandle(config->persistentArray->mappingHandle);
         return FALSE;
     }
     /* printf("Remap: offset: %d length: %d\n", offset, length); */
     config->persistentArray->mappingAddress = (void *)MapViewOfFile(config->persistentArray->mappingHandle, FILE_MAP_ALL_ACCESS, 0, offset, length);
     if (config->persistentArray->mappingAddress == NULL) {
-        handle_error("MapViewOfFile()");
+        XcpHw_ErrorMsg("FlsEmu_MapAddress::MapViewOfFile()", GetLastError());
         CloseHandle(config->persistentArray->mappingHandle);
         return FALSE;
     }
@@ -256,15 +235,6 @@ uint32_t FlsEmu_GetAllocationGranularity(void)
     return info.dwAllocationGranularity;
 }
 
-#if 0
-static bool FileExits(char * const name)
-{
-    DWORD attribs = GetFileAttributes(name);
-
-    return (attribs != INVALID_FILE_ATTRIBUTES) && !(attribs & FILE_ATTRIBUTE_DIRECTORY);
-}
-#endif // 0
-
 /** @brief Open or create a file.
  *
  * @param fileName
@@ -276,12 +246,17 @@ static MEM_HANDLE OpenCreateFile(char const * fileName, bool create)
 {
     MEM_HANDLE handle;
     DWORD dispoition = (create == TRUE) ? CREATE_NEW : OPEN_EXISTING;
+    DWORD error;
 
     handle = CreateFile(fileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
         (LPSECURITY_ATTRIBUTES)NULL, dispoition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, (MEM_HANDLE)NULL
     );
+
     if (handle == INVALID_HANDLE_VALUE) {
-        handle_error("CreateFile()");
+        error = GetLastError();
+        if (error != 0) {
+            XcpHw_ErrorMsg("OpenCreateFile::CreateFile", error);
+        }
     }
 
     return handle;
@@ -297,7 +272,7 @@ static bool CreateFileView(MEM_HANDLE handle, DWORD length, FlsEmu_HwFileViewTyp
     /* TODO: Refactor to function; s. FlsEmu_MapView() */
     fileView->mappingAddress = (void *)MapViewOfFile(fileView->mappingHandle, FILE_MAP_ALL_ACCESS, 0, 0, length);
     if (fileView->mappingAddress == NULL) {
-        handle_error("MapViewOfFile()");
+        XcpHw_ErrorMsg("CreateFileView::MapViewOfFile()", GetLastError());
         CloseHandle(fileView->mappingHandle);
         return FALSE;
     }

@@ -32,6 +32,8 @@
     #define ZeroMemory(b,l )    memset((b), 0, (l))
 #endif
 
+void XcpHw_ErrorMsg(char * const function, int errorCode);
+
 static void XcpTl_Accept(void);
 static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter);
 static int XcpTl_ReadData(uint8_t * data, uint8_t len);
@@ -104,6 +106,7 @@ static int XcpTl_ReadData(uint8_t * data, uint8_t len)
         }
         offset += nbytes;
     }
+    return 1;
 }
 
 void XcpTl_RxHandler(void)

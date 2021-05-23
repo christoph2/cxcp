@@ -130,7 +130,6 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx)
         for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
             offset = segment->persistentArray->mappingAddress + (pageIdx * pageSize);
             XcpUtl_MemSet(offset, FLSEMU_ERASED_VALUE, segment->pageSize);
-            printf("Erase [%d] offset: %p\n", pageIdx, offset);
             if (fillerSize > 0) {
                 XcpUtl_MemSet(offset + segment->pageSize, FLSEMU_FILLER_VALUE, fillerSize);
             }
