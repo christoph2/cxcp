@@ -25,7 +25,6 @@ set(SOURCES
     ../../src/hw/terminal.c
     ../../src/hw/options.c
     ../../flsemu/common.c
-    ../../src/tl/eth/common.c
     app_config.c
     appl1.c
     main.c
@@ -79,21 +78,17 @@ endif()
 
 if (WIN32)
     add_definitions(-DETHER)
-    add_executable(xcp_sim ${SOURCES} "../../src/tl/eth/wineth.c")
+    add_executable(xcp_sim ${SOURCES} "../../src/tl/eth/wineth.c" "../../src/tl/eth/common.c")
     target_include_directories(xcp_sim PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim ${ADD_LIBS})
     target_compile_features(xcp_sim PRIVATE c_std_11)
 elseif(UNIX)
-    #remove_definitions(-DSOCKET_CAN)
-    #add_definitions(-DETHER)
-    add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/linuxeth.c")
+    add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/linuxeth.c" "../../src/tl/eth/common.c")
     target_compile_definitions(xcp_sim_eth PUBLIC ETHER)
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
 
-    #remove_definitions(-DETHER)
-    #add_definitions(-DSOCKET_CAN)
     add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c")
     target_compile_definitions(xcp_sim_can PUBLIC SOCKET_CAN)
     target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})

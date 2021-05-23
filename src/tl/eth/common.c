@@ -28,7 +28,8 @@
 #include "xcp_eth.h"
 
 #if defined(__unix__)
-    #define SOCKET_ERROR    (-1)
+    #define SOCKET_ERROR        (-1)
+    #define ZeroMemory(b,l )    memset((b), 0, (l))
 #endif
 
 static void XcpTl_Accept(void);
@@ -116,14 +117,22 @@ void XcpTl_RxHandler(void)
     XCP_FOREVER {
         res = XcpTl_ReadHeader(&dlc, &counter);
         if (res == -1) {
+#if defined(_WIN32)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", WSAGetLastError());
+#elif defined(__unix__)
+            XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", errno);
+#endif
             exit(2);
         } else if (res == 0) {
             return;
         }
         res = XcpTl_ReadData(&XcpTl_RxBuffer[0], dlc);
         if (res == -1) {
+#if defined(_WIN32)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
+#elif defined(__unix__)
+            XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", errno);
+#endif
             exit(2);
         } else if (res == 0) {
             return;
@@ -145,13 +154,11 @@ static void XcpTl_Accept(void)
             FromLen = sizeof(From);
             XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
             if (XcpTl_Connection.connectedSocket == -1) {
-                XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", errno);
-                //WSACleanup();
+                XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
                 exit(1);
-                return;
             }
+        } else {
         }
-
     }
 }
 

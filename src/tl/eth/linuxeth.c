@@ -30,7 +30,7 @@
 
 socklen_t addrSize = sizeof(struct sockaddr_storage);
 
-static XcpTl_ConnectionType XcpTl_Connection;
+extern XcpTl_ConnectionType XcpTl_Connection;
 
 static bool Xcp_EnableSocketOption(int sock, int option);
 static bool Xcp_DisableSocketOption(int sock, int option);
@@ -113,7 +113,6 @@ void XcpTl_Init(void)
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {
         XcpHw_ErrorMsg("XcpTl_Init:setsockopt(SO_REUSEADDR)", errno);
     }
-
 }
 
 void XcpTl_DeInit(void)
