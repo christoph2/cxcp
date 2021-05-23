@@ -506,6 +506,8 @@ extern "C"
 #define XCP_ETH_DEFAULT_PORT        (5555)
 #define XCP_SOCKET_CAN_DEFAULT_IF   ("vcan0")
 
+#define XCP_ETH_HEADER_SIZE         (4)
+
 /*
 ** Global Types.
 */

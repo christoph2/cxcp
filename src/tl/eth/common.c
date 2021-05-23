@@ -31,8 +31,13 @@
     #define SOCKET_ERROR    (-1)
 #endif
 
+static void XcpTl_Accept(void);
+static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter);
+static int XcpTl_ReadData(uint8_t * data, uint8_t len);
 
 XcpTl_ConnectionType XcpTl_Connection;
+
+static uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
 
 
 void * XcpTl_Thread(void * param)
@@ -46,9 +51,8 @@ void * XcpTl_Thread(void * param)
 
 void XcpTl_MainFunction(void)
 {
-    if (XcpTl_FrameAvailable(0, 1000) > 0) {
-        XcpTl_RxHandler();
-    }
+    XcpTl_Accept();
+    XcpTl_RxHandler();
 }
 
 void *get_in_addr(struct sockaddr *sa)
@@ -59,31 +63,95 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
+static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter)
 {
-    struct timeval timeout;
-    fd_set fds;
-    int16_t res;
+    uint8_t header_buffer[8];
+    uint8_t bytes_remaining = XCP_ETH_HEADER_SIZE;
+    uint8_t offset = 0;
+    uint8_t nbytes = 0;
 
-    timeout.tv_sec = sec;
-    timeout.tv_usec = usec;
-
-    FD_ZERO(&fds);
-    FD_SET(XcpTl_Connection.boundSocket, &fds);
-
-    // Return value:
-    // -1: error occurred
-    // 0: timed out
-    // > 0: data ready to be read
-    if (((XcpTl_Connection.socketType == SOCK_STREAM) && (!XcpTl_Connection.connected)) || (XcpTl_Connection.socketType == SOCK_DGRAM)) {
-        res = select(0, &fds, 0, 0, &timeout);
-        if (res == SOCKET_ERROR) {
-            XcpHw_ErrorMsg("XcpTl_FrameAvailable:select()", WSAGetLastError());
-            exit(2);
+    XCP_FOREVER {
+        nbytes = recv(XcpTl_Connection.connectedSocket, (char*)header_buffer + offset, bytes_remaining, 0);
+        if (nbytes < 1) {
+            return nbytes;
         }
-        return res;
-    } else {
-        return 1;
+        bytes_remaining -= nbytes;
+        if (bytes_remaining == 0) {
+            break;
+        }
+        offset += nbytes;
+    }
+    *len = XCP_MAKEWORD(header_buffer[offset + 1], header_buffer[offset + 0]);
+    *counter = XCP_MAKEWORD(header_buffer[offset + 3], header_buffer[offset + 2]);
+    return 1;
+}
+
+static int XcpTl_ReadData(uint8_t * data, uint8_t len)
+{
+    uint8_t bytes_remaining = len;
+    uint8_t offset = 0;
+    uint8_t nbytes = 0;
+
+    XCP_FOREVER {
+        nbytes = recv(XcpTl_Connection.connectedSocket, (char*)data + offset, bytes_remaining, 0);
+        if (nbytes < 1) {
+            return nbytes;
+        }
+        bytes_remaining -= nbytes;
+        if (bytes_remaining == 0) {
+            break;
+        }
+        offset += nbytes;
+    }
+}
+
+void XcpTl_RxHandler(void)
+{
+    int res;
+    uint16_t dlc = 0U;
+    uint16_t counter = 0U;
+
+    ZeroMemory(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
+
+    XCP_FOREVER {
+        res = XcpTl_ReadHeader(&dlc, &counter);
+        if (res == -1) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", WSAGetLastError());
+            exit(2);
+        } else if (res == 0) {
+            return;
+        }
+        res = XcpTl_ReadData(&XcpTl_RxBuffer[0], dlc);
+        if (res == -1) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
+            exit(2);
+        } else if (res == 0) {
+            return;
+        }
+        XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
+        Xcp_DispatchCommand(&Xcp_CtoIn);
+    }
+}
+
+static void XcpTl_Accept(void)
+{
+    socklen_t FromLen = 0;
+    struct sockaddr_storage From;
+
+    XcpUtl_ZeroMem(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
+
+    if (XcpTl_Connection.socketType == SOCK_STREAM) {
+        if (!XcpTl_Connection.connected) {
+            FromLen = sizeof(From);
+            XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
+            if (XcpTl_Connection.connectedSocket == -1) {
+                XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", errno);
+                //WSACleanup();
+                exit(1);
+                return;
+            }
+        }
+
     }
 }
 
@@ -114,7 +182,7 @@ bool XcpTl_VerifyConnection(void)
 
 void XcpTl_PrintConnectionInformation(void)
 {
-    printf("XCPonEth -- Listening on port %s / %s [%s]\n\r",
+    printf("XCPonEth -- Listening on port %u / %s [%s]\n\r",
         XCP_ETH_DEFAULT_PORT,
         Xcp_Options.tcp ? "TCP" : "UDP",
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"

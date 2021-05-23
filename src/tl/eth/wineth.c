@@ -45,8 +45,6 @@
 void XcpHw_ErrorMsg(char * const function, int errorCode);
 
 
-uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
-
 extern XcpTl_ConnectionType XcpTl_Connection;
 
 void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
@@ -182,112 +180,6 @@ void XcpTl_DeInit(void)
     WSACleanup();
 }
 
-int XcpTl_Read(uint8_t * buffer, size_t offset)
-{
-    int nbytes;
-
-    if (XcpTl_Connection.socketType == SOCK_STREAM) {
-        if (!XcpTl_Connection.connected) {
-            XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (LPSOCKADDR)&XcpTl_Connection.currentAddress, NULL);
-            if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
-                XcpHw_ErrorMsg("XcpTl_RxHandler::accept()", WSAGetLastError());
-                exit(1);
-            }
-
-        }
-        nbytes = recv(XcpTl_Connection.connectedSocket, (char*)buffer + offset, XCP_COMM_BUFLEN, 0);
-        if (nbytes == SOCKET_ERROR) {
-            XcpHw_ErrorMsg("XcpTl_RxHandler::recv()", WSAGetLastError());
-            closesocket(XcpTl_Connection.connectedSocket);
-            exit(1);
-        }
-        printf("len: %u\n\r", nbytes);
-        XcpUtl_Hexdump(XcpTl_RxBuffer + offset, nbytes);
-
-        if (nbytes == 0) {
-            DBG_PRINT1("Client closed connection\n\r");
-            closesocket(XcpTl_Connection.connectedSocket);
-            Xcp_Disconnect();
-        }
-    } else {
-        nbytes = recvfrom(XcpTl_Connection.boundSocket, (char*)buffer + offset, XCP_COMM_BUFLEN, 0,
-            (LPSOCKADDR)&XcpTl_Connection.currentAddress, NULL
-        );
-        if (nbytes == SOCKET_ERROR)
-        {
-            XcpHw_ErrorMsg("XcpTl_RxHandler:recvfrom()", WSAGetLastError());
-            exit(1);
-        }
-    }
-    return nbytes;
-}
-
-void XcpTl_RxHandler(void)
-{
-    int nbytes;
-    uint16_t dlc = 0U;
-    uint16_t counter = 0U;
-    static uint16_t offset = 0U;
-    static uint16_t bytes_to_read = 0U;
-    static uint8_t state = 0;
-
-    ZeroMemory(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
-
-    XCP_FOREVER {
-        nbytes = XcpTl_Read(XcpTl_RxBuffer, 0);
-        if (nbytes == 0) {
-            return;
-        } else if (nbytes > 0) {
-            printf("nbytes: %u\n", nbytes);
-            offset += nbytes;
-            if (nbytes >= 2) {
-                dlc = MAKEWORD(XcpTl_RxBuffer[0], XcpTl_RxBuffer[1]);
-                Xcp_CtoIn.len = dlc;
-                printf("\tdlc: %u\n\r", dlc);
-
-                if ((dlc + 4) <= nbytes) {
-                    printf("COMPLETE frame!!\n");
-                    XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, nbytes - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                }
-            }
-        } else {
-
-        }
-        if (nbytes < XCP_COMM_BUFLEN) {
-            break;
-        }
-    }
-#if 0
-    if (nbytes > 0) {
-        printf("len: %u\n\r", nbytes);
-        XcpUtl_Hexdump(XcpTl_RxBuffer + offset, nbytes);
-        offset += nbytes;
-        if (state == 1) {
-            if (offset == 2) {
-
-                state = 2;
-                bytes_to_read = dlc + 2;    /* Consider counter. */
-            } else {
-                bytes_to_read = 1;          /* we got only a single byte. */
-            }
-            printf("\t\tcontinue with [%d] bytes\n\r",bytes_to_read);
-        } else if (state == 2) {
-            bytes_to_read -= nbytes;
-            if (bytes_to_read == 0) {
-                if (!XcpTl_Connection.connected || (XcpTl_VerifyConnection())) {
-
-                    XcpUtl_Hexdump(XcpTl_RxBuffer, nbytes);
-
-                }
-            }
-        }
-    } else {
-
-    }
-#endif
-}
-
 
 void XcpTl_Send(uint8_t const * buf, uint16_t len)
 {
@@ -305,4 +197,3 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     }
     XCP_TL_LEAVE_CRITICAL();
 }
-
