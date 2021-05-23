@@ -15,30 +15,20 @@
 
 #define ABS_ZERO        (-273.15)
 
-/* TODO: make the defines calibration parameters! */
-#define T_LIMIT_LOW     (70.0)
-#define T_LIMIT_HIGH    (85.0)
-#define T_STEP_SIZE     (1.5)
-#define ENV_FACTOR      (0.3)
-#define HEATER_FACTOR   (0.5)
-#define DT              (1.0)
-#define SETPOINT        (78.0)
-#define KI              (5.0)       /* UNUSED !!! */
-#define MAX_ERROR_SUM   (100.0)
 
 /*
  *
  * Calibration Parameters.
  *
  */
-float CAL_PARAM prmLimitLow = 70.0;
+float CAL_PARAM prmLimitLow = 65.0;
 float CAL_PARAM prmLimitHigh = 85.0;
 float CAL_PARAM prmStepSize = 1.5;
-float CAL_PARAM prmEnvFactor = 0.3;
+float CAL_PARAM prmEnvFactor = 0.5;
 float CAL_PARAM prmHeaterFactor = 0.5;
 float CAL_PARAM prmDt = 0.5;
-float CAL_PARAM prmSetpoint = 78.0;
-float CAL_PARAM prmKi = 5.0;
+float CAL_PARAM prmSetpoint = 70.0;
+float CAL_PARAM prmKi = 2.5;
 float CAL_PARAM prmMaxErrorSum = 100.0;
 
 
@@ -114,4 +104,16 @@ double controller(double temperature)
     }
     current = sum_of_errors * prmKi;
     return current;
+}
+
+void AppTask(void)
+{
+    double env_temp = 0;
+    double plant_temp;
+    static double current = 0.0;
+
+    env_temp = environment();
+    plant_temp = plant(env_temp, current);
+    current = controller(plant_temp);
+    printf("T_E: %3.3f T_P: %3.3f I: %3.3f\n", env_temp, plant_temp, current);
 }

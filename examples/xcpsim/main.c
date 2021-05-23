@@ -41,6 +41,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options);
 
 void * XcpTl_Thread(void * param);
 
+void AppTask(void);
 
 int main(int argc, char **argv)
 {
