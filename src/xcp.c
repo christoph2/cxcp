@@ -929,7 +929,10 @@ void Xcp_DispatchCommand(Xcp_PduType const * const pdu)
 {
     const uint8_t cmd = pdu->data[0];
     DBG_TRACE1("<- ");
-
+#if 0
+    printf("[%02u] ", pdu->len);
+    XcpUtl_Hexdump(pdu->data, pdu->len);
+#endif
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         /*DBG_PRINT2("CMD: [%02X]\n\r", cmd); */
 

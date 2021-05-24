@@ -129,6 +129,7 @@ void XcpTl_RxHandler(void)
         } else if (res == 0) {
             return;
         }
+        Xcp_CtoIn.len = dlc;
         res = XcpTl_ReadData(&XcpTl_RxBuffer[0], dlc);
         if (res == -1) {
 #if defined(_WIN32)
