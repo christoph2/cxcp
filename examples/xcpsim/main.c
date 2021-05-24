@@ -25,6 +25,7 @@
 
 
 #include <pthread.h>
+#include <signal.h>
 
 #include "xcp.h"
 #include "terminal.h"
@@ -55,7 +56,7 @@ int main(int argc, char **argv)
     pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
     pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
     pthread_join(threads[UI_THREAD], NULL);
-
+    pthread_kill(threads[TL_THREAD], SIGINT);
 
     FlsEmu_DeInit();
     XcpHw_Deinit();
