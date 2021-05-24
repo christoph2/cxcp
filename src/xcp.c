@@ -1397,7 +1397,7 @@ XCP_STATIC void Xcp_UserCmd_Res(Xcp_PduType const * const pdu)
 XCP_STATIC void Xcp_Download_Res(Xcp_PduType const * const pdu)
 {
     uint8_t len = Xcp_GetByte(pdu, UINT8(1));
-
+    const uint16_t LIMIT = XCP_MAX_BS * XCP_DOWNLOAD_PAYLOAD_LENGTH;
     DBG_TRACE2("DOWNLOAD [len: %u]\n\r", len);
 
     XCP_ASSERT_PGM_IDLE();
@@ -1405,7 +1405,7 @@ XCP_STATIC void Xcp_Download_Res(Xcp_PduType const * const pdu)
 
 #if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
     Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_FALSE;
-    if (len > (XCP_MAX_BS * XCP_DOWNLOAD_PAYLOAD_LENGTH)) {
+    if (len > LIMIT) {
         Xcp_ErrorResponse(ERR_OUT_OF_RANGE);    /* Request exceeds max. block size. */
         return;
     } else if (len > XCP_DOWNLOAD_PAYLOAD_LENGTH) {
