@@ -33,7 +33,6 @@ extern "C"
 #endif  /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
 
-
 /*
 **  Global Functions.
 */
@@ -44,6 +43,12 @@ void XcpHw_Sleep(uint64_t usec);
 void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all);
 uint32_t XcpHw_WaitApplicationState(uint32_t mask);
 void XcpHw_ResetApplicationState(uint32_t mask);
+
+void XcpThrd_RunThreads(void);
+void * XcpTerm_Thread(void * param);
+void * Xcp_Thread(void * param);
+void * XcpTl_Thread(void * param);
+void * Xcp_Thread(void * param);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)

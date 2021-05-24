@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -23,32 +23,37 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <pthread.h>
+#include <signal.h>
 
 #include "xcp.h"
-#include "terminal.h"
-#include "app_config.h"
+#include "xcp_hw.h"
 
+#define XCP_THREAD  (0)
+#define UI_THREAD   (1)
+#define APP_THREAD  (2)
+#define TL_THREAD   (3)
 
-Xcp_OptionsType Xcp_Options = {0};
+#define NUM_THREADS (4)
 
-void parse_options(int argc, char ** argv, Xcp_OptionsType * options);
-void AppTask(void);
+pthread_t threads[NUM_THREADS];
 
-int main(int argc, char **argv)
+void XcpThrd_RunThreads(void)
 {
-    parse_options(argc, argv, &Xcp_Options);
-
-    FlsEmu_Init(&FlsEmu_Config);
-
-    Xcp_Init();
-    Xcp_DisplayInfo();
-
-    XcpThrd_RunThreads();
-
-    FlsEmu_DeInit();
-    XcpHw_Deinit();
-    XcpTl_DeInit();
-
-    return 0;
+    pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
+    pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
+    pthread_create(&threads[XCP_THREAD], NULL, &Xcp_Thread, NULL);
+    pthread_join(threads[UI_THREAD], NULL);
+    pthread_kill(threads[TL_THREAD], SIGINT);
+    pthread_kill(threads[XCP_THREAD], SIGINT);
 }
 
+
+void * Xcp_Thread(void * param)
+{
+    XCP_UNREFERENCED_PARAMETER(param);
+    XCP_FOREVER {
+        Xcp_MainFunction();
+    }
+    return NULL;
+}
