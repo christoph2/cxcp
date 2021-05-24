@@ -689,6 +689,7 @@ void Xcp_MainFunction(void)
 #if (XCP_ENABLE_BUILD_CHECKSUM == XCP_ON) && (XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON)
     Xcp_ChecksumMainFunction();
 #endif /* (XCP_ENABLE_BUILD_CHECKSUM) && (XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON) */
+    XcpHw_Sleep(XCP_MAIN_FUNCTION_PERIOD);
 }
 
 void Xcp_SetMta(Xcp_MtaType mta)

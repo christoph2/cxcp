@@ -39,6 +39,7 @@ extern "C"
 */
 void XcpHw_ParseCommandLineOptions(int argc, char **argv, Xcp_OptionsType * options);
 void XcpHw_ErrorMsg(char * const function, int errorCode);
+void XcpHw_Sleep(uint64_t usec);
 
 void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all);
 uint32_t XcpHw_WaitApplicationState(uint32_t mask);

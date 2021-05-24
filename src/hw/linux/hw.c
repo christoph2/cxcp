@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "xcp.h"
 #include "xcp_hw.h"
@@ -383,5 +384,15 @@ void XcpHw_WaitTransmitRequest(void)
 void XcpHw_ErrorMsg(char * const fun, int errorCode)
 {
     fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
+}
+
+/*
+ *
+ * Sleep for `usec` microseconds.
+ *
+ */
+void XcpHw_Sleep(uint64_t usec)
+{
+    usleep(usec);
 }
 
