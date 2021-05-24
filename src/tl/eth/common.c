@@ -75,7 +75,13 @@ static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter)
     uint8_t nbytes = 0;
 
     XCP_FOREVER {
-        nbytes = recv(XcpTl_Connection.connectedSocket, (char*)header_buffer + offset, bytes_remaining, 0);
+        if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+            nbytes = recvfrom(XcpTl_Connection.boundSocket, (char*)header_buffer + offset, bytes_remaining, 0,
+            (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL);
+
+        } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
+            nbytes = recv(XcpTl_Connection.connectedSocket, (char*)header_buffer + offset, bytes_remaining, 0);
+        }
         if (nbytes < 1) {
             return nbytes;
         }
@@ -97,7 +103,12 @@ static int XcpTl_ReadData(uint8_t * data, uint8_t len)
     uint8_t nbytes = 0;
 
     XCP_FOREVER {
-        nbytes = recv(XcpTl_Connection.connectedSocket, (char*)data + offset, bytes_remaining, 0);
+        if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+            nbytes = recvfrom(XcpTl_Connection.boundSocket, (char*)data + offset, bytes_remaining, 0,
+            (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL);
+        } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
+            nbytes = recv(XcpTl_Connection.connectedSocket, (char*)data + offset, bytes_remaining, 0);
+        }
         if (nbytes < 1) {
             return nbytes;
         }
@@ -162,7 +173,7 @@ static void XcpTl_Accept(void)
         if (!XcpTl_Connection.connected) {
             FromLen = sizeof(From);
             XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
-            if (XcpTl_Connection.connectedSocket == -1) {
+            if (XcpTl_Connection.connectedSocket == -1 && errno != 0) {
                 XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
                 exit(1);
             }

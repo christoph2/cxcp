@@ -42,9 +42,6 @@
 
 #define ADDR_LEN    sizeof(SOCKADDR_STORAGE)
 
-void XcpHw_ErrorMsg(char * const function, int errorCode);
-
-
 extern XcpTl_ConnectionType XcpTl_Connection;
 
 void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
