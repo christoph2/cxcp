@@ -51,6 +51,10 @@ elseif(UNIX)
     )
 endif(WIN32)
 
+IF(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    add_link_options("-fuse-ld=lld")
+ENDIF()
+
 add_definitions(-D_GNU_SOURCE)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable  -ffunction-sections")

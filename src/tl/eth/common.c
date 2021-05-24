@@ -23,6 +23,7 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <stdlib.h>
 
 #include "xcp.h"
 #include "xcp_eth.h"
@@ -141,6 +142,10 @@ void XcpTl_RxHandler(void)
         } else if (res == 0) {
             return;
         }
+#if 0
+        printf("\t[%02u] ", dlc);
+        XcpUtl_Hexdump(XcpTl_RxBuffer, dlc);
+#endif
         XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
         Xcp_DispatchCommand(&Xcp_CtoIn);
     }
