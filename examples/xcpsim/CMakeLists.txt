@@ -73,7 +73,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         endif()
     endif()
 else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -flto -fomit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -flto ")
 endif()
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
