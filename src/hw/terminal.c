@@ -28,7 +28,7 @@
 
 #include "xcp.h"
 #include "xcp_hw.h"
-#include "terminal.h"
+#include "xcp_terminal.h"
 #include "flsemu.h"
 
 #if defined(_WIN32)
