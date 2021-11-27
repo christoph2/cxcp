@@ -50,8 +50,8 @@ XCP_STATIC const Xcp_GetIdType Xcp_GetId1 = XCP_SET_ID(XCP_GET_ID_1);
 XCP_STATIC Xcp_ConnectionStateType Xcp_ConnectionState = XCP_DISCONNECTED;
 XCP_STATIC Xcp_StateType Xcp_State;
 XCP_STATIC Xcp_SendCalloutType Xcp_SendCallout = (Xcp_SendCalloutType)XCP_NULL;
-static uint8_t Xcp_CtoOutBuffer[XCP_MAX_CTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
-static uint8_t Xcp_CtoInBuffer[XCP_MAX_CTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
+static uint8_t Xcp_CtoOutBuffer[XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE] = {0};
+static uint8_t Xcp_CtoInBuffer[XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE] = {0};
 
 /*
 **  Global Variables.
@@ -60,7 +60,7 @@ Xcp_PduType Xcp_CtoIn = {0, (uint8_t*)&Xcp_CtoInBuffer[0]};
 Xcp_PduType Xcp_CtoOut = {0, (uint8_t*)&Xcp_CtoOutBuffer[0]};
 
 #if XCP_ENABLE_DAQ_COMMANDS  == XCP_ON
-static uint8_t Xcp_DtoOutBuffer[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET] = {0};
+static uint8_t Xcp_DtoOutBuffer[XCP_TRANSPORT_LAYER_DTO_BUFFER_SIZE] = {0};
 static Xcp_PduType Xcp_DtoOut = {0, (uint8_t*)&Xcp_DtoOutBuffer[0]};
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
@@ -930,10 +930,10 @@ void Xcp_DispatchCommand(Xcp_PduType const * const pdu)
 {
     const uint8_t cmd = pdu->data[0];
     DBG_TRACE1("<- ");
-#if 0
+//#if 0
     printf("[%02u] ", pdu->len);
     XcpUtl_Hexdump(pdu->data, pdu->len);
-#endif
+//#endif
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         /*DBG_PRINT2("CMD: [%02X]\n\r", cmd); */
 

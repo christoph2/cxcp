@@ -26,6 +26,8 @@
 #if !defined(__CXCP_H)
 #define __CXCP_H
 
+#include <assert.h>
+
 #include "xcp_types.h"
 #include "xcp_macros.h"
 #include "xcp_util.h"
@@ -45,6 +47,7 @@
 #define XCP_ON_USB              (3)
 #define XCP_ON_ETHERNET         (4)
 #define XCP_ON_SXI              (5)
+#define XCP_ON_BTH              (128)   /* XCP on Bluetooth -- no-standard. */
 
 #define XCP_DAQ_CONFIG_TYPE_STATIC      (0)
 #define XCP_DAQ_CONFIG_TYPE_DYNAMIC     (1)
@@ -219,7 +222,10 @@ extern "C"
     #error XCP_TRANSPORT_LAYER_LENGTH_SIZE  must be 0, 1, or 2
 #endif
 
-#define XCP_TRANSPORT_LAYER_BUFFER_OFFSET   (XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_LENGTH_SIZE)
+#define XCP_TRANSPORT_LAYER_BUFFER_OFFSET       (XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_LENGTH_SIZE)
+#define XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE     (XCP_MAX_CTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET)
+#define XCP_TRANSPORT_LAYER_DTO_BUFFER_SIZE     (XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET)
+
 
 #if !defined(XCP_DAQ_ENABLE_WRITE_THROUGH)
     #define XCP_DAQ_ENABLE_WRITE_THROUGH    XCP_OFF
@@ -497,8 +503,9 @@ extern "C"
 #define XCP_HW_LOCK_XCP                     UINT8(0)
 #define XCP_HW_LOCK_TL                      UINT8(1)
 #define XCP_HW_LOCK_DAQ                     UINT8(2)
+#define XCP_HW_LOCK_HW                      UINT8(3)
 
-#define XCP_HW_LOCK_COUNT                   UINT8(3)
+#define XCP_HW_LOCK_COUNT                   UINT8(4)
 
 /*
  * Interface defaults.
@@ -507,6 +514,13 @@ extern "C"
 #define XCP_SOCKET_CAN_DEFAULT_IF   ("vcan0")
 
 #define XCP_ETH_HEADER_SIZE         (4)
+
+
+/*
+** Other function-line macros.
+*/
+#define XCP_BOUNDS_CHECK_S(b, l, a)     assert((((a) >= (b))) && ((a) < ((b) + (l))))
+
 
 /*
 ** Global Types.

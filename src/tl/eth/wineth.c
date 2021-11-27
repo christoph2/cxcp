@@ -32,11 +32,6 @@
 #include "xcp_hw.h"
 #include "xcp_eth.h"
 
-#if !defined(__GNUC__)
-#pragma comment(lib,"ws2_32.lib") // MSVC only.
-#endif
-
-
 #define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
 #define DEFAULT_SOCKTYPE   SOCK_STREAM //
 

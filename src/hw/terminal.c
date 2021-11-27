@@ -59,6 +59,7 @@ void Xcp_DisplayInfo(void);
 void XcpDaq_PrintDAQDetails(void);
 void XcpDaq_Info(void);
 
+
 #if defined(_WIN32)
 void * XcpTerm_Thread(void * param)
 {
@@ -399,3 +400,4 @@ void XcpDaq_Info(void)
     printf("\tfunctionality not supported.\n\r");
 #endif
 }
+
