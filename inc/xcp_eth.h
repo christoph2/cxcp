@@ -65,5 +65,10 @@ typedef struct tagXcpTl_ConnectionType {
  } XcpTl_ConnectionType;
 #endif
 
+#if defined(__unix__)
+    #define SOCKET_ERROR        (-1)
+    #define ZeroMemory(b,l )    memset((b), 0, (l))
+#endif
+
 
 #endif  /* __XCP_ETH_H */
