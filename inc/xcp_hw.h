@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2020 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -40,15 +40,6 @@ void XcpHw_ParseCommandLineOptions(int argc, char **argv, Xcp_OptionsType * opti
 void XcpHw_ErrorMsg(char * const function, int errorCode);
 void XcpHw_Sleep(uint64_t usec);
 
-void XcpHw_SignalApplicationState(uint32_t state, uint8_t signal_all);
-uint32_t XcpHw_WaitApplicationState(uint32_t mask);
-void XcpHw_ResetApplicationState(uint32_t mask);
-
-void XcpThrd_RunThreads(void);
-void * XcpTerm_Thread(void * param);
-void * Xcp_Thread(void * param);
-void * XcpTl_Thread(void * param);
-void * Xcp_Thread(void * param);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)

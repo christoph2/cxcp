@@ -25,9 +25,11 @@
 
 #include <pthread.h>
 #include <signal.h>
+#include <intrin.h>
 
 #include "xcp.h"
 #include "xcp_hw.h"
+#include "xcp_threads.h"
 
 #define XCP_THREAD  (0)
 #define UI_THREAD   (1)
@@ -38,12 +40,15 @@
 
 pthread_t threads[NUM_THREADS];
 
+static short XcpThrd_ShuttingDown __attribute__((aligned(8)))  = 0L;
+
 void XcpThrd_RunThreads(void)
 {
     pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
     pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
     pthread_create(&threads[XCP_THREAD], NULL, &Xcp_Thread, NULL);
     pthread_join(threads[UI_THREAD], NULL);
+    XcpThrd_ShutDown();
     pthread_kill(threads[TL_THREAD], SIGINT);
     pthread_kill(threads[XCP_THREAD], SIGINT);
 }
@@ -56,4 +61,35 @@ void * Xcp_Thread(void * param)
         Xcp_MainFunction();
     }
     return NULL;
+}
+
+void XcpThrd_EnableAsyncCancellation(void)
+{
+    int res;
+
+    res =  pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    if (res != 0) {
+        XcpHw_ErrorMsg("pthread_setcancelstate()", errno);
+    }
+}
+
+void XcpThrd_ShutDown(void)
+{
+    int res;
+
+    printf("Shutdown RQ.\n");
+    if (XcpThrd_IsShuttingDown() > 0) {
+        return 0;
+    }
+    res = pthread_cancel(threads[TL_THREAD]);   // Due to blocking accept().
+    if (res != 0) {
+        XcpHw_ErrorMsg("pthread_cancel()", errno);
+    }
+    printf("Canc'ld.\n");
+    _InterlockedIncrement16(&XcpThrd_ShuttingDown);
+}
+
+bool XcpThrd_IsShuttingDown(void)
+{
+    return _InterlockedCompareExchange16(&XcpThrd_ShuttingDown, 0, 0);
 }
