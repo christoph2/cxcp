@@ -40,6 +40,8 @@ void XcpHw_ErrorMsg(char * const function, int errorCode);
 void XcpThrd_EnableAsyncCancellation(void);
 bool XcpThrd_IsShuttingDown(void);
 
+void XcpTl_PrintBtDetails(void);
+
 static void XcpTl_Accept(void);
 static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter);
 static int XcpTl_ReadData(uint8_t * data, uint8_t len);
@@ -240,6 +242,6 @@ void XcpTl_PrintConnectionInformation(void)
 #elif XCP_TRANSPORT_LAYER == XCP_ON_BTH
 void XcpTl_PrintConnectionInformation(void)
 {
-    printf("XCPonBth -- Listening on \n\r");
+    XcpTl_PrintBtDetails();
 }
 #endif
