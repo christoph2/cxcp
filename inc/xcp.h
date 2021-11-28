@@ -84,7 +84,7 @@ extern "C"
 #endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
 
 #if XCP_DAQ_ENABLE_ADDR_EXT == XCP_ON
-    #error DAQ doesn't support address extension.
+    #error "DAQ doesn't support address extension."
 #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
 #if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_ON

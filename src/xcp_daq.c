@@ -529,7 +529,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
             if (odtEntryIdx == (XcpDaq_ODTEntryIntegerType)0) {
 
             }
-            XCP_ASSERT_LE(XCP_MAX_DTO - offset, entry->length);
+            XCP_ASSERT_LE((unsigned int)(XCP_MAX_DTO - offset), entry->length);
             XcpDaq_CopyMemory(&data[offset], (void*)entry->mta.address, entry->length);
             offset += entry->length;
         }
