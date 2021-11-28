@@ -23,17 +23,22 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+ /*
+ **
+ ** Socket routines independent of operating system and protocol.
+ **
+ */
+
 #include <stdlib.h>
 
 #include "xcp.h"
 #include "xcp_eth.h"
 
-#if defined(__unix__)
-    #define SOCKET_ERROR        (-1)
-    #define ZeroMemory(b,l )    memset((b), 0, (l))
-#endif
 
 void XcpHw_ErrorMsg(char * const function, int errorCode);
+
+void XcpThrd_EnableAsyncCancellation(void);
+bool XcpThrd_IsShuttingDown(void);
 
 static void XcpTl_Accept(void);
 static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter);
@@ -46,7 +51,9 @@ static uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
 
 void * XcpTl_Thread(void * param)
 {
+
     XCP_UNREFERENCED_PARAMETER(param);
+    XcpThrd_EnableAsyncCancellation();
     XCP_FOREVER {
         XcpTl_MainFunction();
     }
@@ -139,26 +146,31 @@ void XcpTl_RxHandler(void)
 #endif
             exit(2);
         } else if (res == 0) {
+            exit(0);
             return;
         }
-        Xcp_CtoIn.len = dlc;
-        res = XcpTl_ReadData(&XcpTl_RxBuffer[0], dlc);
-        if (res == -1) {
+        if (!XcpThrd_IsShuttingDown()) {
+            Xcp_CtoIn.len = dlc;
+            res = XcpTl_ReadData(&XcpTl_RxBuffer[0], dlc);
+            if (res == -1) {
 #if defined(_WIN32)
-            XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
+                XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
 #elif defined(__unix__)
-            XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", errno);
+                XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", errno);
 #endif
-            exit(2);
-        } else if (res == 0) {
-            return;
-        }
+                exit(2);
+            } else if (res == 0) {
+                exit(0);
+                return;
+            }
 #if 0
-        printf("\t[%02u] ", dlc);
-        XcpUtl_Hexdump(XcpTl_RxBuffer, dlc);
+            printf("\t[%02u] ", dlc);
+            XcpUtl_Hexdump(XcpTl_RxBuffer, dlc);
 #endif
-        XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
-        Xcp_DispatchCommand(&Xcp_CtoIn);
+            XCP_ASSERT_LE(XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE , dlc);
+            XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
+            Xcp_DispatchCommand(&Xcp_CtoIn);
+        }
     }
 }
 
@@ -166,6 +178,7 @@ static void XcpTl_Accept(void)
 {
     socklen_t FromLen = 0;
     struct sockaddr_storage From;
+    uint32_t err;
 
     XcpUtl_ZeroMem(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
 
@@ -173,8 +186,16 @@ static void XcpTl_Accept(void)
         if (!XcpTl_Connection.connected) {
             FromLen = sizeof(From);
             XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
-            if (XcpTl_Connection.connectedSocket == -1 && errno != 0) {
+            if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
+
+#if defined(_WIN32)
+                err = WSAGetLastError();
+                if (err != WSAEINTR) {
+                    XcpHw_ErrorMsg("XcpTl_Accept::accept()", err);  /* Not canceled by WSACancelBlockingCall(), i.e. pthread_cancel()  */
+                }
+#elif defined(__unix__)
                 XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
+#endif
                 exit(1);
             }
         } else {
@@ -207,6 +228,7 @@ bool XcpTl_VerifyConnection(void)
     return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_storage)) == 0;
 }
 
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
 void XcpTl_PrintConnectionInformation(void)
 {
     printf("XCPonEth -- Listening on port %u / %s [%s]\n\r",
@@ -215,4 +237,9 @@ void XcpTl_PrintConnectionInformation(void)
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
 }
-
+#elif XCP_TRANSPORT_LAYER == XCP_ON_BTH
+void XcpTl_PrintConnectionInformation(void)
+{
+    printf("XCPonBth -- Listening on \n\r");
+}
+#endif

@@ -77,15 +77,14 @@ void XcpThrd_ShutDown(void)
 {
     int res;
 
-    printf("Shutdown RQ.\n");
+    /* printf("Shutdown RQ.\n"); */
     if (XcpThrd_IsShuttingDown() > 0) {
-        return 0;
+        return;
     }
     res = pthread_cancel(threads[TL_THREAD]);   // Due to blocking accept().
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_cancel()", errno);
     }
-    printf("Canc'ld.\n");
     _InterlockedIncrement16(&XcpThrd_ShuttingDown);
 }
 

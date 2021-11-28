@@ -529,6 +529,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
             if (odtEntryIdx == (XcpDaq_ODTEntryIntegerType)0) {
 
             }
+            XCP_ASSERT_LE(XCP_MAX_DTO - offset, entry->length);
             XcpDaq_CopyMemory(&data[offset], (void*)entry->mta.address, entry->length);
             offset += entry->length;
         }
@@ -724,6 +725,8 @@ XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const * data)
     }
 
     XcpDaq_QueueDTOs[XcpDaq_Queue.head].len = len;
+
+    XCP_ASSERT_LE(XCP_MAX_DTO, len);
     XcpUtl_MemCopy(XcpDaq_QueueDTOs[XcpDaq_Queue.head].data, data, len);
     XcpDaq_Queue.head = (XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1);
     return (bool)XCP_TRUE;
@@ -737,6 +740,7 @@ XCP_STATIC bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data)
         return (bool)XCP_FALSE;
     }
     dto_len = XcpDaq_QueueDTOs[XcpDaq_Queue.tail].len;
+    XCP_ASSERT_LE(XCP_MAX_DTO, dto_len);
     *len = dto_len;
     XcpUtl_MemCopy(data, XcpDaq_QueueDTOs[XcpDaq_Queue.tail].data, dto_len);
     XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1);

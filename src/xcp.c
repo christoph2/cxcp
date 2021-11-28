@@ -1192,6 +1192,7 @@ XCP_STATIC void Xcp_GetSeed_Res(Xcp_PduType const * const pdu)
     if (Xcp_IsProtected(resource)) {
         Xcp_HookFunction_GetSeed(resource, &seed);  /* User supplied callout. */
         length = XCP_MIN(XCP_MAX_CTO - UINT16(2), seed.length);
+        XCP_ASSERT_LE(XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE - 2, length);
         XcpUtl_MemCopy(dataOut + UINT16(2), seed.data, (uint32_t)length);
     } else {
         /* Resource already unlocked. */
@@ -2150,10 +2151,12 @@ XCP_STATIC void Xcp_SendResult(Xcp_ReturnType result)
     }
 }
 
+#if 0
 void Xcp_WriteMemory(void * dest, void * src, uint16_t count)
 {
     XcpUtl_MemCopy(dest, src, UINT32(count));
 }
+#endif
 
 #if XCP_REPLACE_STD_COPY_MEMORY == XCP_OFF
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len)

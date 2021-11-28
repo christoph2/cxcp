@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#if defined(ETHER)
+#if defined(TP_ETHER)
 static const char OPTION_STR[] = "htu46p:";
 #elif defined(SOCKET_CAN)
 static const char OPTION_STR[] = "hi:f";
@@ -48,7 +48,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 {
     int idx;
     char * arg;
-#if !defined(KVASER_CAN)
+#if defined(TP_ETHER)
     options->ipv6 = XCP_FALSE;
     options->tcp = XCP_TRUE;
 
@@ -78,6 +78,10 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
             }
         }
     }
+#elif defined(TP_BLUETOOTH)
+
+#else   /* defined(KVASER_CAN)*/
+
 #endif
 }
 #else
@@ -85,7 +89,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 void usage(void)
 {
     printf("\nparameter summary: \n");
-#if defined(ETHER)
+#if defined(TP_ETHER)
     printf("-h\t  this message.\n");
     printf("-t\t  TCP\t\t  default: TRUE\n");
     printf("-u\t  UDP\t\t  default: FALSE\n");
@@ -106,7 +110,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
     int opt;
     int res;
 
-#if defined(ETHER)
+#if defined(TP_ETHER)
     int p_assigned = 0;
     int v_assigned = 0;
 
@@ -124,7 +128,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
             case '?':
                 usage();
                 break; /* never reached. */
-#if defined(ETHER)
+#if defined(TP_ETHER)
             case 't':
                 if (p_assigned) {
                     printf("-t and -u options are mutual exclusive.\n");
