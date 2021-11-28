@@ -517,9 +517,22 @@ extern "C"
 
 
 /*
-** Other function-line macros.
+** Bounds-checking macros.
 */
-#define XCP_BOUNDS_CHECK_S(b, l, a)     assert((((a) >= (b))) && ((a) < ((b) + (l))))
+
+/**! Comparisions   */
+#define XCP_ASSERT_EQ(lhs, rhs)             assert((lhs) == (rhs))
+#define XCP_ASSERT_NE(lhs, rhs)             assert((lhs) != (rhs))
+#define XCP_ASSERT_LE(lhs, rhs)             assert((lhs) <= (rhs))
+#define XCP_ASSERT_LT(lhs, rhs)             assert((lhs) <  (rhs))
+#define XCP_ASSERT_BE(lhs, rhs)             assert((lhs) >= (rhs))
+#define XCP_ASSERT_BG(lhs, rhs)             assert((lhs) >  (rhs))
+
+/**! Check if address `a` is in range [`b` .. `b` + `l`] */
+#define XCP_CHECK_ADDRESS_IN_RANGE(b, l, a) assert((((a) >= (b))) && ((a) < ((b) + (l))))
+
+/**! Check if address range [`a` -- `a` + `l1`] is contained in range [`b` .. `b` + `l0`] */
+#define XCP_BOUNDS_CHECK(b, l0, a, l1)      assert((((a) >= (b))) && ((a) < ((b) + (l0))) && (((a) + (l1)) <= ((b) + (l0))))
 
 
 /*
@@ -906,10 +919,12 @@ typedef struct tagXcp_1DArrayType {
 typedef struct tagXcp_OptionsType {
 #if defined(KVASER_CAN)
     int dummy;
-#elif defined(ETHER)
+#elif defined(TP_ETHER)
     bool ipv6;
     bool tcp;
     uint16_t port;
+#elif defined(TP_BLUETOOTH)
+    char interface2[6];
 #elif defined(SOCKET_CAN)
     bool fd;
     char interface[64];
