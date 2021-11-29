@@ -139,7 +139,7 @@ void XcpTl_PrintBtDetails(void)
 {
     printf("XCPonBth -- Listening on ");
     PrintBthAddr(&XcpTl_LocalBtAddress);
-    printf(" port %u\n\r", (unsigned int)XcpTl_LocalBtAddress.port);
+    printf(" channel %u\n\r", (unsigned int)XcpTl_LocalBtAddress.port);
 }
 
 static void PrintBthAddr(SOCKADDR_BTH * addr)
