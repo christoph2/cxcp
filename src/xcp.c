@@ -1192,7 +1192,7 @@ XCP_STATIC void Xcp_GetSeed_Res(Xcp_PduType const * const pdu)
     if (Xcp_IsProtected(resource)) {
         Xcp_HookFunction_GetSeed(resource, &seed);  /* User supplied callout. */
         length = XCP_MIN(XCP_MAX_CTO - UINT16(2), seed.length);
-        XCP_ASSERT_LE(XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE - 2, length);
+        XCP_ASSERT_LE(length, XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE - 2);
         XcpUtl_MemCopy(dataOut + UINT16(2), seed.data, (uint32_t)length);
     } else {
         /* Resource already unlocked. */

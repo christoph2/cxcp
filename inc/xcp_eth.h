@@ -49,6 +49,7 @@
 typedef struct tagXcpTl_ConnectionType {
     SOCKADDR_STORAGE connectionAddress;
     SOCKADDR_STORAGE currentAddress;
+    SOCKADDR_STORAGE localAddress;
     SOCKET boundSocket;
     SOCKET connectedSocket;
     bool connected;
@@ -58,6 +59,7 @@ typedef struct tagXcpTl_ConnectionType {
 typedef struct tagXcpTl_ConnectionType {
     struct sockaddr_storage connectionAddress;
     struct sockaddr_storage currentAddress;
+    struct sockaddr_storage localAddress;
     int boundSocket;
     int connectedSocket;
     bool connected;

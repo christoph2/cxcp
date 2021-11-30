@@ -136,6 +136,11 @@ void XcpTl_Init(void)
             XcpHw_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
             continue;
         }
+
+        memcpy(&XcpTl_Connection.localAddress, AI->ai_addr, sizeof(SOCKADDR_STORAGE));
+        //XcpTl_Connection.localAddress = *AI->ai_addr;
+        printf("%x\n", AI->ai_addr);
+
         if (XcpTl_Connection.socketType == SOCK_STREAM) {
             if (listen(serverSockets[idx], 1) == SOCKET_ERROR) {
                 XcpHw_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());

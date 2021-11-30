@@ -108,6 +108,8 @@ void XcpTl_Init(void)
         }
     }
 
+    memcpy(&XcpTl_Connection.localAddress, &addr_info->ai_addr, sizeof(XcpTl_Connection.localAddress));
+
     XcpTl_Connection.boundSocket = sock;
     freeaddrinfo(addr_info);
     if (!Xcp_EnableSocketOption(XcpTl_Connection.boundSocket, SO_REUSEADDR)) {

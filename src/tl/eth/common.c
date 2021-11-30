@@ -46,6 +46,10 @@ static void XcpTl_Accept(void);
 static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter);
 static int XcpTl_ReadData(uint8_t * data, uint8_t len);
 
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
+static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size);
+#endif
+
 XcpTl_ConnectionType XcpTl_Connection;
 
 static uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
@@ -169,7 +173,7 @@ void XcpTl_RxHandler(void)
             printf("\t[%02u] ", dlc);
             XcpUtl_Hexdump(XcpTl_RxBuffer, dlc);
 #endif
-            XCP_ASSERT_LE(XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE , dlc);
+            XCP_ASSERT_LE(dlc, XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE);
             XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
             Xcp_DispatchCommand(&Xcp_CtoIn);
         }
@@ -233,15 +237,149 @@ bool XcpTl_VerifyConnection(void)
 #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
 void XcpTl_PrintConnectionInformation(void)
 {
+    char buf[128];
+
     printf("XCPonEth -- Listening on port %u / %s [%s]\n\r",
         XCP_ETH_DEFAULT_PORT,
         Xcp_Options.tcp ? "TCP" : "UDP",
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
+    Curl_inet_ntop(Xcp_Options.ipv6 ? AF_INET6 : AF_INET, &XcpTl_Connection.localAddress, &buf, 128);
+    printf("%s\n", buf);
 }
 #elif XCP_TRANSPORT_LAYER == XCP_ON_BTH
 void XcpTl_PrintConnectionInformation(void)
 {
     XcpTl_PrintBtDetails();
+}
+#endif
+
+/*
+** NOTE: The following code is taken from OpenBSD, because inet_ntop() is notorious
+**       for being problematic on (older versions of) Windows.
+*/
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
+
+#define IN6ADDRSZ       16
+#define INADDRSZ         4
+#define INT16SZ          2
+
+static char *inet_ntop4(const unsigned char *src, char *dst, size_t size)
+{
+    char tmp[sizeof("255.255.255.255")];
+    size_t len;
+
+    tmp[0] = '\0';
+    (void)sprintf(tmp, "%d.%d.%d.%d",
+                  ((int)((unsigned char)src[0])) & 0xff,
+                  ((int)((unsigned char)src[1])) & 0xff,
+                  ((int)((unsigned char)src[2])) & 0xff,
+                  ((int)((unsigned char)src[3])) & 0xff);
+
+    len = strlen(tmp);
+    if (len == 0 || len >= size) {
+        return NULL;
+    }
+    strcpy(dst, tmp);
+    return dst;
+}
+
+/*
+ * Convert IPv6 binary address into presentation (printable) format.
+ */
+static char *inet_ntop6(const unsigned char *src, char *dst, size_t size)
+{
+    char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+    char *tp;
+    struct {
+        long base;
+        long len;
+    } best, cur;
+    unsigned long words[IN6ADDRSZ / INT16SZ];
+    int i;
+
+    /* Preprocess:
+     *  Copy the input (bytewise) array into a wordwise array.
+     *  Find the longest run of 0x00's in src[] for :: shorthanding.
+     */
+    memset(words, '\0', sizeof(words));
+    for (i = 0; i < IN6ADDRSZ; i++) {
+        words[i/2] |= (src[i] << ((1 - (i % 2)) << 3));
+    }
+
+    best.base = -1;
+    cur.base  = -1;
+    best.len = 0;
+    cur.len = 0;
+
+    for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
+        if (words[i] == 0) {
+            if (cur.base == -1)
+                cur.base = i, cur.len = 1;
+            else
+                cur.len++;
+        } else if (cur.base != -1) {
+            if (best.base == -1 || cur.len > best.len)
+                best = cur;
+            cur.base = -1;
+        }
+    }
+    if ((cur.base != -1) && (best.base == -1 || cur.len > best.len))
+        best = cur;
+    if (best.base != -1 && best.len < 2)
+        best.base = -1;
+    /* Format the result. */
+    tp = tmp;
+    for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
+        /* Are we inside the best run of 0x00's? */
+        if (best.base != -1 && i >= best.base && i < (best.base + best.len)) {
+            if (i == best.base)
+                *tp++ = ':';
+            continue;
+        }
+
+        /* Are we following an initial run of 0x00s or any real hex?
+         */
+        if (i)
+            *tp++ = ':';
+
+        /* Is this address an encapsulated IPv4?
+         */
+        if (i == 6 && best.base == 0 &&
+            (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
+            if (!inet_ntop4(src + 12, tp, sizeof(tmp) - (tp - tmp))) {
+                return NULL;
+            }
+            tp += strlen(tp);
+            break;
+        }
+        tp += sprintf(tp, "%lx", words[i]);
+    }
+
+    /* Was it a trailing run of 0x00's?
+     */
+    if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ))
+        *tp++ = ':';
+    *tp++ = '\0';
+
+    /* Check for overflow, copy, and we're done.
+     */
+    if ((size_t)(tp - tmp) > size) {
+        return NULL;
+    }
+    strcpy(dst, tmp);
+    return dst;
+}
+
+static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size)
+{
+    switch (af) {
+        case AF_INET:
+            return inet_ntop4((const unsigned char *)src, buf, size);
+        case AF_INET6:
+            return inet_ntop6((const unsigned char *)src, buf, size);
+        default:
+            return NULL;
+    }
 }
 #endif
