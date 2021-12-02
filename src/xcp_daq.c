@@ -117,14 +117,10 @@ XCP_STATIC const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
 ** Local Variables.
 */
 
+XCP_STATIC XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC XcpDaq_AllocStateType XcpDaq_AllocState;
-XCP_STATIC XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
-XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_EntityCount = (XCP_DAQ_ENTITY_TYPE)0;
-XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_ListCount = (XCP_DAQ_ENTITY_TYPE)0;
-XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_OdtCount = (XCP_DAQ_ENTITY_TYPE)0;
-
 XCP_STATIC XcpDaq_ListStateType XcpDaq_ListState ;
 XCP_STATIC XcpDaq_ListConfigurationType XcpDaq_ListConfiguration;
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
@@ -139,6 +135,12 @@ XCP_STATIC uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 #else
     #error XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT option currently not supported
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
+
+#if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
+XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_EntityCount = (XCP_DAQ_ENTITY_TYPE)0;
+XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_ListCount = (XCP_DAQ_ENTITY_TYPE)0;
+XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_OdtCount = (XCP_DAQ_ENTITY_TYPE)0;
+#endif /* XCP_BUILD_TYPE */
 
 
 /*
@@ -535,7 +537,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
         }
         pid++;
         XcpDaq_QueueEnqueue(offset, data);
-        XcpUtl_Hexdump(data, offset);
+//        XcpUtl_Hexdump(data, offset);
     }
     XcpHw_TransmitDtos();
 }
@@ -669,7 +671,7 @@ bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerT
 **  Debugging / Testing interface.
 */
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-#if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
+
 void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE * entityCount, XCP_DAQ_ENTITY_TYPE * listCount, XCP_DAQ_ENTITY_TYPE * odtCount)
 {
     *entityCount = XcpDaq_EntityCount;
@@ -691,9 +693,15 @@ XcpDaq_EntityType * XcpDaq_GetDynamicEntity(uint16_t num)
 {
     return &XcpDaq_Entities[num];
 }
-#endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
+
+void XcpDaq_QueueGetVar(XcpDaq_QueueType * var)
+{
+    XcpUtl_MemCopy(var, &XcpDaq_Queue, sizeof(XcpDaq_QueueType));
+}
+
 #endif /* XCP_BUILD_TYPE */
 
+//#if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
 void XcpDaq_QueueInit(void)
@@ -712,7 +720,7 @@ XCP_STATIC bool XcpDaq_QueueFull(void)
     return ((XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1)) == XcpDaq_Queue.tail;
 }
 
-XCP_STATIC bool XcpDaq_QueueEmpty(void)
+bool XcpDaq_QueueEmpty(void)
 {
     return XcpDaq_Queue.head == XcpDaq_Queue.tail;
 }
@@ -732,7 +740,7 @@ XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const * data)
     return (bool)XCP_TRUE;
 }
 
-XCP_STATIC bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data)
+bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data)
 {
     uint16_t dto_len;
 
@@ -746,16 +754,5 @@ XCP_STATIC bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data)
     XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1);
     return (bool)XCP_TRUE;
 }
-
-
-/*
-**  Debugging / Testing interface.
-*/
-#if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-void XcpDaq_QueueGetVar(XcpDaq_QueueType * var)
-{
-    XcpUtl_MemCopy(var, &XcpDaq_Queue, sizeof(XcpDaq_QueueType));
-}
-#endif
-
+//#endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 #endif /* XCP_DAQ_ENABLE_QUEUING */
