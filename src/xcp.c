@@ -878,7 +878,7 @@ void Xcp_UploadSingleBlock(void)
     } else {
         Xcp_SetCtoOutLen(UINT16(XCP_MAX_CTO));
         //printf("FULL BLOCK: %08x\n", Xcp_State.mta.address);
-        Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)(XCP_MAX_CTO - 1));
+         Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)(XCP_MAX_CTO - 1));
         XCP_INCREMENT_MTA((XCP_MAX_CTO - 1));
         Xcp_State.slaveBlockModeState.remaining -= (XCP_MAX_CTO - 1);
     }
@@ -1996,9 +1996,9 @@ XCP_STATIC void Xcp_ProgramStart_Res(Xcp_PduType const * const pdu)
 XCP_STATIC void Xcp_ProgramClear_Res(Xcp_PduType const * const pdu)
 {
     uint8_t mode = Xcp_GetByte(pdu, UINT8(1));
-    uint32_t clearRange = (XcpDaq_ListIntegerType)Xcp_GetDWord(pdu, UINT8(4));
+    uint32_t clearRange = Xcp_GetDWord(pdu, UINT8(4));
 
-    DBG_TRACE3("PROGRAM_CLEAR [mode: %d clearRange: 0x%x]\n\r", mode, clearRange);
+    DBG_TRACE3("PROGRAM_CLEAR [mode: %d clearRange: 0x%08x]\n\r", mode, clearRange);
     XCP_ASSERT_PGM_ACTIVE();
 }
 

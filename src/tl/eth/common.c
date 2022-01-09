@@ -244,8 +244,8 @@ void XcpTl_PrintConnectionInformation(void)
         Xcp_Options.tcp ? "TCP" : "UDP",
         Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
-    Curl_inet_ntop(Xcp_Options.ipv6 ? AF_INET6 : AF_INET, &XcpTl_Connection.localAddress, &buf, 128);
-    printf("%s\n", buf);
+//    Curl_inet_ntop(Xcp_Options.ipv6 ? AF_INET6 : AF_INET, &XcpTl_Connection.localAddress, &buf, 128);
+//    printf("%s\n", buf);
 }
 #elif XCP_TRANSPORT_LAYER == XCP_ON_BTH
 void XcpTl_PrintConnectionInformation(void)
