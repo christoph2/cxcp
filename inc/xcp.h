@@ -917,15 +917,13 @@ typedef struct tagXcp_1DArrayType {
 
 
 typedef struct tagXcp_OptionsType {
-#if defined(KVASER_CAN)
-    int dummy;
-#elif defined(TP_ETHER)
+#if defined(TP_ETHER)
     bool ipv6;
     bool tcp;
     uint16_t port;
 #elif defined(TP_BLUETOOTH)
     char interface2[6];
-#elif defined(SOCKET_CAN)
+#elif defined(TP_CAN)
     bool fd;
     char interface[64];
 #endif

@@ -24,11 +24,11 @@
  */
 
 #define _GNU_SOURCE
+#include <errno.h>
 #include <pthread.h>
 #include <intrin.h>
 #include <sched.h>
 #include <signal.h>
-#include <intrin.h>
 
 #include "xcp.h"
 #include "xcp_hw.h"
@@ -56,6 +56,10 @@ void XcpThrd_RunThreads(void)
     pthread_join(threads[UI_THREAD], NULL);
     pthread_kill(threads[TL_THREAD], SIGINT);
     pthread_kill(threads[XCP_THREAD], SIGINT);
+
+//    bool __sync_bool_compare_and_swap (type *ptr, type oldval type newval, ...)
+//           type __sync_val_compare_and_swap (type *ptr, type oldval type newval, ...)
+
 }
 
 
@@ -117,10 +121,13 @@ void XcpThrd_ShutDown(void)
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_cancel()", errno);
     }
-    _InterlockedIncrement16(&XcpThrd_ShuttingDown);
+//    _InterlockedIncrement16(&XcpThrd_ShuttingDown);
+  __sync_fetch_and_add(&XcpThrd_ShuttingDown, 1);
 }
 
 bool XcpThrd_IsShuttingDown(void)
 {
-    return _InterlockedCompareExchange16(&XcpThrd_ShuttingDown, 0, 0);
+    return __sync_bool_compare_and_swap (&XcpThrd_ShuttingDown, 0, 0);
+
+//    return _InterlockedCompareExchange16(&XcpThrd_ShuttingDown, 0, 0);
 }

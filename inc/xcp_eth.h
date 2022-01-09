@@ -69,6 +69,7 @@ typedef struct tagXcpTl_ConnectionType {
 
 #if defined(__unix__)
     #define SOCKET_ERROR        (-1)
+    #define INVALID_SOCKET      (-1)
     #define ZeroMemory(b,l )    memset((b), 0, (l))
 #endif
 

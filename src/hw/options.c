@@ -35,7 +35,7 @@
 
 #if defined(TP_ETHER)
 static const char OPTION_STR[] = "htu46p:";
-#elif defined(SOCKET_CAN)
+#elif defined(TP_CAN)
 static const char OPTION_STR[] = "hi:f";
 #endif
 
@@ -96,7 +96,7 @@ void usage(void)
     printf("-4\t  IPv4\t\t  default: TRUE\n");
     printf("-6\t  IPv6\t\t  default: FALSE\n");
     printf("-p <port> port to listen  default: 5555\n");
-#elif defined(SOCKET_CAN)
+#elif defined(TP_CAN)
     printf("-h\tthis message.\n");
     printf("-f\t\tuse CAN-FD\t\tdefault: FALSE\n");
     printf("-i <if-name>\tinterface to use\tdefault: vcan0\n");
@@ -117,7 +117,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
     options->tcp = XCP_TRUE;
     options->ipv6 = XCP_FALSE;
     options->port = XCP_ETH_DEFAULT_PORT;
-#elif defined(SOCKET_CAN)
+#elif defined(TP_CAN)
     int if_assigned = 0;
     options->fd = XCP_FALSE;
 #endif
@@ -163,7 +163,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
                 break;
             case 'p':
                 options->port = atoi(optarg);
-#elif defined(SOCKET_CAN)
+#elif defined(TP_CAN)
             case 'f':
                 options->fd = XCP_TRUE;
                 break;
@@ -175,7 +175,7 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
         }
     }
 
-#if defined(SOCKET_CAN)
+#if defined(TP_CAN)
     if (!if_assigned) {
         strcpy(options->interface, XCP_SOCKET_CAN_DEFAULT_IF);
     }
