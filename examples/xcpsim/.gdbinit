@@ -1,3 +1,5 @@
+handle SIG34 nostop noprint
+
 python
 
 # GDB dashboard - Modular visual interface for GDB in Python.
