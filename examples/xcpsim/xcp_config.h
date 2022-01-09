@@ -164,7 +164,7 @@
 /*
 **  Transport-Layer specific Options (may not apply to every Transport).
 */
-#if defined(KVASER_CAN)
+#if defined(TP_CAN)
     #define XCP_TRANSPORT_LAYER                         XCP_ON_CAN
 
     #define XCP_ON_CAN_INBOUND_IDENTIFIER               (0x102)
