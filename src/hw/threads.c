@@ -23,7 +23,10 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#define _GNU_SOURCE
 #include <pthread.h>
+#include <intrin.h>
+#include <sched.h>
 #include <signal.h>
 #include <intrin.h>
 
@@ -42,17 +45,46 @@ pthread_t threads[NUM_THREADS];
 
 static short XcpThrd_ShuttingDown __attribute__((aligned(8)))  = 0L;
 
+void bye(void);
+
 void XcpThrd_RunThreads(void)
 {
+    atexit(bye);
     pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
     pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
     pthread_create(&threads[XCP_THREAD], NULL, &Xcp_Thread, NULL);
     pthread_join(threads[UI_THREAD], NULL);
-    XcpThrd_ShutDown();
     pthread_kill(threads[TL_THREAD], SIGINT);
     pthread_kill(threads[XCP_THREAD], SIGINT);
 }
 
+
+void bye(void)
+{
+    printf("Exiting program.\n");
+}
+
+#if 0
+void XcpThrd_SetAffinity(pthread_t thrd, int cpu)
+{
+    int res;
+    cpu_set_t cpuset;
+
+    CPU_ZERO(&cpuset);
+
+    CPU_SET(0, &cpuset);
+
+    res = pthread_setaffinity_np(thrd, sizeof(cpu_set_t), &cpuset);
+    if (res != 0) {
+        XcpHw_ErrorMsg("pthread_setaffinity_np()", errno);
+    }
+
+    res = pthread_getaffinity_np(thrd, sizeof(cpu_set_t), &cpuset);
+    if (res != 0) {
+        XcpHw_ErrorMsg("pthread_getaffinity_np()", errno);
+    }
+}
+#endif
 
 void * Xcp_Thread(void * param)
 {
