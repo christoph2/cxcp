@@ -101,7 +101,7 @@ elseif(UNIX)
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
 
     add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c")
-    target_compile_definitions(xcp_sim_can PUBLIC SOCKET_CAN)
+    target_compile_definitions(xcp_sim_can PUBLIC TP_CAN)
     target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim_can ${ADD_LIBS})
     target_compile_features(xcp_sim_can PRIVATE c_std_11)
