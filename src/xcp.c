@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -24,10 +24,7 @@
  */
 
 #include "xcp.h"
-
-#if defined(_MSC_VER)
-#include <stdio.h>
-#endif /* _MSC_VER */
+#include "xcp_hw.h"
 
 /*
 ** Private Options.

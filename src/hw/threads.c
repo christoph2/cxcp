@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2021-2022 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -23,12 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#define _GNU_SOURCE
 #include <errno.h>
 #include <pthread.h>
-#include <intrin.h>
 #include <sched.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #include "xcp.h"
 #include "xcp_hw.h"
