@@ -158,7 +158,7 @@
     #define XCP_ENABLE_PROGRAM_MAX                  XCP_OFF
     #define XCP_ENABLE_PROGRAM_VERIFY               XCP_OFF
 
-#define XCP_ENABLE_EVENT_PACKET_API                 XCP_OFF
+#define XCP_ENABLE_EVENT_PACKET_API                 XCP_ON
 #define XCP_ENABLE_SERVICE_REQUEST_API              XCP_OFF
 
 /*
