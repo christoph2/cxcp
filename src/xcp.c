@@ -927,10 +927,7 @@ void Xcp_DispatchCommand(Xcp_PduType const * const pdu)
 {
     const uint8_t cmd = pdu->data[0];
     DBG_TRACE1("<- ");
-//#if 0
-//    printf("[%02u] ", pdu->len);
-//    XcpUtl_Hexdump(pdu->data, pdu->len);
-//#endif
+
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         /*DBG_PRINT2("CMD: [%02X]\n\r", cmd); */
 
@@ -1105,6 +1102,7 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const * const pdu)
     uint8_t idType = Xcp_GetByte(pdu, UINT8(1));
     static uint8_t * response = XCP_NULL;
     uint32_t response_len = UINT32(0);
+    bool valid = XCP_TRUE;
 
     DBG_TRACE2("GET_ID [type: 0x%02x]\n\r", idType);
 
@@ -1118,18 +1116,19 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const * const pdu)
 #if XCP_ENABLE_GET_ID_HOOK == XCP_ON
     else {
         if (!Xcp_HookFunction_GetId(idType, &response, &response_len)) {
-            Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
-            return;
+            response_len = 0;
+            valid = XCP_FALSE;
         }
     }
 #else
     else {
-        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
-        return;
+        response_len = 0;
+        valid = XCP_FALSE;
     }
 #endif /* XCP_ENABLE_GET_ID_HOOK */
-
-    Xcp_SetMta(Xcp_GetNonPagedAddress(response));
+    if (valid) {
+        Xcp_SetMta(Xcp_GetNonPagedAddress(response));
+    }
     Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0),
         XCP_LOBYTE(XCP_LOWORD(response_len)),
         XCP_HIBYTE(XCP_LOWORD(response_len)),
@@ -1997,6 +1996,8 @@ XCP_STATIC void Xcp_ProgramClear_Res(Xcp_PduType const * const pdu)
 
     DBG_TRACE3("PROGRAM_CLEAR [mode: %d clearRange: 0x%08x]\n\r", mode, clearRange);
     XCP_ASSERT_PGM_ACTIVE();
+
+    Xcp_PositiveResponse();
 }
 
 XCP_STATIC void Xcp_Program_Res(Xcp_PduType const * const pdu)
@@ -2114,6 +2115,8 @@ XCP_STATIC void Xcp_ProgramNext_Res(Xcp_PduType const * const pdu)
 {
     DBG_TRACE1("PROGRAM_NEXT\n\r");
     XCP_ASSERT_PGM_ACTIVE();
+
+    Xcp_PositiveResponse();
 }
 #endif /* XCP_ENABLE_PROGRAM_NEXT */
 
@@ -2122,6 +2125,8 @@ XCP_STATIC void Xcp_ProgramMax_Res(Xcp_PduType const * const pdu)
 {
     DBG_TRACE1("PROGRAM_MAX\n\r");
     XCP_ASSERT_PGM_ACTIVE();
+
+    Xcp_PositiveResponse();
 }
 #endif /* XCP_ENABLE_PROGRAM_MAX */
 
@@ -2130,6 +2135,8 @@ XCP_STATIC void Xcp_ProgramVerify_Res(Xcp_PduType const * const pdu)
 {
     DBG_TRACE1("PROGRAM_VERIFY\n\r");
     XCP_ASSERT_PGM_ACTIVE();
+
+    Xcp_PositiveResponse();
 }
 #endif /* XCP_ENABLE_PROGRAM_VERIFY */
 
