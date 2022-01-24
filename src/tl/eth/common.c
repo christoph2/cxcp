@@ -91,9 +91,14 @@ static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter)
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             nbytes = recvfrom(XcpTl_Connection.boundSocket, (char*)header_buffer + offset, bytes_remaining, 0,
             (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL);
-
+            if (XcpThrd_IsShuttingDown()) {
+                return 0;
+            }
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
             nbytes = recv(XcpTl_Connection.connectedSocket, (char*)header_buffer + offset, bytes_remaining, 0);
+            if (XcpThrd_IsShuttingDown()) {
+                return 0;
+            }
         }
         if (nbytes < 1) {
             return nbytes;
@@ -152,7 +157,7 @@ void XcpTl_RxHandler(void)
 #endif
             exit(2);
         } else if (res == 0) {
-            exit(0);
+            XcpTl_ReleaseConnection();
             return;
         }
         if (!XcpThrd_IsShuttingDown()) {
@@ -166,7 +171,7 @@ void XcpTl_RxHandler(void)
 #endif
                 exit(2);
             } else if (res == 0) {
-                exit(0);
+                printf("Empty data\n");
                 return;
             }
 #if 0
@@ -176,6 +181,8 @@ void XcpTl_RxHandler(void)
             XCP_ASSERT_LE(dlc, XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE);
             XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
             Xcp_DispatchCommand(&Xcp_CtoIn);
+        } else {
+            printf("shutting down\n");
         }
     }
 }
@@ -202,7 +209,6 @@ static void XcpTl_Accept(void)
 #elif defined(__unix__)
                 XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
 #endif
-                exit(1);
             }
         } else {
         }
