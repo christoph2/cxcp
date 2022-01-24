@@ -46,5 +46,3 @@ typedef uint32_t Xcp_ChecksumType;
 Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const * ptr, uint32_t length, Xcp_ChecksumType startValue, bool isFirstCall);
 
 """
-
-

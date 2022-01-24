@@ -395,4 +395,3 @@ void XcpHw_Sleep(uint64_t usec)
 {
     usleep(usec);
 }
-

@@ -14,4 +14,3 @@ bool Xcp_IsBusy(void)
 {
     return XCP_FALSE;
 }
-

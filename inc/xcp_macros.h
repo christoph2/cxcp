@@ -176,4 +176,3 @@ extern "C"
 
 
 #endif /* __XCP_MACROS_H */
-

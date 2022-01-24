@@ -183,4 +183,3 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
 
 }
 #endif
-

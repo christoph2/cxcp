@@ -417,35 +417,19 @@ extern "C"
 #define EV_TRANSPORT                        UINT8(0xFF)
 
 /* Function-like Macros for Events. */
-#if XCP_ENABLE_EVENT_PACKET_API == XCP_ON
-    #define XcpEvent_ResumeMode()               Xcp_SendEventPacket(EV_RESUME_MODE, XCP_NULL, UINT8(0))
-    #define XcpEvent_ClearDaq()                 Xcp_SendEventPacket(EV_CLEAR_DAQ, XCP_NULL, UINT8(0))
-    #define XcpEvent_StoreDaq()                 Xcp_SendEventPacket(EV_STORE_DAQ, XCP_NULL, UINT8(0))
-    #define XcpEvent_StoreCal()                 Xcp_SendEventPacket(EV_STORE_CAL, XCP_NULL, UINT8(0))
-    #define XcpEvent_CmdPending()               Xcp_SendEventPacket(EV_CMD_PENDING, XCP_NULL, UINT8(0))
-    #define XcpEvent_DaqOverload()              Xcp_SendEventPacket(EV_DAQ_OVERLOAD, XCP_NULL, UINT8(0))
-    #define XcpEvent_SessionTerminated()        Xcp_SendEventPacket(EV_SESSION_TERMINATED, XCP_NULL, UINT8(0))
-    #define XcpEvent_TimeSync()                 Xcp_SendEventPacket(EV_TIME_SYNC, XCP_NULL, UINT8(0))
-    #define XcpEvent_StimTimeout()              Xcp_SendEventPacket(EV_STIM_TIMEOUT, XCP_NULL, UINT8(0))
-    #define XcpEvent_Sleep()                    Xcp_SendEventPacket(EV_SLEEP, XCP_NULL, UINT8(0))
-    #define XcpEvent_WakeUp()                   Xcp_SendEventPacket(EV_WAKE_UP, XCP_NULL, UINT8(0))
-    #define XcpEvent_User(data, len)            Xcp_SendEventPacket(EV_USER, (data), (len))
-    #define XcpEvent_Transport(data, len)       Xcp_SendEventPacket(EV_TRANSPORT, (data), (len))
-#else
-    #define XcpEvent_ResumeMode()
-    #define XcpEvent_ClearDaq()
-    #define XcpEvent_StoreDaq()
-    #define XcpEvent_StoreCal()
-    #define XcpEvent_CmdPending()
-    #define XcpEvent_DaqOverload()
-    #define XcpEvent_SessionTerminated()
-    #define XcpEvent_TimeSync()
-    #define XcpEvent_StimTimeout()
-    #define XcpEvent_Sleep()
-    #define XcpEvent_WakeUp()
-    #define XcpEvent_User(data, len)
-    #define XcpEvent_Transport(data, len)
-#endif /* XCP_ENABLE_EVENT_PACKET_API */
+#define XcpEvent_ResumeMode()               Xcp_SendEventPacket(EV_RESUME_MODE, XCP_NULL, UINT8(0))
+#define XcpEvent_ClearDaq()                 Xcp_SendEventPacket(EV_CLEAR_DAQ, XCP_NULL, UINT8(0))
+#define XcpEvent_StoreDaq()                 Xcp_SendEventPacket(EV_STORE_DAQ, XCP_NULL, UINT8(0))
+#define XcpEvent_StoreCal()                 Xcp_SendEventPacket(EV_STORE_CAL, XCP_NULL, UINT8(0))
+#define XcpEvent_CmdPending()               Xcp_SendEventPacket(EV_CMD_PENDING, XCP_NULL, UINT8(0))
+#define XcpEvent_DaqOverload()              Xcp_SendEventPacket(EV_DAQ_OVERLOAD, XCP_NULL, UINT8(0))
+#define XcpEvent_SessionTerminated()        Xcp_SendEventPacket(EV_SESSION_TERMINATED, XCP_NULL, UINT8(0))
+#define XcpEvent_TimeSync()                 Xcp_SendEventPacket(EV_TIME_SYNC, XCP_NULL, UINT8(0))
+#define XcpEvent_StimTimeout()              Xcp_SendEventPacket(EV_STIM_TIMEOUT, XCP_NULL, UINT8(0))
+#define XcpEvent_Sleep()                    Xcp_SendEventPacket(EV_SLEEP, XCP_NULL, UINT8(0))
+#define XcpEvent_WakeUp()                   Xcp_SendEventPacket(EV_WAKE_UP, XCP_NULL, UINT8(0))
+#define XcpEvent_User(data, len)            Xcp_SendEventPacket(EV_USER, (data), (len))
+#define XcpEvent_Transport(data, len)       Xcp_SendEventPacket(EV_TRANSPORT, (data), (len))
 
 /*
  * XCP Service Request Codes
@@ -456,7 +440,6 @@ extern "C"
 /* Function-like Macros for Service Requests. */
 #define XcpService_Reset()                  Xcp_SendServiceRequestPacket(SERV_RESET, XCP_NULL, UINT8(0))
 #define XcpService_Text(txt, txt_len)       Xcp_SendServiceRequestPacket(SERV_TEXT, (txt), (txt_len))
-
 
 #define XCP_DAQ_PREDEFINDED_LIST_COUNT      (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 

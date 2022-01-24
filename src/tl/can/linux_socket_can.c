@@ -266,5 +266,3 @@ void XcpTl_PrintConnectionInformation(void)
     );
 #endif
 }
-
-

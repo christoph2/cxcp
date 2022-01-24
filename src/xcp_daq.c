@@ -756,4 +756,3 @@ bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data)
 }
 //#endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 #endif /* XCP_DAQ_ENABLE_QUEUING */
-

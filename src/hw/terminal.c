@@ -400,4 +400,3 @@ void XcpDaq_Info(void)
     printf("\tfunctionality not supported.\n\r");
 #endif
 }
-

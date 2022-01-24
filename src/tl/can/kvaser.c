@@ -162,7 +162,8 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
             } else if (status & canSTAT_ERROR_ACTIVE) {
                 /** Kv_Info("Error-Active"); */
             } else {
-                printf("BusOn/BusOff %lu\n", status);  // ???
+                printf("BusOn/BusOff %lu\n", status);
+  // ???
             }
             break;
         default:
@@ -366,5 +367,3 @@ void XcpTl_PrintConnectionInformation(void)
         XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
     );
 }
-
-

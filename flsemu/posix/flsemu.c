@@ -184,4 +184,3 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page)
     }
 */
 }
-

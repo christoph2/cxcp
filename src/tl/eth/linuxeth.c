@@ -140,4 +140,3 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     }
     XCP_TL_LEAVE_CRITICAL();
 }
-

@@ -2411,4 +2411,3 @@ XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t a
      */
     Xcp_State.daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;
 }
-

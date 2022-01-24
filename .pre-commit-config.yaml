@@ -1,0 +1,45 @@
+repos:
+- repo: local
+  hooks:
+      #- id: check-yaml
+      #name: check-yaml
+      #entry: check-yaml
+      #language: python
+      #types: [yaml]
+      #stages: [commit]
+  - id: check-json
+    name: check-json
+    entry: check-json
+    language: python
+    types: [json]
+    stages: [commit]
+  - id: check-toml
+    name: check-toml
+    entry: check-toml
+    language: python
+    types: [toml]
+    stages: [commit]
+  - id: check-merge-conflict
+    name: check-merge-conflict
+    entry: check-merge-conflict
+    language: python
+    types: [text]
+    stages: [commit]
+  - id: mixed-line-ending
+    name: mixed-line-ending
+    entry: mixed-line-ending
+    language: python
+    types_or: [c, c++, python]
+    stages: [commit]
+  - id: end-of-file-fixer
+    name: end-of-file-fixer
+    entry: end-of-file-fixer
+    language: python
+    types_or: [c, c++, python]
+    stages: [commit]
+  - id: trailing-whitespace-fixer
+    name: trailing-whitespace-fixer
+    entry: trailing-whitespace-fixer
+    language: python
+    types_or: [c, c++, python]
+    stages: [commit]

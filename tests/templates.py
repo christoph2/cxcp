@@ -70,4 +70,3 @@ def doTemplateFromText(tmpl, namespace = {}, leftMargin = 0, rightMargin = 80, f
 
 def callDef(template, definition, *args, **kwargs):
     return template.get_def(definition).render(*args, **kwargs)
-

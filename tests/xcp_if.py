@@ -72,4 +72,3 @@ class XCP(API):
         data = (ctypes.c_uint8 * 256)()
         res = self.XcpDaq_QueueDequeue(ctypes.byref(length), data)
         return res, bytes(data[ : length.value])
-

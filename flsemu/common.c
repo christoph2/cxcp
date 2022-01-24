@@ -279,4 +279,3 @@ FlsEmu_ModuleStateType * FlsEmu_GetModuleState(void)
 {
     return &FlsEmu_ModuleState;
 }
-

@@ -286,4 +286,3 @@ static void MemoryInfo(void * address)
 
     VirtualQuery(address, &info, sizeof(MEMORY_BASIC_INFORMATION));
 }
-
