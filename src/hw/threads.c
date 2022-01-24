@@ -29,6 +29,15 @@
 #include <signal.h>
 #include <stdlib.h>
 
+#include <stdbool.h>
+
+/*
+** NOTE: Atomics require at least C11.
+*/
+#if !defined(__STDC_NO_ATOMICS__)
+    #include <stdatomic.h>
+#endif /* __STDC_NO_ATOMICS__ */
+
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "xcp_threads.h"
@@ -42,7 +51,11 @@
 
 pthread_t threads[NUM_THREADS];
 
-static short XcpThrd_ShuttingDown __attribute__((aligned(8)))  = 0L;
+#if defined(__STDC_NO_ATOMICS__)
+static bool XcpThrd_ShuttingDown;
+#else
+static atomic_bool XcpThrd_ShuttingDown;
+#endif  /* __STDC_NO_ATOMICS__ */
 
 void bye(void);
 
@@ -53,12 +66,9 @@ void XcpThrd_RunThreads(void)
     pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
     pthread_create(&threads[XCP_THREAD], NULL, &Xcp_Thread, NULL);
     pthread_join(threads[UI_THREAD], NULL);
+    XcpThrd_ShutDown();
     pthread_kill(threads[TL_THREAD], SIGINT);
     pthread_kill(threads[XCP_THREAD], SIGINT);
-
-//    bool __sync_bool_compare_and_swap (type *ptr, type oldval type newval, ...)
-//           type __sync_val_compare_and_swap (type *ptr, type oldval type newval, ...)
-
 }
 
 
@@ -112,21 +122,18 @@ void XcpThrd_ShutDown(void)
 {
     int res;
 
-    /* printf("Shutdown RQ.\n"); */
-    if (XcpThrd_IsShuttingDown() > 0) {
+    printf("Shutdown RQ.\n");
+    if (XcpThrd_IsShuttingDown()) {
         return;
     }
     res = pthread_cancel(threads[TL_THREAD]);   // Due to blocking accept().
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_cancel()", errno);
     }
-//    _InterlockedIncrement16(&XcpThrd_ShuttingDown);
-  __sync_fetch_and_add(&XcpThrd_ShuttingDown, 1);
+  XcpThrd_ShuttingDown = true;
 }
 
 bool XcpThrd_IsShuttingDown(void)
 {
-    return __sync_bool_compare_and_swap (&XcpThrd_ShuttingDown, 0, 0);
-
-//    return _InterlockedCompareExchange16(&XcpThrd_ShuttingDown, 0, 0);
+    return XcpThrd_ShuttingDown;
 }
