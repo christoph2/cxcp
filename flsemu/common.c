@@ -27,7 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "flsemu.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 /*
 **  Local Defines.

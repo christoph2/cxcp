@@ -24,8 +24,10 @@
  */
 
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_util.h"
 #include "xcp_macros.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_MSC_VER)
 #include <stdio.h>

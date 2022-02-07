@@ -23,9 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "Xcp.h"
 #include "Xcp_hw.h"
+/*!!! END-INCLUDE-SECTION !!!*/
+
 #include "canlib.h"
 
 #include <stdio.h>

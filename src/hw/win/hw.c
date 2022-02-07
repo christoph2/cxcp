@@ -34,8 +34,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 /*
 **  Local Types.

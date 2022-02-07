@@ -31,8 +31,10 @@
 
 #include <stdlib.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_eth.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 
 void XcpHw_ErrorMsg(char * const function, int errorCode);

@@ -38,9 +38,11 @@
     #include <stdatomic.h>
 #endif /* __STDC_NO_ATOMICS__ */
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "xcp_threads.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #define XCP_THREAD  (0)
 #define UI_THREAD   (1)

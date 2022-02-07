@@ -31,7 +31,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #else
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 #endif
 
 

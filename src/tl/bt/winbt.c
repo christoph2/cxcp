@@ -23,9 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "xcp_eth.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #include <stdio.h>
 #include <stdint.h>

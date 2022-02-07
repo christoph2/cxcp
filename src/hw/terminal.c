@@ -26,10 +26,12 @@
 #include <ctype.h>
 #include <pthread.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "xcp_terminal.h"
 #include "flsemu.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_WIN32)
     #include <windows.h>

@@ -43,8 +43,10 @@
 #include <unistd.h>
 
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 
 #define err_abort(code,text) do { \

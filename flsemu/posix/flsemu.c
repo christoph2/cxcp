@@ -36,9 +36,9 @@
 #include <string.h>
 #include <unistd.h>
 
-
-#include <flsemu.h>
-#include <flsemu.h>
+/*!!! START-INCLUDE-SECTION !!!*/
+#include "flsemu.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #define handle_error(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
 #define FLSEMU_ERASED_VALUE (0xff) /**< Value of an erased Flash/EEPROM cell. */

@@ -27,10 +27,12 @@
 #include <stdlib.h>
 #include <memory.h>
 
-
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "xcp_eth.h"
+/*!!! END-INCLUDE-SECTION !!!*/
+
 
 #define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
 #define DEFAULT_SOCKTYPE   SOCK_STREAM //

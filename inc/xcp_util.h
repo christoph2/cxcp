@@ -34,8 +34,9 @@ extern "C"
 #endif  /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
 
-
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_types.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 void XcpUtl_MemCopy(void * dst, void const * src, uint32_t len);
 void XcpUtl_MemSet(void * dest, uint8_t fill_char, uint32_t len);

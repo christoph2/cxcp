@@ -23,9 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "xcp_eth.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 
 socklen_t addrSize = sizeof(struct sockaddr_storage);

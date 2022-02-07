@@ -28,9 +28,11 @@
 
 #include <assert.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_types.h"
 #include "xcp_macros.h"
 #include "xcp_util.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #define XCP_PROTOCOL_VERSION_MAJOR       (1)
 #define XCP_PROTOCOL_VERSION_RELEASE     (0)

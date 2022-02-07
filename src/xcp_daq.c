@@ -27,8 +27,10 @@
 #include <stdio.h>
 #endif /* _WIN32 */
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_util.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 
 /*

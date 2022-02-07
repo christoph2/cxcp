@@ -23,8 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_hw.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 /*
 ** Private Options.

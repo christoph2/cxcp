@@ -27,8 +27,10 @@
 #include "Arduino.h"
 #endif
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_util.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 
 #define XCP_SXI_MAKEWORD(buf, offs)  ((*((buf) + (offs))) | (( *((buf) + (offs) + 1) << 8)))

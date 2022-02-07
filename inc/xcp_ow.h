@@ -27,7 +27,10 @@
 #define XCP_OW_H_INCLUDED
 
 #include <Windows.h>
+
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 /*
 **  Global Types.

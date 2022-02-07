@@ -31,7 +31,9 @@
  * expressed or implied by its publication or distribution.
  **********************************************************************/
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 
 /*

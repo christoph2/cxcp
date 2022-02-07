@@ -25,7 +25,9 @@
 
 #include <stdlib.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_WIN32)
 

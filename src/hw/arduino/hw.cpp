@@ -26,7 +26,9 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
 #if 0
 typedef struct tagHwStateType {

@@ -26,8 +26,11 @@
 #include <assert.h>
 #include <string.h>
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "flsemu.h"
 #include "xcp_hw.h"
+/*!!! END-INCLUDE-SECTION !!!*/
+
 
 #define _WIN32_WINNT    0x601
 #include <Windows.h>
