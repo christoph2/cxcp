@@ -32,60 +32,40 @@
 #include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-
-#define XCP_SXI_MAKEWORD(buf, offs)  ((*((buf) + (offs))) | (( *((buf) + (offs) + 1) << 8)))
-
+#define XCP_SXI_MAKEWORD(buf, offs) ((*((buf) + (offs))) | ((*((buf) + (offs) + 1) << 8)))
 
 void XcpTl_SignalTimeout(void);
 
 static void XcpTl_ResetSM(void);
 
-typedef enum tagXcpTl_ReceiverStateType {
-    XCP_RCV_IDLE,
-    XCP_RCV_UNTIL_LENGTH,
-    XCP_RCV_REMAINING
-} XcpTl_ReceiverStateType;
-
+typedef enum tagXcpTl_ReceiverStateType { XCP_RCV_IDLE, XCP_RCV_UNTIL_LENGTH, XCP_RCV_REMAINING } XcpTl_ReceiverStateType;
 
 typedef struct tagXcpTl_ReceiverType {
     uint8_t Buffer[XCP_COMM_BUFLEN];
     XcpTl_ReceiverStateType State;
     uint16_t Index;
     uint16_t Remaining;
-    uint16_t Dlc;   /* TODO: config!!! */
-    uint16_t Ctr;   /* TODO: config!!! */
+    uint16_t Dlc; /* TODO: config!!! */
+    uint16_t Ctr; /* TODO: config!!! */
 } XcpTl_ReceiverType;
-
 
 static XcpTl_ReceiverType XcpTl_Receiver;
 
+void XcpTl_Init(void) { XcpTl_ResetSM(); }
 
-void XcpTl_Init(void)
-{
-    XcpTl_ResetSM();
-}
+void XcpTl_DeInit(void) {}
 
-void XcpTl_DeInit(void)
-{
+void XcpTl_MainFunction(void) {}
 
-}
-
-
-void XcpTl_MainFunction(void)
-{
-}
-
-
-/********************************************//**
- * \brief Initialize, i.e. reset receiver state
- *        Machine
- *
- * \param void
- * \return void
- *
- ***********************************************/
-static void XcpTl_ResetSM(void)
-{
+/********************************************/ /**
+                                                * \brief Initialize, i.e. reset receiver state
+                                                *        Machine
+                                                *
+                                                * \param void
+                                                * \return void
+                                                *
+                                                ***********************************************/
+static void XcpTl_ResetSM(void) {
     XcpTl_Receiver.State = XCP_RCV_IDLE;
     XcpTl_Receiver.Index = 0u;
     XcpTl_Receiver.Dlc = 0u;
@@ -93,23 +73,15 @@ static void XcpTl_ResetSM(void)
     XcpTl_Receiver.Remaining = 0u;
 }
 
+void XcpTl_RxHandler(void) {}
 
-void XcpTl_RxHandler(void)
-{
-
-}
-
-
-void XcpTl_SignalTimeout(void)
-{
+void XcpTl_SignalTimeout(void) {
     XCP_TL_ENTER_CRITICAL();
     XcpTl_ResetSM();
     XCP_TL_LEAVE_CRITICAL();
 }
 
-
-void XcpTl_FeedReceiver(uint8_t octet)
-{
+void XcpTl_FeedReceiver(uint8_t octet) {
     XCP_TL_ENTER_CRITICAL();
 
     XcpTl_Receiver.Buffer[XcpTl_Receiver.Index] = octet;
@@ -128,7 +100,6 @@ void XcpTl_FeedReceiver(uint8_t octet)
         }
         XcpTl_Receiver.Remaining--;
         if (XcpTl_Receiver.Remaining == 0u) {
-
             XcpTl_ResetSM();
 
             Xcp_CtoIn.len = XcpTl_Receiver.Dlc;
@@ -144,8 +115,7 @@ void XcpTl_FeedReceiver(uint8_t octet)
 
 #include <stdio.h>
 
-void XcpTl_Send(uint8_t const * buf, uint16_t len)
-{
+void XcpTl_Send(uint8_t const* buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
 #if defined(ARDUINO)
     Serial.write(buf, len);
@@ -162,21 +132,14 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     XCP_TL_LEAVE_CRITICAL();
 }
 
-void XcpTl_SaveConnection(void)
-{
+void XcpTl_SaveConnection(void) {}
 
-}
+void XcpTl_ReleaseConnection(void) {}
 
-void XcpTl_ReleaseConnection(void)
-{
-
-}
-
-void XcpTl_PrintConnectionInformation(void)
-{
+void XcpTl_PrintConnectionInformation(void) {
     printf("\nXCPonSxi\n"
- //       ; DEFAULT_PORT,
- //       Xcp_Options.tcp ? "TCP" : "UDP",
- //       Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+           //       ; DEFAULT_PORT,
+           //       Xcp_Options.tcp ? "TCP" : "UDP",
+           //       Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
 }

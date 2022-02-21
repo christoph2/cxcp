@@ -38,38 +38,25 @@ typedef struct tagHwStateType {
 static HwStateType HwState = {0};
 #endif
 
-void XcpHw_Init(void)
-{
-    //HwState.StartingTime = micros();
+void XcpHw_Init(void) {
+    // HwState.StartingTime = micros();
 }
 
-
-uint32_t XcpHw_GetTimerCounter(void)
-{
+uint32_t XcpHw_GetTimerCounter(void) {
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
     return micros();
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
     return millis();
 #else
 #error Timestamp-unit not supported.
-#endif // XCP_DAQ_TIMESTAMP_UNIT
+#endif  // XCP_DAQ_TIMESTAMP_UNIT
 }
 
+bool XcpHw_SxIAvailable(void) { return Serial.available(); }
 
-bool XcpHw_SxIAvailable(void)
-{
-    return Serial.available();
-}
+uint8_t XcpHw_SxIRead(void) { return (uint8_t)Serial.read(); }
 
-
-uint8_t XcpHw_SxIRead(void)
-{
-    return (uint8_t)Serial.read();
-}
-
-
-
-//void Xcp_Tl_FeedReceiver(uint8_t octet);
+// void Xcp_Tl_FeedReceiver(uint8_t octet);
 
 // Transport-Layer: Frame-based vs. byte-wise interfaces!
 

@@ -28,24 +28,21 @@
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
-extern "C"
-{
-#endif  /* __cplusplus */
+extern "C" {
+#endif /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
 
 /*
 **  Global Functions.
 */
-void XcpHw_ParseCommandLineOptions(int argc, char **argv, Xcp_OptionsType * options);
-void XcpHw_ErrorMsg(char * const function, int errorCode);
+void XcpHw_ParseCommandLineOptions(int argc, char **argv, Xcp_OptionsType *options);
+void XcpHw_ErrorMsg(char *const function, int errorCode);
 void XcpHw_Sleep(uint64_t usec);
-
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
 }
-#endif  /* __cplusplus */
+#endif /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
-
 
 #endif /* __XCP_HW_H */

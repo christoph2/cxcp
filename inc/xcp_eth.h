@@ -27,23 +27,22 @@
 #define __XCP_ETH_H
 
 #if defined(_WIN32)
-    #include <WinSock2.h>
-    #include <Ws2tcpip.h>
-    #include <Mstcpip.h>
+#include <Mstcpip.h>
+#include <WinSock2.h>
+#include <Ws2tcpip.h>
 #elif defined(__unix__)
-    #include <fcntl.h>
-    #include <unistd.h>
-    #include <errno.h>
-    #include <string.h>
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <netdb.h>
-    #include <arpa/inet.h>
-    #include <sys/wait.h>
-    #include <signal.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #endif
-
 
 #if defined(_WIN32)
 typedef struct tagXcpTl_ConnectionType {
@@ -54,8 +53,8 @@ typedef struct tagXcpTl_ConnectionType {
     SOCKET connectedSocket;
     bool connected;
     int socketType;
- } XcpTl_ConnectionType;
- #elif defined(__unix__)
+} XcpTl_ConnectionType;
+#elif defined(__unix__)
 typedef struct tagXcpTl_ConnectionType {
     struct sockaddr_storage connectionAddress;
     struct sockaddr_storage currentAddress;
@@ -64,14 +63,13 @@ typedef struct tagXcpTl_ConnectionType {
     int connectedSocket;
     bool connected;
     int socketType;
- } XcpTl_ConnectionType;
+} XcpTl_ConnectionType;
 #endif
 
 #if defined(__unix__)
-    #define SOCKET_ERROR        (-1)
-    #define INVALID_SOCKET      (-1)
-    #define ZeroMemory(b,l )    memset((b), 0, (l))
+#define SOCKET_ERROR (-1)
+#define INVALID_SOCKET (-1)
+#define ZeroMemory(b, l) memset((b), 0, (l))
 #endif
 
-
-#endif  /* __XCP_ETH_H */
+#endif /* __XCP_ETH_H */

@@ -32,12 +32,11 @@
 #include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-
 /*
 ** Private Parameters for now.
 */
-#define XCP_DAQ_QUEUE_SIZE          (4)
-#define XCP_DAQ_ENABLE_QUEUING      XCP_ON
+#define XCP_DAQ_QUEUE_SIZE (4)
+#define XCP_DAQ_ENABLE_QUEUING XCP_ON
 
 /*
 ** Local Types.
@@ -47,10 +46,7 @@ typedef struct {
     uint8_t data[XCP_MAX_DTO];
 } XcpDaq_OdtType;
 
-typedef enum tagXcpDaq_AllocResultType {
-    DAQ_ALLOC_OK,
-    DAQ_ALLOC_ERR
-} XcpDaq_AllocResultType;
+typedef enum tagXcpDaq_AllocResultType { DAQ_ALLOC_OK, DAQ_ALLOC_ERR } XcpDaq_AllocResultType;
 
 typedef enum tagXcpDaq_AllocStateType {
     XCP_ALLOC_IDLE,
@@ -67,10 +63,7 @@ typedef enum tagXcpDaq_AllocTransitionType {
     XCP_CALL_ALLOC_ODT_ENTRY
 } XcpDaq_AllocTransitionype;
 
-typedef enum tagXcpDaq_ListTransitionType {
-    DAQ_LIST_TRANSITION_START,
-    DAQ_LIST_TRANSITION_STOP
-} XcpDaq_ListTransitionType;
+typedef enum tagXcpDaq_ListTransitionType { DAQ_LIST_TRANSITION_START, DAQ_LIST_TRANSITION_STOP } XcpDaq_ListTransitionType;
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
 typedef struct tagXcpDaq_QueueType {
@@ -83,8 +76,7 @@ typedef struct tagXcpDaq_QueueType {
 /*
 ** Local Function-like Macros.
 */
-#define XCP_DAQ_MESSAGE_SIZE(msg)   UINT16((((msg)->dlc) + sizeof(uint8_t)))
-
+#define XCP_DAQ_MESSAGE_SIZE(msg) UINT16((((msg)->dlc) + sizeof(uint8_t)))
 
 /*
 ** Local Function Prototypes.
@@ -98,7 +90,7 @@ XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const * data);
+XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
 #endif /* XCP_DAQ_ENABLE_QUEUING */
 
 /*
@@ -106,12 +98,12 @@ XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const * data);
 */
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
-                            /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT             ALLOC_ODT_ENTRY    */
-/* ALLOC_IDLE*/             {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
-/* AFTER_FREE_DAQ  */       {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK) , UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
-/* AFTER_ALLOC_DAQ */       {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK) , UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR) },
-/* AFTER_ALLOC_ODT */       {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK)  },
-/* AFTER_ALLOC_ODT_ENTRY */ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)  },
+    /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT             ALLOC_ODT_ENTRY    */
+    /* ALLOC_IDLE*/ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
+    /* AFTER_FREE_DAQ  */ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
+    /* AFTER_ALLOC_DAQ */ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR)},
+    /* AFTER_ALLOC_ODT */ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK)},
+    /* AFTER_ALLOC_ODT_ENTRY */ {UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)},
 };
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -123,7 +115,7 @@ XCP_STATIC XcpDaq_EntityType XcpDaq_Entities[XCP_DAQ_MAX_DYNAMIC_ENTITIES];
 
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC XcpDaq_AllocStateType XcpDaq_AllocState;
-XCP_STATIC XcpDaq_ListStateType XcpDaq_ListState ;
+XCP_STATIC XcpDaq_ListStateType XcpDaq_ListState;
 XCP_STATIC XcpDaq_ListConfigurationType XcpDaq_ListConfiguration;
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -132,10 +124,10 @@ XCP_STATIC XcpDaq_QueueType XcpDaq_Queue = {0};
 XCP_STATIC XcpDaq_OdtType XcpDaq_QueueDTOs[XCP_DAQ_QUEUE_SIZE] = {0};
 #endif /* XCP_DAQ_ENABLE_QUEUING */
 
-#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
+#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_OFF
 XCP_STATIC uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 #else
-    #error XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT option currently not supported
+#error XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT option currently not supported
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
@@ -143,7 +135,6 @@ XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_EntityCount = (XCP_DAQ_ENTITY_TYPE)0;
 XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_ListCount = (XCP_DAQ_ENTITY_TYPE)0;
 XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_OdtCount = (XCP_DAQ_ENTITY_TYPE)0;
 #endif /* XCP_BUILD_TYPE */
-
 
 /*
 **
@@ -155,29 +146,28 @@ XCP_STATIC XCP_DAQ_ENTITY_TYPE XcpDaq_OdtCount = (XCP_DAQ_ENTITY_TYPE)0;
 ** Dynamic DAQ related functions.
 */
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-Xcp_ReturnType XcpDaq_Free(void)
-{
+Xcp_ReturnType XcpDaq_Free(void) {
     Xcp_ReturnType result = ERR_SUCCESS;
 
     XcpDaq_EntityCount = (XCP_DAQ_ENTITY_TYPE)0;
     XcpDaq_ListCount = (XCP_DAQ_ENTITY_TYPE)0;
     XcpDaq_OdtCount = (XCP_DAQ_ENTITY_TYPE)0;
 
-#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
+#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_OFF
     XcpUtl_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 
     if (XcpDaq_AllocValidateTransition(XCP_CALL_FREE_DAQ)) {
-        XcpUtl_MemSet(XcpDaq_Entities, UINT8(0), UINT32(sizeof(XcpDaq_EntityType) * (XCP_DAQ_ENTITY_TYPE)XCP_DAQ_MAX_DYNAMIC_ENTITIES));
+        XcpUtl_MemSet(XcpDaq_Entities, UINT8(0),
+                      UINT32(sizeof(XcpDaq_EntityType) * (XCP_DAQ_ENTITY_TYPE)XCP_DAQ_MAX_DYNAMIC_ENTITIES));
         XcpDaq_AllocState = XCP_AFTER_FREE_DAQ;
     } else {
-        result = ERR_SEQUENCE;  /* Never touched; function always succeeds. */
+        result = ERR_SEQUENCE; /* Never touched; function always succeeds. */
     }
     return result;
 }
 
-Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
-{
+Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount) {
     XCP_DAQ_ENTITY_TYPE idx;
     Xcp_ReturnType result = ERR_SUCCESS;
 
@@ -202,8 +192,7 @@ Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount)
     return result;
 }
 
-Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtCount)
-{
+Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtCount) {
     XCP_DAQ_ENTITY_TYPE idx;
     Xcp_ReturnType result = ERR_SUCCESS;
 
@@ -225,13 +214,12 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
         } else {
             result = ERR_MEMORY_OVERFLOW;
         }
-
     }
     return result;
 }
 
-Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntriesCount)
-{
+Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber,
+                                    XcpDaq_ODTEntryIntegerType odtEntriesCount) {
     XCP_DAQ_ENTITY_TYPE idx;
     XcpDaq_ODTIntegerType odt;
     Xcp_ReturnType result = ERR_SUCCESS;
@@ -258,9 +246,7 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq
     return result;
 }
 
-
-XCP_STATIC bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition)
-{
+XCP_STATIC bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition) {
     /* printf("STATE: %u TRANSITION: %u\n", XcpDaq_AllocState, transition); */
     if (XcpDaq_AllocTransitionTable[XcpDaq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
         return (bool)XCP_TRUE;
@@ -269,16 +255,10 @@ XCP_STATIC bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transit
     }
 }
 
-
-XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void)
-{
-    return (XcpDaq_ListIntegerType)XcpDaq_ListCount;
-}
+XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void) { return (XcpDaq_ListIntegerType)XcpDaq_ListCount; }
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
-
-void XcpDaq_Init(void)
-{
+void XcpDaq_Init(void) {
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     XcpDaq_ListIntegerType idx = 0;
 
@@ -300,13 +280,13 @@ void XcpDaq_Init(void)
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-    //XcpDaq_QueueInit();
+    // XcpDaq_QueueInit();
 #endif
 }
 
-XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber)
-{
-    XcpDaq_ODTType const * odt = XCP_NULL;
+XcpDaq_ODTEntryType *XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber,
+                                        XcpDaq_ODTEntryIntegerType odtEntryNumber) {
+    XcpDaq_ODTType const *odt = XCP_NULL;
     XcpDaq_ODTIntegerType idx = 0;
 
     /* printf("XcpDaq_GetOdtEntry(()\n"); */
@@ -322,20 +302,18 @@ XcpDaq_ODTEntryType * XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber, X
     /* Predefined DAQs only */
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
-#endif // XCP_DAQ_ENABLE_DYNAMIC_LISTS
+#endif  // XCP_DAQ_ENABLE_DYNAMIC_LISTS
 }
 
-XcpDaq_ListConfigurationType const * XcpDaq_GetListConfiguration(XcpDaq_ListIntegerType daqListNumber)
-{
+XcpDaq_ListConfigurationType const *XcpDaq_GetListConfiguration(XcpDaq_ListIntegerType daqListNumber) {
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 
+#endif  // XCP_DAQ_ENABLE_DYNAMIC_LISTS
 
-#endif // XCP_DAQ_ENABLE_DYNAMIC_LISTS
-
-    //printf("XcpDaq_GetListConfiguration(%u)\n", daqListNumber);
+    // printf("XcpDaq_GetListConfiguration(%u)\n", daqListNumber);
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    XcpDaq_DynamicListType * dl = &XcpDaq_Entities[daqListNumber].entity.daqList;
+    XcpDaq_DynamicListType *dl = &XcpDaq_Entities[daqListNumber].entity.daqList;
 
     XcpDaq_ListConfiguration.firstOdt = dl->firstOdt;
     XcpDaq_ListConfiguration.numOdts = dl->numOdts;
@@ -350,10 +328,8 @@ XcpDaq_ListConfigurationType const * XcpDaq_GetListConfiguration(XcpDaq_ListInte
 #endif
 }
 
-XcpDaq_ListStateType * XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber)
-{
+XcpDaq_ListStateType *XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber) {
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-
 
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -368,7 +344,7 @@ XcpDaq_ListStateType * XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber)
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
     if (daqListNumber >= XcpDaq_PredefinedListCount) {
-        XcpDaq_DynamicListType * dl = &XcpDaq_Entities[daqListNumber].entity.daqList;
+        XcpDaq_DynamicListType *dl = &XcpDaq_Entities[daqListNumber].entity.daqList;
 
         XcpDaq_ListState.mode = dl->mode;
 
@@ -379,9 +355,9 @@ XcpDaq_ListStateType * XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber)
 #endif
 }
 
-void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber)
-{
-    Xcp_StateType * Xcp_State = XCP_NULL;
+void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber,
+                       XcpDaq_ODTEntryIntegerType odtEntryNumber) {
+    Xcp_StateType *Xcp_State = XCP_NULL;
 
     Xcp_State = Xcp_GetState();
     Xcp_State->daqPointer.daqList = daqListNumber;
@@ -389,11 +365,11 @@ void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerTy
     Xcp_State->daqPointer.odtEntry = odtEntryNumber;
 }
 
-bool XcpDaq_ValidateConfiguration(void)
-{
+bool XcpDaq_ValidateConfiguration(void) {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    return (bool)((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&  (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
+    return (bool)((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
+                  (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
     return (bool)XCP_TRUE;
@@ -402,8 +378,7 @@ bool XcpDaq_ValidateConfiguration(void)
 #endif
 }
 
-XcpDaq_ListIntegerType XcpDaq_GetListCount(void)
-{
+XcpDaq_ListIntegerType XcpDaq_GetListCount(void) {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
     return XcpDaq_GetDynamicListCount();
@@ -416,10 +391,9 @@ XcpDaq_ListIntegerType XcpDaq_GetListCount(void)
 #endif
 }
 
-bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber)
-{
-    XcpDaq_ListConfigurationType const * daqList = XCP_NULL;
-    XcpDaq_ODTType const * odt = XCP_NULL;
+bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber) {
+    XcpDaq_ListConfigurationType const *daqList = XCP_NULL;
+    XcpDaq_ODTType const *odt = XCP_NULL;
     bool result = (bool)XCP_TRUE;
     XcpDaq_ODTIntegerType numOdts = 0;
     uint8_t idx = 0;
@@ -428,7 +402,7 @@ bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber)
         result = (bool)XCP_FALSE;
     } else {
         daqList = XcpDaq_GetListConfiguration(daqListNumber);
-        numOdts = daqList->numOdts ;
+        numOdts = daqList->numOdts;
         if (numOdts == UINT8(0)) {
             result = (bool)XCP_FALSE;
         } else {
@@ -445,10 +419,10 @@ bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber)
     return result;
 }
 
-bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntry)
-{
-    XcpDaq_ListConfigurationType const * daqList = XCP_NULL;
-    XcpDaq_ODTType const * odt = XCP_NULL;
+bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber,
+                             XcpDaq_ODTEntryIntegerType odtEntry) {
+    XcpDaq_ListConfigurationType const *daqList = XCP_NULL;
+    XcpDaq_ODTType const *odt = XCP_NULL;
     bool result = (bool)XCP_TRUE;
 
     if (daqListNumber > (XcpDaq_GetListCount() - UINT16(1))) {
@@ -467,37 +441,32 @@ bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTInt
     return result;
 }
 
-XcpDaq_EventType const * XcpDaq_GetEventConfiguration(uint16_t eventChannelNumber)
-{
+XcpDaq_EventType const *XcpDaq_GetEventConfiguration(uint16_t eventChannelNumber) {
     if (eventChannelNumber >= UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)) {
         return (XcpDaq_EventType const *)XCP_NULL;
     }
     return &XcpDaq_Events[eventChannelNumber];
 }
 
-
-void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t eventChannelNumber)
-{
-#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
+void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t eventChannelNumber) {
+#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_OFF
     XcpDaq_ListForEvent[eventChannelNumber] = daqListNumber;
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 }
-
 
 /** @brief Triggers acquisition and transmission of DAQ lists.
  *
  *  @param eventChannelNumber   Number of event to trigger.
  */
-void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
-{
-    Xcp_StateType const * state = XCP_NULL;
+void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
+    Xcp_StateType const *state = XCP_NULL;
     XcpDaq_ListIntegerType daqListNumber = 0;
     XcpDaq_ODTIntegerType odtIdx = 0;
     XcpDaq_ODTIntegerType pid = 0;
     XcpDaq_ODTEntryIntegerType odtEntryIdx = 0;
-    XcpDaq_ODTType const * odt = XCP_NULL;
-    XcpDaq_ODTEntryType * entry = XCP_NULL;
-    XcpDaq_ListConfigurationType const * listConf = XCP_NULL;
+    XcpDaq_ODTType const *odt = XCP_NULL;
+    XcpDaq_ODTEntryType *entry = XCP_NULL;
+    XcpDaq_ListConfigurationType const *listConf = XCP_NULL;
     uint16_t offset = UINT16(0);
     uint32_t timestamp = UINT32(0);
     uint8_t data[XCP_MAX_DTO];
@@ -512,7 +481,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
 
     timestamp = XcpHw_GetTimerCounter();
 
-#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT  == XCP_OFF
+#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_OFF
     daqListNumber = XcpDaq_ListForEvent[eventChannelNumber];
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 
@@ -524,26 +493,24 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
         offset = UINT16(0);
         odt = XcpDaq_GetOdt(daqListNumber, odtIdx);
 
-        data[0] = pid;  /* Absolute ODT number. */
+        data[0] = pid; /* Absolute ODT number. */
         offset += UINT16(1);
 
         for (odtEntryIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntryIdx < odt->numOdtEntries; ++odtEntryIdx) {
             entry = XcpDaq_GetOdtEntry(daqListNumber, odtIdx, odtEntryIdx);
-            //printf("\tAddress: 0x%08x Length: %d\n", entry->mta.address, entry->length);
+            // printf("\tAddress: 0x%08x Length: %d\n", entry->mta.address, entry->length);
             if (odtEntryIdx == (XcpDaq_ODTEntryIntegerType)0) {
-
             }
             XCP_ASSERT_LE(entry->length, (unsigned int)(XCP_MAX_DTO - offset));
-            XcpDaq_CopyMemory(&data[offset], (void*)entry->mta.address, entry->length);
+            XcpDaq_CopyMemory(&data[offset], (void *)entry->mta.address, entry->length);
             offset += entry->length;
         }
         pid++;
         XcpDaq_QueueEnqueue(offset, data);
-//        XcpUtl_Hexdump(data, offset);
+        //        XcpUtl_Hexdump(data, offset);
     }
     XcpHw_TransmitDtos();
 }
-
 
 /** @brief Copies bytes from a source memory area to a destination memory area,
  *   where both areas may not overlap.
@@ -551,13 +518,9 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber)
  *  @param[in]  src  The memory area to copy from.
  *  @param[in]  len  The number of bytes to copy
  */
-void XcpDaq_CopyMemory(void * dst, void * src, uint32_t len)
-{
-    XcpUtl_MemCopy(dst, src, len);
-}
+void XcpDaq_CopyMemory(void *dst, void *src, uint32_t len) { XcpUtl_MemCopy(dst, src, len); }
 
-void XcpDaq_GetProperties(uint8_t * properties)
-{
+void XcpDaq_GetProperties(uint8_t *properties) {
     *properties = UINT8(0);
 #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
     *properties |= XCP_DAQ_PROP_PRESCALER_SUPPORTED;
@@ -568,13 +531,10 @@ void XcpDaq_GetProperties(uint8_t * properties)
 #elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_DYNAMIC
     *properties |= UINT8(XCP_DAQ_CONFIG_TYPE_NONE);
 #endif
-
 }
 
-
-void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state)
-{
-    Xcp_StateType * stateVar = XCP_NULL;
+void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state) {
+    Xcp_StateType *stateVar = XCP_NULL;
 
     stateVar = Xcp_GetState();
     XCP_DAQ_ENTER_CRITICAL();
@@ -582,31 +542,17 @@ void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state)
     XCP_DAQ_LEAVE_CRITICAL();
 }
 
+void XcpDaq_StartSelectedLists(void) { XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_START); }
 
-void XcpDaq_StartSelectedLists(void)
-{
-    XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_START);
-}
+void XcpDaq_StopSelectedLists(void) { XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_STOP); }
 
-
-void XcpDaq_StopSelectedLists(void)
-{
-    XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_STOP);
-}
-
-
-void XcpDaq_StopAllLists(void)
-{
-    XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_STOP);
-}
-
+void XcpDaq_StopAllLists(void) { XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_STOP); }
 
 /*
 ** Local Functions.
 */
-XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber)
-{
-    XcpDaq_ListConfigurationType const * dl = XCP_NULL;
+XcpDaq_ODTType const *XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber) {
+    XcpDaq_ListConfigurationType const *dl = XCP_NULL;
     XcpDaq_ODTIntegerType idx = 0;
 
     dl = XcpDaq_GetListConfiguration(daqListNumber);
@@ -622,10 +568,9 @@ XcpDaq_ODTType const * XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDa
 #endif
 }
 
-XCP_STATIC void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition)
-{
+XCP_STATIC void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition) {
     XcpDaq_ListIntegerType idx = 0;
-    XcpDaq_ListStateType * entry = XCP_NULL;
+    XcpDaq_ListStateType *entry = XCP_NULL;
 
     for (idx = (XcpDaq_ListIntegerType)0; idx < XcpDaq_GetListCount(); ++idx) {
         entry = XcpDaq_GetListState(idx);
@@ -640,19 +585,17 @@ XCP_STATIC void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition)
                 /* Do nothing (to keep MISRA happy). */
             }
             /*
-            *  The slave has to reset the SELECTED flag in the mode at GET_DAQ_LIST_MODE
-            *  as soon as the related START_STOP_SYNCH or SET_REQUEST have been acknowledged.
-            */
+             *  The slave has to reset the SELECTED flag in the mode at GET_DAQ_LIST_MODE
+             *  as soon as the related START_STOP_SYNCH or SET_REQUEST have been acknowledged.
+             */
             entry->mode &= UINT8(~XCP_DAQ_LIST_MODE_SELECTED);
         }
     }
 }
 
-
-bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType * firstPID)
-{
+bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType *firstPID) {
     XcpDaq_ListIntegerType listIdx = 0;
-    XcpDaq_ListConfigurationType const * daqList = XCP_NULL;
+    XcpDaq_ListConfigurationType const *daqList = XCP_NULL;
     bool result = (bool)XCP_TRUE;
     XcpDaq_ODTIntegerType tmp = (XcpDaq_ODTIntegerType)0;
 
@@ -668,46 +611,31 @@ bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerT
     return result;
 }
 
-
 /*
 **  Debugging / Testing interface.
 */
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
 
-void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE * entityCount, XCP_DAQ_ENTITY_TYPE * listCount, XCP_DAQ_ENTITY_TYPE * odtCount)
-{
+void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE *entityCount, XCP_DAQ_ENTITY_TYPE *listCount, XCP_DAQ_ENTITY_TYPE *odtCount) {
     *entityCount = XcpDaq_EntityCount;
     *listCount = XcpDaq_ListCount;
     *odtCount = XcpDaq_OdtCount;
 }
 
-uint16_t XcpDaq_TotalDynamicEntityCount(void)
-{
-    return UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES);
-}
+uint16_t XcpDaq_TotalDynamicEntityCount(void) { return UINT16(XCP_DAQ_MAX_DYNAMIC_ENTITIES); }
 
-XcpDaq_EntityType * XcpDaq_GetDynamicEntities(void)
-{
-    return &XcpDaq_Entities[0];
-}
+XcpDaq_EntityType *XcpDaq_GetDynamicEntities(void) { return &XcpDaq_Entities[0]; }
 
-XcpDaq_EntityType * XcpDaq_GetDynamicEntity(uint16_t num)
-{
-    return &XcpDaq_Entities[num];
-}
+XcpDaq_EntityType *XcpDaq_GetDynamicEntity(uint16_t num) { return &XcpDaq_Entities[num]; }
 
-void XcpDaq_QueueGetVar(XcpDaq_QueueType * var)
-{
-    XcpUtl_MemCopy(var, &XcpDaq_Queue, sizeof(XcpDaq_QueueType));
-}
+void XcpDaq_QueueGetVar(XcpDaq_QueueType *var) { XcpUtl_MemCopy(var, &XcpDaq_Queue, sizeof(XcpDaq_QueueType)); }
 
 #endif /* XCP_BUILD_TYPE */
 
 //#if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-void XcpDaq_QueueInit(void)
-{
+void XcpDaq_QueueInit(void) {
     uint8_t idx;
 
     XcpDaq_Queue.head = XcpDaq_Queue.tail = UINT8(0);
@@ -717,18 +645,13 @@ void XcpDaq_QueueInit(void)
     }
 }
 
-XCP_STATIC bool XcpDaq_QueueFull(void)
-{
+XCP_STATIC bool XcpDaq_QueueFull(void) {
     return ((XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1)) == XcpDaq_Queue.tail;
 }
 
-bool XcpDaq_QueueEmpty(void)
-{
-    return XcpDaq_Queue.head == XcpDaq_Queue.tail;
-}
+bool XcpDaq_QueueEmpty(void) { return XcpDaq_Queue.head == XcpDaq_Queue.tail; }
 
-XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const * data)
-{
+XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
     if (XcpDaq_QueueFull()) {
         XcpDaq_Queue.overload = (bool)XCP_TRUE;
         return (bool)XCP_FALSE;
@@ -742,8 +665,7 @@ XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const * data)
     return (bool)XCP_TRUE;
 }
 
-bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data)
-{
+bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
     uint16_t dto_len;
 
     if (XcpDaq_QueueEmpty()) {

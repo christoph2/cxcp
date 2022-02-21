@@ -30,5 +30,4 @@
 #include "xcp.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-
 #endif /* __TERMINAL_H */

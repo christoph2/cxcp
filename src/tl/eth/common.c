@@ -23,11 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
- /*
- **
- ** Socket routines independent of operating system and protocol.
- **
- */
+/*
+**
+** Socket routines independent of operating system and protocol.
+**
+*/
 
 #include <stdlib.h>
 
@@ -36,8 +36,7 @@
 #include "xcp_eth.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-
-void XcpHw_ErrorMsg(char * const function, int errorCode);
+void XcpHw_ErrorMsg(char *const function, int errorCode);
 
 void XcpThrd_EnableAsyncCancellation(void);
 bool XcpThrd_IsShuttingDown(void);
@@ -45,8 +44,8 @@ bool XcpThrd_IsShuttingDown(void);
 void XcpTl_PrintBtDetails(void);
 
 static void XcpTl_Accept(void);
-static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter);
-static int XcpTl_ReadData(uint8_t * data, uint8_t len);
+static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter);
+static int XcpTl_ReadData(uint8_t *data, uint8_t len);
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
 static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size);
@@ -56,34 +55,26 @@ XcpTl_ConnectionType XcpTl_Connection;
 
 static uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
 
-
-void * XcpTl_Thread(void * param)
-{
-
+void *XcpTl_Thread(void *param) {
     XCP_UNREFERENCED_PARAMETER(param);
     XcpThrd_EnableAsyncCancellation();
-    XCP_FOREVER {
-        XcpTl_MainFunction();
-    }
+    XCP_FOREVER { XcpTl_MainFunction(); }
     return NULL;
 }
 
-void XcpTl_MainFunction(void)
-{
+void XcpTl_MainFunction(void) {
     XcpTl_Accept();
     XcpTl_RxHandler();
 }
 
-void *get_in_addr(struct sockaddr *sa)
-{
+void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+        return &(((struct sockaddr_in *)sa)->sin_addr);
     }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter)
-{
+static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
     uint8_t header_buffer[8];
     uint8_t bytes_remaining = XCP_ETH_HEADER_SIZE;
     uint8_t offset = 0;
@@ -91,13 +82,13 @@ static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter)
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
-            nbytes = recvfrom(XcpTl_Connection.boundSocket, (char*)header_buffer + offset, bytes_remaining, 0,
-            (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL);
+            nbytes = recvfrom(XcpTl_Connection.boundSocket, (char *)header_buffer + offset, bytes_remaining, 0,
+                              (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL);
             if (XcpThrd_IsShuttingDown()) {
                 return 0;
             }
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
-            nbytes = recv(XcpTl_Connection.connectedSocket, (char*)header_buffer + offset, bytes_remaining, 0);
+            nbytes = recv(XcpTl_Connection.connectedSocket, (char *)header_buffer + offset, bytes_remaining, 0);
             if (XcpThrd_IsShuttingDown()) {
                 return 0;
             }
@@ -116,18 +107,17 @@ static int XcpTl_ReadHeader(uint16_t * len, uint16_t * counter)
     return 1;
 }
 
-static int XcpTl_ReadData(uint8_t * data, uint8_t len)
-{
+static int XcpTl_ReadData(uint8_t *data, uint8_t len) {
     uint8_t bytes_remaining = len;
     uint8_t offset = 0;
     uint8_t nbytes = 0;
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
-            nbytes = recvfrom(XcpTl_Connection.boundSocket, (char*)data + offset, bytes_remaining, 0,
-            (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL);
+            nbytes = recvfrom(XcpTl_Connection.boundSocket, (char *)data + offset, bytes_remaining, 0,
+                              (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL);
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
-            nbytes = recv(XcpTl_Connection.connectedSocket, (char*)data + offset, bytes_remaining, 0);
+            nbytes = recv(XcpTl_Connection.connectedSocket, (char *)data + offset, bytes_remaining, 0);
         }
         if (nbytes < 1) {
             return nbytes;
@@ -141,8 +131,7 @@ static int XcpTl_ReadData(uint8_t * data, uint8_t len)
     return 1;
 }
 
-void XcpTl_RxHandler(void)
-{
+void XcpTl_RxHandler(void) {
     int res;
     uint16_t dlc = 0U;
     uint16_t counter = 0U;
@@ -189,8 +178,7 @@ void XcpTl_RxHandler(void)
     }
 }
 
-static void XcpTl_Accept(void)
-{
+static void XcpTl_Accept(void) {
     socklen_t FromLen = 0;
     struct sockaddr_storage From;
     uint32_t err;
@@ -200,13 +188,14 @@ static void XcpTl_Accept(void)
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (!XcpTl_Connection.connected) {
             FromLen = sizeof(From);
-            XcpTl_Connection.connectedSocket = accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
+            XcpTl_Connection.connectedSocket =
+                accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
             if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
-
 #if defined(_WIN32)
                 err = WSAGetLastError();
                 if (err != WSAEINTR) {
-                    XcpHw_ErrorMsg("XcpTl_Accept::accept()", err);  /* Not canceled by WSACancelBlockingCall(), i.e. pthread_cancel()  */
+                    XcpHw_ErrorMsg("XcpTl_Accept::accept()",
+                                   err); /* Not canceled by WSACancelBlockingCall(), i.e. pthread_cancel()  */
                 }
 #elif defined(__unix__)
                 XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
@@ -217,49 +206,30 @@ static void XcpTl_Accept(void)
     }
 }
 
+void XcpTl_TxHandler(void) {}
 
-void XcpTl_TxHandler(void)
-{
-
-}
-
-
-void XcpTl_SaveConnection(void)
-{
+void XcpTl_SaveConnection(void) {
     XcpUtl_MemCopy(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_storage));
     XcpTl_Connection.connected = XCP_TRUE;
 }
 
+void XcpTl_ReleaseConnection(void) { XcpTl_Connection.connected = XCP_FALSE; }
 
-void XcpTl_ReleaseConnection(void)
-{
-    XcpTl_Connection.connected = XCP_FALSE;
-}
-
-
-bool XcpTl_VerifyConnection(void)
-{
+bool XcpTl_VerifyConnection(void) {
     return memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(struct sockaddr_storage)) == 0;
 }
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
-void XcpTl_PrintConnectionInformation(void)
-{
+void XcpTl_PrintConnectionInformation(void) {
     char buf[128];
 
-    printf("XCPonEth -- Listening on port %u / %s [%s]\n\r",
-        XCP_ETH_DEFAULT_PORT,
-        Xcp_Options.tcp ? "TCP" : "UDP",
-        Xcp_Options.ipv6 ? "IPv6" : "IPv4"
-    );
-//    Curl_inet_ntop(Xcp_Options.ipv6 ? AF_INET6 : AF_INET, &XcpTl_Connection.localAddress, &buf, 128);
-//    printf("%s\n", buf);
+    printf("XCPonEth -- Listening on port %u / %s [%s]\n\r", XCP_ETH_DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP",
+           Xcp_Options.ipv6 ? "IPv6" : "IPv4");
+    //    Curl_inet_ntop(Xcp_Options.ipv6 ? AF_INET6 : AF_INET, &XcpTl_Connection.localAddress, &buf, 128);
+    //    printf("%s\n", buf);
 }
 #elif XCP_TRANSPORT_LAYER == XCP_ON_BTH
-void XcpTl_PrintConnectionInformation(void)
-{
-    XcpTl_PrintBtDetails();
-}
+void XcpTl_PrintConnectionInformation(void) { XcpTl_PrintBtDetails(); }
 #endif
 
 /*
@@ -268,21 +238,17 @@ void XcpTl_PrintConnectionInformation(void)
 */
 #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
 
-#define IN6ADDRSZ       16
-#define INADDRSZ         4
-#define INT16SZ          2
+#define IN6ADDRSZ 16
+#define INADDRSZ 4
+#define INT16SZ 2
 
-static char *inet_ntop4(const unsigned char *src, char *dst, size_t size)
-{
+static char *inet_ntop4(const unsigned char *src, char *dst, size_t size) {
     char tmp[sizeof("255.255.255.255")];
     size_t len;
 
     tmp[0] = '\0';
-    (void)sprintf(tmp, "%d.%d.%d.%d",
-                  ((int)((unsigned char)src[0])) & 0xff,
-                  ((int)((unsigned char)src[1])) & 0xff,
-                  ((int)((unsigned char)src[2])) & 0xff,
-                  ((int)((unsigned char)src[3])) & 0xff);
+    (void)sprintf(tmp, "%d.%d.%d.%d", ((int)((unsigned char)src[0])) & 0xff, ((int)((unsigned char)src[1])) & 0xff,
+                  ((int)((unsigned char)src[2])) & 0xff, ((int)((unsigned char)src[3])) & 0xff);
 
     len = strlen(tmp);
     if (len == 0 || len >= size) {
@@ -295,8 +261,7 @@ static char *inet_ntop4(const unsigned char *src, char *dst, size_t size)
 /*
  * Convert IPv6 binary address into presentation (printable) format.
  */
-static char *inet_ntop6(const unsigned char *src, char *dst, size_t size)
-{
+static char *inet_ntop6(const unsigned char *src, char *dst, size_t size) {
     char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
     char *tp;
     struct {
@@ -312,11 +277,11 @@ static char *inet_ntop6(const unsigned char *src, char *dst, size_t size)
      */
     memset(words, '\0', sizeof(words));
     for (i = 0; i < IN6ADDRSZ; i++) {
-        words[i/2] |= (src[i] << ((1 - (i % 2)) << 3));
+        words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
     }
 
     best.base = -1;
-    cur.base  = -1;
+    cur.base = -1;
     best.len = 0;
     cur.len = 0;
 
@@ -327,34 +292,28 @@ static char *inet_ntop6(const unsigned char *src, char *dst, size_t size)
             else
                 cur.len++;
         } else if (cur.base != -1) {
-            if (best.base == -1 || cur.len > best.len)
-                best = cur;
+            if (best.base == -1 || cur.len > best.len) best = cur;
             cur.base = -1;
         }
     }
-    if ((cur.base != -1) && (best.base == -1 || cur.len > best.len))
-        best = cur;
-    if (best.base != -1 && best.len < 2)
-        best.base = -1;
+    if ((cur.base != -1) && (best.base == -1 || cur.len > best.len)) best = cur;
+    if (best.base != -1 && best.len < 2) best.base = -1;
     /* Format the result. */
     tp = tmp;
     for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
         /* Are we inside the best run of 0x00's? */
         if (best.base != -1 && i >= best.base && i < (best.base + best.len)) {
-            if (i == best.base)
-                *tp++ = ':';
+            if (i == best.base) *tp++ = ':';
             continue;
         }
 
         /* Are we following an initial run of 0x00s or any real hex?
          */
-        if (i)
-            *tp++ = ':';
+        if (i) *tp++ = ':';
 
         /* Is this address an encapsulated IPv4?
          */
-        if (i == 6 && best.base == 0 &&
-            (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
+        if (i == 6 && best.base == 0 && (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
             if (!inet_ntop4(src + 12, tp, sizeof(tmp) - (tp - tmp))) {
                 return NULL;
             }
@@ -366,8 +325,7 @@ static char *inet_ntop6(const unsigned char *src, char *dst, size_t size)
 
     /* Was it a trailing run of 0x00's?
      */
-    if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ))
-        *tp++ = ':';
+    if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ)) *tp++ = ':';
     *tp++ = '\0';
 
     /* Check for overflow, copy, and we're done.
@@ -379,8 +337,7 @@ static char *inet_ntop6(const unsigned char *src, char *dst, size_t size)
     return dst;
 }
 
-static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size)
-{
+static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size) {
     switch (af) {
         case AF_INET:
             return inet_ntop4((const unsigned char *)src, buf, size);

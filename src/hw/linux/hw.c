@@ -23,7 +23,7 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#define  _GNU_C_SOURCE
+#define _GNU_C_SOURCE
 
 #include <ctype.h>
 #include <errno.h>
@@ -31,8 +31,8 @@
 #include <limits.h>
 #include <pthread.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -50,23 +50,23 @@ typedef struct tagHwStateType {
     struct timespec StartingTime;
 } HwStateType;
 
- /*
- ** Local Defines.
- */
-#define TIMER_PS_1NS    (1UL)
-#define TIMER_PS_10NS   (10UL)
-#define TIMER_PS_100NS  (100UL)
-#define TIMER_PS_1US    (1000UL)
-#define TIMER_PS_10US   (10000UL)
-#define TIMER_PS_100US  (100000UL)
-#define TIMER_PS_1MS    (1000000UL)
-#define TIMER_PS_10MS   (10000000UL)
-#define TIMER_PS_100MS  (100000000UL)
-#define TIMER_PS_1S     (1000000000UL)
+/*
+** Local Defines.
+*/
+#define TIMER_PS_1NS (1UL)
+#define TIMER_PS_10NS (10UL)
+#define TIMER_PS_100NS (100UL)
+#define TIMER_PS_1US (1000UL)
+#define TIMER_PS_10US (10000UL)
+#define TIMER_PS_100US (100000UL)
+#define TIMER_PS_1MS (1000000UL)
+#define TIMER_PS_10MS (10000000UL)
+#define TIMER_PS_100MS (100000000UL)
+#define TIMER_PS_1S (1000000000UL)
 
-#define TIMER_MASK_1    (0x000000FFUL)
-#define TIMER_MASK_2    (0x0000FFFFUL)
-#define TIMER_MASK_4    (0xFFFFFFFFUL)
+#define TIMER_MASK_1 (0x000000FFUL)
+#define TIMER_MASK_2 (0x0000FFFFUL)
+#define TIMER_MASK_4 (0xFFFFFFFFUL)
 
 #define SIG SIGRTMIN
 
@@ -83,29 +83,26 @@ static void DeinitTUI(void);
 **  External Function Prototypes.
 */
 
-void * XcpHw_MainFunction();
+void *XcpHw_MainFunction();
 
 bool XcpDaq_QueueEmpty(void);
-bool XcpDaq_QueueDequeue(uint16_t * len, uint8_t * data);
+bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
 
 void exitFunc(void);
-
 
 /*
 ** Global Variables.
 */
 pthread_t XcpHw_ThreadID[4];
 
-
 /*
  * Local Types.
  */
-#define XCPHW_APPLICATION_STATES    (32)
+#define XCPHW_APPLICATION_STATES (32)
 
 typedef struct tagXcpHw_ApplicationStateType {
     volatile uint8_t counter[XCPHW_APPLICATION_STATES];
 } XcpHw_ApplicationStateType;
-
 
 /*
 **  Local Variables.
@@ -123,8 +120,7 @@ static pthread_mutex_t XcpHw_TransmissionMutex;
 **  Global Functions.
 */
 
-static void termination_handler(int sig)
-{
+static void termination_handler(int sig) {
     printf("Terminating due to ");
     switch (sig) {
         case SIGKILL:
@@ -155,23 +151,20 @@ static void termination_handler(int sig)
     exit(9);
 }
 
-static void handler(int sig, siginfo_t *si, void *uc)
-{
+static void handler(int sig, siginfo_t *si, void *uc) {
     /* Note: calling printf() from a signal handler is not safe
      * (and should not be done in production programs), since
      * printf() is not async-signal-safe; see signal-safety(7).
      *  Nevertheless, we use printf() here as a simple way of
      * showing that the handler was called. */
 
-    //printf("Caught signal %u %lu\n", sig, XcpHw_GetTimerCounter());
+    // printf("Caught signal %u %lu\n", sig, XcpHw_GetTimerCounter());
 
-    //print_siginfo(si);
-    //signal(sig, SIG_IGN);
-
+    // print_siginfo(si);
+    // signal(sig, SIG_IGN);
 }
 
-void XcpHw_Init(void)
-{
+void XcpHw_Init(void) {
     int status = 0;
     struct sigevent sev = {0};
     timer_t timerid = 0;
@@ -207,7 +200,7 @@ void XcpHw_Init(void)
 #endif
 
     /* Establish handler for timer signal */
-    //printf("Establishing handler for signal %d\n", SIG);
+    // printf("Establishing handler for signal %d\n", SIG);
     sa.sa_flags = SA_SIGINFO;
     sa.sa_sigaction = handler;
     sigemptyset(&sa.sa_mask);
@@ -216,7 +209,7 @@ void XcpHw_Init(void)
     }
 
     /* Block timer signal temporarily */
-    //printf("Blocking signal %d\n", SIG);
+    // printf("Blocking signal %d\n", SIG);
     sigemptyset(&mask);
     sigaddset(&mask, SIG);
     if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
@@ -249,30 +242,27 @@ void XcpHw_Init(void)
     pthread_mutex_init(&XcpHw_TransmissionMutex, NULL);
 }
 
-void XcpHw_Deinit(void)
-{
+void XcpHw_Deinit(void) {
     XcpHw_DeinitLocks();
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
     pthread_mutex_destroy(&XcpHw_TransmissionMutex);
 }
 
-static struct timespec Timespec_Diff(struct timespec start, struct timespec end)
-{
+static struct timespec Timespec_Diff(struct timespec start, struct timespec end) {
     struct timespec temp;
 
-    if ((end.tv_nsec-start.tv_nsec) < 0) {
-        temp.tv_sec = end.tv_sec-start.tv_sec - 1;
+    if ((end.tv_nsec - start.tv_nsec) < 0) {
+        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
         temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
     } else {
-        temp.tv_sec = end.tv_sec-start.tv_sec;
-        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+        temp.tv_sec = end.tv_sec - start.tv_sec;
+        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
     }
     return temp;
 }
 
-uint32_t XcpHw_GetTimerCounter(void)
-{
+uint32_t XcpHw_GetTimerCounter(void) {
     struct timespec now = {0};
     struct timespec dt = {0};
     unsigned long long timestamp = 0ULL;
@@ -283,7 +273,8 @@ uint32_t XcpHw_GetTimerCounter(void)
 
     dt = Timespec_Diff(HwState.StartingTime, now);
 
-    XcpHw_FreeRunningCounter = ((unsigned long long)(dt.tv_sec) * (unsigned long long)1000 * 1000 * 1000) + ((unsigned long long)dt.tv_nsec);
+    XcpHw_FreeRunningCounter =
+        ((unsigned long long)(dt.tv_sec) * (unsigned long long)1000 * 1000 * 1000) + ((unsigned long long)dt.tv_nsec);
 
     timestamp = XcpHw_FreeRunningCounter;
 //    printf("\tTS: %llu\n", XcpHw_FreeRunningCounter);
@@ -307,7 +298,7 @@ uint32_t XcpHw_GetTimerCounter(void)
 //    timestamp /= TIMER_PS_100MS;
 #else
 #error Timestamp-unit not supported.
-#endif // XCP_DAQ_TIMESTAMP_UNIT
+#endif  // XCP_DAQ_TIMESTAMP_UNIT
 
     timestamp = XcpHw_FreeRunningCounter % UINT_MAX;
 
@@ -319,27 +310,25 @@ uint32_t XcpHw_GetTimerCounter(void)
     timestamp &= TIMER_MASK_4;
 #else
 #error Timestamp-size not supported.
-#endif // XCP_DAQ_TIMESTAMP_SIZE
+#endif  // XCP_DAQ_TIMESTAMP_SIZE
 
     return (uint32_t)timestamp;
 }
 
-void XcpHw_TransmitDtos(void)
-{
+void XcpHw_TransmitDtos(void) {
     uint16_t len;
     uint8_t data[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET];
-    uint8_t * dataOut = Xcp_GetDtoOutPtr();
+    uint8_t *dataOut = Xcp_GetDtoOutPtr();
 
     while (!XcpDaq_QueueEmpty()) {
         XcpDaq_QueueDequeue(&len, dataOut);
-        //printf("\tDTO -- len: %d data: \t", len);
+        // printf("\tDTO -- len: %d data: \t", len);
         Xcp_SetDtoOutLen(len);
         Xcp_SendDto();
     }
 }
 
-static void XcpHw_InitLocks(void)
-{
+static void XcpHw_InitLocks(void) {
     uint8_t idx = UINT8(0);
 
     for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
@@ -347,8 +336,7 @@ static void XcpHw_InitLocks(void)
     }
 }
 
-static void XcpHw_DeinitLocks(void)
-{
+static void XcpHw_DeinitLocks(void) {
     uint8_t idx = UINT8(0);
 
     for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
@@ -356,44 +344,32 @@ static void XcpHw_DeinitLocks(void)
     }
 }
 
-void XcpHw_AcquireLock(uint8_t lockIdx)
-{
+void XcpHw_AcquireLock(uint8_t lockIdx) {
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
     pthread_mutex_lock(&XcpHw_Locks[lockIdx]);
 }
 
-void XcpHw_ReleaseLock(uint8_t lockIdx)
-{
+void XcpHw_ReleaseLock(uint8_t lockIdx) {
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
     pthread_mutex_unlock(&XcpHw_Locks[lockIdx]);
 }
 
-void XcpHw_SignalTransmitRequest(void)
-{
+void XcpHw_SignalTransmitRequest(void) {
     pthread_mutex_lock(&XcpHw_TransmissionMutex);
     pthread_cond_signal(&XcpHw_TransmissionEvent);
 }
 
-void XcpHw_WaitTransmitRequest(void)
-{
-    pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
-}
+void XcpHw_WaitTransmitRequest(void) { pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex); }
 
-void XcpHw_ErrorMsg(char * const fun, int errorCode)
-{
-    fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
-}
+void XcpHw_ErrorMsg(char *const fun, int errorCode) { fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode); }
 
 /*
  *
  * Sleep for `usec` microseconds.
  *
  */
-void XcpHw_Sleep(uint64_t usec)
-{
-    usleep(usec);
-}
+void XcpHw_Sleep(uint64_t usec) { usleep(usec); }

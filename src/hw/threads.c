@@ -27,15 +27,14 @@
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
-#include <stdlib.h>
-
 #include <stdbool.h>
+#include <stdlib.h>
 
 /*
 ** NOTE: Atomics require at least C11.
 */
 #if !defined(__STDC_NO_ATOMICS__)
-    #include <stdatomic.h>
+#include <stdatomic.h>
 #endif /* __STDC_NO_ATOMICS__ */
 
 /*!!! START-INCLUDE-SECTION !!!*/
@@ -44,10 +43,10 @@
 #include "xcp_threads.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-#define XCP_THREAD  (0)
-#define UI_THREAD   (1)
-#define APP_THREAD  (2)
-#define TL_THREAD   (3)
+#define XCP_THREAD (0)
+#define UI_THREAD (1)
+#define APP_THREAD (2)
+#define TL_THREAD (3)
 
 #define NUM_THREADS (4)
 
@@ -57,12 +56,11 @@ pthread_t threads[NUM_THREADS];
 static bool XcpThrd_ShuttingDown;
 #else
 static atomic_bool XcpThrd_ShuttingDown;
-#endif  /* __STDC_NO_ATOMICS__ */
+#endif /* __STDC_NO_ATOMICS__ */
 
 void bye(void);
 
-void XcpThrd_RunThreads(void)
-{
+void XcpThrd_RunThreads(void) {
     atexit(bye);
     pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
     pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
@@ -73,11 +71,7 @@ void XcpThrd_RunThreads(void)
     pthread_kill(threads[XCP_THREAD], SIGINT);
 }
 
-
-void bye(void)
-{
-    printf("Exiting program.\n");
-}
+void bye(void) { printf("Exiting program.\n"); }
 
 #if 0
 void XcpThrd_SetAffinity(pthread_t thrd, int cpu)
@@ -101,41 +95,33 @@ void XcpThrd_SetAffinity(pthread_t thrd, int cpu)
 }
 #endif
 
-void * Xcp_Thread(void * param)
-{
+void* Xcp_Thread(void* param) {
     XCP_UNREFERENCED_PARAMETER(param);
-    XCP_FOREVER {
-        Xcp_MainFunction();
-    }
+    XCP_FOREVER { Xcp_MainFunction(); }
     return NULL;
 }
 
-void XcpThrd_EnableAsyncCancellation(void)
-{
+void XcpThrd_EnableAsyncCancellation(void) {
     int res;
 
-    res =  pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    res = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_setcancelstate()", errno);
     }
 }
 
-void XcpThrd_ShutDown(void)
-{
+void XcpThrd_ShutDown(void) {
     int res;
 
     printf("Shutdown RQ.\n");
     if (XcpThrd_IsShuttingDown()) {
         return;
     }
-    res = pthread_cancel(threads[TL_THREAD]);   // Due to blocking accept().
+    res = pthread_cancel(threads[TL_THREAD]);  // Due to blocking accept().
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_cancel()", errno);
     }
-  XcpThrd_ShuttingDown = true;
+    XcpThrd_ShuttingDown = true;
 }
 
-bool XcpThrd_IsShuttingDown(void)
-{
-    return XcpThrd_ShuttingDown;
-}
+bool XcpThrd_IsShuttingDown(void) { return XcpThrd_ShuttingDown; }

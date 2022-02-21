@@ -23,26 +23,24 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
-#include "xcp_hw.h"
 #include "xcp_eth.h"
+#include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
+#define DEFAULT_FAMILY PF_UNSPEC      // Accept either IPv4 or IPv6
+#define DEFAULT_SOCKTYPE SOCK_STREAM  //
 
-#define DEFAULT_FAMILY     PF_UNSPEC // Accept either IPv4 or IPv6
-#define DEFAULT_SOCKTYPE   SOCK_STREAM //
-
-#define ADDR_LEN    sizeof(SOCKADDR_STORAGE)
+#define ADDR_LEN sizeof(SOCKADDR_STORAGE)
 
 extern XcpTl_ConnectionType XcpTl_Connection;
 
-void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
-
+void Xcp_DispatchCommand(Xcp_PduType const *const pdu);
 
 extern Xcp_PduType Xcp_CtoIn;
 extern Xcp_PduType Xcp_CtoOut;
@@ -52,9 +50,7 @@ static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
 #endif
 
-
-static  boolean Xcp_EnableSocketOption(SOCKET sock, int option)
-{
+static boolean Xcp_EnableSocketOption(SOCKET sock, int option) {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
     const char enable = 1;
 
@@ -87,13 +83,11 @@ static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
 }
 #endif
 
-
-void XcpTl_Init(void)
-{
+void XcpTl_Init(void) {
     WSADATA wsa;
     ADDRINFO Hints, *AddrInfo, *AI;
     char *Address = NULL;
-    char * Port = "5555";
+    char *Port = "5555";
     SOCKET serverSockets[FD_SETSIZE];
     int boundSocketNum = -1;
     int ret;
@@ -109,10 +103,9 @@ void XcpTl_Init(void)
         XcpHw_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
         exit(EXIT_FAILURE);
     } else {
-
     }
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
-    Hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;
+    Hints.ai_family = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
     Hints.ai_socktype = XcpTl_Connection.socketType;
     Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
     ret = getaddrinfo(Address, Port, &Hints, &AddrInfo);
@@ -130,7 +123,7 @@ void XcpTl_Init(void)
             continue;
         }
         serverSockets[idx] = socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol);
-        if (serverSockets[idx] == INVALID_SOCKET){
+        if (serverSockets[idx] == INVALID_SOCKET) {
             XcpHw_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
             continue;
         }
@@ -140,7 +133,7 @@ void XcpTl_Init(void)
         }
 
         memcpy(&XcpTl_Connection.localAddress, AI->ai_addr, sizeof(SOCKADDR_STORAGE));
-        //XcpTl_Connection.localAddress = *AI->ai_addr;
+        // XcpTl_Connection.localAddress = *AI->ai_addr;
 
         if (XcpTl_Connection.socketType == SOCK_STREAM) {
             if (listen(serverSockets[idx], 1) == SOCKET_ERROR) {
@@ -151,14 +144,14 @@ void XcpTl_Init(void)
         boundSocketNum = idx;
         XcpTl_Connection.boundSocket = serverSockets[boundSocketNum];
         /* ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &ul); */
-        break;  /* Grab first address. */
+        break; /* Grab first address. */
     }
     freeaddrinfo(AddrInfo);
     if (boundSocketNum == -1) {
-        fprintf(stderr, "Fatal error: unable to serve on any address.\nPerhaps" \
-            " a server is already running on port %u / %s [%s]?\n",
-            XCP_ETH_DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4"
-        );
+        fprintf(stderr,
+                "Fatal error: unable to serve on any address.\nPerhaps"
+                " a server is already running on port %u / %s [%s]?\n",
+                XCP_ETH_DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4");
         WSACleanup();
         exit(2);
     }
@@ -171,20 +164,16 @@ void XcpTl_Init(void)
 #endif
 }
 
-
-void XcpTl_DeInit(void)
-{
+void XcpTl_DeInit(void) {
     closesocket(XcpTl_Connection.boundSocket);
     WSACleanup();
 }
 
-
-void XcpTl_Send(uint8_t const * buf, uint16_t len)
-{
+void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
-            (SOCKADDR * )(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, ADDR_LEN) == SOCKET_ERROR) {
+                   (SOCKADDR *)(SOCKADDR_STORAGE const *)&XcpTl_Connection.connectionAddress, ADDR_LEN) == SOCKET_ERROR) {
             XcpHw_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {

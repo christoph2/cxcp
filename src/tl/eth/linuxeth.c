@@ -25,10 +25,9 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
-#include "xcp_hw.h"
 #include "xcp_eth.h"
+#include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
-
 
 socklen_t addrSize = sizeof(struct sockaddr_storage);
 
@@ -37,8 +36,7 @@ extern XcpTl_ConnectionType XcpTl_Connection;
 static bool Xcp_EnableSocketOption(int sock, int option);
 static bool Xcp_DisableSocketOption(int sock, int option);
 
-static  bool Xcp_EnableSocketOption(int sock, int option)
-{
+static bool Xcp_EnableSocketOption(int sock, int option) {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
     const char enable = 1;
 
@@ -53,9 +51,7 @@ static  bool Xcp_EnableSocketOption(int sock, int option)
     return true;
 }
 
-
-static bool Xcp_DisableSocketOption(int sock, int option)
-{
+static bool Xcp_DisableSocketOption(int sock, int option) {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
     const char enable = 0;
 
@@ -70,12 +66,10 @@ static bool Xcp_DisableSocketOption(int sock, int option)
     return true;
 }
 
-
-void XcpTl_Init(void)
-{
+void XcpTl_Init(void) {
     struct addrinfo hints;
-    struct addrinfo * addr_info = NULL;
-    char * address = NULL;
+    struct addrinfo *addr_info = NULL;
+    char *address = NULL;
     char port[16];
     int sock = 0;
     int ret = 0;
@@ -84,7 +78,7 @@ void XcpTl_Init(void)
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     sprintf(port, "%d", Xcp_Options.port);
-    hints.ai_family = Xcp_Options.ipv6 ? PF_INET6: PF_INET;
+    hints.ai_family = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
     hints.ai_socktype = XcpTl_Connection.socketType;
     hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
     ret = getaddrinfo(address, port, &hints, &addr_info);
@@ -95,7 +89,7 @@ void XcpTl_Init(void)
     }
 
     sock = socket(addr_info->ai_family, addr_info->ai_socktype, addr_info->ai_protocol);
-    if (sock == -1){
+    if (sock == -1) {
         XcpHw_ErrorMsg("XcpTl_Init::socket()", errno);
         return;
     }
@@ -119,19 +113,14 @@ void XcpTl_Init(void)
     }
 }
 
-void XcpTl_DeInit(void)
-{
-    close(XcpTl_Connection.boundSocket);
-}
+void XcpTl_DeInit(void) { close(XcpTl_Connection.boundSocket); }
 
-void XcpTl_Send(uint8_t const * buf, uint16_t len)
-{
-
-    //XcpUtl_Hexdump(buf,  len);
+void XcpTl_Send(uint8_t const *buf, uint16_t len) {
+    // XcpUtl_Hexdump(buf,  len);
     XCP_TL_ENTER_CRITICAL();
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
-            (struct sockaddr const *)&XcpTl_Connection.connectionAddress, addrSize) == -1) {
+                   (struct sockaddr const *)&XcpTl_Connection.connectionAddress, addrSize) == -1) {
             XcpHw_ErrorMsg("XcpTl_Send:sendto()", errno);
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {

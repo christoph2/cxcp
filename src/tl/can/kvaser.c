@@ -28,18 +28,15 @@
 #include "Xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-#include "canlib.h"
-
 #include <stdio.h>
 
+#include "canlib.h"
 
 #if _MSC_VER
-#pragma warning(disable: 4996)
+#pragma warning(disable : 4996)
 #endif /* _MSC_VER */
 
-
-#define KV_MAX_DLC     ((uint16_t)8)   /* TODO: depends on classic or FD. */
-
+#define KV_MAX_DLC ((uint16_t)8) /* TODO: depends on classic or FD. */
 
 #if 0
 static const uint8_t GET_SLAVE_ID_ECHO[] = {UINT8(0x58), UINT8(0x43), UINT8(0x50)};
@@ -49,7 +46,7 @@ static const uint8_t GET_SLAVE_ID_INVERSE_ECHO[] = {UINT8(0xA7), UINT8(0xBC), UI
 typedef struct tagXcpTl_ConnectionType {
     int virtualChannel;
     int handle;
- } XcpTl_ConnectionType;
+} XcpTl_ConnectionType;
 
 extern Xcp_PduType Xcp_CtoIn;
 extern Xcp_PduType Xcp_CtoOut;
@@ -58,21 +55,14 @@ static XcpTl_ConnectionType XcpTl_Connection;
 
 static uint16_t XcpTl_SetDLC(uint16_t len);
 static void XcpTl_SetCANFilter(void);
-static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent);
+static void Kv_Notification(int hnd, void* context, unsigned int notifyEvent);
 static bool XcpTl_MatchingAddress(uint32_t id0, uint32_t id1, uint16_t flag);
 
-void Kv_Error(const char * msg)
-{
-    printf("ERROR[Kvaser]:: %s\n", msg);
-}
+void Kv_Error(const char* msg) { printf("ERROR[Kvaser]:: %s\n", msg); }
 
-void Kv_Info(const char * msg)
-{
-    printf("INFO[Kvaser]:: %s\n", msg);
-}
+void Kv_Info(const char* msg) { printf("INFO[Kvaser]:: %s\n", msg); }
 
-void Kv_Check(char* id, canStatus stat)
-{
+void Kv_Check(char* id, canStatus stat) {
     char err_buf[128];
     char msg_buf[128];
 
@@ -84,9 +74,7 @@ void Kv_Check(char* id, canStatus stat)
     }
 }
 
-
-static bool XcpTl_MatchingAddress(uint32_t id0, uint32_t id1, uint16_t flag)
-{
+static bool XcpTl_MatchingAddress(uint32_t id0, uint32_t id1, uint16_t flag) {
     uint16_t ext0;
     uint16_t ext1;
     uint32_t identifier;
@@ -98,9 +86,7 @@ static bool XcpTl_MatchingAddress(uint32_t id0, uint32_t id1, uint16_t flag)
     return (identifier == id1) && (ext0 == ext1);
 }
 
-
-static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
-{
+static void Kv_Notification(int hnd, void* context, unsigned int notifyEvent) {
     canStatus stat;
     long id;
     uint8_t msg[64];
@@ -108,17 +94,17 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
     unsigned int flag;
     unsigned long time;
     unsigned long status;
-    //char msg_buffer[128];
+    // char msg_buffer[128];
 
     stat = canReadStatus(hnd, &status);
     Kv_Check("canReadStatus", stat);
 
     switch (notifyEvent) {
         case canNOTIFY_TX:
-            //Kv_Info("CAN message sent\n");
+            // Kv_Info("CAN message sent\n");
             break;
         case canNOTIFY_RX:
-            //Kv_Info("CAN message received\n");
+            // Kv_Info("CAN message received\n");
             stat = canRead(hnd, &id, msg, &dlc, &flag, &time);
             Kv_Check("canRead", stat);
 #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
@@ -136,17 +122,17 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
                 }
             }
 #if 0
-#define  canMSG_MASK   0x00ff
-#define  canMSG_RTR   0x0001
-#define  canMSG_STD   0x0002
-#define  canMSG_EXT   0x0004
-#define  canMSG_WAKEUP   0x0008
-#define  canMSG_NERR   0x0010
-#define  canMSG_ERROR_FRAME   0x0020
-#define  canMSG_TXACK   0x0040
-#define  canMSG_TXRQ   0x0080
+#define canMSG_MASK 0x00ff
+#define canMSG_RTR 0x0001
+#define canMSG_STD 0x0002
+#define canMSG_EXT 0x0004
+#define canMSG_WAKEUP 0x0008
+#define canMSG_NERR 0x0010
+#define canMSG_ERROR_FRAME 0x0020
+#define canMSG_TXACK 0x0040
+#define canMSG_TXRQ 0x0080
 #endif
-            //printf("ID: %08x DLC: %d Flags: %08x Timer: %d\n", id, dlc, flag, time);
+            // printf("ID: %08x DLC: %d Flags: %08x Timer: %d\n", id, dlc, flag, time);
             break;
         case canNOTIFY_STATUS:
             /* printf("CAN status %u\n", stat); */
@@ -165,26 +151,25 @@ static void Kv_Notification(int hnd, void * context, unsigned int notifyEvent)
                 /** Kv_Info("Error-Active"); */
             } else {
                 printf("BusOn/BusOff %lu\n", status);
-  // ???
+                // ???
             }
             break;
         default:
             printf("Unknown event %d\n", notifyEvent);
             break;
-        }
+    }
 }
 
-void XcpTl_Init(void)
-{
+void XcpTl_Init(void) {
     canStatus stat;
     uint32_t ts;
-    //int code;
-    //int ext;
+    // int code;
+    // int ext;
     int hnd;
 
     canInitializeLibrary();
     hnd = canOpenChannel(0, canOPEN_ACCEPT_VIRTUAL | canOPEN_NO_INIT_ACCESS /* | canOPEN_ACCEPT_LARGE_DLC*/);
-    if(hnd < 0){
+    if (hnd < 0) {
         Kv_Check("canOpenChannel", hnd);
         exit(1);
     }
@@ -192,14 +177,13 @@ void XcpTl_Init(void)
     XcpTl_Connection.handle = hnd;
 
     stat = kvSetNotifyCallback(hnd, (kvCallback_t)&Kv_Notification, NULL,
-        canNOTIFY_RX | canNOTIFY_TX | canNOTIFY_ERROR | canNOTIFY_STATUS | canNOTIFY_BUSONOFF
-    );
+                               canNOTIFY_RX | canNOTIFY_TX | canNOTIFY_ERROR | canNOTIFY_STATUS | canNOTIFY_BUSONOFF);
     Kv_Check("kvSetNotifyCallback", stat);
 
     stat = canSetBusParams(hnd, XCP_ON_CAN_FREQ, XCP_ON_CAN_TSEG1, XCP_ON_CAN_TSEG2, XCP_ON_CAN_SJW, XCP_ON_CAN_NOSAMP, 0);
     Kv_Check("SetBusParams", stat);
 
-    ts = 10;  /* We are using 10µS timer resolution. */
+    ts = 10; /* We are using 10µS timer resolution. */
     stat = canIoCtl(hnd, canIOCTL_SET_TIMER_SCALE, &ts, 4);
     Kv_Check("SET_TIME_SCALE", stat);
 
@@ -212,16 +196,14 @@ void XcpTl_Init(void)
     Kv_Check("canBusOn", stat);
 }
 
-
-void XcpTl_DeInit(void)
-{
+void XcpTl_DeInit(void) {
     canStatus stat;
 
     Kv_Info("Going off bus and closing channel");
     stat = canBusOff(XcpTl_Connection.handle);
     Kv_Check("canBusOff", stat);
-    //stat = canClose(hnd);
-    //Kv_Check("canClose", stat);
+    // stat = canClose(hnd);
+    // Kv_Check("canClose", stat);
 }
 
 #if 0
@@ -231,9 +213,7 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 }
 #endif
 
-
-static uint16_t XcpTl_SetDLC(uint16_t len)
-{
+static uint16_t XcpTl_SetDLC(uint16_t len) {
     static const uint16_t FD_DLCS[] = {12, 16, 20, 24, 32, 48, 64};
     uint8_t idx;
 
@@ -248,9 +228,7 @@ static uint16_t XcpTl_SetDLC(uint16_t len)
     }
 }
 
-
-static void XcpTl_SetCANFilter(void)
-{
+static void XcpTl_SetCANFilter(void) {
     uint32_t i0;
     uint32_t i1;
     uint32_t filter;
@@ -264,7 +242,8 @@ static void XcpTl_SetCANFilter(void)
     filter = i0 & i1;
     mask = (i0 | i1) ^ filter;
 
-    if ((XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER)) || (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER))) {
+    if ((XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER)) ||
+        (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER))) {
         ext = 1;
         mask ^= 0x1fffffff;
     } else {
@@ -275,8 +254,7 @@ static void XcpTl_SetCANFilter(void)
     Kv_Check("canSetAcceptanceFilter", stat);
 }
 
-void XcpTl_Send(uint8_t const * buf, uint16_t len)
-{
+void XcpTl_Send(uint8_t const* buf, uint16_t len) {
     int stat;
     int id;
     int ext;
@@ -286,7 +264,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     XCP_TL_ENTER_CRITICAL();
     if (len > KV_MAX_DLC) {
         sprintf(msg_buf, "XcpTl_Send -- at most %d bytes supported, got %d.\n", KV_MAX_DLC, len);
-        Kv_Error((const char *)msg_buf);
+        Kv_Error((const char*)msg_buf);
         return;
     }
 
@@ -298,9 +276,7 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     XCP_TL_LEAVE_CRITICAL();
 }
 
-
-void XcpTl_MainFunction(void)
-{
+void XcpTl_MainFunction(void) {
     Sleep(1);
 #if 0
     if (XcpTl_FrameAvailable(0, 1000) > 0) {
@@ -316,45 +292,21 @@ void XcpTl_RxHandler(void)
 }
 #endif
 
-void XcpTl_SaveConnection(void)
-{
+void XcpTl_SaveConnection(void) {}
 
-}
+void XcpTl_ReleaseConnection(void) {}
 
+void XcpTl_PostQuitMessage(void) {}
 
-void XcpTl_ReleaseConnection(void)
-{
+bool XcpTl_VerifyConnection(void) { return XCP_TRUE; }
 
-}
+void XcpTl_FeedReceiver(uint8_t octet) {}
 
-void XcpTl_PostQuitMessage(void)
-{
+void XcpTl_TransportLayerCmd_Res(Xcp_PduType const* const pdu) {}
 
-}
+void XcpTl_SetOptions(Xcp_OptionsType const* options) { CopyMemory(&Xcp_Options, options, sizeof(Xcp_OptionsType)); }
 
-bool XcpTl_VerifyConnection(void)
-{
-    return XCP_TRUE;
-}
-
-
-void XcpTl_FeedReceiver(uint8_t octet)
-{
-
-}
-
-void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu)
-{
-
-}
-
-void XcpTl_SetOptions(Xcp_OptionsType const * options)
-{
-    CopyMemory(&Xcp_Options, options, sizeof(Xcp_OptionsType));
-}
-
-void XcpTl_PrintConnectionInformation(void)
-{
+void XcpTl_PrintConnectionInformation(void) {
     int stat;
     int num;
     char name[128];
@@ -366,6 +318,5 @@ void XcpTl_PrintConnectionInformation(void)
     stat = canGetChannelData(XcpTl_Connection.handle, canCHANNELDATA_DEVDESCR_ASCII, &name, sizeof(name));
     Kv_Check("canGetChannelData", stat);
     printf("\nXCPonCAN -- %s (channel %d), listening on 0x%X [%s]\n", name, num,
-        XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
-    );
+           XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD");
 }

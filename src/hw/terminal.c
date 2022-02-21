@@ -27,20 +27,20 @@
 #include <pthread.h>
 
 /*!!! START-INCLUDE-SECTION !!!*/
+#include "flsemu.h"
 #include "xcp.h"
 #include "xcp_hw.h"
 #include "xcp_terminal.h"
-#include "flsemu.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_WIN32)
-    #include <windows.h>
+#include <windows.h>
 #else
-    #include <stdlib.h>
-    #include <string.h>
-    #include <unistd.h>
-    #include <sys/select.h>
-    #include <termios.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
 #endif
 
 #if !defined(_WIN32)
@@ -53,7 +53,6 @@ static int kbhit(void);
 static int getch(void);
 #endif
 
-
 static void SystemInformation(void);
 static void DisplayHelp(void);
 void FlsEmu_Info(void);
@@ -61,10 +60,8 @@ void Xcp_DisplayInfo(void);
 void XcpDaq_PrintDAQDetails(void);
 void XcpDaq_Info(void);
 
-
 #if defined(_WIN32)
-void * XcpTerm_Thread(void * param)
-{
+void* XcpTerm_Thread(void* param) {
     HANDLE hStdin;
     DWORD cNumRead, fdwMode, idx;
     INPUT_RECORD irInBuf[128];
@@ -85,7 +82,7 @@ void * XcpTerm_Thread(void * param)
     XCP_FOREVER {
         WaitForSingleObject(hStdin, 1000);
 
-        if (!GetNumberOfConsoleInputEvents (hStdin, &cNumRead)) {
+        if (!GetNumberOfConsoleInputEvents(hStdin, &cNumRead)) {
             XcpHw_ErrorMsg("PeekConsoleInput", GetLastError());
         } else {
             if (cNumRead) {
@@ -93,7 +90,7 @@ void * XcpTerm_Thread(void * param)
                     XcpHw_ErrorMsg("ReadConsoleInput", GetLastError());
                 }
                 for (idx = 0; idx < cNumRead; ++idx) {
-                switch(irInBuf[idx].EventType) {
+                    switch (irInBuf[idx].EventType) {
                         case KEY_EVENT:
                             key = irInBuf[idx].Event.KeyEvent;
                             if (key.bKeyDown) {
@@ -124,13 +121,9 @@ void * XcpTerm_Thread(void * param)
     }
 }
 #else
-static void reset_terminal_mode(void)
-{
-    tcsetattr(0, TCSANOW, &orig_termios);
-}
+static void reset_terminal_mode(void) { tcsetattr(0, TCSANOW, &orig_termios); }
 
-static void set_options(void)
-{
+static void set_options(void) {
     struct termios term;
 
     tcgetattr(STDIN_FILENO, &term);
@@ -141,8 +134,7 @@ static void set_options(void)
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 }
 
-static void set_raw_terminal_mode(void)
-{
+static void set_raw_terminal_mode(void) {
     struct termios new_termios;
 
     tcgetattr(0, &orig_termios);
@@ -154,9 +146,8 @@ static void set_raw_terminal_mode(void)
     tcsetattr(0, TCSANOW, &new_termios);
 }
 
-static int kbhit(void)
-{
-    struct timeval tv = { 0L, 0L };
+static int kbhit(void) {
+    struct timeval tv = {0L, 0L};
     fd_set fds;
 
     FD_ZERO(&fds);
@@ -164,8 +155,7 @@ static int kbhit(void)
     return select(1, &fds, NULL, NULL, &tv);
 }
 
-static int getch(void)
-{
+static int getch(void) {
     int len;
     unsigned char buf[256];
 
@@ -182,16 +172,15 @@ static int getch(void)
     }
 }
 
-void * XcpTerm_Thread(void * param)
-{
+void* XcpTerm_Thread(void* param) {
     int key = 0;
 
     set_raw_terminal_mode();
     while (1) {
-        while(!kbhit()) {
+        while (!kbhit()) {
         }
         key = getch();
-        if (key != -1 ) {
+        if (key != -1) {
             switch (tolower(key)) {
                 case '\x1b':
                 case 'q':
@@ -209,12 +198,11 @@ void * XcpTerm_Thread(void * param)
         }
     }
 }
-#endif // defined
+#endif  // defined
 
-static void SystemInformation(void)
-{
+static void SystemInformation(void) {
 #if XCP_ENABLE_STATISTICS == XCP_ON
-    Xcp_StateType * state;
+    Xcp_StateType* state;
 #endif /* XCP_ENABLE_STATISTICS */
 
     printf("\n\rSystem-Information\n\r");
@@ -225,27 +213,26 @@ static void SystemInformation(void)
     printf("Master-Blockmode: %s\n\r", (XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON) ? "Yes" : "No");
 
 #if XCP_ENABLE_CAL_COMMANDS == XCP_ON
-    printf("Calibration     : Yes   Protected: %s\n\r", (XCP_PROTECT_CAL == XCP_ON)  ? "Yes" : "No");
+    printf("Calibration     : Yes   Protected: %s\n\r", (XCP_PROTECT_CAL == XCP_ON) ? "Yes" : "No");
 #else
     printf("Calibration     : No\n\r");
 #endif /* XCP_ENABLE_CAL_COMMANDS */
 
 #if XCP_ENABLE_PAG_COMMANDS == XCP_ON
-    printf("Paging          : Yes   Protected: %s\n\r", (XCP_PROTECT_PAG == XCP_ON)  ? "Yes" : "No");
+    printf("Paging          : Yes   Protected: %s\n\r", (XCP_PROTECT_PAG == XCP_ON) ? "Yes" : "No");
 #else
     printf("Paging          : No\n\r");
 #endif /* XCP_ENABLE_PAG_COMMANDS */
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    printf("DAQ             : Yes   Protected: [DAQ: %s STIM: %s]\n\r", (XCP_PROTECT_DAQ == XCP_ON)  ?
-           "Yes" : "No", (XCP_PROTECT_STIM == XCP_ON)  ? "Yes" : "No"
-    );
+    printf("DAQ             : Yes   Protected: [DAQ: %s STIM: %s]\n\r", (XCP_PROTECT_DAQ == XCP_ON) ? "Yes" : "No",
+           (XCP_PROTECT_STIM == XCP_ON) ? "Yes" : "No");
 #else
     printf("DAQ             : No\n\r");
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 #if XCP_ENABLE_PGM_COMMANDS
-    printf("Programming     : Yes   Protected: %s\n\r", (XCP_PROTECT_PGM == XCP_ON)  ? "Yes" : "No");
+    printf("Programming     : Yes   Protected: %s\n\r", (XCP_PROTECT_PGM == XCP_ON) ? "Yes" : "No");
 #else
     printf("Programming     : No\n\r");
 #endif /* XCP_ENABLE_PGM_COMMANDS */
@@ -264,8 +251,7 @@ static void SystemInformation(void)
     printf("-------------------------------------------------------------------------------\n\r");
 }
 
-static void DisplayHelp(void)
-{
+static void DisplayHelp(void) {
     printf("\n\rh\t\tshow this help message\n\r");
     printf("<ESC> or q\texit\n\r");
     printf("i\t\tsystem information\n\r");
@@ -273,11 +259,10 @@ static void DisplayHelp(void)
     /* printf("d\t\tReset connection\n"); */
 }
 
-void FlsEmu_Info(void)
-{
+void FlsEmu_Info(void) {
     uint8_t idx;
-    uint8_t * ptr;
-    FlsEmu_SegmentType * segment;
+    uint8_t* ptr;
+    FlsEmu_SegmentType* segment;
 
     printf("\n\rFlash-Emulator\n\r");
     printf("--------------\n\r");
@@ -285,28 +270,26 @@ void FlsEmu_Info(void)
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
         ptr = FlsEmu_BasePointer(idx);
         segment = FlsEmu_GetConfig()->segments[idx];
-        printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n\r", segment->name, (void*)segment->baseAddress, ptr, segment->memSize / 1024, segment->pageSize / 1024, FlsEmu_NumPages(idx));
+        printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n\r", segment->name, (void*)segment->baseAddress, ptr,
+               segment->memSize / 1024, segment->pageSize / 1024, FlsEmu_NumPages(idx));
     }
     printf("\n\r");
-
 }
 
-void Xcp_DisplayInfo(void)
-{
+void Xcp_DisplayInfo(void) {
     XcpTl_PrintConnectionInformation();
     printf("Press h for help.\n\r");
     fflush(stdout);
 }
 
-void XcpDaq_PrintDAQDetails(void)
-{
+void XcpDaq_PrintDAQDetails(void) {
     XcpDaq_ListIntegerType listIdx;
     XcpDaq_ODTIntegerType odtIdx;
     XcpDaq_ODTEntryIntegerType odtEntriyIdx;
-    XcpDaq_ListConfigurationType const * listConf;
-    XcpDaq_ListStateType * listState;
-    XcpDaq_ODTType const * odt;
-    XcpDaq_ODTEntryType * entry;
+    XcpDaq_ListConfigurationType const* listConf;
+    XcpDaq_ListStateType* listState;
+    XcpDaq_ODTType const* odt;
+    XcpDaq_ODTEntryType* entry;
     uint8_t mode;
     uint32_t total;
     XcpDaq_ODTIntegerType firstPid;
@@ -320,15 +303,11 @@ void XcpDaq_PrintDAQDetails(void)
         total = UINT16(0);
         XcpDaq_GetFirstPid(listIdx, &firstPid);
 #if XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_DYNAMIC
-        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "dynamic",
-               firstPid
-        );
+        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "dynamic", firstPid);
 #elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_STATIC
-        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "static",
-               firstPid
-        );
+        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "static", firstPid);
 #elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE
-    printf("DAQ-List #%d [predefined] firstPid: %d mode: ", listIdx, firstPid);
+        printf("DAQ-List #%d [predefined] firstPid: %d mode: ", listIdx, firstPid);
 #endif /* XCP_DAQ_CONFIG_TYPE */
 
         if (mode & XCP_DAQ_LIST_MODE_DIRECTION) {
@@ -367,9 +346,8 @@ void XcpDaq_PrintDAQDetails(void)
     printf("-------------------------------------------------------------------------------\n\r");
 }
 
-void XcpDaq_Info(void)
-{
-    Xcp_StateType const * Xcp_State;
+void XcpDaq_Info(void) {
+    Xcp_StateType const* Xcp_State;
 
     Xcp_State = Xcp_GetState();
 

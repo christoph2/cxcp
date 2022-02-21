@@ -23,19 +23,17 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-
+#include "app_config.h"
 #include "xcp.h"
 #include "xcp_terminal.h"
 #include "xcp_threads.h"
-#include "app_config.h"
 
 Xcp_OptionsType Xcp_Options = {0};
 
-void parse_options(int argc, char ** argv, Xcp_OptionsType * options);
+void parse_options(int argc, char **argv, Xcp_OptionsType *options);
 void AppTask(void);
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     parse_options(argc, argv, &Xcp_Options);
     FlsEmu_Init(&FlsEmu_Config);
     Xcp_Init();

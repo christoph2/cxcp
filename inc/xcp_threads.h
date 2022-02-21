@@ -32,9 +32,8 @@ void XcpThrd_ShutDown(void);
 bool XcpThrd_IsShuttingDown(void);
 void XcpThrd_EnableAsyncCancellation(void);
 
-void * Xcp_Thread(void * param);
-void * XcpTerm_Thread(void * param);
-void * XcpTl_Thread(void * param);
-
+void* Xcp_Thread(void* param);
+void* XcpTerm_Thread(void* param);
+void* XcpTl_Thread(void* param);
 
 #endif /* __XCP_THREADS_H */

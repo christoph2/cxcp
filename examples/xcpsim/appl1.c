@@ -7,14 +7,12 @@
  *
  */
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "app_config.h"
 
-
-#define ABS_ZERO        (-273.15)
-
+#define ABS_ZERO (-273.15)
 
 /*
  *
@@ -31,24 +29,19 @@ float CAL_PARAM prmSetpoint = 70.0;
 float CAL_PARAM prmKi = 2.5;
 float CAL_PARAM prmMaxErrorSum = 100.0;
 
-
 /*
  *
  * Random selection of [-1, 0 , 1].
  *
  */
-int8_t randomSlope(void)
-{
-    return (rand() % 3) - 1;
-}
+int8_t randomSlope(void) { return (rand() % 3) - 1; }
 
 /*
  *
  *  Random walking temperature within boundaries.
  *
  */
-double environment(void)
-{
+double environment(void) {
     static double t_prev = ABS_ZERO;
 
     t_prev = t_prev + (prmStepSize * randomSlope());
@@ -66,8 +59,7 @@ double environment(void)
  * Electrically heated mass that is exposed to the air flow in the environment.
  *
  */
-double plant(double temperature, double current)
-{
+double plant(double temperature, double current) {
     static double q_plant = 0.0;
     double q_heater = 0.0;
     double q_env = 0.0;
@@ -88,8 +80,7 @@ double plant(double temperature, double current)
  * I-Controller.
  *
  */
-double controller(double temperature)
-{
+double controller(double temperature) {
     double current = 0.0;
     double error = 0.0;
     static double sum_of_errors = 0.0;
@@ -106,8 +97,7 @@ double controller(double temperature)
     return current;
 }
 
-void AppTask(void)
-{
+void AppTask(void) {
     double env_temp = 0;
     double plant_temp;
     static double current = 0.0;

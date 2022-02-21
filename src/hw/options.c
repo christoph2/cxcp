@@ -32,8 +32,8 @@
 #if defined(_WIN32)
 
 #else
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #if defined(TP_ETHER)
 static const char OPTION_STR[] = "htu46p:";
@@ -41,21 +41,18 @@ static const char OPTION_STR[] = "htu46p:";
 static const char OPTION_STR[] = "hi:f";
 #endif
 
-
 #endif
 
-
 #if defined(_WIN32)
-void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
-{
+void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
     int idx;
-    char * arg;
+    char* arg;
 #if defined(TP_ETHER)
     options->ipv6 = XCP_FALSE;
     options->tcp = XCP_TRUE;
 
     if (argc >= 2) {
-        for(idx = 1; idx < argc; ++idx) {
+        for (idx = 1; idx < argc; ++idx) {
             arg = argv[idx];
             if ((arg[0] != '/') && (arg[0] != '-')) {
                 continue;
@@ -82,14 +79,13 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
     }
 #elif defined(TP_BLUETOOTH)
 
-#else   /* defined(KVASER_CAN)*/
+#else /* defined(KVASER_CAN)*/
 
 #endif
 }
 #else
 
-void usage(void)
-{
+void usage(void) {
     printf("\nparameter summary: \n");
 #if defined(TP_ETHER)
     printf("-h\t  this message.\n");
@@ -106,9 +102,7 @@ void usage(void)
     exit(0);
 }
 
-
-void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
-{
+void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
     int opt;
     int res;
 
@@ -182,6 +176,5 @@ void parse_options(int argc, char ** argv, Xcp_OptionsType * options)
         strcpy(options->interface, XCP_SOCKET_CAN_DEFAULT_IF);
     }
 #endif
-
 }
 #endif

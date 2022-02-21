@@ -25,31 +25,27 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
-#include "xcp_hw.h"
 #include "xcp_eth.h"
+#include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <memory.h>
-
+#include <BluetoothAPIs.h>
 #include <Winsock2.h>
 #include <Ws2bth.h>
-#include <BluetoothAPIs.h>
-
 #include <initguid.h>
-
+#include <memory.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 DEFINE_GUID(ASAM_XCP_ON_BT_GUID, 0xDC3CCEDC, 0xF7DE, 0x56E8, 0x87, 0x6F, 0x78, 0x1C, 0x07, 0x3C, 0x9B, 0x77);
 
 extern XcpTl_ConnectionType XcpTl_Connection;
 SOCKADDR_BTH XcpTl_LocalBtAddress;
 
-static void PrintBthAddr(SOCKADDR_BTH * addr);
+static void PrintBthAddr(SOCKADDR_BTH *addr);
 
-void XcpTl_Init(void)
-{
+void XcpTl_Init(void) {
     WSADATA wsa;
     GUID Xcp_ServiceID = ASAM_XCP_ON_BT_GUID;
     WSAQUERYSET service;
@@ -78,16 +74,17 @@ void XcpTl_Init(void)
     XcpTl_LocalBtAddress.serviceClassId = GUID_NULL;
     XcpTl_LocalBtAddress.port = BT_PORT_ANY;
 
-    if (bind(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_LocalBtAddress, sizeof (SOCKADDR_BTH))  == SOCKET_ERROR) {
+    if (bind(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_LocalBtAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
         return;
-    /* } else {
-        int length = sizeof(SOCKADDR_BTH);
+        /* } else {
+            int length = sizeof(SOCKADDR_BTH);
 
-        getsockname(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_LocalBtAddress, &length);
-        printf("Local Bluetooth device is: [NAP: %04x SAP: %08x] Server channel = %04x\n",  GET_NAP(XcpTl_LocalBtAddress.btAddr), GET_SAP(XcpTl_LocalBtAddress.btAddr), XcpTl_LocalBtAddress.port);
-        printf("MAC: 0x%012x Port: %x\n", XcpTl_LocalBtAddress.btAddr, XcpTl_LocalBtAddress.port);
-    */
+            getsockname(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_LocalBtAddress, &length);
+            printf("Local Bluetooth device is: [NAP: %04x SAP: %08x] Server channel = %04x\n", GET_NAP(XcpTl_LocalBtAddress.btAddr),
+           GET_SAP(XcpTl_LocalBtAddress.btAddr), XcpTl_LocalBtAddress.port); printf("MAC: 0x%012x Port: %x\n",
+           XcpTl_LocalBtAddress.btAddr, XcpTl_LocalBtAddress.port);
+        */
     }
 
     int size = sizeof(SOCKADDR_BTH);
@@ -102,13 +99,13 @@ void XcpTl_Init(void)
         return;
     }
 
-    service.dwSize = sizeof (service);
+    service.dwSize = sizeof(service);
     service.lpszServiceInstanceName = "XCPonBth";
     service.lpszComment = "Measure and calibrate with XCP on Bluetooth -- Have fun :-)";
     service.lpServiceClassId = &Xcp_ServiceID;
     service.dwNumberOfCsAddrs = 1;
     service.dwNameSpace = NS_BTH;
-    csAddr.LocalAddr.iSockaddrLength = sizeof (SOCKADDR_BTH);
+    csAddr.LocalAddr.iSockaddrLength = sizeof(SOCKADDR_BTH);
     csAddr.LocalAddr.lpSockaddr = (struct sockaddr *)&XcpTl_LocalBtAddress;
     csAddr.iSocketType = SOCK_STREAM;
     csAddr.iProtocol = BTHPROTO_RFCOMM;
@@ -117,17 +114,14 @@ void XcpTl_Init(void)
     if (WSASetService(&service, RNRSERVICE_REGISTER, 0) == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Init::WSASetService()", WSAGetLastError());
     }
-
 }
 
-void XcpTl_DeInit(void)
-{
+void XcpTl_DeInit(void) {
     closesocket(XcpTl_Connection.boundSocket);
     WSACleanup();
 }
 
-void XcpTl_Send(uint8_t const * buf, uint16_t len)
-{
+void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
 
     if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
@@ -137,15 +131,13 @@ void XcpTl_Send(uint8_t const * buf, uint16_t len)
     XCP_TL_LEAVE_CRITICAL();
 }
 
-void XcpTl_PrintBtDetails(void)
-{
+void XcpTl_PrintBtDetails(void) {
     printf("XCPonBth -- Listening on ");
     PrintBthAddr(&XcpTl_LocalBtAddress);
     printf(" channel %u\n\r", (unsigned int)XcpTl_LocalBtAddress.port);
 }
 
-static void PrintBthAddr(SOCKADDR_BTH * addr)
-{
+static void PrintBthAddr(SOCKADDR_BTH *addr) {
     uint8_t mac[6] = {0};
     uint8_t idx = 0;
 

@@ -23,48 +23,44 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_util.h"
+
 #include "xcp_macros.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_MSC_VER)
 #include <stdio.h>
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
-void XcpUtl_MemCopy(/*@out@*/void * dst,/*@in@*/ void const * src, uint32_t len)
-{
-    uint8_t * pd = (uint8_t *)dst;
-    uint8_t * ps = (uint8_t *)src;
+void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len) {
+    uint8_t *pd = (uint8_t *)dst;
+    uint8_t *ps = (uint8_t *)src;
 
-    //printf("\tDST: %p SRC: %p LEN: %u\n", dst, src, len);
+    // printf("\tDST: %p SRC: %p LEN: %u\n", dst, src, len);
 
-/*    ASSERT(dst != (void *)NULL); */
-/*    ASSERT(pd >= ps + len || ps >= pd + len); */
-/*    ASSERT(len != (uint16_t)0); */
+    /*    ASSERT(dst != (void *)NULL); */
+    /*    ASSERT(pd >= ps + len || ps >= pd + len); */
+    /*    ASSERT(len != (uint16_t)0); */
 
     while (len--) {
         *pd++ = *ps++;
     }
-
 }
 
-void XcpUtl_MemSet(/*@out@*/void * dest, uint8_t fill_char, uint32_t len)
-{
-    uint8_t * p = (uint8_t *)dest;
+void XcpUtl_MemSet(/*@out@*/ void *dest, uint8_t fill_char, uint32_t len) {
+    uint8_t *p = (uint8_t *)dest;
 
-/*    ASSERT(dest != (void *)NULL); */
+    /*    ASSERT(dest != (void *)NULL); */
 
     while (len--) {
         *p++ = fill_char;
     }
 }
 
-bool XcpUtl_MemCmp(/*@in@*/void const * lhs,/*@in@*/ void const * rhs, uint32_t len)
-{
-    uint8_t const * pl = (uint8_t *)lhs;
-    uint8_t const * pr = (uint8_t *)rhs;
+bool XcpUtl_MemCmp(/*@in@*/ void const *lhs, /*@in@*/ void const *rhs, uint32_t len) {
+    uint8_t const *pl = (uint8_t *)lhs;
+    uint8_t const *pr = (uint8_t *)rhs;
 
     if (len == UINT32(0)) {
         return XCP_FALSE;
@@ -75,8 +71,7 @@ bool XcpUtl_MemCmp(/*@in@*/void const * lhs,/*@in@*/ void const * rhs, uint32_t 
 }
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-void XcpUtl_Hexdump(/*@in@*/uint8_t const * buf, uint16_t sz)
-{
+void XcpUtl_Hexdump(/*@in@*/ uint8_t const *buf, uint16_t sz) {
     uint16_t idx;
 
     for (idx = UINT16(0); idx < sz; ++idx) {
@@ -85,18 +80,17 @@ void XcpUtl_Hexdump(/*@in@*/uint8_t const * buf, uint16_t sz)
     DBG_PRINT1("\n\r");
 }
 
-void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
-{
+void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf) {
     uint8_t mod;
     uint8_t pos = (uint8_t)0x00, swap_pos = (uint8_t)0x00;
     uint8_t ch;
 
     /* ASSERT(buf != (void *)NULL); */
     if (((int32_t)value) < 0L && base == (uint8_t)10) {
-        value      = (uint32_t)((int32_t)value * -1L);
-        buf[0]     = '-';
-        swap_pos   = 1;
-        pos        = 1;
+        value = (uint32_t)((int32_t)value * -1L);
+        buf[0] = '-';
+        swap_pos = 1;
+        pos = 1;
     }
 
     if (value == 0L) {
@@ -114,9 +108,9 @@ void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t * buf)
     }
     buf[pos--] = '\0';
     while (pos > swap_pos) {
-        ch  = buf[swap_pos];
-        buf[swap_pos]  = buf[pos];
-        buf[pos]       = ch;
+        ch = buf[swap_pos];
+        buf[swap_pos] = buf[pos];
+        buf[pos] = ch;
         swap_pos++;
         pos--;
     }
