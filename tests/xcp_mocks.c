@@ -14,7 +14,7 @@ triangle_type triangle = {0};
 uint16_t randomValue;
 float sine_wave = 1.0;
 
-const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
+XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
     XCP_DAQ_DEFINE_ODT_ENTRY(triangle.value),
     XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
     XCP_DAQ_DEFINE_ODT_ENTRY(sine_wave),
