@@ -68,9 +68,6 @@ else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -flto ")
 endif()
 
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-endif()
 
 
 if (WIN32)
@@ -82,6 +79,9 @@ if (WIN32)
 
 elseif(UNIX)
     add_library(xcp_test SHARED ${SOURCES})
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set_target_properties(xcp_test PROPERTIES_COMPILE_FLAGS "-m32" PROPERTIES_LINK_FLAGS "-m32")
+    endif()
     target_compile_definitions(xcp_test PUBLIC TP_ETHER)
     target_include_directories(xcp_test PUBLIC ${INCLUDES})
     target_link_libraries(xcp_test ${ADD_LIBS})
