@@ -42,7 +42,7 @@ const FlsEmu_ConfigType FlsEmu_Config = {
     (FlsEmu_SegmentType**)segments,
 };
 
-const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
+XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
     XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
     XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
 };

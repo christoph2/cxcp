@@ -948,7 +948,7 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
 **  Predefined DAQ constants.
 */
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
-extern const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[];
+extern XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[];
 extern const XcpDaq_ODTType XcpDaq_PredefinedOdts[];
 extern const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[];
 extern const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount;
