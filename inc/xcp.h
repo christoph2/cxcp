@@ -443,7 +443,7 @@ extern "C" {
 
 /* DAQ Implementation Macros */
 #define XCP_DAQ_DEFINE_ODT_ENTRY(meas) \
-    { {(const uint32_t) & (meas)}, sizeof((meas)) }
+    { {(uint32_t) & (meas)}, sizeof((meas)) }
 
 /* DAQ Event Implementation Macros */
 #define XCP_DAQ_BEGIN_EVENTS const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
