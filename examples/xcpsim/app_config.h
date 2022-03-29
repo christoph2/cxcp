@@ -8,8 +8,13 @@
 
 #include "flsemu.h"
 
+#if defined(_MSC_VER)
+#pragma section("calparams", read)
+#define CAL_PARAM __declspec(allocate("calparams"))
+#else
 #define CAL_PARAM __attribute__((section("calparams")))
+#endif
 
 const FlsEmu_ConfigType FlsEmu_Config;
 
-#endif  // __APP_CONFIG_H
+#endif // __APP_CONFIG_H

@@ -52,29 +52,40 @@ elseif(UNIX)
     )
 endif(WIN32)
 
-IF(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    add_link_options("-fuse-ld=lld")
-ENDIF()
-
-add_definitions(-D_GNU_SOURCE)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable  -ffunction-sections")
-
-if ("${PROFILE}" STREQUAL "ON")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg -fprofile-arcs -ftest-coverage --coverage")
-endif()
-
-if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls")
-    if (NOT WIN32)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check -fsanitize=address -fsanitize=undefined ")
-        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wthread-safety")
-        endif()
+if(MSVC)
+    if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Od /fsanitize")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2 /Oy")
     endif()
 else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -flto ")
-endif()
+#
+# clang or gcc
+#
+    IF(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        add_link_options("-fuse-ld=lld")
+    ENDIF()
+
+    add_definitions(-D_GNU_SOURCE)
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable  -ffunction-sections")
+
+    if ("${PROFILE}" STREQUAL "ON")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg -fprofile-arcs -ftest-coverage --coverage")
+    endif()
+
+    if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+        if (NOT WIN32)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check -fsanitize=address -fsanitize=undefined ")
+            if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wthread-safety")
+            endif()
+        endif()
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -flto ")
+    endif()
+endif(MSVC)
 
 
 if (WIN32)
@@ -108,4 +119,3 @@ elseif(UNIX)
     target_link_libraries(xcp_sim_can ${ADD_LIBS})
     target_compile_features(xcp_sim_can PRIVATE c_std_11)
 endif()
-
