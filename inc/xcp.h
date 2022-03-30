@@ -49,7 +49,7 @@
 #define XCP_ON_USB (3)
 #define XCP_ON_ETHERNET (4)
 #define XCP_ON_SXI (5)
-#define XCP_ON_BTH (128) /* XCP on Bluetooth -- no-standard. */
+#define XCP_ON_BTH (128) /* XCP on Bluetooth -- non-standard. */
 
 #define XCP_DAQ_CONFIG_TYPE_STATIC (0)
 #define XCP_DAQ_CONFIG_TYPE_DYNAMIC (1)
