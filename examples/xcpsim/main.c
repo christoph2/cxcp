@@ -34,13 +34,13 @@ void parse_options(int argc, char **argv, Xcp_OptionsType *options);
 void AppTask(void);
 
 int main(int argc, char **argv) {
-    parse_options(argc, argv, &Xcp_Options);
-    FlsEmu_Init(&FlsEmu_Config);
-    Xcp_Init();
-    Xcp_DisplayInfo();
-    XcpThrd_RunThreads();
-    FlsEmu_DeInit();
-    XcpHw_Deinit();
-    XcpTl_DeInit();
-    return 0;
+  parse_options(argc, argv, &Xcp_Options);
+  // FlsEmu_Init(&FlsEmu_Config);
+  Xcp_Init();
+  Xcp_DisplayInfo();
+  XcpThrd_RunThreads();
+  // FlsEmu_DeInit();
+  XcpHw_Deinit();
+  XcpTl_DeInit();
+  return 0;
 }

@@ -27,7 +27,6 @@
 #define __XCP_ETH_H
 
 #if defined(_WIN32)
-#include <Mstcpip.h>
 #include <WinSock2.h>
 #include <Ws2tcpip.h>
 #elif defined(__unix__)
@@ -46,23 +45,23 @@
 
 #if defined(_WIN32)
 typedef struct tagXcpTl_ConnectionType {
-    SOCKADDR_STORAGE connectionAddress;
-    SOCKADDR_STORAGE currentAddress;
-    SOCKADDR_STORAGE localAddress;
-    SOCKET boundSocket;
-    SOCKET connectedSocket;
-    bool connected;
-    int socketType;
+  SOCKADDR_STORAGE connectionAddress;
+  SOCKADDR_STORAGE currentAddress;
+  SOCKADDR_STORAGE localAddress;
+  SOCKET boundSocket;
+  SOCKET connectedSocket;
+  bool connected;
+  int socketType;
 } XcpTl_ConnectionType;
 #elif defined(__unix__)
 typedef struct tagXcpTl_ConnectionType {
-    struct sockaddr_storage connectionAddress;
-    struct sockaddr_storage currentAddress;
-    struct sockaddr_storage localAddress;
-    int boundSocket;
-    int connectedSocket;
-    bool connected;
-    int socketType;
+  struct sockaddr_storage connectionAddress;
+  struct sockaddr_storage currentAddress;
+  struct sockaddr_storage localAddress;
+  int boundSocket;
+  int connectedSocket;
+  bool connected;
+  int socketType;
 } XcpTl_ConnectionType;
 #endif
 

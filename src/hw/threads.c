@@ -23,9 +23,15 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include <errno.h>
+#if defined(_WIN32)
+#include <process.h>
+#include <windows.h>
+#else
 #include <pthread.h>
 #include <sched.h>
+#endif
+
+#include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -50,7 +56,11 @@
 
 #define NUM_THREADS (4)
 
+#if defined(_WIN32)
+HANDLE threads[NUM_THREADS];
+#else
 pthread_t threads[NUM_THREADS];
+#endif
 
 #if defined(__STDC_NO_ATOMICS__)
 static bool XcpThrd_ShuttingDown;
@@ -61,14 +71,31 @@ static atomic_bool XcpThrd_ShuttingDown;
 void bye(void);
 
 void XcpThrd_RunThreads(void) {
-    atexit(bye);
-    pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
-    pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
-    pthread_create(&threads[XCP_THREAD], NULL, &Xcp_Thread, NULL);
-    pthread_join(threads[UI_THREAD], NULL);
-    XcpThrd_ShutDown();
-    pthread_kill(threads[TL_THREAD], SIGINT);
-    pthread_kill(threads[XCP_THREAD], SIGINT);
+  atexit(bye);
+
+#if defined(_WIN32)
+  threads[UI_THREAD] = (HANDLE)_beginthread(&XcpTerm_Thread, 0, NULL);
+  threads[TL_THREAD] = (HANDLE)_beginthread(&XcpTl_Thread, 0, NULL);
+  threads[XCP_THREAD] = (HANDLE)_beginthread(&Xcp_Thread, 0, NULL);
+  WaitForSingleObject(threads[UI_THREAD], INFINITE);
+  XcpThrd_ShutDown();
+#else
+  pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
+  pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
+  pthread_create(&threads[XCP_THREAD], NULL, &Xcp_Thread, NULL);
+  pthread_join(threads[UI_THREAD], NULL);
+  XcpThrd_ShutDown();
+  pthread_kill(threads[TL_THREAD], SIGINT);
+  pthread_kill(threads[XCP_THREAD], SIGINT);
+#endif
+}
+
+void XcpThrd_Exit(void) {
+#if defined(_WIN32)
+  ExitThread(0);
+#else
+  pthread_exit(NULL);
+#endif
 }
 
 void bye(void) { printf("Exiting program.\n"); }
@@ -95,33 +122,45 @@ void XcpThrd_SetAffinity(pthread_t thrd, int cpu)
 }
 #endif
 
-void* Xcp_Thread(void* param) {
-    XCP_UNREFERENCED_PARAMETER(param);
-    XCP_FOREVER { Xcp_MainFunction(); }
-    return NULL;
+void *Xcp_Thread(void *param) {
+  XCP_UNREFERENCED_PARAMETER(param);
+  XCP_FOREVER { Xcp_MainFunction(); }
+  return NULL;
 }
 
 void XcpThrd_EnableAsyncCancellation(void) {
-    int res;
+#if defined(_WIN32)
 
-    res = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-    if (res != 0) {
-        XcpHw_ErrorMsg("pthread_setcancelstate()", errno);
-    }
+#else
+  int res;
+
+  res = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+  if (res != 0) {
+    XcpHw_ErrorMsg("pthread_setcancelstate()", errno);
+  }
+#endif
 }
 
 void XcpThrd_ShutDown(void) {
-    int res;
+  int res;
 
-    printf("Shutdown RQ.\n");
-    if (XcpThrd_IsShuttingDown()) {
-        return;
-    }
-    res = pthread_cancel(threads[TL_THREAD]);  // Due to blocking accept().
-    if (res != 0) {
-        XcpHw_ErrorMsg("pthread_cancel()", errno);
-    }
-    XcpThrd_ShuttingDown = true;
+  printf("Shutdown RQ.\n");
+  if (XcpThrd_IsShuttingDown()) {
+    return;
+  }
+  // Due to blocking accept().
+#if defined(_WIN32)
+  res = TerminateThread(threads[TL_THREAD], 0);
+  if (!res) {
+    XcpHw_ErrorMsg("TerminateThread", GetLastError());
+  }
+#else
+  res = pthread_cancel(threads[TL_THREAD]);
+  if (res != 0) {
+    XcpHw_ErrorMsg("pthread_cancel()", errno);
+  }
+#endif
+  XcpThrd_ShuttingDown = true;
 }
 
 bool XcpThrd_IsShuttingDown(void) { return XcpThrd_ShuttingDown; }

@@ -151,11 +151,15 @@ bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t **result,
   static char get_id_result[256];
 
   if (id_type == 0x80) { /* First user-defined identification type. */
+#if defined(_WIN32)
+
+#else
     fp = popen("uname -a ", "r");
     assert(fp != NULL);
     fgets(get_id_result, sizeof(get_id_result), fp);
     *result = (uint8_t *)&get_id_result[0];
     *result_length = strlen(get_id_result) - 1; /* Get rid of trailing '\n'. */
+#endif
     return XCP_TRUE;
   } else {
     return XCP_FALSE;
