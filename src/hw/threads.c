@@ -56,11 +56,19 @@
 
 #define NUM_THREADS (4)
 
+typedef void (*XcpThrd_ThreadFuncType)(void *);
+
 #if defined(_WIN32)
-HANDLE threads[NUM_THREADS];
+typedef HANDLE XcpThrd_ThreadType;
 #else
-pthread_t threads[NUM_THREADS];
+typedef pthread_t XcpThrd_ThreadType;
 #endif
+
+XcpThrd_ThreadType threads[NUM_THREADS];
+
+static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd,
+                                 XcpThrd_ThreadFuncType *func);
+static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu);
 
 #if defined(__STDC_NO_ATOMICS__)
 static bool XcpThrd_ShuttingDown;
@@ -70,19 +78,29 @@ static atomic_bool XcpThrd_ShuttingDown;
 
 void bye(void);
 
+static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd,
+                                 XcpThrd_ThreadFuncType *func) {
+#if defined(_WIN32)
+  XcpThrd_ThreadType res;
+  res = (HANDLE)_beginthread(func, 0, NULL);
+  CopyMemory(thrd, &res, sizeof(XcpThrd_ThreadType));
+  XcpThrd_SetAffinity(res, 1);
+#else
+  pthread_create(thrd, NULL, func, NULL);
+  XcpThrd_SetAffinity(thrd, 1);
+#endif
+}
+
 void XcpThrd_RunThreads(void) {
   atexit(bye);
 
+  XcpThrd_CreateThread(&threads[UI_THREAD], XcpTerm_Thread);
+  XcpThrd_CreateThread(&threads[TL_THREAD], XcpTl_Thread);
+  XcpThrd_CreateThread(&threads[XCP_THREAD], Xcp_Thread);
 #if defined(_WIN32)
-  threads[UI_THREAD] = (HANDLE)_beginthread(&XcpTerm_Thread, 0, NULL);
-  threads[TL_THREAD] = (HANDLE)_beginthread(&XcpTl_Thread, 0, NULL);
-  threads[XCP_THREAD] = (HANDLE)_beginthread(&Xcp_Thread, 0, NULL);
   WaitForSingleObject(threads[UI_THREAD], INFINITE);
   XcpThrd_ShutDown();
 #else
-  pthread_create(&threads[UI_THREAD], NULL, &XcpTerm_Thread, NULL);
-  pthread_create(&threads[TL_THREAD], NULL, &XcpTl_Thread, NULL);
-  pthread_create(&threads[XCP_THREAD], NULL, &Xcp_Thread, NULL);
   pthread_join(threads[UI_THREAD], NULL);
   XcpThrd_ShutDown();
   pthread_kill(threads[TL_THREAD], SIGINT);
@@ -97,30 +115,6 @@ void XcpThrd_Exit(void) {
   pthread_exit(NULL);
 #endif
 }
-
-void bye(void) { printf("Exiting program.\n"); }
-
-#if 0
-void XcpThrd_SetAffinity(pthread_t thrd, int cpu)
-{
-    int res;
-    cpu_set_t cpuset;
-
-    CPU_ZERO(&cpuset);
-
-    CPU_SET(0, &cpuset);
-
-    res = pthread_setaffinity_np(thrd, sizeof(cpu_set_t), &cpuset);
-    if (res != 0) {
-        XcpHw_ErrorMsg("pthread_setaffinity_np()", errno);
-    }
-
-    res = pthread_getaffinity_np(thrd, sizeof(cpu_set_t), &cpuset);
-    if (res != 0) {
-        XcpHw_ErrorMsg("pthread_getaffinity_np()", errno);
-    }
-}
-#endif
 
 void *Xcp_Thread(void *param) {
   XCP_UNREFERENCED_PARAMETER(param);
@@ -164,3 +158,30 @@ void XcpThrd_ShutDown(void) {
 }
 
 bool XcpThrd_IsShuttingDown(void) { return XcpThrd_ShuttingDown; }
+
+void bye(void) { printf("Exiting program.\n"); }
+
+static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
+#if defined(_WIN32)
+  if (SetThreadAffinityMask(thrd, cpu) == 0) {
+    XcpHw_ErrorMsg("SetThreadAffinityMask()", GetLastError());
+  }
+#else
+  /* Linux only (i.e. no BSD) ??? */
+  int res;
+  cpu_set_t cpuset;
+
+  CPU_ZERO(&cpuset);
+  CPU_SET(0, &cpuset);
+
+  res = pthread_setaffinity_np(thrd, sizeof(cpu_set_t), &cpuset);
+  if (res != 0) {
+    XcpHw_ErrorMsg("pthread_setaffinity_np()", errno);
+  }
+
+  res = pthread_getaffinity_np(thrd, sizeof(cpu_set_t), &cpuset);
+  if (res != 0) {
+    XcpHw_ErrorMsg("pthread_getaffinity_np()", errno);
+  }
+#endif
+}
