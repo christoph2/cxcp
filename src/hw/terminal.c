@@ -393,8 +393,8 @@ void XcpDaq_Info(void) {
   }
   printf("\n\r");
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-  printf("Allocated DAQ entities: %d of %d\n\r", XcpDaq_EntityCount,
-         XCP_DAQ_MAX_DYNAMIC_ENTITIES);
+  printf("Allocated DAQ entities: %d of %d\n\r",
+         XcpDaq_GetDynamicDaqEntityCount(), XCP_DAQ_MAX_DYNAMIC_ENTITIES);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #else

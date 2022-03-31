@@ -1025,6 +1025,8 @@ extern XcpDaq_ListStateType XcpDaq_PredefinedListsState[];
 
 extern const XcpDaq_EventType XcpDaq_Events[];
 
+XCP_DAQ_ENTITY_TYPE XcpDaq_GetDynamicDaqEntityCount(void);
+
 /*
 ** Debugging / Testing interface.
 */
