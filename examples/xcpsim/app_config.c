@@ -60,6 +60,7 @@ const FlsEmu_ConfigType FlsEmu_Config = {
     (FlsEmu_SegmentType **)segments,
 };
 
+#if 0
 XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
     XCP_DAQ_DEFINE_ODT_ENTRY(triangle),
     XCP_DAQ_DEFINE_ODT_ENTRY(randomValue),
@@ -75,6 +76,7 @@ XcpDaq_ListStateType
 const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount =
     XCP_DAQ_PREDEFINDED_LIST_COUNT;
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+#endif
 
 XCP_DAQ_BEGIN_EVENTS
 XCP_DAQ_DEFINE_EVENT("EVT 100ms",

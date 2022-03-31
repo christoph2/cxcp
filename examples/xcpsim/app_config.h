@@ -15,6 +15,6 @@
 #define CAL_PARAM __attribute__((section("calparams")))
 #endif
 
-const FlsEmu_ConfigType FlsEmu_Config;
+extern const FlsEmu_ConfigType FlsEmu_Config;
 
 #endif // __APP_CONFIG_H
