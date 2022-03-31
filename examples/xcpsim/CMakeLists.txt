@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(xcpsim LANGUAGES C)
 
+
+MESSAGE("CMAKE_HOST_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME}")
+MESSAGE("CMAKE_HOST_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION}")
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Build type not specified: defaulting to release.")
@@ -37,20 +41,20 @@ set(INCLUDES
     ../../flsemu
 )
 
-if(WIN32)
+if(CMAKE_HOST_WIN32)
     set(ADD_LIBS
         "ws2_32"
     )
     list(APPEND SOURCES "../../src/hw/win/hw.c")
     list(APPEND SOURCES "../../flsemu/win/flsemu.c")
-elseif(UNIX)
+elseif(CMAKE_HOST_UNIX)
     list(APPEND SOURCES "../../src/hw/linux/hw.c")
     list(APPEND SOURCES "../../flsemu/posix/flsemu.c")
     set(ADD_LIBS
         "pthread"
         "rt"
     )
-endif(WIN32)
+endif(CMAKE_HOST_WIN32)
 
 if(MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
@@ -76,7 +80,7 @@ else()
 
     if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls")
-        if (NOT WIN32)
+	if (NOT CMAKE_HOST_WIN32)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check -fsanitize=address -fsanitize=undefined ")
             if(CMAKE_C_COMPILER_ID MATCHES "Clang")
                 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wthread-safety")
@@ -88,13 +92,13 @@ else()
 endif(MSVC)
 
 
-if (WIN32)
+if (CMAKE_HOST_WIN32)
     add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/wineth.c" "../../src/tl/eth/common.c")
     target_compile_definitions(xcp_sim_eth PUBLIC TP_ETHER)
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
-elseif(UNIX)
+elseif(CMAKE_HOST_UNIX)
     add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/linuxeth.c" "../../src/tl/eth/common.c")
     if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	add_compile_options("-m32")
@@ -105,13 +109,15 @@ elseif(UNIX)
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
 
-    add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c")
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	add_compile_options("-m32")
-	link_libraries("-m32")
+    if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN")
+	    add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c")
+	    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+		add_compile_options("-m32")
+		link_libraries("-m32")
+	    endif()
+	    target_compile_definitions(xcp_sim_can PUBLIC TP_CAN)
+	    target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})
+	    target_link_libraries(xcp_sim_can ${ADD_LIBS})
+	    target_compile_features(xcp_sim_can PRIVATE c_std_11)
     endif()
-    target_compile_definitions(xcp_sim_can PUBLIC TP_CAN)
-    target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})
-    target_link_libraries(xcp_sim_can ${ADD_LIBS})
-    target_compile_features(xcp_sim_can PRIVATE c_std_11)
 endif()
