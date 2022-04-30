@@ -154,7 +154,7 @@ bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t **result,
 
   if (id_type == 0x80) { /* First user-defined identification type. */
 #if defined(_WIN32)
-    fp = _popen("cmd /c ver", "r");
+    fp = _popen("cmd /c ver", "rt");
 #else
     fp = popen("uname -a ", "r");
 #endif

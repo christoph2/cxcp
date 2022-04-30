@@ -40,6 +40,10 @@
 //#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
 
+#define XCP_TRANSPORT_LAYER                                                    \
+  XCP_ON_SXI // Alternatively one could use [TP_CAN | TP_ETHER | TP_SXI] on the
+             // command line, e.g. -DTP_ETHER
+
 #define XCP_ENABLE_EXTERN_C_GUARDS XCP_OFF
 
 #define XCP_ENABLE_SLAVE_BLOCKMODE XCP_ON
@@ -162,7 +166,7 @@
 /*
 **  Transport-Layer specific Options (may not apply to every Transport).
 */
-#if defined(TP_CAN)
+#if defined(TP_CAN) || (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
 #define XCP_TRANSPORT_LAYER XCP_ON_CAN
 
 #define XCP_ON_CAN_INBOUND_IDENTIFIER (0x102)
@@ -175,7 +179,7 @@
 #define XCP_ON_CAN_TSEG2 (2)
 #define XCP_ON_CAN_SJW (2)
 #define XCP_ON_CAN_NOSAMP (1)
-#elif defined(TP_BLUETOOTH)
+#elif defined(TP_BLUETOOTH) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
 #define XCP_TRANSPORT_LAYER XCP_ON_BTH
 
 #define XCP_MAX_CTO (64) // (16)
@@ -184,7 +188,7 @@
 #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
-#elif defined(TP_ETHER)
+#elif defined(TP_ETHER) || (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
 #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
 #define XCP_MAX_CTO (64) // (16)
@@ -193,9 +197,16 @@
 #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
+#elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
+
+#define XCP_MAX_CTO (64)
+#define XCP_MAX_DTO (64)
+#define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+#define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
+#define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (2)
 #else
 #error                                                                         \
-    "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
+    "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
 #endif // KVASER_CAN
 
 /*
@@ -204,11 +215,16 @@
 #define XCP_ENABLE_ADDRESS_MAPPER XCP_ON
 #define XCP_ENABLE_CHECK_MEMORY_ACCESS XCP_ON
 #define XCP_REPLACE_STD_COPY_MEMORY XCP_OFF
-
-#define XCP_ENABLE_GET_ID_HOOK XCP_OFF
+#define XCP_ENABLE_GET_ID_HOOK XCP_ON
 
 /*
-**  Platform Specific Options.
+**
+** Arduino Specific Options.
+**
+*/
+
+/*
+**  Platform Specific Function-like Macros.
 */
 #define XCP_ENTER_CRITICAL() XcpHw_AcquireLock(XCP_HW_LOCK_XCP)
 #define XCP_LEAVE_CRITICAL() XcpHw_ReleaseLock(XCP_HW_LOCK_XCP)

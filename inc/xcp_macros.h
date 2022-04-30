@@ -44,46 +44,55 @@ extern "C" {
 #define XCP_DEBUG_BUILD (1)
 #define XCP_RELEASE_BUILD (2)
 
-#include "xcp_config.h"
-
 #if defined(_WIN32) || (XCP_BUILD_TYPE == XCP_DEBUG_BUILD)
 #include <stdio.h>
 #endif /* defined(_WIN32) */
 
 #if !defined(XCP_LOBYTE)
-#define XCP_LOBYTE(w) ((uint8_t)((w) & (uint8_t)0xff)) /**< Get the low-byte from a word. */
+#define XCP_LOBYTE(w)                                                          \
+  ((uint8_t)((w) & (uint8_t)0xff)) /**< Get the low-byte from a word. */
 #endif
 
 #if !defined(XCP_HIBYTE)
-#define XCP_HIBYTE(w) ((uint8_t)(((w) & (uint16_t)0xff00U) >> 8U)) /**< Get the high-byte from a word. */
+#define XCP_HIBYTE(w)                                                          \
+  ((uint8_t)(((w) & (uint16_t)0xff00U) >>                                      \
+             8U)) /**< Get the high-byte from a word. */
 #endif
 
 #if !defined(XCP_LOWORD)
-#define XCP_LOWORD(w) ((uint16_t)((w) & (uint16_t)0xffff)) /**< Get the low-word from a double-word. */
+#define XCP_LOWORD(w)                                                          \
+  ((uint16_t)((w) &                                                            \
+              (uint16_t)0xffff)) /**< Get the low-word from a double-word. */
 #endif
 
 #if !defined(XCP_HIWORD)
-#define XCP_HIWORD(w) ((uint16_t)(((w) & (uint32_t)0xffff0000) >> 16U)) /**< Get the high-word from a doubleword. */
+#define XCP_HIWORD(w)                                                          \
+  ((uint16_t)(((w) & (uint32_t)0xffff0000) >>                                  \
+              16U)) /**< Get the high-word from a doubleword. */
 #endif
 
 #if !defined(XCP_MAKEWORD)
-#define XCP_MAKEWORD(h, l)                                  \
-    ((((uint16_t)((h) & ((uint8_t)0xff))) << (uint16_t)8) | \
-     ((uint16_t)((l) & ((uint8_t)0xff)))) /**< Make word from high and low bytes. */
+#define XCP_MAKEWORD(h, l)                                                     \
+  ((((uint16_t)((h) & ((uint8_t)0xff))) << (uint16_t)8) |                      \
+   ((uint16_t)((l) &                                                           \
+               ((uint8_t)0xff)))) /**< Make word from high and low bytes. */
 #endif
 
 #if !defined(XCP_MAKEDWORD)
-#define XCP_MAKEDWORD(h, l)                                      \
-    ((((uint32_t)((h) & ((uint16_t)0xffffu))) << (uint32_t)16) | \
-     ((uint32_t)((l) & ((uint16_t)0xffffu)))) /**< Make double-word from high and low words. */
+#define XCP_MAKEDWORD(h, l)                                                    \
+  ((((uint32_t)((h) & ((uint16_t)0xffffu))) << (uint32_t)16) |                 \
+   ((uint32_t)((l) & ((uint16_t)0xffffu)))) /**< Make double-word from high    \
+                                               and low words. */
 #endif
 
 #if !defined(XCP_MAX)
-#define XCP_MAX(l, r) (((l) > (r)) ? (l) : (r)) /**< Computes the maximum of \a l and \a r. */
+#define XCP_MAX(l, r)                                                          \
+  (((l) > (r)) ? (l) : (r)) /**< Computes the maximum of \a l and \a r. */
 #endif
 
 #if !defined(XCP_MIN)
-#define XCP_MIN(l, r) (((l) < (r)) ? (l) : (r)) /**< Computes the minimum of \a l and \a r. */
+#define XCP_MIN(l, r)                                                          \
+  (((l) < (r)) ? (l) : (r)) /**< Computes the minimum of \a l and \a r. */
 #endif
 
 #if !defined(XCP_TRUE)
@@ -98,12 +107,13 @@ extern "C" {
 #if defined(__cplusplus)
 #define XCP_NULL (0)
 #else
-#define XCP_NULL ((void*)0)
+#define XCP_NULL ((void *)0)
 #endif
 #endif
 
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
-#define XCP_STATIC /**< Static only on DEBUG builds. Rationale: (unit-) testing. */
+#define XCP_STATIC /**< Static only on DEBUG builds. Rationale: (unit-)        \
+                      testing. */
 #else
 #define XCP_STATIC static
 #endif /* XCP_BUILD_TYPE */
@@ -147,7 +157,7 @@ extern "C" {
 #define DBG_TRACE4(A, B, C, D) DBG_PRINT4(A, B, C, D)
 #define DBG_TRACE5(A, B, C, D, E) DBG_PRINT5(A, B, C, D, E)
 #define DBG_TRACE6(A, B, C, D, E, F) DBG_PRINT6(A, B, C, D, E, F)
-#endif  // defined(_WIN32)
+#endif // defined(_WIN32)
 #else
 #define INLINE
 #define DBG_PRINT1(a)
@@ -165,7 +175,9 @@ extern "C" {
 #define DBG_TRACE6(a, b, c, d, e, f)
 #endif /* XCP_BUILD_TYPE == XCP_DEBUG_BUILD */
 
-#define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr)[0])) /**< Calculates the number of elements of \a arr */
+#define XCP_ARRAY_SIZE(arr)                                                    \
+  (sizeof((arr)) /                                                             \
+   sizeof((arr)[0])) /**< Calculates the number of elements of \a arr */
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)

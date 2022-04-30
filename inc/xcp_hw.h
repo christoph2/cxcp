@@ -32,10 +32,15 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
 
+/*!!! START-INCLUDE-SECTION !!!*/
+#include "xcp.h"
+/*!!! END-INCLUDE-SECTION !!!*/
+
 /*
 **  Global Functions.
 */
-void XcpHw_ParseCommandLineOptions(int argc, char **argv, Xcp_OptionsType *options);
+void XcpHw_ParseCommandLineOptions(int argc, char **argv,
+                                   Xcp_OptionsType *options);
 void XcpHw_ErrorMsg(char *const function, int errorCode);
 void XcpHw_Sleep(uint64_t usec);
 

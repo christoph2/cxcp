@@ -111,7 +111,7 @@
 #define XCP_ENABLE_UPLOAD XCP_ON
 #define XCP_ENABLE_SHORT_UPLOAD XCP_ON
 #define XCP_ENABLE_BUILD_CHECKSUM XCP_ON
-#define XCP_ENABLE_TRANSPORT_LAYER_CMD \
+#define XCP_ENABLE_TRANSPORT_LAYER_CMD                                         \
   XCP_OFF /* TODO: TL dependend include file! */
 #define XCP_ENABLE_USER_CMD XCP_OFF
 
@@ -161,7 +161,7 @@
 /*
 **  Transport-Layer specific Options (may not apply to every Transport).
 */
-#if defined(KVASER_CAN)
+#if defined(KVASER_CAN) || XCP_TRANSPORT_LAYER == XCP_ON_CAN
 #define XCP_TRANSPORT_LAYER XCP_ON_CAN
 
 #define XCP_ON_CAN_INBOUND_IDENTIFIER (0x102)
@@ -177,13 +177,13 @@
 #else
 #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
-#define XCP_MAX_CTO (64)  // (16)
+#define XCP_MAX_CTO (64) // (16)
 #define XCP_MAX_DTO (64)
 
 #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
-#endif  // KVASER_CAN
+#endif // KVASER_CAN
 
 /*
 **  Customization Options.
@@ -215,9 +215,9 @@
 /*
 **  Application Settings.
 */
-#define XCP_APP_TIMEBASE                                   \
-  (10) /* Applications gets called every 'n' milliseconds, \
-       ** 0 ==> free running.                              \
+#define XCP_APP_TIMEBASE                                                       \
+  (10) /* Applications gets called every 'n' milliseconds,                     \
+       ** 0 ==> free running.                                                  \
        */
 
 #endif /* __XCP_CONFIG_H */

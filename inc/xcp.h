@@ -43,12 +43,12 @@
 #define XCP_ON (1)
 #define XCP_OFF (0)
 
-#define XCP_ON_CAN (0)
-#define XCP_ON_CANFD (1)
-#define XCP_ON_FLEXRAY (2)
-#define XCP_ON_USB (3)
-#define XCP_ON_ETHERNET (4)
-#define XCP_ON_SXI (5)
+#define XCP_ON_CAN (1)
+#define XCP_ON_CANFD (2)
+#define XCP_ON_FLEXRAY (3)
+#define XCP_ON_USB (4)
+#define XCP_ON_ETHERNET (5)
+#define XCP_ON_SXI (6)
 #define XCP_ON_BTH (128) /* XCP on Bluetooth -- non-standard. */
 
 #define XCP_DAQ_CONFIG_TYPE_STATIC (0)
@@ -926,15 +926,17 @@ typedef struct tagXcp_1DArrayType {
 } Xcp_1DArrayType;
 
 typedef struct tagXcp_OptionsType {
-#if defined(TP_ETHER)
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
   bool ipv6;
   bool tcp;
   uint16_t port;
-#elif defined(TP_BLUETOOTH)
+#elif XCP_TRANSPORT_LAYER == XCP_ON_BTH
   char interface2[6];
-#elif defined(TP_CAN)
+#elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
   bool fd;
   char interface[64];
+#elif XCP_TRANSPORT_LAYER == XCP_ON_SXI
+  bool dummy;
 #endif
 } Xcp_OptionsType;
 

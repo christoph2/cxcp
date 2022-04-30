@@ -47,7 +47,10 @@ extern "C" {
 #endif
 
 #if defined(__CSMC__) || !defined(C99_COMPILER) || !defined(C11_COMPILER)
+
+#if !defined(__cplusplus)
 typedef unsigned char bool;
+#endif
 
 typedef signed char int8_t;
 typedef unsigned char uint8_t;

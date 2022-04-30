@@ -261,9 +261,9 @@ XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber,
            idx < (XcpDaq_EntityCount + odtEntriesCount); ++idx) {
         XcpDaq_Entities[idx].kind = UINT8(XCP_ENTITY_ODT_ENTRY);
       }
-      odt = (XcpDaq_ODTIntegerType)(
-          XcpDaq_Entities[daqListNumber].entity.daqList.firstOdt +
-          UINT16(odtNumber));
+      odt = (XcpDaq_ODTIntegerType)(XcpDaq_Entities[daqListNumber]
+                                        .entity.daqList.firstOdt +
+                                    UINT16(odtNumber));
       XcpDaq_Entities[odt].entity.odt.firstOdtEntry = XcpDaq_EntityCount;
       XcpDaq_Entities[odt].entity.odt.numOdtEntries = odtEntriesCount;
       XcpDaq_EntityCount += (XCP_DAQ_ENTITY_TYPE)odtEntriesCount;
@@ -530,7 +530,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
   XcpDaq_ListConfigurationType const *listConf = XCP_NULL;
   uint16_t offset = UINT16(0);
   uint32_t timestamp = UINT32(0);
-  uint8_t data[XCP_MAX_DTO];
+  uint8_t data[XCP_MAX_DTO] = {0};
 
   state = Xcp_GetState();
   if (state->daqProcessor.state != XCP_DAQ_STATE_RUNNING) {
