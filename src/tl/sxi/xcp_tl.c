@@ -60,11 +60,24 @@ typedef struct tagXcpTl_ReceiverType {
 
 static XcpTl_ReceiverType XcpTl_Receiver;
 
-void XcpTl_Init(void) { XcpTl_ResetSM(); }
+void XcpTl_Init(void) {
+  Serial.begin(115000);
+  XcpTl_ResetSM();
+}
 
 void XcpTl_DeInit(void) {}
 
-void XcpTl_MainFunction(void) {}
+void XcpTl_MainFunction(void) {
+  uint8_t octet = 0;
+
+  if (Serial.available()) {
+    digitalWrite(LED_BUILTIN, LOW);
+    octet = Serial.read();
+    // XcpTl_FeedReceiver(octet);
+
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
+}
 
 /********************************************/ /**
                                                 * \brief Initialize, i.e. reset
@@ -152,5 +165,21 @@ void XcpTl_PrintConnectionInformation(void) {
          //       Xcp_Options.ipv6 ? "IPv6" : "IPv4"
   );
 }
+
+#if 0
+void serialEventRun(void)
+{
+    if (Serial.available()) {
+        serialEvent();
+    }
+}
+
+void serialEvent()
+{
+    digitalWrite(LED_BUILTIN, HIGH);
+    XcpTl_RxHandler();
+    digitalWrite(LED_BUILTIN, LOW);
+}
+#endif
 
 #endif /* XCP_TRANSPORT_LAYER == XCP_ON_SXI */

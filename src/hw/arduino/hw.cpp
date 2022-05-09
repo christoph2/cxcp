@@ -37,7 +37,7 @@ static HwStateType HwState = {0};
 
 void XcpHw_Init(void) {
   HwState.StartingTime = millis();
-  // pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void XcpHw_Deinit(void) {}
