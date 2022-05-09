@@ -36,17 +36,7 @@
 #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-// CAN TX Variables
-unsigned long prevTX = 0;         // Variable to store last execution time
-const unsigned int invlTX = 1000; // One second interval constant
-byte data[] = {0xAA, 0x55, 0x01, 0x10,
-               0xFF, 0x12, 0x34, 0x56}; // Generic CAN data to send
-
-// MCP2515 INT and CS Pins.
-#define CAN0_INT (2)
-#define CAN0_CS (9) // 10
-
-XcpTl_ConnectionType XcpTl_Connection;
+static bool connected = false;
 
 void XcpTl_Init(void) {
   Serial.begin(9600);
@@ -61,6 +51,7 @@ void XcpTl_Init(void) {
     while (1) {
     }
   }
+  CAN.setTimeout(1000);
 }
 
 void XcpTl_DeInit(void) {}
@@ -101,12 +92,18 @@ void XcpTl_RxHandler(void) {
     return;
   } else {
     Serial.print(" and length ");
-    Serial.println(packetSize);
+    Serial.println(dlc);
 
-    CAN.readBytes(buffer, 64);
+    int actual = CAN.readBytes(buffer, dlc);
+    Serial.print("actaul length: ");
+    Serial.print(actual);
+    Serial.println();
 
     Xcp_CtoIn.len = dlc;
-    Xcp_CtoIn.data = buffer + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+    // Xcp_CtoIn.data = buffer + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+
+    XcpUtl_MemCopy(Xcp_CtoIn.data, &buffer, dlc);
+
     Xcp_DispatchCommand(&Xcp_CtoIn);
     // only print packet data for non-RTR packets
     // while (CAN.available()) {
@@ -121,26 +118,39 @@ void XcpTl_RxHandler(void) {
 void XcpTl_TxHandler(void) {}
 
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
-
+  int res;
   XCP_UNREFERENCED_PARAMETER(sec);
   XCP_UNREFERENCED_PARAMETER(usec);
 
-  return CAN.parsePacket();
+  res = CAN.parsePacket();
+  if (res != 0) {
+    Serial.print("Frames avail!!!");
+    Serial.println();
+  }
+
+  return res;
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
-  // CAN.beginPacket(id, dlc);
-  // CAN.beginExtendedPacket(id, dlc);
+  uint32_t can_id;
 
-  // CAN.write(buf, len);
-  // CAN.endPacket();
+  can_id = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+
+  if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER)) {
+    CAN.beginExtendedPacket(can_id, len);
+  } else {
+    CAN.beginPacket(can_id);
+  }
+
+  CAN.write(buf, len);
+  CAN.endPacket();
 }
 
-void XcpTl_SaveConnection(void) { XcpTl_Connection.connected = XCP_TRUE; }
+void XcpTl_SaveConnection(void) { connected = XCP_TRUE; }
 
-void XcpTl_ReleaseConnection(void) { XcpTl_Connection.connected = XCP_FALSE; }
+void XcpTl_ReleaseConnection(void) { connected = XCP_FALSE; }
 
-bool XcpTl_VerifyConnection(void) { return XCP_TRUE; }
+bool XcpTl_VerifyConnection(void) { return connected; }
 
 void XcpTl_PrintConnectionInformation(void) {}
 
