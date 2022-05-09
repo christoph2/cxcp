@@ -29,27 +29,27 @@
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 /*!!! END-INCLUDE-SECTION !!!*/
-
-#if 0
 typedef struct tagHwStateType {
-    uint32_t StartingTime;
+  uint32_t StartingTime;
 } HwStateType;
 
 static HwStateType HwState = {0};
-#endif
 
 void XcpHw_Init(void) {
-    // HwState.StartingTime = micros();
+  HwState.StartingTime = millis();
+  // pinMode(LED_BUILTIN, OUTPUT);
 }
+
+void XcpHw_Deinit(void) {}
 
 uint32_t XcpHw_GetTimerCounter(void) {
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-    return micros();
+  return micros();
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-    return millis();
+  return millis();
 #else
 #error Timestamp-unit not supported.
-#endif  // XCP_DAQ_TIMESTAMP_UNIT
+#endif // XCP_DAQ_TIMESTAMP_UNIT
 }
 
 bool XcpHw_SxIAvailable(void) { return Serial.available(); }
@@ -60,16 +60,14 @@ uint8_t XcpHw_SxIRead(void) { return (uint8_t)Serial.read(); }
 
 // Transport-Layer: Frame-based vs. byte-wise interfaces!
 
-#if 0
-void serialEventRun(void)
-{
-    if (Serial.available()) {
-        serialEvent();
-    }
+void XcpHw_AcquireLock(uint8_t lockIdx) {
+  if (lockIdx >= XCP_HW_LOCK_COUNT) {
+    return;
+  }
 }
 
-void serialEvent()
-{
-    XcpTl_RxHandler();
+void XcpHw_ReleaseLock(uint8_t lockIdx) {
+  if (lockIdx >= XCP_HW_LOCK_COUNT) {
+    return;
+  }
 }
-#endif
