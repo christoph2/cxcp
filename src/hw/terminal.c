@@ -278,12 +278,12 @@ void FlsEmu_Info(void) {
 
   printf("\n\rFlash-Emulator\n\r");
   printf("--------------\n\r");
-  printf("Segment              Mapped     Virtual    Size(KB) Pagesize(KB) "
+  printf("Segment              Mapped Virtual      Size(KB) Pagesize(KB) "
          "#Pages\n\r");
   for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
     ptr = FlsEmu_BasePointer(idx);
     segment = FlsEmu_GetConfig()->segments[idx];
-    printf("%-20.20s 0x%p 0x%p %8d         %4d %6d\n\r", segment->name,
+    printf("%-20.20s %p %p %8d         %4d %6d\n\r", segment->name,
            (void *)segment->baseAddress, ptr, segment->memSize / 1024,
            segment->pageSize / 1024, FlsEmu_NumPages(idx));
   }
