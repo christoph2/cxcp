@@ -40,10 +40,6 @@
 //#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
 
-#define XCP_TRANSPORT_LAYER                                                    \
-  XCP_ON_CAN // Alternatively one could use [TP_CAN | TP_ETHER | TP_SXI] on the
-             // command line, e.g. -DTP_ETHER
-
 #define XCP_ENABLE_EXTERN_C_GUARDS XCP_OFF
 
 #define XCP_ENABLE_SLAVE_BLOCKMODE XCP_ON

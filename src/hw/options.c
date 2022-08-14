@@ -24,6 +24,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
@@ -35,9 +36,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#if defined(TP_ETHER)
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
 static const char OPTION_STR[] = "htu46p:";
-#elif defined(TP_CAN)
+#elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
 static const char OPTION_STR[] = "hi:f";
 #endif
 
@@ -47,7 +48,7 @@ static const char OPTION_STR[] = "hi:f";
 void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
     int idx;
     char* arg;
-#if defined(TP_ETHER)
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
     options->ipv6 = XCP_FALSE;
     options->tcp = XCP_TRUE;
 
@@ -87,14 +88,14 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
 
 void usage(void) {
     printf("\nparameter summary: \n");
-#if defined(TP_ETHER)
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
     printf("-h\t  this message.\n");
     printf("-t\t  TCP\t\t  default: TRUE\n");
     printf("-u\t  UDP\t\t  default: FALSE\n");
     printf("-4\t  IPv4\t\t  default: TRUE\n");
     printf("-6\t  IPv6\t\t  default: FALSE\n");
     printf("-p <port> port to listen  default: 5555\n");
-#elif defined(TP_CAN)
+#elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
     printf("-h\tthis message.\n");
     printf("-f\t\tuse CAN-FD\t\tdefault: FALSE\n");
     printf("-i <if-name>\tinterface to use\tdefault: vcan0\n");
@@ -106,14 +107,14 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
     int opt;
     int res;
 
-#if defined(TP_ETHER)
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
     int p_assigned = 0;
     int v_assigned = 0;
 
     options->tcp = XCP_TRUE;
     options->ipv6 = XCP_FALSE;
     options->port = XCP_ETH_DEFAULT_PORT;
-#elif defined(TP_CAN)
+#elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
     int if_assigned = 0;
     options->fd = XCP_FALSE;
 #endif
@@ -124,7 +125,7 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
             case '?':
                 usage();
                 break; /* never reached. */
-#if defined(TP_ETHER)
+#if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
             case 't':
                 if (p_assigned) {
                     printf("-t and -u options are mutual exclusive.\n");
@@ -159,7 +160,7 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
                 break;
             case 'p':
                 options->port = atoi(optarg);
-#elif defined(TP_CAN)
+#elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
             case 'f':
                 options->fd = XCP_TRUE;
                 break;
@@ -171,7 +172,7 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
         }
     }
 
-#if defined(TP_CAN)
+#if XCP_TRANSPORT_LAYER == XCP_ON_CAN
     if (!if_assigned) {
         strcpy(options->interface, XCP_SOCKET_CAN_DEFAULT_IF);
     }
