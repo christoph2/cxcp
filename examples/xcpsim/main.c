@@ -36,7 +36,7 @@ void parse_options(int argc, char **argv, Xcp_OptionsType *options);
 void AppTask(void);
 
 int main(int argc, char **argv) {
-  assert(sizeof(void *) == 4);
+//  assert(sizeof(void *) == 4);
 
   parse_options(argc, argv, &Xcp_Options);
   FlsEmu_Init(&FlsEmu_Config);

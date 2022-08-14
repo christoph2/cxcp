@@ -89,7 +89,7 @@ static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const* persist
     FLSEMU_ASSERT_INITIALIZED();
 
     FlsEmu_UnmapAddress(persistentArray->mappingAddress, size);
-    close((int)persistentArray->fileHandle);
+    close((uint32_t)persistentArray->fileHandle);
 }
 
 static void FlsEmu_MapAddress(void* mappingAddress, int offset, uint32_t size, int fd) {
@@ -171,7 +171,7 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page) {
     /* printf("page# %u offset: %x\n", page, offset); */
     FlsEmu_UnmapAddress(segment->persistentArray->mappingAddress, segment->memSize);
     FlsEmu_MapAddress(segment->persistentArray->mappingAddress, offset, segment->memSize,
-                      (int)segment->persistentArray->fileHandle);
+                      (uint32_t)segment->persistentArray->fileHandle);
     /*
         if (FlsEmu_MapView(segment, offset, segment->pageSize)) {
             segment->currentPage = page;
