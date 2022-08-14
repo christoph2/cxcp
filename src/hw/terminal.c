@@ -40,6 +40,7 @@
 #include <windows.h>
 #else
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
 #include <termios.h>

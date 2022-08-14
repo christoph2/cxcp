@@ -23,6 +23,8 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <stdio.h>
+
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_eth.h"
