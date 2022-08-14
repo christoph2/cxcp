@@ -67,9 +67,6 @@ else()
 #
 # clang or gcc
 #
-    IF(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        add_link_options("-fuse-ld=lld")
-    ENDIF()
 
     add_definitions(-D_GNU_SOURCE)
 
@@ -80,7 +77,7 @@ else()
     endif()
 
     if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -UNDEBUG -fno-omit-frame-pointer -fno-optimize-sibling-calls")
 	if (NOT CMAKE_HOST_WIN32)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check -fsanitize=address -fsanitize=undefined ")
             if(CMAKE_C_COMPILER_ID MATCHES "Clang")
@@ -102,8 +99,6 @@ if (CMAKE_HOST_WIN32)
 elseif(CMAKE_HOST_UNIX)
     add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/linuxeth.c" "../../src/tl/eth/common.c")
     if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
     endif()
     target_compile_definitions(xcp_sim_eth PUBLIC TP_ETHER)
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
