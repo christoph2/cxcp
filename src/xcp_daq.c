@@ -23,6 +23,13 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+/*
+ *
+ * TODO: Cleanup DAQ configuration
+ *
+ */
+
+
 #if defined(_WIN32)
 #include <stdio.h>
 #endif /* _WIN32 */
@@ -317,7 +324,7 @@ void XcpDaq_Init(void) {
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-  // XcpDaq_QueueInit();
+  XcpDaq_QueueInit();
 #endif
 }
 

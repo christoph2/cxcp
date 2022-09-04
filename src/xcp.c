@@ -768,31 +768,31 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3,
   case 8:
     dataOut[7] = b7;
     /*lint -fallthrough */
-    [[fallthrough]];
+    //[[fallthrough]];
   case 7:
     dataOut[6] = b6;
     /*lint -fallthrough */
-    [[fallthrough]];
+    //[[fallthrough]];
   case 6:
     dataOut[5] = b5;
     /*lint -fallthrough */
-    [[fallthrough]];
+    //[[fallthrough]];
   case 5:
     dataOut[4] = b4;
     /*lint -fallthrough */
-    [[fallthrough]];
+    //[[fallthrough]];
   case 4:
     dataOut[3] = b3;
     /*lint -fallthrough */
-    [[fallthrough]];
+    //[[fallthrough]];
   case 3:
     dataOut[2] = b2;
     /*lint -fallthrough */
-    [[fallthrough]];
+    //[[fallthrough]];
   case 2:
     dataOut[1] = b1;
     /*lint -fallthrough */
-    [[fallthrough]];
+    //[[fallthrough]];
   case 1:
     dataOut[0] = b0;
     break;

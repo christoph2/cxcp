@@ -198,33 +198,33 @@ def test_daq_queue_init(xcp):
     assert var.head == 0
     assert var.tail == 0
 
-#def test_daq_queue_enq_deq_with_wraparound(xcp):
-#    RESULTS = (
-#        (1, 1),
-#        (2, 2),
-#        (3, 3),
-#        (4, 4),
-#        (0, 0),
-#        (1, 1),
-#    )
-#    xcp.XcpDaq_QueueInit()
-#    for idx in range(6):
-#        xcp.daq_enqueue(b"test data")
-#        xcp.daq_dequeue()
-#        var = xcp.get_daq_queue_var()
-#        head, tail = RESULTS[idx]
-#        assert var.head == head
-#        assert var.tail == tail
+def test_daq_queue_enq_deq_with_wraparound(xcp):
+    RESULTS = (
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        (4, 4),
+        (0, 0),
+        (1, 1),
+    )
+    xcp.XcpDaq_QueueInit()
+    for idx in range(6):
+        xcp.daq_enqueue(b"test data")
+        xcp.daq_dequeue()
+        var = xcp.get_daq_queue_var()
+        head, tail = RESULTS[idx]
+        assert var.head == head
+        assert var.tail == tail
 
 def test_daq_queue_empty(xcp):
     xcp.XcpDaq_QueueInit()
     assert xcp.daq_dequeue() == (False, b'', )
 
-#def test_daq_queue_full(xcp):
-#    xcp.XcpDaq_QueueInit()
-#    for _ in range(4):
-#        assert xcp.daq_enqueue(b"test data") == True
-#    assert xcp.daq_enqueue(b"test data") == False
+def test_daq_queue_full(xcp):
+    xcp.XcpDaq_QueueInit()
+    for _ in range(4):
+        assert xcp.daq_enqueue(b"test data") == True
+    assert xcp.daq_enqueue(b"test data") == False
 
 def test_daq_queue_push_pop_seq(xcp):
     for idx in range(4):
