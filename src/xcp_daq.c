@@ -97,7 +97,7 @@ XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
+bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
 #endif /* XCP_DAQ_ENABLE_QUEUING */
 
 /*
@@ -744,7 +744,7 @@ XCP_STATIC bool XcpDaq_QueueFull(void) {
 
 bool XcpDaq_QueueEmpty(void) { return XcpDaq_Queue.head == XcpDaq_Queue.tail; }
 
-XCP_STATIC bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
+bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
   if (XcpDaq_QueueFull()) {
     XcpDaq_Queue.overload = (bool)XCP_TRUE;
     return (bool)XCP_FALSE;
