@@ -1009,7 +1009,7 @@ void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber,
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
 void XcpDaq_QueueInit(void);
-bool XcpDaq_QueueFull(void);
+XCP_STATIC bool XcpDaq_QueueFull(void);
 bool XcpDaq_QueueEmpty(void);
 bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
 #endif /* XCP_DAQ_ENABLE_QUEUING */

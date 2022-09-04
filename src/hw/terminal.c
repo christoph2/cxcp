@@ -106,6 +106,7 @@ void *XcpTerm_Thread(void *param) {
               switch (tolower(key.uChar.AsciiChar)) {
               case 'q':
                 XcpThrd_Exit();
+                [[noreturn]];
               case 'h':
                 DisplayHelp();
                 break;
