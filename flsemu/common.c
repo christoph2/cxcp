@@ -93,14 +93,14 @@ void FlsEmu_DeInit(void) {
 }
 
 void FlsEmu_OpenCreate(uint8_t segmentIdx) {
-  unsigned int length = 0;
+  uint32_t length = 0;
   char rom[1024];
   FlsEmu_SegmentType *segment = XCP_NULL;
   FlsEmu_OpenCreateResultType result = 0;
   uint32_t fillerSize = 0UL;
-  uint32_t offset = 0UL;
-  uint16_t numPages = 0U;
-  uint16_t pageIdx = 0U;
+  Xcp_PointerSizeType offset = 0UL;
+  uint32_t numPages = 0U;
+  uint32_t pageIdx = 0U;
   uint32_t pageSize = 0U;
 
   FLSEMU_ASSERT_INITIALIZED();
@@ -129,7 +129,7 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
     }
     for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
       // FIXME!!!
-      offset = ((int)segment->persistentArray->mappingAddress) +
+      offset = ((Xcp_PointerSizeType)segment->persistentArray->mappingAddress) +
                (pageIdx * pageSize);
       XcpUtl_MemSet(offset, FLSEMU_ERASED_VALUE, segment->pageSize);
       if (fillerSize > 0) {
@@ -146,7 +146,7 @@ void *FlsEmu_BasePointer(uint8_t segmentIdx) {
   FLSEMU_ASSERT_INITIALIZED();
 
   if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
-    return (void *)XCP_NULL;
+    return XCP_NULL;
   }
   segment = FlsEmu_GetConfig()->segments[segmentIdx];
   return segment->persistentArray->mappingAddress;
@@ -204,7 +204,7 @@ void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block) {
   uint8_t *ptr = XCP_NULL;
   uint32_t offset = 0UL;
   uint32_t blockSize = 0UL;
-  FlsEmu_SegmentType *segment = XCP_NULL;
+  FlsEmu_SegmentType const *segment = XCP_NULL;
 
   FLSEMU_ASSERT_INITIALIZED();
   if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
@@ -224,7 +224,7 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst,
                                                 Xcp_MtaType const *src) {
   uint8_t idx = 0;
   uint8_t *ptr = XCP_NULL;
-  FlsEmu_SegmentType *segment = XCP_NULL;
+  FlsEmu_SegmentType const *segment = XCP_NULL;
 
   /* printf("addr: %x ext: %d\n", src->address, src->ext); */
 
@@ -238,7 +238,8 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst,
       } else {
         FlsEmu_SelectPage(idx, src->ext);
       }
-      dst->address = ((uint32_t)ptr - segment->baseAddress) + src->address;
+      dst->address =
+          ((Xcp_PointerSizeType)ptr - segment->baseAddress) + src->address;
       dst->ext = src->ext;
       /* printf("MAPPED: addr: %x ext: %d TO: %x:%d\n", src->address, src->ext,
        * dst->address, dst->ext); */
@@ -275,7 +276,7 @@ FlsEmu_ModuleStateType *FlsEmu_GetModuleState(void) {
 }
 
 bool FlsEmu_Initialized(void) {
-  FlsEmu_ModuleStateType *state = FlsEmu_GetModuleState();
+  FlsEmu_ModuleStateType const *state = FlsEmu_GetModuleState();
 
   return *state == FLSEMU_INIT;
 }

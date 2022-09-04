@@ -34,7 +34,7 @@ void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src,
   uint8_t *pd = (uint8_t *)dst;
   uint8_t const *ps = (uint8_t const *)src;
 
-  XCP_ASSERT(dst != NULL);
+  XCP_ASSERT(dst != XCP_NULL);
   XCP_ASSERT(pd >= ps + len || ps >= pd + len);
   XCP_ASSERT(len != 0UL);
 
