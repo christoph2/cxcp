@@ -95,9 +95,9 @@ static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd,
 void XcpThrd_RunThreads(void) {
   atexit(bye);
 
-  XcpThrd_CreateThread(&threads[UI_THREAD], XcpTerm_Thread);
-  XcpThrd_CreateThread(&threads[TL_THREAD], XcpTl_Thread);
-  XcpThrd_CreateThread(&threads[XCP_THREAD], Xcp_Thread);
+  XcpThrd_CreateThread(&threads[UI_THREAD], &XcpTerm_Thread);
+  XcpThrd_CreateThread(&threads[TL_THREAD], &XcpTl_Thread);
+  XcpThrd_CreateThread(&threads[XCP_THREAD], &Xcp_Thread);
 #if defined(_WIN32)
   WaitForSingleObject(threads[UI_THREAD], INFINITE);
   XcpThrd_ShutDown();

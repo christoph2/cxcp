@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -25,6 +25,8 @@
 
 #if !defined(__XCP_TYPES_H)
 #define __XCP_TYPES_H
+
+#include <limits.h>
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
 #if defined(__cplusplus)
@@ -59,14 +61,25 @@ typedef unsigned short uint16_t;
 typedef signed long int32_t;
 typedef unsigned long uint32_t;
 
-#if 0
-typedef signed long long    int64_t;
-typedef unsigned long long  uint64_t;
-#endif
+typedef signed long long int64_t;
+typedef unsigned long long uint64_t;
+
 #else
 
 #include <stdbool.h>
 #include <stdint.h>
+
+/* 64-bit */
+#if UINTPTR_MAX == 0xffffffffffffffff
+#define ENV64BIT
+typedef uint64_t Xcp_PointerSizeType;
+#elif UINTPTR_MAX == 0xffffffff
+typedef uint32_t Xcp_PointerSizeType;
+#define ENV32BIT
+#else
+#define ENV16BIT
+typedef uint32_t Xcp_PointerSizeType;
+#endif
 
 #endif
 

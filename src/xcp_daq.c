@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -201,8 +201,8 @@ Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount) {
         XcpDaq_Entities[idx].kind = UINT8(XCP_ENTITY_DAQ_LIST);
         XcpDaq_Entities[idx].entity.daqList.numOdts = (XcpDaq_ODTIntegerType)0;
       }
-      XcpDaq_ListCount += (XCP_DAQ_ENTITY_TYPE)daqCount;
-      XcpDaq_EntityCount += (XCP_DAQ_ENTITY_TYPE)daqCount;
+      XcpDaq_ListCount += daqCount;
+      XcpDaq_EntityCount += daqCount;
     } else {
       result = ERR_MEMORY_OVERFLOW;
     }
@@ -231,8 +231,8 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber,
       XcpDaq_Entities[daqListNumber].entity.daqList.numOdts += odtCount;
       XcpDaq_Entities[daqListNumber].entity.daqList.firstOdt =
           XcpDaq_EntityCount;
-      XcpDaq_OdtCount += (XCP_DAQ_ENTITY_TYPE)odtCount;
-      XcpDaq_EntityCount += (XCP_DAQ_ENTITY_TYPE)odtCount;
+      XcpDaq_OdtCount += odtCount;
+      XcpDaq_EntityCount += odtCount;
     } else {
       result = ERR_MEMORY_OVERFLOW;
     }
@@ -357,7 +357,8 @@ XcpDaq_GetListConfiguration(XcpDaq_ListIntegerType daqListNumber) {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) &&                                \
     (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
   /* Dynamic DAQs only */
-  XcpDaq_DynamicListType *dl = &XcpDaq_Entities[daqListNumber].entity.daqList;
+  XcpDaq_DynamicListType const *dl =
+      &XcpDaq_Entities[daqListNumber].entity.daqList;
 
   XcpDaq_ListConfiguration.firstOdt = dl->firstOdt;
   XcpDaq_ListConfiguration.numOdts = dl->numOdts;
@@ -583,7 +584,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
  *  @param[in]  src  The memory area to copy from.
  *  @param[in]  len  The number of bytes to copy
  */
-void XcpDaq_CopyMemory(void *dst, void *src, uint32_t len) {
+void XcpDaq_CopyMemory(void *dst, void const *src, uint32_t len) {
   XcpUtl_MemCopy(dst, src, len);
 }
 

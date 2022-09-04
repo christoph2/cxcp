@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2022 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -28,6 +28,7 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+#include "xcp_threads.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #endif /* __TERMINAL_H */

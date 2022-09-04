@@ -714,7 +714,7 @@ typedef enum tagXcp_ReturnType {
 
 typedef struct tagXcp_MtaType {
   uint8_t ext;
-  uint32_t address;
+  Xcp_PointerSizeType address;
 } Xcp_MtaType;
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
@@ -722,7 +722,7 @@ typedef struct tagXcpDaq_MtaType {
 #if XCP_DAQ_ENABLE_ADDR_EXT == XCP_ON
   uint8_t ext;
 #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
-  uint32_t address;
+  Xcp_PointerSizeType address;
 } XcpDaq_MtaType;
 
 typedef enum tagXcpDaq_ProcessorStateType {
@@ -991,7 +991,7 @@ bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber,
                              XcpDaq_ODTEntryIntegerType odtEntry);
 void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber,
                             uint16_t eventChannelNumber);
-void XcpDaq_CopyMemory(void *dst, void *src, uint32_t len);
+void XcpDaq_CopyMemory(void *dst, void const *src, uint32_t len);
 XcpDaq_EventType const *
 XcpDaq_GetEventConfiguration(uint16_t eventChannelNumber);
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);

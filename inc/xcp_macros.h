@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -40,6 +40,8 @@
 extern "C" {
 #endif /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
+
+#include <assert.h>
 
 #define XCP_DEBUG_BUILD (1)
 #define XCP_RELEASE_BUILD (2)
@@ -184,5 +186,7 @@ extern "C" {
 }
 #endif /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
+
+#define XCP_ASSERT(x) assert(x)
 
 #endif /* __XCP_MACROS_H */

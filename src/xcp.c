@@ -55,12 +55,12 @@ static uint8_t Xcp_CtoInBuffer[XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE] = {0};
 /*
 **  Global Variables.
 */
-Xcp_PduType Xcp_CtoIn = {0, (uint8_t *)&Xcp_CtoInBuffer[0]};
-Xcp_PduType Xcp_CtoOut = {0, (uint8_t *)&Xcp_CtoOutBuffer[0]};
+Xcp_PduType Xcp_CtoIn = {0, &Xcp_CtoInBuffer[0]};
+Xcp_PduType Xcp_CtoOut = {0, &Xcp_CtoOutBuffer[0]};
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 static uint8_t Xcp_DtoOutBuffer[XCP_TRANSPORT_LAYER_DTO_BUFFER_SIZE] = {0};
-static Xcp_PduType Xcp_DtoOut = {0, (uint8_t *)&Xcp_DtoOutBuffer[0]};
+static Xcp_PduType Xcp_DtoOut = {0, &Xcp_DtoOutBuffer[0]};
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 void Xcp_WriteMemory(void *dest, void *src, uint16_t count);
@@ -670,7 +670,7 @@ Xcp_MtaType Xcp_GetNonPagedAddress(void const *const ptr) {
   Xcp_MtaType mta;
 
   mta.ext = (uint8_t)0;
-  mta.address = (uint32_t)ptr;
+  mta.address = (Xcp_PointerSizeType)ptr;
   return mta;
 }
 
@@ -768,24 +768,31 @@ void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3,
   case 8:
     dataOut[7] = b7;
     /*lint -fallthrough */
+    // [[fallthrough]];
   case 7:
     dataOut[6] = b6;
     /*lint -fallthrough */
+    // [[fallthrough]];
   case 6:
     dataOut[5] = b5;
     /*lint -fallthrough */
+    // [[fallthrough]];
   case 5:
     dataOut[4] = b4;
     /*lint -fallthrough */
+    // [[fallthrough]];
   case 4:
     dataOut[3] = b3;
     /*lint -fallthrough */
+    // [[fallthrough]];
   case 3:
     dataOut[2] = b2;
     /*lint -fallthrough */
+    // [[fallthrough]];
   case 2:
     dataOut[1] = b1;
     /*lint -fallthrough */
+    // [[fallthrough]];
   case 1:
     dataOut[0] = b0;
     break;
@@ -819,7 +826,7 @@ void Xcp_UploadSingleBlock(void) {
   }
   dataOut = Xcp_GetCtoOutPtr();
   dataOut[0] = (uint8_t)ERR_SUCCESS;
-  dst.address = (uint32_t)(dataOut + 1);
+  dst.address = (Xcp_PointerSizeType)(dataOut + 1);
   dst.ext = (uint8_t)0;
 
   if (Xcp_State.slaveBlockModeState.remaining <= (XCP_MAX_CTO - 1)) {
@@ -853,7 +860,7 @@ void Xcp_UploadSingleBlock(void) {
 #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
 
 XCP_STATIC void Xcp_Upload(uint8_t len) {
-  uint8_t *dataOut = Xcp_GetCtoOutPtr();
+  uint8_t const *dataOut = Xcp_GetCtoOutPtr();
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_OFF
   Xcp_MtaType dst = {0};
   dataOut[0] = (uint8_t)ERR_SUCCESS;
@@ -1035,17 +1042,17 @@ XCP_STATIC void Xcp_GetCommModeInfo_Res(Xcp_PduType const *const pdu) {
 #if XCP_ENABLE_GET_ID == XCP_ON
 XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const *const pdu) {
   uint8_t idType = Xcp_GetByte(pdu, UINT8(1));
-  static uint8_t *response = XCP_NULL;
+  static uint8_t const *response = XCP_NULL;
   uint32_t response_len = UINT32(0);
   bool valid = XCP_TRUE;
 
   DBG_TRACE2("GET_ID [type: 0x%02x]\n\r", idType);
 
   if (idType == UINT8(0)) {
-    response = (uint8_t *)Xcp_GetId0.name;
+    response = Xcp_GetId0.name;
     response_len = Xcp_GetId0.len;
   } else if (idType == UINT8(1)) {
-    response = (uint8_t *)Xcp_GetId1.name;
+    response = Xcp_GetId1.name;
     response_len = Xcp_GetId1.len;
   }
 #if XCP_ENABLE_GET_ID_HOOK == XCP_ON
@@ -1397,7 +1404,7 @@ XCP_STATIC void Xcp_ShortDownload_Res(Xcp_PduType const *const pdu) {
     return;
   }
 
-  src.address = (uint32_t)pdu->data + 8;
+  src.address = (Xcp_PointerSizeType)pdu->data + 8;
   src.ext = UINT8(0);
   Xcp_CopyMemory(dst, src, (uint32_t)len);
 
@@ -1420,7 +1427,7 @@ XCP_STATIC void Xcp_ModifyBits_Res(Xcp_PduType const *const pdu) {
   XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, 2, XCP_MEM_ACCESS_WRITE,
                           (bool)XCP_FALSE);
   vp = (uint32_t *)Xcp_State.mta.address;
-  *vp = ((*vp) & (((~((uint32_t)(((uint16_t)~andMask) << shiftValue)))) ^
+  *vp = ((*vp) & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue))) ^
                   ((uint32_t)(xorMask << shiftValue))));
 
   Xcp_PositiveResponse();
@@ -1753,7 +1760,7 @@ XCP_STATIC void Xcp_AllocOdt_Res(Xcp_PduType const *const pdu) {
   XCP_ASSERT_PGM_IDLE();
   XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
   daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
-  odtCount = (XcpDaq_ODTIntegerType)Xcp_GetByte(pdu, UINT8(4));
+  odtCount = Xcp_GetByte(pdu, UINT8(4));
   DBG_TRACE3("ALLOC_ODT [daq: %u count: %u] \n\r", daqListNumber, odtCount);
   Xcp_SendResult(XcpDaq_AllocOdt(daqListNumber, odtCount));
 }
@@ -1768,8 +1775,8 @@ XCP_STATIC void Xcp_AllocOdtEntry_Res(Xcp_PduType const *const pdu) {
   XCP_ASSERT_PGM_IDLE();
   XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
   daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
-  odtNumber = (XcpDaq_ODTIntegerType)Xcp_GetByte(pdu, UINT8(4));
-  odtEntriesCount = (XcpDaq_ODTEntryIntegerType)Xcp_GetByte(pdu, UINT8(5));
+  odtNumber = Xcp_GetByte(pdu, UINT8(4));
+  odtEntriesCount = Xcp_GetByte(pdu, UINT8(5));
   DBG_TRACE4("ALLOC_ODT_ENTRY: [daq: %u odt: %u count: %u]\n\r", daqListNumber,
              odtNumber, odtEntriesCount);
   Xcp_SendResult(
@@ -1892,7 +1899,7 @@ XCP_STATIC void Xcp_Program_Res(Xcp_PduType const *const pdu) {
   XCP_ASSERT_PGM_ACTIVE();
   XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, len, XCP_MEM_ACCESS_WRITE,
                           (bool)XCP_TRUE);
-  src.address = (uint32_t)pdu->data + 2;
+  src.address = (Xcp_PointerSizeType)pdu->data + 2;
   src.ext = UINT8(0);
   //    Xcp_CopyMemory(Xcp_State.mta, src, (uint32_t)len);
 
@@ -2120,7 +2127,7 @@ XCP_STATIC uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value,
   if ((value & flag) == flag) {
     result |= flag;
   } else {
-    result &= ~(flag);
+    result &= ~flag;
   }
   return result;
 }
@@ -2233,17 +2240,17 @@ XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len) {
 
   src.address = address;
   src.ext = ext;
-  Xcp_CopyMemory(Xcp_State.mta, src, (uint32_t)len);
+  Xcp_CopyMemory(Xcp_State.mta, src, len);
   XCP_INCREMENT_MTA(len);
 }
 
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
 void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state) {
-  Xcp_StateType *Xcp_State = {0};
+  Xcp_StateType *tmpState = {0};
 
-  Xcp_State = Xcp_GetState();
+  tmpState = Xcp_GetState();
   XCP_PGM_ENTER_CRITICAL();
-  Xcp_State->pgmProcessor.state = state;
+  tmpState->pgmProcessor.state = state;
   XCP_PGM_LEAVE_CRITICAL();
 }
 #endif /* ENABLE_PGM_COMMANDS */

@@ -88,7 +88,7 @@ typedef struct tagFlsEmu_SegmentType {
   uint16_t sectorSize;
   uint32_t pageSize;
   uint8_t blockCount;
-  uint32_t baseAddress;
+  Xcp_PointerSizeType baseAddress;
   FlsEmu_PersistentArrayType *persistentArray;
   uint8_t currentPage;
   uint32_t alloctedPageSize;

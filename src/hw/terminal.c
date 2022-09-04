@@ -39,8 +39,8 @@
 #if defined(_WIN32)
 #include <windows.h>
 #else
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/select.h>
 #include <termios.h>
@@ -67,7 +67,9 @@ void XcpDaq_Info(void);
 #if defined(_WIN32)
 void *XcpTerm_Thread(void *param) {
   HANDLE hStdin;
-  DWORD cNumRead, fdwMode, idx;
+  DWORD cNumRead;
+  DWORD fdwMode;
+  DWORD idx;
   INPUT_RECORD irInBuf[128];
   KEY_EVENT_RECORD key;
 
@@ -103,7 +105,7 @@ void *XcpTerm_Thread(void *param) {
               }
               switch (tolower(key.uChar.AsciiChar)) {
               case 'q':
-                XcpThrd_Exit(NULL);
+                XcpThrd_Exit();
               case 'h':
                 DisplayHelp();
                 break;
@@ -112,6 +114,8 @@ void *XcpTerm_Thread(void *param) {
                 break;
               case 'd':
                 XcpDaq_PrintDAQDetails();
+                break;
+              default:
                 break;
               }
             }
@@ -206,7 +210,7 @@ void *XcpTerm_Thread(void *param) {
 
 static void SystemInformation(void) {
 #if XCP_ENABLE_STATISTICS == XCP_ON
-  Xcp_StateType *state;
+  Xcp_StateType const *state = Xcp_GetState();
 #endif /* XCP_ENABLE_STATISTICS */
 
   printf("\n\rSystem-Information\n\r");
@@ -252,7 +256,6 @@ static void SystemInformation(void) {
     FlsEmu_Info();
   }
 #if XCP_ENABLE_STATISTICS == XCP_ON
-  state = Xcp_GetState();
   printf("\n\rStatistics\n\r");
   printf("----------\n\r");
   printf("CTOs rec'd      : %d\n\r", state->statistics.ctosReceived);
@@ -268,7 +271,6 @@ static void DisplayHelp(void) {
   printf("<ESC> or q\texit\n\r");
   printf("i\t\tsystem information\n\r");
   printf("d\t\tDAQ configuration\n\r");
-  /* printf("d\t\tReset connection\n"); */
 }
 
 void FlsEmu_Info(void) {
@@ -303,7 +305,7 @@ void XcpDaq_PrintDAQDetails(void) {
   XcpDaq_ListConfigurationType const *listConf;
   XcpDaq_ListStateType *listState;
   XcpDaq_ODTType const *odt;
-  XcpDaq_ODTEntryType *entry;
+  XcpDaq_ODTEntryType const *entry;
   uint8_t mode;
   uint32_t total;
   XcpDaq_ODTIntegerType firstPid;

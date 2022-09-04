@@ -36,7 +36,7 @@
 */
 #define TP_CAN
 
-#define XCP_GET_ID_0 "BlueParrot XCP running on Windows"
+#define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
 #define XCP_GET_ID_1 "Example_Project"
 
 //#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
