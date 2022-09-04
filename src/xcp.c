@@ -860,7 +860,7 @@ void Xcp_UploadSingleBlock(void) {
 #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
 
 XCP_STATIC void Xcp_Upload(uint8_t len) {
-  uint8_t const *dataOut = Xcp_GetCtoOutPtr();
+  uint8_t *dataOut = Xcp_GetCtoOutPtr();
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_OFF
   Xcp_MtaType dst = {0};
   dataOut[0] = (uint8_t)ERR_SUCCESS;
