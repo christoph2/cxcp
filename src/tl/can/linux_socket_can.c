@@ -119,7 +119,7 @@ void XcpTl_Init(void) {
     rfilter[0].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER) ? CAN_EFF_FLAG : CAN_SFF_MASK;
     rfilter[1].can_id = XCP_ON_CAN_BROADCAST_IDENTIFIER;
     rfilter[1].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER) ? CAN_EFF_FLAG : CAN_SFF_MASK;
-    ;
+
     setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
 }
 
@@ -150,15 +150,17 @@ void XcpTl_RxHandler(void) {
     } else {
         errno_abort("can raw socket read");
     }
-    // printf("#%d bytes received from '%04x' DLC: %d .\n\r", nbytes, frame.can_id, frame.can_dlc);
+    //printf("#%d bytes received from '%04x' DLC: %d .\n\r", nbytes, frame.can_id, frame.len);
     if (frame.len > 0) {
         Xcp_CtoIn.len = frame.len;
-        Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-        XcpUtl_MemCopy(Xcp_CtoIn.data, (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET,
-                       nbytes - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+        //Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+        //XcpUtl_MemCopy(Xcp_CtoIn.data, (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, nbytes - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+        XcpUtl_MemCopy(Xcp_CtoIn.data, &frame.data, frame.len);
+        //XcpUtl_Hexdump(Xcp_CtoIn.data, frame.len);
         Xcp_DispatchCommand(&Xcp_CtoIn);
     }
 }
+
 
 void XcpTl_TxHandler(void) {}
 
