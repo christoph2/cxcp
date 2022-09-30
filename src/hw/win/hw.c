@@ -24,6 +24,7 @@
  */
 
 #define _CRTDBG_MAP_ALLOC
+
 #include <crtdbg.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -55,6 +56,26 @@ typedef struct tagHwStateType {
 #define TIMER_PS_1MS (1000UL)
 #define TIMER_PS_10MS (100UL)
 #define TIMER_PS_100MS (10UL)
+#define TIMER_PS_1S (1UL)
+
+/* Set timer prescaler value. */
+#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US)
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100MS)
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1S
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1S)
+#else
+#error Timestamp-unit not supported.
+#endif // XCP_DAQ_TIMESTAMP_UNIT
 
 #define TIMER_MASK_1 (0x000000FFUL)
 #define TIMER_MASK_2 (0x0000FFFFUL)
@@ -64,7 +85,10 @@ typedef struct tagHwStateType {
 **  Local Function Prototypes.
 */
 static void XcpHw_InitLocks(void);
+
 static void XcpHw_DeinitLocks();
+
+static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler);
 
 /*
 **  External Function Prototypes.
@@ -72,9 +96,13 @@ static void XcpHw_DeinitLocks();
 void XcpTl_PrintConnectionInformation(void);
 
 void FlsEmu_Info(void);
+
 void XcpDaq_Info(void);
+
 void XcpDaq_PrintDAQDetails();
+
 bool XcpDaq_QueueEmpty(void);
+
 bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
 
 void XcpHw_MainFunction(void);
@@ -92,48 +120,39 @@ CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
 */
 void XcpHw_Init(void) {
   fflush(stdout);
-  //_setmode(_fileno(stdout), _O_WTEXT);
-  //_setmode(_fileno(stdout), _O_U8TEXT);
   QueryPerformanceFrequency(&HwState.TicksPerSecond);
   XcpHw_InitLocks();
 }
 
 void XcpHw_Deinit(void) { XcpHw_DeinitLocks(); }
 
-uint32_t XcpHw_GetTimerCounter(void) {
+static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler) {
+  /* TODO: check initialisation state. */
   LARGE_INTEGER Now;
   LARGE_INTEGER Elapsed;
 
   QueryPerformanceCounter(&Now);
   Elapsed.QuadPart = Now.QuadPart - HwState.StartingTime.QuadPart;
+  Elapsed.QuadPart /= (HwState.TicksPerSecond.QuadPart / prescaler);
+  return Elapsed.QuadPart;
+}
 
-#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-  Elapsed.QuadPart *= TIMER_PS_1US;
-#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
-  Elapsed.QuadPart *= TIMER_PS_10US;
-#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
-  Elapsed.QuadPart *= TIMER_PS_100US;
-#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-  Elapsed.QuadPart *= TIMER_PS_1MS;
-#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
-  Elapsed.QuadPart *= TIMER_PS_10MS;
-#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
-  Elapsed.QuadPart *= TIMER_PS_100MS;
-#else
-#error Timestamp-unit not supported.
-#endif // XCP_DAQ_TIMESTAMP_UNIT
-
-  Elapsed.QuadPart /= HwState.TicksPerSecond.QuadPart;
+uint32_t XcpHw_GetTimerCounter(void) {
+  uint64_t Now = XcpHw_GetElapsedTime(XCP_HW_TIMER_PRESCALER);
 
 #if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
-  return (uint32_t)Elapsed.QuadPart & TIMER_MASK_1;
+  return (uint32_t)Now & TIMER_MASK_1;
 #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_2
-    return (uint32_t)Elapsed.QuadPart) & TIMER_MASK_2;
+  return (uint32_t)Now & TIMER_MASK_2;
 #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_4
-  return (uint32_t)Elapsed.QuadPart & TIMER_MASK_4;
+  return (uint32_t)Now & TIMER_MASK_4;
 #else
 #error Timestamp-size not supported.
 #endif // XCP_DAQ_TIMESTAMP_SIZE
+}
+
+uint32_t XcpHw_GetTimerCounterMS(void) {
+  return (uint32_t)((XcpHw_GetElapsedTime(TIMER_PS_1MS)) & TIMER_MASK_4);
 }
 
 static void XcpHw_InitLocks(void) {

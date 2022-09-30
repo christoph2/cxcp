@@ -685,7 +685,7 @@ typedef enum tagXcp_ReturnType {
       UINT8(0x20), /* Unknown command or not implemented optional command. S2 */
   ERR_CMD_SYNTAX = UINT8(0x21),   /* Command syntax invalid   S2 */
   ERR_OUT_OF_RANGE = UINT8(0x22), /* Command syntax valid but command
-                                     parameter(s) out of range.   S2 */
+                                   parameter(s) out of range.   S2 */
   ERR_WRITE_PROTECTED =
       UINT8(0x23), /* The memory location is write protected. S2 */
   ERR_ACCESS_DENIED =
@@ -701,12 +701,12 @@ typedef enum tagXcp_ReturnType {
   ERR_MEMORY_OVERFLOW = UINT8(0x30), /* Memory overflow error S2 */
   ERR_GENERIC = UINT8(0x31),         /* Generic error.         S2 */
   ERR_VERIFY = UINT8(0x32), /* The slave internal program verify routine detects
-                               an error.   S3 */
+                             an error.   S3 */
 
   /* NEW IN 1.1 */
   ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE =
       UINT8(0x33), /* Access to the requested resource is temporary not
-                      possible.   S3 */
+                        possible.   S3 */
 
   /* Internal Success Code - not related to XCP spec. */
   ERR_SUCCESS = UINT8(0xff)
@@ -918,6 +918,7 @@ typedef enum tagXcp_MemoryMappingResultType {
 } Xcp_MemoryMappingResultType;
 
 typedef void (*Xcp_SendCalloutType)(Xcp_PduType const *pdu);
+
 typedef void (*Xcp_ServerCommandType)(Xcp_PduType const *const pdu);
 
 typedef struct tagXcp_1DArrayType {
@@ -944,6 +945,7 @@ typedef struct tagXcp_OptionsType {
 ** Global User Functions.
 */
 void Xcp_Init(void);
+
 void Xcp_MainFunction(void);
 
 /*
@@ -954,64 +956,101 @@ extern Xcp_OptionsType Xcp_Options;
 void Xcp_DispatchCommand(Xcp_PduType const *const pdu);
 
 void Xcp_Disconnect(void);
+
 Xcp_ConnectionStateType Xcp_GetConnectionState(void);
+
 void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
+
 Xcp_MtaType Xcp_GetNonPagedAddress(void const *const ptr);
+
 void Xcp_SetMta(Xcp_MtaType mta);
+
 void Xcp_SetBusy(bool enable);
+
 bool Xcp_IsBusy(void);
+
 void Xcp_UploadSingleBlock(void);
+
 Xcp_StateType *Xcp_GetState(void);
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+
 /*
 ** DAQ Implementation Functions.
 */
 void XcpDaq_Init(void);
+
 Xcp_ReturnType XcpDaq_Free(void);
+
 Xcp_ReturnType XcpDaq_Alloc(XcpDaq_ListIntegerType daqCount);
+
 Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber,
                                XcpDaq_ODTIntegerType odtCount);
+
 Xcp_ReturnType XcpDaq_AllocOdtEntry(XcpDaq_ListIntegerType daqListNumber,
                                     XcpDaq_ODTIntegerType odtNumber,
                                     XcpDaq_ODTEntryIntegerType odtEntriesCount);
+
 XcpDaq_ListStateType *XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber);
+
 XcpDaq_ListConfigurationType const *
 XcpDaq_GetListConfiguration(XcpDaq_ListIntegerType daqListNumber);
+
 XcpDaq_ODTType const *XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber,
                                     XcpDaq_ODTIntegerType odtNumber);
+
 XcpDaq_ODTEntryType *
 XcpDaq_GetOdtEntry(XcpDaq_ListIntegerType daqListNumber,
                    XcpDaq_ODTIntegerType odtNumber,
                    XcpDaq_ODTEntryIntegerType odtEntryNumber);
+
 bool XcpDaq_ValidateConfiguration(void);
+
 bool XcpDaq_ValidateList(XcpDaq_ListIntegerType daqListNumber);
+
 bool XcpDaq_ValidateOdtEntry(XcpDaq_ListIntegerType daqListNumber,
                              XcpDaq_ODTIntegerType odtNumber,
                              XcpDaq_ODTEntryIntegerType odtEntry);
+
 void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber,
                             uint16_t eventChannelNumber);
+
 void XcpDaq_CopyMemory(void *dst, void const *src, uint32_t len);
+
 XcpDaq_EventType const *
 XcpDaq_GetEventConfiguration(uint16_t eventChannelNumber);
+
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber);
+
 void XcpDaq_GetProperties(uint8_t *properties);
+
 XcpDaq_ListIntegerType XcpDaq_GetListCount(void);
+
 void XcpDaq_SetProcessorState(XcpDaq_ProcessorStateType state);
+
 void XcpDaq_StartSelectedLists(void);
+
 void XcpDaq_StopSelectedLists(void);
+
 void XcpDaq_StopAllLists(void);
+
 bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber,
                         XcpDaq_ODTIntegerType *firstPID);
+
 void XcpDaq_SetPointer(XcpDaq_ListIntegerType daqListNumber,
                        XcpDaq_ODTIntegerType odtNumber,
                        XcpDaq_ODTEntryIntegerType odtEntryNumber);
 
 #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
+
 void XcpDaq_QueueInit(void);
+
 XCP_STATIC bool XcpDaq_QueueFull(void);
+
 bool XcpDaq_QueueEmpty(void);
+
 bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
+
 #endif /* XCP_DAQ_ENABLE_QUEUING */
 
 /*
@@ -1033,14 +1072,19 @@ XCP_DAQ_ENTITY_TYPE XcpDaq_GetDynamicDaqEntityCount(void);
 ** Debugging / Testing interface.
 */
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
+
 void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE *entityCount,
                       XCP_DAQ_ENTITY_TYPE *listCount,
                       XCP_DAQ_ENTITY_TYPE *odtCount);
+
 uint16_t XcpDaq_TotalDynamicEntityCount(void);
+
 XcpDaq_EntityType *XcpDaq_GetDynamicEntities(void);
+
 XcpDaq_EntityType *XcpDaq_GetDynamicEntity(uint16_t num);
 
 uint8_t *XcpDaq_GetDtoBuffer(void);
+
 #endif // XCP_BUILD_TYPE
 
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
@@ -1049,7 +1093,9 @@ uint8_t *XcpDaq_GetDtoBuffer(void);
 ** PGM Functions.
 */
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
+
 void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state);
+
 #endif /* ENABLE_PGM_COMMANDS */
 
 /*
@@ -1088,20 +1134,29 @@ void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state);
 **
 */
 void Xcp_SendCto(void);
+
 uint8_t *Xcp_GetCtoOutPtr(void);
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+
 void Xcp_SendDto(void);
+
 uint8_t *Xcp_GetDtoOutPtr(void);
+
 void Xcp_SetDtoOutLen(uint16_t len);
+
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
 void Xcp_SetCtoOutLen(uint16_t len);
+
 void Xcp_Send8(uint8_t len, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3,
                uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7);
+
 #if XCP_ENABLE_EVENT_PACKET_API == XCP_ON
+
 void Xcp_SendEventPacket(uint8_t eventCode, uint8_t const *const eventInfo,
                          uint8_t eventInfoLength);
+
 #endif /* XCP_ENABLE_EVENT_PACKET_API */
 #if XCP_ENABLE_SERVICE_REQUEST_API == XCP_ON
 void Xcp_SendServiceRequestPacket(uint8_t serviceRequestCode,
@@ -1117,11 +1172,15 @@ void Xcp_DisplayInfo(void);
 void Xcp_CopyMemory(Xcp_MtaType dst, Xcp_MtaType src, uint32_t len);
 
 uint8_t Xcp_GetByte(Xcp_PduType const *const value, uint8_t offs);
+
 uint16_t Xcp_GetWord(Xcp_PduType const *const value, uint8_t offs);
+
 uint32_t Xcp_GetDWord(Xcp_PduType const *const value, uint8_t offs);
 
 void Xcp_SetByte(Xcp_PduType const *const pdu, uint8_t offs, uint8_t value);
+
 void Xcp_SetWord(Xcp_PduType const *const pdu, uint8_t offs, uint16_t value);
+
 void Xcp_SetDWord(Xcp_PduType const *const pdu, uint8_t offs, uint32_t value);
 
 /*
@@ -1132,16 +1191,27 @@ void Xcp_SetDWord(Xcp_PduType const *const pdu, uint8_t offs, uint32_t value);
    XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE)
 
 void XcpTl_Init(void);
+
 void XcpTl_DeInit(void);
+
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec);
+
 void XcpTl_RxHandler(void);
+
 void XcpTl_Send(uint8_t const *buf, uint16_t len);
+
 void XcpTl_MainFunction(void);
+
 void XcpTl_SaveConnection(void);
+
 void XcpTl_ReleaseConnection(void);
+
 bool XcpTl_VerifyConnection(void);
+
 void XcpTl_FeedReceiver(uint8_t octet);
+
 void XcpTl_TransportLayerCmd_Res(Xcp_PduType const *const pdu);
+
 void XcpTl_PrintConnectionInformation(void);
 
 /*
@@ -1149,12 +1219,15 @@ void XcpTl_PrintConnectionInformation(void);
 */
 bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t **result,
                             uint32_t *result_length);
+
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType *result);
+
 bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const *key);
 
 bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length,
                                         Xcp_MemoryAccessType access,
                                         bool programming);
+
 Xcp_MemoryMappingResultType
 Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src);
 
@@ -1162,10 +1235,17 @@ Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src);
 **  Hardware dependent stuff.
 */
 void XcpHw_Init(void);
+
 void XcpHw_Deinit(void);
+
 uint32_t XcpHw_GetTimerCounter(void);
+
+uint32_t XcpHw_GetTimerCounterMS(void);
+
 void XcpHw_AcquireLock(uint8_t lockIdx);
+
 void XcpHw_ReleaseLock(uint8_t lockIdx);
+
 void XcpHw_TransmitDtos(void);
 
 extern Xcp_PduType Xcp_CtoIn;
@@ -1188,12 +1268,17 @@ typedef uint32_t Xcp_ChecksumType;
 #endif /* XCP_CHECKSUM_METHOD */
 
 void Xcp_ChecksumInit(void);
+
 Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const *ptr, uint32_t length,
                                        Xcp_ChecksumType startValue,
                                        bool isFirstCall);
+
 void Xcp_ChecksumMainFunction(void);
+
 void Xcp_SendChecksumPositiveResponse(Xcp_ChecksumType checksum);
+
 void Xcp_SendChecksumOutOfRangeResponse(void);
+
 void Xcp_StartChecksumCalculation(uint8_t const *ptr, uint32_t size);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON

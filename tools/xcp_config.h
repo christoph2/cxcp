@@ -34,10 +34,11 @@
 /*
 **  General Options.
 */
-#define TP_CAN
+//#define TP_CAN
+#define TP_SXI
 
 #define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
-#define XCP_GET_ID_1 "Example_Project"
+#define XCP_GET_ID_1 "BlueParrot_XCP_on_Arduino"
 
 //#define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
@@ -85,6 +86,7 @@
 #define XCP_DAQ_ENABLE_PRESCALER XCP_OFF
 #define XCP_DAQ_ENABLE_ADDR_EXT XCP_OFF
 #define XCP_DAQ_ENABLE_BIT_OFFSET XCP_OFF
+#define XCP_DAQ_ENABLE_QUEUING XCP_ON
 #define XCP_DAQ_ENABLE_PRIORITIZATION XCP_OFF
 #define XCP_DAQ_ENABLE_ALTERNATING XCP_OFF
 #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS XCP_ON
@@ -195,6 +197,13 @@
 #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
+#elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
+#define XCP_TRANSPORT_LAYER XCP_ON_SXI
+#define XCP_MAX_CTO (64)
+#define XCP_MAX_DTO (64)
+#define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+#define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
+#define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (2)
 #else
 #error                                                                         \
     "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
@@ -203,10 +212,10 @@
 /*
 **  Customization Options.
 */
-#define XCP_ENABLE_ADDRESS_MAPPER XCP_ON
-#define XCP_ENABLE_CHECK_MEMORY_ACCESS XCP_ON
+#define XCP_ENABLE_ADDRESS_MAPPER XCP_OFF
+#define XCP_ENABLE_CHECK_MEMORY_ACCESS XCP_OFF
 #define XCP_REPLACE_STD_COPY_MEMORY XCP_OFF
-#define XCP_ENABLE_GET_ID_HOOK XCP_ON
+#define XCP_ENABLE_GET_ID_HOOK XCP_OFF
 
 /*
 **

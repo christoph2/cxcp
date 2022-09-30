@@ -24,8 +24,10 @@
  */
 
 #if defined(_WIN32)
+
 #include <process.h>
 #include <windows.h>
+
 #else
 #include <pthread.h>
 #include <sched.h>
@@ -41,7 +43,9 @@
 ** NOTE: Atomics require at least C11.
 */
 #if !defined(__STDC_NO_ATOMICS__)
+
 #include <stdatomic.h>
+
 #endif /* __STDC_NO_ATOMICS__ */
 
 /*!!! START-INCLUDE-SECTION !!!*/
@@ -68,7 +72,8 @@ typedef pthread_t XcpThrd_ThreadType;
 XcpThrd_ThreadType threads[NUM_THREADS];
 
 static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd,
-                                 XcpThrd_ThreadFuncType *func);
+                                 XcpThrd_ThreadFuncType func);
+
 static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu);
 
 #if defined(__STDC_NO_ATOMICS__)
@@ -80,7 +85,7 @@ static atomic_bool XcpThrd_ShuttingDown;
 void bye(void);
 
 static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd,
-                                 XcpThrd_ThreadFuncType *func) {
+                                 XcpThrd_ThreadFuncType func) {
 #if defined(_WIN32)
   XcpThrd_ThreadType res;
   res = (HANDLE)_beginthread(func, 0, NULL);
@@ -95,9 +100,9 @@ static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd,
 void XcpThrd_RunThreads(void) {
   atexit(bye);
 
-  XcpThrd_CreateThread(&threads[UI_THREAD], &XcpTerm_Thread);
-  XcpThrd_CreateThread(&threads[TL_THREAD], &XcpTl_Thread);
-  XcpThrd_CreateThread(&threads[XCP_THREAD], &Xcp_Thread);
+  XcpThrd_CreateThread(&threads[UI_THREAD], XcpTerm_Thread);
+  XcpThrd_CreateThread(&threads[TL_THREAD], XcpTl_Thread);
+  XcpThrd_CreateThread(&threads[XCP_THREAD], Xcp_Thread);
 #if defined(_WIN32)
   WaitForSingleObject(threads[UI_THREAD], INFINITE);
   XcpThrd_ShutDown();
