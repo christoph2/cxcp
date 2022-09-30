@@ -28,7 +28,9 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+
 /*!!! END-INCLUDE-SECTION !!!*/
+
 typedef struct tagHwStateType {
   uint32_t StartingTime;
 } HwStateType;
@@ -52,13 +54,11 @@ uint32_t XcpHw_GetTimerCounter(void) {
 #endif // XCP_DAQ_TIMESTAMP_UNIT
 }
 
+uint32_t XcpHw_GetTimerCounterMS(void) { return millis(); }
+
 bool XcpHw_SxIAvailable(void) { return Serial.available(); }
 
 uint8_t XcpHw_SxIRead(void) { return (uint8_t)Serial.read(); }
-
-// void Xcp_Tl_FeedReceiver(uint8_t octet);
-
-// Transport-Layer: Frame-based vs. byte-wise interfaces!
 
 void XcpHw_AcquireLock(uint8_t lockIdx) {
   if (lockIdx >= XCP_HW_LOCK_COUNT) {
@@ -71,3 +71,13 @@ void XcpHw_ReleaseLock(uint8_t lockIdx) {
     return;
   }
 }
+
+#include <vector>
+
+class Timer {
+public:
+  Timer();
+
+private:
+  std::vector<int> m_timers;
+};

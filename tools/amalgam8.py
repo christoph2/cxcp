@@ -49,6 +49,7 @@ def builder(files, stoplist = None):
                             incf = match.group(1)
                             source_includes[fn].append(incf)
     for k,v in source_files.items():
+        #print(k)
         source_files[k] = "".join(v)
     return source_includes, source_files
 

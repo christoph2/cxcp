@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -33,15 +33,14 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+#include "xcp_tl_timeout.h"
 #include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #define XCP_SXI_MAKEWORD(buf, offs)                                            \
   ((*((buf) + (offs))) | ((*((buf) + (offs) + 1) << 8)))
 
-void XcpTl_SignalTimeout(void);
-
-static void XcpTl_ResetSM(void);
+#define TIMEOUT_VALUE (100)
 
 typedef enum tagXcpTl_ReceiverStateType {
   XCP_RCV_IDLE,
@@ -60,9 +59,14 @@ typedef struct tagXcpTl_ReceiverType {
 
 static XcpTl_ReceiverType XcpTl_Receiver;
 
+static void XcpTl_ResetSM(void);
+
+static void XcpTl_SignalTimeout(void);
+
 void XcpTl_Init(void) {
   Serial.begin(115000);
   XcpTl_ResetSM();
+  XcpTl_TimeoutInit(TIMEOUT_VALUE, XcpTl_ResetSM);
 }
 
 void XcpTl_DeInit(void) {}
@@ -71,22 +75,23 @@ void XcpTl_MainFunction(void) {
   uint8_t octet = 0;
 
   if (Serial.available()) {
-    digitalWrite(LED_BUILTIN, LOW);
-    octet = Serial.read();
-    // XcpTl_FeedReceiver(octet);
-
     digitalWrite(LED_BUILTIN, HIGH);
+    octet = Serial.read();
+    XcpTl_FeedReceiver(octet);
+
+    digitalWrite(LED_BUILTIN, LOW);
   }
+  XcpTl_TimeoutCheck();
 }
 
-/********************************************/ /**
-                                                * \brief Initialize, i.e. reset
-                                                *receiver state Machine
-                                                *
-                                                * \param void
-                                                * \return void
-                                                *
-                                                ***********************************************/
+/**
+ * \brief Initialize, i.e. reset
+ *receiver state Machine
+ *
+ * \param void
+ * \return void
+ *
+ **/
 static void XcpTl_ResetSM(void) {
   XcpTl_Receiver.State = XCP_RCV_IDLE;
   XcpTl_Receiver.Index = 0u;
@@ -97,12 +102,6 @@ static void XcpTl_ResetSM(void) {
 
 void XcpTl_RxHandler(void) {}
 
-void XcpTl_SignalTimeout(void) {
-  XCP_TL_ENTER_CRITICAL();
-  XcpTl_ResetSM();
-  XCP_TL_LEAVE_CRITICAL();
-}
-
 void XcpTl_FeedReceiver(uint8_t octet) {
   XCP_TL_ENTER_CRITICAL();
 
@@ -110,20 +109,23 @@ void XcpTl_FeedReceiver(uint8_t octet) {
 
   if (XcpTl_Receiver.State == XCP_RCV_IDLE) {
     XcpTl_Receiver.State = XCP_RCV_UNTIL_LENGTH;
+    XcpTl_TimeoutStart();
   } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
     if (XcpTl_Receiver.Index == 0x01) {
       XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
       XcpTl_Receiver.State = XCP_RCV_REMAINING;
       XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc + 2;
+      XcpTl_TimeoutReset();
     }
   } else if (XcpTl_Receiver.State == XCP_RCV_REMAINING) {
     if (XcpTl_Receiver.Index == 0x03) {
       XcpTl_Receiver.Ctr = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x02);
     }
+    XcpTl_TimeoutReset();
     XcpTl_Receiver.Remaining--;
     if (XcpTl_Receiver.Remaining == 0u) {
       XcpTl_ResetSM();
-
+      XcpTl_TimeoutStop();
       Xcp_CtoIn.len = XcpTl_Receiver.Dlc;
       Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
       Xcp_DispatchCommand(&Xcp_CtoIn);
@@ -135,22 +137,12 @@ void XcpTl_FeedReceiver(uint8_t octet) {
   XCP_TL_LEAVE_CRITICAL();
 }
 
-#include <stdio.h>
-
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
   XCP_TL_ENTER_CRITICAL();
 #if defined(ARDUINO)
   Serial.write(buf, len);
 #endif
-  uint8_t ch[6];
-  uint16_t idx;
 
-  for (idx = 0; idx < len; ++idx) {
-    XcpUtl_Itoa((uint32_t)buf[idx], 16, (uint8_t *)ch);
-    /* fputs(ch, stdout); */
-    /* fputs(" ", stdout); */
-  }
-  /* fputs("\n", stdout); */
   XCP_TL_LEAVE_CRITICAL();
 }
 
@@ -164,6 +156,12 @@ void XcpTl_PrintConnectionInformation(void) {
          //       Xcp_Options.tcp ? "TCP" : "UDP",
          //       Xcp_Options.ipv6 ? "IPv6" : "IPv4"
   );
+}
+
+static void XcpTl_SignalTimeout(void) {
+  XCP_TL_ENTER_CRITICAL();
+  XcpTl_ResetSM();
+  XCP_TL_LEAVE_CRITICAL();
 }
 
 #if 0

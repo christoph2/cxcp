@@ -68,6 +68,7 @@ typedef unsigned long long uint64_t;
 
 #include <stdbool.h>
 #include <stdint.h>
+#endif
 
 /* 64-bit */
 #if UINTPTR_MAX == 0xffffffffffffffff
@@ -79,8 +80,6 @@ typedef uint32_t Xcp_PointerSizeType;
 #else
 #define ENV16BIT
 typedef uint32_t Xcp_PointerSizeType;
-#endif
-
 #endif
 
 #define UINT8(x) ((uint8_t)(x))

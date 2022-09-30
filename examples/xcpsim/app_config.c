@@ -98,8 +98,8 @@ XCP_DAQ_DEFINE_EVENT("EVT 100ms",
      * Customization Functions.
      *
      */
-    static uint8_t unlock_key[4] = {0};
 
+    static uint8_t unlock_key[4] = {0};
 #define KEY_INITIAL (0xBC)
 
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType *result) {
