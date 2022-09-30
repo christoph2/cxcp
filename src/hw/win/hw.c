@@ -121,6 +121,7 @@ CRITICAL_SECTION XcpHw_Locks[XCP_HW_LOCK_COUNT];
 void XcpHw_Init(void) {
   fflush(stdout);
   QueryPerformanceFrequency(&HwState.TicksPerSecond);
+  QueryPerformanceCounter(&HwState.StartingTime);
   XcpHw_InitLocks();
 }
 
