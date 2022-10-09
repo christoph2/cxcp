@@ -40,7 +40,10 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* XCP_EXTERN_C_GUARDS */
 
+/*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_types.h"
+
+/*!!! END-INCLUDE-SECTION !!!*/
 
 static void XcpTl_TimeoutInit(uint16_t timeout_value,
                               void (*timeout_function)(void));

@@ -34,8 +34,8 @@
 /*
 **  General Options.
 */
-//#define TP_CAN
-#define TP_SXI
+#define TP_CAN
+//#define TP_SXI
 
 #define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
 #define XCP_GET_ID_1 "BlueParrot_XCP_on_Arduino"

@@ -46,7 +46,7 @@ void XcpTl_Init(void) {
   Serial.println("Starting Blueparrot XCP...");
 
   // start the CAN bus at 500 kbps
-  if (!CAN.begin(500E3)) {
+  if (!CAN.begin(250E3)) {
     Serial.println("Starting CAN failed!");
     while (1) {
     }
@@ -71,6 +71,7 @@ void XcpTl_RxHandler(void) {
   static byte buffer[64];
   byte dlc;
 
+  digitalWrite(LED_BUILTIN, HIGH);
   Serial.print("Received ");
 
   dlc = CAN.packetDlc();
@@ -95,7 +96,7 @@ void XcpTl_RxHandler(void) {
     Serial.println(dlc);
 
     int actual = CAN.readBytes(buffer, dlc);
-    Serial.print("actaul length: ");
+    Serial.print("actual length: ");
     Serial.print(actual);
     Serial.println();
 
@@ -113,6 +114,7 @@ void XcpTl_RxHandler(void) {
   }
 
   Serial.println();
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 void XcpTl_TxHandler(void) {}
