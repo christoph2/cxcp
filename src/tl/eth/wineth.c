@@ -46,6 +46,7 @@ extern Xcp_PduType Xcp_CtoIn;
 extern Xcp_PduType Xcp_CtoOut;
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
+
 #if 0
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
 #endif
@@ -132,7 +133,7 @@ void XcpTl_Init(void) {
       XcpHw_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
       continue;
     }
-    if (bind(serverSockets[idx], AI->ai_addr, AI->ai_addrlen) == SOCKET_ERROR) {
+    if (bind(serverSockets[idx], AI->ai_addr, AI->ai_addrlen) != 0) {
       XcpHw_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
       continue;
     }
