@@ -44,7 +44,11 @@
 */
 #if !defined(__STDC_NO_ATOMICS__)
 
+#if defined(_MSC_VER)
+typedef bool atomic_bool;
+#else
 #include <stdatomic.h>
+#endif
 
 #endif /* __STDC_NO_ATOMICS__ */
 

@@ -37,7 +37,7 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_WIN32)
-#include <windows.h>
+#include <Windows.h>
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,7 +106,9 @@ void *XcpTerm_Thread(void *param) {
               switch (tolower(key.uChar.AsciiChar)) {
               case 'q':
                 XcpThrd_Exit();
+#if !defined(_MSC_VER)
                 [[noreturn]];
+#endif /* _MSC_VER */
               case 'h':
                 DisplayHelp();
                 break;
@@ -299,6 +301,7 @@ void Xcp_DisplayInfo(void) {
   fflush(stdout);
 }
 
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 void XcpDaq_PrintDAQDetails(void) {
   XcpDaq_ListIntegerType listIdx;
   XcpDaq_ODTIntegerType odtIdx;
@@ -405,3 +408,4 @@ void XcpDaq_Info(void) {
   printf("\tfunctionality not supported.\n\r");
 #endif
 }
+#endif /* XCP_ENABLE_DAQ_COMMANDS */

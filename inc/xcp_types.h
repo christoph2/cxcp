@@ -50,10 +50,12 @@ extern "C" {
 
 #if defined(__CSMC__) || !defined(C99_COMPILER) || !defined(C11_COMPILER)
 
-#if !defined(__cplusplus)
-typedef unsigned char bool;
-#endif
+#if defined(_MSC_VER)
 
+#include <stdbool.h>
+#include <stdint.h>
+#else
+typedef unsigned char bool;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
 typedef signed short int16_t;
@@ -63,6 +65,7 @@ typedef unsigned long uint32_t;
 
 typedef signed long long int64_t;
 typedef unsigned long long uint64_t;
+#endif
 
 #else
 
