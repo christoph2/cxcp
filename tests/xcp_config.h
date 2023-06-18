@@ -24,11 +24,14 @@
  */
 
 /*
- *  For details on options refer to `documentation <https://github.com/christoph2/cxcp/docs/options.rst>`_
+ *  For details on options refer to `documentation
+ * <https://github.com/christoph2/cxcp/docs/options.rst>`_
  */
 
 #if !defined(__XCP_CONFIG_H)
 #define __XCP_CONFIG_H
+
+#define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
 #define XCP_GET_ID_0 "BlueParrot XCP tests"
 #define XCP_GET_ID_1 "Example_Project"
@@ -38,7 +41,7 @@
 #define XCP_EXTERN_C_GUARDS XCP_OFF
 
 #define XCP_ENABLE_SLAVE_BLOCKMODE XCP_ON
-#define XCP_ENABLE_MASTER_BLOCKMODE XCP_OFF
+#define XCP_ENABLE_MASTER_BLOCKMODE XCP_ON
 
 #define XCP_ENABLE_STIM XCP_OFF
 
@@ -50,10 +53,14 @@
 #define XCP_BYTE_ORDER XCP_BYTE_ORDER_INTEL
 #define XCP_ADDRESS_GRANULARITY XCP_ADDRESS_GRANULARITY_BYTE
 
-#define XCP_MAX_CTO (64)
-#define XCP_MAX_DTO (64)
+#define XCP_MAX_CTO (8)
+#define XCP_MAX_DTO (8)
 
-#define XCP_ENABLE_DAQ_COMMANDS XCP_ON
+#define XCP_ENABLE_DAQ_COMMANDS XCP_OFF
+
+#define XCP_ENABLE_DOWNLOAD_NEXT XCP_ON
+#define XCP_ENABLE_DOWNLOAD_MAX XCP_ON
+#define XCP_ENABLE_SHORT_DOWNLOAD XCP_ON
 
 /*
  * **  DAQ Settings.
@@ -69,12 +76,12 @@
 #define XCP_DAQ_ENABLE_PRIORITIZATION XCP_OFF
 #define XCP_DAQ_ENABLE_ALTERNATING XCP_OFF
 #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS XCP_ON
-#define XCP_DAQ_ENABLE_QUEUING  XCP_ON
+#define XCP_DAQ_ENABLE_QUEUING XCP_ON
 #define XCP_DAQ_ENABLE_WRITE_THROUGH XCP_ON
 #define XCP_DAQ_MAX_DYNAMIC_ENTITIES (100)
 #define XCP_DAQ_MAX_EVENT_CHANNEL (3)
 #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT XCP_OFF
-#define XCP_DAQ_ENABLE_DYNAMIC_LISTS    XCP_ON
+#define XCP_DAQ_ENABLE_DYNAMIC_LISTS XCP_ON
 
 /*
  * **  Platform Specific Options.
@@ -93,5 +100,11 @@
 #define XCP_CAL_LEAVE_CRITICAL()
 #define XCP_PAG_ENTER_CRITICAL()
 #define XCP_PAG_LEAVE_CRITICAL()
+
+#define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+#define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
+#define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
+
+#define XCP_MAIN_FUNCTION_PERIOD (2000)
 
 #endif /* __XCP_CONFIG_H */
