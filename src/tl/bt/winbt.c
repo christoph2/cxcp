@@ -41,13 +41,13 @@
 DEFINE_GUID(ASAM_XCP_ON_BT_GUID, 0xDC3CCEDC, 0xF7DE, 0x56E8, 0x87, 0x6F, 0x78, 0x1C, 0x07, 0x3C, 0x9B, 0x77);
 
 extern XcpTl_ConnectionType XcpTl_Connection;
-SOCKADDR_BTH XcpTl_LocalBtAddress;
+SOCKADDR_BTH                XcpTl_LocalBtAddress;
 
 static void PrintBthAddr(SOCKADDR_BTH *addr);
 
 void XcpTl_Init(void) {
-    WSADATA wsa;
-    GUID Xcp_ServiceID = ASAM_XCP_ON_BT_GUID;
+    WSADATA     wsa;
+    GUID        Xcp_ServiceID = ASAM_XCP_ON_BT_GUID;
     WSAQUERYSET service;
     CSADDR_INFO csAddr;
 
@@ -69,10 +69,10 @@ void XcpTl_Init(void) {
         }
     }
 
-    XcpTl_LocalBtAddress.addressFamily = AF_BTH;
-    XcpTl_LocalBtAddress.btAddr = 0;
+    XcpTl_LocalBtAddress.addressFamily  = AF_BTH;
+    XcpTl_LocalBtAddress.btAddr         = 0;
     XcpTl_LocalBtAddress.serviceClassId = GUID_NULL;
-    XcpTl_LocalBtAddress.port = BT_PORT_ANY;
+    XcpTl_LocalBtAddress.port           = BT_PORT_ANY;
 
     if (bind(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_LocalBtAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
@@ -99,17 +99,17 @@ void XcpTl_Init(void) {
         return;
     }
 
-    service.dwSize = sizeof(service);
-    service.lpszServiceInstanceName = "XCPonBth";
-    service.lpszComment = "Measure and calibrate with XCP on Bluetooth -- Have fun :-)";
-    service.lpServiceClassId = &Xcp_ServiceID;
-    service.dwNumberOfCsAddrs = 1;
-    service.dwNameSpace = NS_BTH;
+    service.dwSize                   = sizeof(service);
+    service.lpszServiceInstanceName  = "XCPonBth";
+    service.lpszComment              = "Measure and calibrate with XCP on Bluetooth -- Have fun :-)";
+    service.lpServiceClassId         = &Xcp_ServiceID;
+    service.dwNumberOfCsAddrs        = 1;
+    service.dwNameSpace              = NS_BTH;
     csAddr.LocalAddr.iSockaddrLength = sizeof(SOCKADDR_BTH);
-    csAddr.LocalAddr.lpSockaddr = (struct sockaddr *)&XcpTl_LocalBtAddress;
-    csAddr.iSocketType = SOCK_STREAM;
-    csAddr.iProtocol = BTHPROTO_RFCOMM;
-    service.lpcsaBuffer = &csAddr;
+    csAddr.LocalAddr.lpSockaddr      = (struct sockaddr *)&XcpTl_LocalBtAddress;
+    csAddr.iSocketType               = SOCK_STREAM;
+    csAddr.iProtocol                 = BTHPROTO_RFCOMM;
+    service.lpcsaBuffer              = &csAddr;
 
     if (WSASetService(&service, RNRSERVICE_REGISTER, 0) == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Init::WSASetService()", WSAGetLastError());
@@ -138,8 +138,8 @@ void XcpTl_PrintBtDetails(void) {
 }
 
 static void PrintBthAddr(SOCKADDR_BTH *addr) {
-    uint8_t mac[6] = {0};
-    uint8_t idx = 0;
+    uint8_t mac[6] = { 0 };
+    uint8_t idx    = 0;
 
     mac[0] = (addr->btAddr >> 40) & 0xff;
     mac[1] = (addr->btAddr >> 32) & 0xff;

@@ -24,52 +24,52 @@
  */
 
 #if !defined(__XCP_ETH_H)
-#define __XCP_ETH_H
+    #define __XCP_ETH_H
 
-#if defined(_WIN32)
-#include <WinSock2.h>
-#include <Ws2tcpip.h>
-#elif defined(__unix__) || defined(__APPLE__)
+    #if defined(_WIN32)
+        #include <WinSock2.h>
+        #include <Ws2tcpip.h>
+    #elif defined(__unix__) || defined(__APPLE__)
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <signal.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#endif
+        #include <arpa/inet.h>
+        #include <errno.h>
+        #include <fcntl.h>
+        #include <netdb.h>
+        #include <netinet/in.h>
+        #include <signal.h>
+        #include <string.h>
+        #include <sys/socket.h>
+        #include <sys/types.h>
+        #include <sys/wait.h>
+        #include <unistd.h>
+    #endif
 
-#if defined(_WIN32)
+    #if defined(_WIN32)
 typedef struct tagXcpTl_ConnectionType {
-  SOCKADDR_STORAGE connectionAddress;
-  SOCKADDR_STORAGE currentAddress;
-  SOCKADDR_STORAGE localAddress;
-  SOCKET boundSocket;
-  SOCKET connectedSocket;
-  bool connected;
-  int socketType;
+    SOCKADDR_STORAGE connectionAddress;
+    SOCKADDR_STORAGE currentAddress;
+    SOCKADDR_STORAGE localAddress;
+    SOCKET           boundSocket;
+    SOCKET           connectedSocket;
+    bool             connected;
+    int              socketType;
 } XcpTl_ConnectionType;
-#elif defined(__unix__)  || defined(__APPLE__)
+    #elif defined(__unix__) || defined(__APPLE__)
 typedef struct tagXcpTl_ConnectionType {
-  struct sockaddr_storage connectionAddress;
-  struct sockaddr_storage currentAddress;
-  struct sockaddr_storage localAddress;
-  int boundSocket;
-  int connectedSocket;
-  bool connected;
-  int socketType;
+    struct sockaddr_storage connectionAddress;
+    struct sockaddr_storage currentAddress;
+    struct sockaddr_storage localAddress;
+    int                     boundSocket;
+    int                     connectedSocket;
+    bool                    connected;
+    int                     socketType;
 } XcpTl_ConnectionType;
-#endif
+    #endif
 
-#if defined(__unix__)  || defined(__APPLE__)
-#define SOCKET_ERROR (-1)
-#define INVALID_SOCKET (-1)
-#define ZeroMemory(b, l) memset((b), 0, (l))
-#endif
+    #if defined(__unix__) || defined(__APPLE__)
+        #define SOCKET_ERROR     (-1)
+        #define INVALID_SOCKET   (-1)
+        #define ZeroMemory(b, l) memset((b), 0, (l))
+    #endif
 
 #endif /* __XCP_ETH_H */

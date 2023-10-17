@@ -25,6 +25,7 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_tl_timeout.h"
+
 #include "xcp.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
@@ -36,35 +37,36 @@
 
 typedef void (*void_function)(void);
 
-static uint32_t XcpTl_TimeoutValue = 0UL;
+static uint32_t      XcpTl_TimeoutValue    = 0UL;
 static void_function XcpTl_TimeoutFunction = XCP_NULL;
-static bool XcpTl_TimeoutRunning = XCP_FALSE;
+static bool          XcpTl_TimeoutRunning  = XCP_FALSE;
 
-static void XcpTl_TimeoutInit(uint16_t timeout_value,
-                              void (*timeout_function)(void)) {
-  XcpTl_TimeoutValue = timeout_value;
-  XcpTl_TimeoutRunning = XCP_FALSE;
-  XcpTl_TimeoutFunction = timeout_function;
+static void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void)) {
+    XcpTl_TimeoutValue    = timeout_value;
+    XcpTl_TimeoutRunning  = XCP_FALSE;
+    XcpTl_TimeoutFunction = timeout_function;
 }
 
 static void XcpTl_TimeoutStart(void) {
-  XcpTl_TimeoutValue = XcpHw_GetTimerCounterMS();
-  XcpTl_TimeoutRunning = XCP_TRUE;
+    XcpTl_TimeoutValue   = XcpHw_GetTimerCounterMS();
+    XcpTl_TimeoutRunning = XCP_TRUE;
 }
 
-static void XcpTl_TimeoutStop(void) { XcpTl_TimeoutRunning = XCP_FALSE; }
+static void XcpTl_TimeoutStop(void) {
+    XcpTl_TimeoutRunning = XCP_FALSE;
+}
 
 static void XcpTl_TimeoutCheck(void) {
-  if (!XcpTl_TimeoutRunning) {
-    return;
-  }
-  if ((XcpHw_GetTimerCounterMS() - XcpTl_TimeoutValue) > XcpTl_TimeoutValue) {
-    if (XcpTl_TimeoutFunction != XCP_NULL) {
-      XcpTl_TimeoutFunction();
+    if (!XcpTl_TimeoutRunning) {
+        return;
     }
-  }
+    if ((XcpHw_GetTimerCounterMS() - XcpTl_TimeoutValue) > XcpTl_TimeoutValue) {
+        if (XcpTl_TimeoutFunction != XCP_NULL) {
+            XcpTl_TimeoutFunction();
+        }
+    }
 }
 
 static void XcpTl_TimeoutReset(void) {
-  XcpTl_TimeoutValue = XcpHw_GetTimerCounterMS();
+    XcpTl_TimeoutValue = XcpHw_GetTimerCounterMS();
 }

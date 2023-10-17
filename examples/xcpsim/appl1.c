@@ -20,22 +20,24 @@
  * Calibration Parameters.
  *
  */
-float CAL_PARAM prmLimitLow = 65.0;
-float CAL_PARAM prmLimitHigh = 85.0;
-float CAL_PARAM prmStepSize = 1.5;
-float CAL_PARAM prmEnvFactor = 0.5;
+float CAL_PARAM prmLimitLow     = 65.0;
+float CAL_PARAM prmLimitHigh    = 85.0;
+float CAL_PARAM prmStepSize     = 1.5;
+float CAL_PARAM prmEnvFactor    = 0.5;
 float CAL_PARAM prmHeaterFactor = 0.5;
-float CAL_PARAM prmDt = 0.5;
-float CAL_PARAM prmSetpoint = 70.0;
-float CAL_PARAM prmKi = 2.5;
-float CAL_PARAM prmMaxErrorSum = 100.0;
+float CAL_PARAM prmDt           = 0.5;
+float CAL_PARAM prmSetpoint     = 70.0;
+float CAL_PARAM prmKi           = 2.5;
+float CAL_PARAM prmMaxErrorSum  = 100.0;
 
 /*
  *
  * Random selection of [-1, 0 , 1].
  *
  */
-int8_t randomSlope(void) { return (rand() % 3) - 1; }
+int8_t randomSlope(void) {
+    return (rand() % 3) - 1;
+}
 
 /*
  *
@@ -61,17 +63,17 @@ double environment(void) {
  *
  */
 double plant(double temperature, double current) {
-    static double q_plant = 0.0;
-    double q_heater = 0.0;
-    double q_env = 0.0;
-    double t_plant = 0.0;
+    static double q_plant  = 0.0;
+    double        q_heater = 0.0;
+    double        q_env    = 0.0;
+    double        t_plant  = 0.0;
 
-    t_plant = q_plant;
+    t_plant  = q_plant;
     q_heater = current * prmHeaterFactor * prmDt;
-    q_env = (temperature - t_plant) * prmEnvFactor * prmDt;
-    q_plant = q_plant + q_heater + q_env;
-    q_plant = q_plant < 0.0 ? 0.0 : q_plant;
-    t_plant = q_plant;
+    q_env    = (temperature - t_plant) * prmEnvFactor * prmDt;
+    q_plant  = q_plant + q_heater + q_env;
+    q_plant  = q_plant < 0.0 ? 0.0 : q_plant;
+    t_plant  = q_plant;
 
     return t_plant;
 }
@@ -82,8 +84,8 @@ double plant(double temperature, double current) {
  *
  */
 double controller(double temperature) {
-    double current = 0.0;
-    double error = 0.0;
+    double        current       = 0.0;
+    double        error         = 0.0;
     static double sum_of_errors = 0.0;
 
     error = prmSetpoint - temperature;
@@ -99,12 +101,12 @@ double controller(double temperature) {
 }
 
 void AppTask(void) {
-    double env_temp = 0;
-    double plant_temp;
+    double        env_temp = 0;
+    double        plant_temp;
     static double current = 0.0;
 
-    env_temp = environment();
+    env_temp   = environment();
     plant_temp = plant(env_temp, current);
-    current = controller(plant_temp);
+    current    = controller(plant_temp);
     printf("T_E: %3.3f T_P: %3.3f I: %3.3f\n", env_temp, plant_temp, current);
 }

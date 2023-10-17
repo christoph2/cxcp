@@ -30,6 +30,7 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+
 /*!!! END-INCLUDE-SECTION !!!*/
 
 /*
@@ -38,19 +39,19 @@
 
 typedef struct tagXcp_HwFileViewType {
     HANDLE mappingHandle;
-    void* mappingAddress;
+    void*  mappingAddress;
 } Xcp_HwFileViewType;
 
 typedef struct tagXcp_HwMapFileType {
-    HANDLE handle;
-    uint64_t size;
+    HANDLE             handle;
+    uint64_t           size;
     Xcp_HwFileViewType view;
 } Xcp_HwMapFileType;
 
 /*
 **  Global Functions.
 */
-bool XcpOw_MapFileOpen(char const* fname, Xcp_HwMapFileType* mf);
-void XcpOw_MapFileClose(Xcp_HwMapFileType const* mf);
+bool XcpOw_MapFileOpen(char const * fname, Xcp_HwMapFileType* mf);
+void XcpOw_MapFileClose(Xcp_HwMapFileType const * mf);
 
 #endif  // XCP_OW_H_INCLUDED

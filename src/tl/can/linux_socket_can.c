@@ -42,20 +42,20 @@
 #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-#define err_abort(code, text)                                                                 \
-    do {                                                                                      \
-        fprintf(stderr, "%s at \"%s\":%d: %s\n\r", text, __FILE__, __LINE__, strerror(code)); \
-        abort();                                                                              \
+#define err_abort(code, text)                                                                                                      \
+    do {                                                                                                                           \
+        fprintf(stderr, "%s at \"%s\":%d: %s\n\r", text, __FILE__, __LINE__, strerror(code));                                      \
+        abort();                                                                                                                   \
     } while (0)
 
-#define errno_abort(text)                                                                      \
-    do {                                                                                       \
-        fprintf(stderr, "%s at \"%s\":%d: %s\n\r", text, __FILE__, __LINE__, strerror(errno)); \
-        abort();                                                                               \
+#define errno_abort(text)                                                                                                          \
+    do {                                                                                                                           \
+        fprintf(stderr, "%s at \"%s\":%d: %s\n\r", text, __FILE__, __LINE__, strerror(errno));                                     \
+        abort();                                                                                                                   \
     } while (0)
 
 typedef struct tagXcpTl_ConnectionType {
-    int can_socket;
+    int  can_socket;
     bool connected;
 } XcpTl_ConnectionType;
 
@@ -63,7 +63,7 @@ unsigned char buf[XCP_COMM_BUFLEN];
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
-int locate_interface(int socket, char const* name) {
+int locate_interface(int socket, char const * name) {
     struct ifreq ifr;
 
     strcpy(ifr.ifr_name, name);
@@ -75,10 +75,10 @@ int locate_interface(int socket, char const* name) {
 }
 
 void XcpTl_Init(void) {
-    int enable_sockopt = 1;
-    int flags;
+    int                 enable_sockopt = 1;
+    int                 flags;
     struct sockaddr_can addr;
-    struct can_filter rfilter[2];
+    struct can_filter   rfilter[2];
 
     memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
 
@@ -108,25 +108,29 @@ void XcpTl_Init(void) {
     }
 
     /* Select that CAN interface, and bind the socket to it. */
-    addr.can_family = AF_CAN;
+    addr.can_family  = AF_CAN;
     addr.can_ifindex = locate_interface(XcpTl_Connection.can_socket, Xcp_Options.interface);
     bind(XcpTl_Connection.can_socket, (struct sockaddr*)&addr, sizeof(addr));
     if (XcpTl_Connection.can_socket == -1) {
         errno_abort("XcpTl_Init::bind()");
     }
 
-    rfilter[0].can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
+    rfilter[0].can_id   = XCP_ON_CAN_INBOUND_IDENTIFIER;
     rfilter[0].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER) ? CAN_EFF_FLAG : CAN_SFF_MASK;
-    rfilter[1].can_id = XCP_ON_CAN_BROADCAST_IDENTIFIER;
+    rfilter[1].can_id   = XCP_ON_CAN_BROADCAST_IDENTIFIER;
     rfilter[1].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER) ? CAN_EFF_FLAG : CAN_SFF_MASK;
 
     setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
 }
 
-void XcpTl_DeInit(void) { close(XcpTl_Connection.can_socket); }
+void XcpTl_DeInit(void) {
+    close(XcpTl_Connection.can_socket);
+}
 
 void* XcpTl_Thread(void* param) {
-    XCP_FOREVER { XcpTl_MainFunction(); }
+    XCP_FOREVER {
+        XcpTl_MainFunction();
+    }
     return NULL;
 }
 
@@ -138,7 +142,7 @@ void XcpTl_MainFunction(void) {
 
 void XcpTl_RxHandler(void) {
     struct canfd_frame frame;
-    int nbytes = 0;
+    int                nbytes = 0;
 
     nbytes = read(XcpTl_Connection.can_socket, &frame, CANFD_MTU);
 
@@ -150,19 +154,20 @@ void XcpTl_RxHandler(void) {
     } else {
         errno_abort("can raw socket read");
     }
-    //printf("#%d bytes received from '%04x' DLC: %d .\n\r", nbytes, frame.can_id, frame.len);
+    // printf("#%d bytes received from '%04x' DLC: %d .\n\r", nbytes, frame.can_id, frame.len);
     if (frame.len > 0) {
         Xcp_CtoIn.len = frame.len;
-        //Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-        //XcpUtl_MemCopy(Xcp_CtoIn.data, (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, nbytes - XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
+        // Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+        // XcpUtl_MemCopy(Xcp_CtoIn.data, (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, nbytes -
+        // XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
         XcpUtl_MemCopy(Xcp_CtoIn.data, &frame.data, frame.len);
-        //XcpUtl_Hexdump(Xcp_CtoIn.data, frame.len);
+        // XcpUtl_Hexdump(Xcp_CtoIn.data, frame.len);
         Xcp_DispatchCommand(&Xcp_CtoIn);
     }
 }
 
-
-void XcpTl_TxHandler(void) {}
+void XcpTl_TxHandler(void) {
+}
 
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
 #if 0
@@ -193,30 +198,36 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
     return 1;
 }
 
-void XcpTl_Send(uint8_t const* buf, uint16_t len) {
-    struct can_frame frame = {0};
-    struct canfd_frame frame_fd = {0};
+void XcpTl_Send(uint8_t const * buf, uint16_t len) {
+    struct can_frame   frame    = { 0 };
+    struct canfd_frame frame_fd = { 0 };
 
     XCP_TL_ENTER_CRITICAL();
     if (Xcp_Options.fd) {
-        frame_fd.len = len;
+        frame_fd.len    = len;
         frame_fd.can_id = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
         memcpy(frame_fd.data, buf, len);
         (void)write(XcpTl_Connection.can_socket, &frame_fd, sizeof(struct canfd_frame));
     } else {
         frame.can_dlc = len;
-        frame.can_id = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
+        frame.can_id  = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
         memcpy(frame.data, buf, len);
         (void)write(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
     }
     XCP_TL_LEAVE_CRITICAL();
 }
 
-void XcpTl_SaveConnection(void) { XcpTl_Connection.connected = XCP_TRUE; }
+void XcpTl_SaveConnection(void) {
+    XcpTl_Connection.connected = XCP_TRUE;
+}
 
-void XcpTl_ReleaseConnection(void) { XcpTl_Connection.connected = XCP_FALSE; }
+void XcpTl_ReleaseConnection(void) {
+    XcpTl_Connection.connected = XCP_FALSE;
+}
 
-bool XcpTl_VerifyConnection(void) { return XCP_TRUE; }
+bool XcpTl_VerifyConnection(void) {
+    return XCP_TRUE;
+}
 
 void XcpTl_PrintConnectionInformation(void) {
     printf("\n\rXCPonCan\n\r");

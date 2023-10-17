@@ -41,25 +41,27 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(__APPLE__)
-#define O_DIRECT    (0)
+    #define O_DIRECT (0)
 #endif
 
-#define handle_error(msg)   \
-    do {                    \
-        perror(msg);        \
-        exit(EXIT_FAILURE); \
+#define handle_error(msg)                                                                                                          \
+    do {                                                                                                                           \
+        perror(msg);                                                                                                               \
+        exit(EXIT_FAILURE);                                                                                                        \
     } while (0)
 #define FLSEMU_ERASED_VALUE (0xff) /**< Value of an erased Flash/EEPROM cell. */
 
-static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const* persistentArray, uint32_t size);
+static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray, uint32_t size);
 static void FlsEmu_UnmapAddress(void* addr, uint32_t size);
 static void FlsEmu_MapAddress(void* mappingAddress, int offset, uint32_t size, int fd);
 static bool FlsEmu_Flush(uint8_t segmentIdx);
 
-uint32_t FlsEmu_GetAllocationGranularity(void) { return sysconf(_SC_PAGE_SIZE); /* don't use getpagesize() for portable appz */ }
+uint32_t FlsEmu_GetAllocationGranularity(void) {
+    return sysconf(_SC_PAGE_SIZE); /* don't use getpagesize() for portable appz */
+}
 
 void FlsEmu_Close(uint8_t segmentIdx) {
-    FlsEmu_SegmentType const* segment = XCP_NULL;
+    FlsEmu_SegmentType const * segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
@@ -74,7 +76,7 @@ void FlsEmu_Close(uint8_t segmentIdx) {
 }
 
 static bool FlsEmu_Flush(uint8_t segmentIdx) {
-    FlsEmu_SegmentType const* segment = XCP_NULL;
+    FlsEmu_SegmentType const * segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
 
@@ -89,7 +91,7 @@ static bool FlsEmu_Flush(uint8_t segmentIdx) {
     return XCP_TRUE;
 }
 
-static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const* persistentArray, uint32_t size) {
+static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray, uint32_t size) {
     FLSEMU_ASSERT_INITIALIZED();
 
     FlsEmu_UnmapAddress(persistentArray->mappingAddress, size);
@@ -111,12 +113,13 @@ static void FlsEmu_UnmapAddress(void* addr, uint32_t size) {
     }
 }
 
-FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const* fileName, uint32_t size,
-                                                            FlsEmu_PersistentArrayType* persistentArray) {
-    int fd = 0;
-    void* addr = XCP_NULL;
-    FlsEmu_OpenCreateResultType result = 0;
-    bool newFile = XCP_FALSE;
+FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(
+    char const * fileName, uint32_t size, FlsEmu_PersistentArrayType* persistentArray
+) {
+    int                         fd      = 0;
+    void*                       addr    = XCP_NULL;
+    FlsEmu_OpenCreateResultType result  = 0;
+    bool                        newFile = XCP_FALSE;
 
     fd = open(fileName, O_RDWR | O_DIRECT | O_DSYNC, 0666);
     if (fd == -1) {
@@ -127,13 +130,13 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const* fileName
                 return OPEN_ERROR;
             } else {
 #if defined(__APPLE__)
-                fstore_t store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, size};
+                fstore_t store = { F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, size };
                 // Try to get a continous chunk of disk space
                 int ret = fcntl(fd, F_PREALLOCATE, &store);
-                if(-1 == ret){
+                if (-1 == ret) {
                     // OK, perhaps we are too fragmented, allocate non-continuous
                     store.fst_flags = F_ALLOCATEALL;
-                    ret = fcntl(fd, F_PREALLOCATE, &store);
+                    ret             = fcntl(fd, F_PREALLOCATE, &store);
                     if (-1 == ret)
                         return false;
                 }
@@ -161,8 +164,8 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const* fileName
     /* printf("ADDR: %p\n", addr); */
 
     persistentArray->mappingAddress = addr;
-    persistentArray->mappingHandle = NULL;
-    persistentArray->currentPage = 0;
+    persistentArray->mappingHandle  = NULL;
+    persistentArray->currentPage    = 0;
 
     if (newFile) {
         result = NEW_FILE;
@@ -173,7 +176,7 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const* fileName
 }
 
 void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page) {
-    uint32_t offset = 0UL;
+    uint32_t            offset  = 0UL;
     FlsEmu_SegmentType* segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
@@ -187,8 +190,9 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page) {
     offset = (segment->pageSize * page);
     /* printf("page# %u offset: %x\n", page, offset); */
     FlsEmu_UnmapAddress(segment->persistentArray->mappingAddress, segment->memSize);
-    FlsEmu_MapAddress(segment->persistentArray->mappingAddress, offset, segment->memSize,
-                      (uint32_t)segment->persistentArray->fileHandle);
+    FlsEmu_MapAddress(
+        segment->persistentArray->mappingAddress, offset, segment->memSize, (uint32_t)segment->persistentArray->fileHandle
+    );
     /*
         if (FlsEmu_MapView(segment, offset, segment->pageSize)) {
             segment->currentPage = page;

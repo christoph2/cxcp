@@ -2,23 +2,23 @@
 Language: Cpp
 AccessModifierOffset: -1
 AlignAfterOpenBracket: BlockIndent
-AlignArrayOfStructures: Right
-AlignConsecutiveMacros:
-  Enabled: true
-  AcrossEmptyLines: true
-  AcrossComments: true
-AlignConsecutiveAssignments:
-  Enabled: true
-  AcrossEmptyLines: true
-  AcrossComments: true
-AlignConsecutiveDeclarations:
-  Enabled: false
-  AcrossEmptyLines: true
-  AcrossComments: true
-AlignConsecutiveBitFields:
-  Enabled: false
-  AcrossEmptyLines: true
-  AcrossComments: true
+AlignArrayOfStructures: Left
+AlignConsecutiveMacros: true
+#  Enabled: true
+#  AcrossEmptyLines: true
+#  AcrossComments: true
+AlignConsecutiveAssignments: true
+#  Enabled: true
+#  AcrossEmptyLines: true
+#  AcrossComments: true
+AlignConsecutiveDeclarations: true
+#  Enabled: false
+#  AcrossEmptyLines: true
+#  AcrossComments: true
+AlignConsecutiveBitFields: true
+#  Enabled: false
+#  AcrossEmptyLines: true
+#  AcrossComments: true
 AlignEscapedNewlines: Right
 AlignOperands: Align
 AlignTrailingComments: true
@@ -65,7 +65,7 @@ BraceWrapping:
 # BreakAfterAttributes: Never
 BreakAfterJavaFieldAnnotations: true
 BreakBeforeBinaryOperators: None
-BreakBeforeConceptDeclarations: Allowed
+# BreakBeforeConceptDeclarations: Allowed
 BreakBeforeInheritanceComma: false
 BreakInheritanceList: AfterComma
 BreakBeforeTernaryOperators: false
@@ -111,7 +111,7 @@ IndentCaseBlocks: true
 IndentExternBlock: Indent
 IndentGotoLabels: true
 IndentPPDirectives: BeforeHash
-IndentRequiresClause: true
+# IndentRequiresClause: true
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 # InsertBraces: true # be careful!

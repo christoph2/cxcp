@@ -32,52 +32,61 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 typedef struct tagHwStateType {
-  uint32_t StartingTime;
+    uint32_t StartingTime;
 } HwStateType;
 
-static HwStateType HwState = {0};
+static HwStateType HwState = { 0 };
 
 void XcpHw_Init(void) {
-  HwState.StartingTime = millis();
-  pinMode(LED_BUILTIN, OUTPUT);
+    HwState.StartingTime = millis();
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
-void XcpHw_Deinit(void) {}
+void XcpHw_Deinit(void) {
+}
 
 uint32_t XcpHw_GetTimerCounter(void) {
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-  return micros();
+    return micros();
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-  return millis();
+    return millis();
 #else
-#error Timestamp-unit not supported.
-#endif // XCP_DAQ_TIMESTAMP_UNIT
+    #error Timestamp-unit not supported.
+#endif  // XCP_DAQ_TIMESTAMP_UNIT
 }
 
-uint32_t XcpHw_GetTimerCounterMS(void) { return millis(); }
+uint32_t XcpHw_GetTimerCounterMS(void) {
+    return millis();
+}
 
-bool XcpHw_SxIAvailable(void) { return Serial.available(); }
+bool XcpHw_SxIAvailable(void) {
+    return Serial.available();
+}
 
-uint8_t XcpHw_SxIRead(void) { return (uint8_t)Serial.read(); }
+uint8_t XcpHw_SxIRead(void) {
+    return (uint8_t)Serial.read();
+}
 
 void XcpHw_AcquireLock(uint8_t lockIdx) {
-  if (lockIdx >= XCP_HW_LOCK_COUNT) {
-    return;
-  }
+    if (lockIdx >= XCP_HW_LOCK_COUNT) {
+        return;
+    }
 }
 
 void XcpHw_ReleaseLock(uint8_t lockIdx) {
-  if (lockIdx >= XCP_HW_LOCK_COUNT) {
-    return;
-  }
+    if (lockIdx >= XCP_HW_LOCK_COUNT) {
+        return;
+    }
 }
 
 #include <vector>
 
 class Timer {
-public:
-  Timer();
+   public:
 
-private:
-  std::vector<int> m_timers;
+    Timer();
+
+   private:
+
+    std::vector<int> m_timers;
 };

@@ -34,17 +34,17 @@ void Xcp_Init(void) {
 
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
     Xcp_State.slaveBlockModeState.blockTransferActive = (bool)XCP_FALSE;
-    Xcp_State.slaveBlockModeState.remaining = UINT8(0);
+    Xcp_State.slaveBlockModeState.remaining           = UINT8(0);
 #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */
 #if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
     Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_FALSE;
-    Xcp_State.masterBlockModeState.remaining = UINT8(0);
+    Xcp_State.masterBlockModeState.remaining           = UINT8(0);
 #endif /* XCP_ENABLE_MASTER_BLOCKMODE */
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
-    Xcp_State.daqProcessor.state = XCP_DAQ_STATE_STOPPED;
-    Xcp_State.daqPointer.daqList = (XcpDaq_ListIntegerType)0;
-    Xcp_State.daqPointer.odt = (XcpDaq_ODTIntegerType)0;
+    Xcp_State.daqProcessor.state  = XCP_DAQ_STATE_STOPPED;
+    Xcp_State.daqPointer.daqList  = (XcpDaq_ListIntegerType)0;
+    Xcp_State.daqPointer.odt      = (XcpDaq_ODTIntegerType)0;
     Xcp_State.daqPointer.odtEntry = (XcpDaq_ODTEntryIntegerType)0;
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
@@ -55,8 +55,8 @@ void Xcp_Init(void) {
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
 
 #if XCP_ENABLE_STATISTICS == XCP_ON
-    Xcp_State.statistics.crosBusy = UINT32(0);
-    Xcp_State.statistics.crosSend = UINT32(0);
+    Xcp_State.statistics.crosBusy     = UINT32(0);
+    Xcp_State.statistics.crosSend     = UINT32(0);
     Xcp_State.statistics.ctosReceived = UINT32(0);
 #endif /* XCP_ENABLE_STATISTICS */
     // XcpTl_Init();

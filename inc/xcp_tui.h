@@ -24,22 +24,22 @@
  */
 
 #if !defined(__XCP_TUI_H)
-#define __XCP_TUI_H
+    #define __XCP_TUI_H
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 extern "C" {
-#endif /* __cplusplus */
-#endif /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
-void XcpTui_Init(void);
-void XcpTui_Deinit(void);
-void* XcpTui_MainFunction(void* param);
+    void  XcpTui_Init(void);
+    void  XcpTui_Deinit(void);
+    void* XcpTui_MainFunction(void* param);
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 }
-#endif /* __cplusplus */
-#endif /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
 #endif /* __XCP_TUI_H */

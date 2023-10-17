@@ -46,7 +46,7 @@ static bool Xcp_EnableSocketOption(int sock, int option) {
         return false;
     }
 #else
-    if (setsockopt(sock, SOL_SOCKET, option, &(const char){1}, sizeof(int)) < 0) {
+    if (setsockopt(sock, SOL_SOCKET, option, &(const char){ 1 }, sizeof(int)) < 0) {
         return false;
     }
 #endif
@@ -61,7 +61,7 @@ static bool Xcp_DisableSocketOption(int sock, int option) {
         return false;
     }
 #else
-    if (setsockopt(sock, SOL_SOCKET, option, &(const char){0}, sizeof(int)) < 0) {
+    if (setsockopt(sock, SOL_SOCKET, option, &(const char){ 0 }, sizeof(int)) < 0) {
         return false;
     }
 #endif
@@ -69,21 +69,21 @@ static bool Xcp_DisableSocketOption(int sock, int option) {
 }
 
 void XcpTl_Init(void) {
-    struct addrinfo hints;
+    struct addrinfo  hints;
     struct addrinfo *addr_info = NULL;
-    char *address = NULL;
-    char port[16];
-    int sock = 0;
-    int ret = 0;
+    char            *address   = NULL;
+    char             port[16];
+    int              sock = 0;
+    int              ret  = 0;
 
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     sprintf(port, "%d", Xcp_Options.port);
-    hints.ai_family = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
+    hints.ai_family   = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
     hints.ai_socktype = XcpTl_Connection.socketType;
-    hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
-    ret = getaddrinfo(address, port, &hints, &addr_info);
+    hints.ai_flags    = AI_NUMERICHOST | AI_PASSIVE;
+    ret               = getaddrinfo(address, port, &hints, &addr_info);
 
     if (ret != 0) {
         XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", errno);
@@ -115,14 +115,18 @@ void XcpTl_Init(void) {
     }
 }
 
-void XcpTl_DeInit(void) { close(XcpTl_Connection.boundSocket); }
+void XcpTl_DeInit(void) {
+    close(XcpTl_Connection.boundSocket);
+}
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     // XcpUtl_Hexdump(buf,  len);
     XCP_TL_ENTER_CRITICAL();
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
-        if (sendto(XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
-                   (struct sockaddr const *)&XcpTl_Connection.connectionAddress, addrSize) == -1) {
+        if (sendto(
+                XcpTl_Connection.boundSocket, (char const *)buf, len, 0,
+                (struct sockaddr const *)&XcpTl_Connection.connectionAddress, addrSize
+            ) == -1) {
             XcpHw_ErrorMsg("XcpTl_Send:sendto()", errno);
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {

@@ -24,7 +24,7 @@
  */
 
 #if !defined(__XCP_THREADS_H)
-#define __XCP_THREADS_H
+    #define __XCP_THREADS_H
 
 void XcpThrd_RunThreads(void);
 

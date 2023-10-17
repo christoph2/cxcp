@@ -24,30 +24,29 @@
  */
 
 #if !defined(__XCP_HW_H)
-#define __XCP_HW_H
+    #define __XCP_HW_H
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 extern "C" {
-#endif /* __cplusplus */
-#endif /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
-/*!!! START-INCLUDE-SECTION !!!*/
-#include "xcp.h"
-/*!!! END-INCLUDE-SECTION !!!*/
+    /*!!! START-INCLUDE-SECTION !!!*/
+    #include "xcp.h"
+    /*!!! END-INCLUDE-SECTION !!!*/
 
-/*
-**  Global Functions.
-*/
-void XcpHw_ParseCommandLineOptions(int argc, char **argv,
-                                   Xcp_OptionsType *options);
-void XcpHw_ErrorMsg(char *const function, int errorCode);
-void XcpHw_Sleep(uint64_t usec);
+    /*
+    **  Global Functions.
+    */
+    void XcpHw_ParseCommandLineOptions(int argc, char **argv, Xcp_OptionsType *options);
+    void XcpHw_ErrorMsg(char * const function, int errorCode);
+    void XcpHw_Sleep(uint64_t usec);
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 }
-#endif /* __cplusplus */
-#endif /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
 #endif /* __XCP_HW_H */

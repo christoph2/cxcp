@@ -37,24 +37,24 @@
 #include "xcp_hw.h"
 
 #if !defined(__GNUC__)
-#pragma comment(lib, "ws2_32.lib")  // MSVC only.
+    #pragma comment(lib, "ws2_32.lib")  // MSVC only.
 #endif
 
 #define XCP_COMM_PORT (5555)
 
-#define DEFAULT_FAMILY PF_UNSPEC      // Accept either IPv4 or IPv6
+#define DEFAULT_FAMILY   PF_UNSPEC    // Accept either IPv4 or IPv6
 #define DEFAULT_SOCKTYPE SOCK_STREAM  //
-#define DEFAULT_PORT "5555"
+#define DEFAULT_PORT     "5555"
 
 typedef struct tagXcpTl_ConnectionType {
-    HANDLE iocp;
+    HANDLE           iocp;
     SOCKADDR_STORAGE connectionAddress;
     SOCKADDR_STORAGE currentAddress;
-    SOCKET boundSocket;
-    SOCKET connectedSocket;
-    bool xcpConnected;
-    bool socketConnected;
-    int socketType;
+    SOCKET           boundSocket;
+    SOCKET           connectedSocket;
+    bool             xcpConnected;
+    bool             socketConnected;
+    int              socketType;
 } XcpTl_ConnectionType;
 
 typedef enum tagHandleType {
@@ -64,40 +64,44 @@ typedef enum tagHandleType {
     HANDLE_USER,
 } HandleType;
 
-typedef enum tagIoOpcode { IoAccept, IoRead, IoWrite } IoOpcode;
+typedef enum tagIoOpcode {
+    IoAccept,
+    IoRead,
+    IoWrite
+} IoOpcode;
 
 typedef struct tagPerHandleData {
     HandleType handleType;
-    HANDLE handle;
-    DWORD seqNoSend;
-    DWORD seqNoRecv;
+    HANDLE     handle;
+    DWORD      seqNoSend;
+    DWORD      seqNoRecv;
 } PerHandleData;
 
 typedef struct tagPerIoData {
     OVERLAPPED overlapped;
-    IoOpcode opcode;
-    SOCKET socket;
-    char buf[XCP_COMM_BUFLEN];
-    WSABUF wsabuf;
+    IoOpcode   opcode;
+    SOCKET     socket;
+    char       buf[XCP_COMM_BUFLEN];
+    WSABUF     wsabuf;
 } PerIoData;
 
 int addrSize = sizeof(SOCKADDR_STORAGE);
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
-void Xcp_DispatchCommand(Xcp_PduType const *const pdu);
+void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
 
 extern Xcp_PduType Xcp_CtoIn;
 extern Xcp_PduType Xcp_CtoOut;
 
-static HANDLE XcpTl_CreateIOCP(void);
-static bool XcpTl_RegisterIOCPHandle(HANDLE port, HANDLE object, ULONG_PTR key);
+static HANDLE       XcpTl_CreateIOCP(void);
+static bool         XcpTl_RegisterIOCPHandle(HANDLE port, HANDLE object, ULONG_PTR key);
 static DWORD WINAPI WorkerThread(LPVOID lpParameter);
 static DWORD WINAPI AcceptorThread(LPVOID lpParameter);
-void XcpTl_PostQuitMessage(void);
-static void XcpTl_TriggerRecv(DWORD numBytes);
-static void XcpTl_Feed(DWORD numBytesReceived);
-static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
+void                XcpTl_PostQuitMessage(void);
+static void         XcpTl_TriggerRecv(DWORD numBytes);
+static void         XcpTl_Feed(DWORD numBytesReceived);
+static boolean      Xcp_EnableSocketOption(SOCKET sock, int option);
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option) {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
@@ -107,33 +111,33 @@ static boolean Xcp_EnableSocketOption(SOCKET sock, int option) {
         return XCP_FALSE;
     }
 #else
-    if (setsockopt(sock, SOL_SOCKET, option, &(const char){1}, sizeof(int)) < 0) {
+    if (setsockopt(sock, SOL_SOCKET, option, &(const char){ 1 }, sizeof(int)) < 0) {
         return XCP_FALSE;
     }
 #endif
     return XCP_TRUE;
 }
 
-#define TL_WORKER_THREAD (0)
+#define TL_WORKER_THREAD   (0)
 #define TL_ACCEPTOR_THREAD (1)
-#define NUM_TL_THREADS (2)
+#define NUM_TL_THREADS     (2)
 
-static HANDLE XcpTl_Threads[NUM_TL_THREADS];
-static PerIoData recvOlap = {0};
-static PerIoData sendOlap = {0};
+static HANDLE    XcpTl_Threads[NUM_TL_THREADS];
+static PerIoData recvOlap = { 0 };
+static PerIoData sendOlap = { 0 };
 
 void XcpTl_Init(void) {
-    WSADATA wsa;
+    WSADATA  wsa;
     ADDRINFO Hints, *AddrInfo, *AI;
-    char *Address = NULL;
-    char *Port = DEFAULT_PORT;
-    SOCKET serverSockets[FD_SETSIZE];
-    int boundSocketNum = -1;
-    int ret;
-    int idx;
-    DWORD dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
-    BOOL fAdjustmentDisabled = XCP_TRUE;
-    int one = 1;
+    char    *Address = NULL;
+    char    *Port    = DEFAULT_PORT;
+    SOCKET   serverSockets[FD_SETSIZE];
+    int      boundSocketNum = -1;
+    int      ret;
+    int      idx;
+    DWORD    dwTimeAdjustment = 0UL, dwTimeIncrement = 0UL;
+    BOOL     fAdjustmentDisabled = XCP_TRUE;
+    int      one                 = 1;
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     ZeroMemory(&serverSockets, FD_SETSIZE);
@@ -151,10 +155,10 @@ void XcpTl_Init(void) {
     } else {
     }
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
-    Hints.ai_family = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
-    Hints.ai_socktype = XcpTl_Connection.socketType;
-    Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
-    ret = getaddrinfo(Address, Port, &Hints, &AddrInfo);
+    Hints.ai_family             = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
+    Hints.ai_socktype           = XcpTl_Connection.socketType;
+    Hints.ai_flags              = AI_NUMERICHOST | AI_PASSIVE;
+    ret                         = getaddrinfo(Address, Port, &Hints, &AddrInfo);
     if (ret != 0) {
         XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
         WSACleanup();
@@ -186,16 +190,18 @@ void XcpTl_Init(void) {
                 continue;
             }
         }
-        boundSocketNum = idx;
+        boundSocketNum               = idx;
         XcpTl_Connection.boundSocket = serverSockets[boundSocketNum];
         break; /* Grab first address. */
     }
     freeaddrinfo(AddrInfo);
     if (boundSocketNum == -1) {
-        fprintf(stderr,
-                "Fatal error: unable to serve on any address.\nPerhaps"
-                " a server is already running on port %s / %s [%s]?\n",
-                DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4");
+        fprintf(
+            stderr,
+            "Fatal error: unable to serve on any address.\nPerhaps"
+            " a server is already running on port %s / %s [%s]?\n",
+            DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+        );
         WSACleanup();
         exit(2);
     }
@@ -205,11 +211,11 @@ void XcpTl_Init(void) {
 
     setsockopt(XcpTl_Connection.boundSocket, IPPROTO_TCP, TCP_NODELAY, (const char *)&one, sizeof(one));
 
-    recvOlap.opcode = IoRead;
+    recvOlap.opcode     = IoRead;
     recvOlap.wsabuf.buf = recvOlap.buf;
     recvOlap.wsabuf.len = XCP_COMM_BUFLEN;
 
-    sendOlap.opcode = IoWrite;
+    sendOlap.opcode     = IoWrite;
     sendOlap.wsabuf.buf = sendOlap.buf;
     sendOlap.wsabuf.len = XCP_COMM_BUFLEN;
 
@@ -237,7 +243,8 @@ void XcpTl_DeInit(void) {
     WSACleanup();
 }
 
-void XcpTl_MainFunction(void) {}
+void XcpTl_MainFunction(void) {
+}
 
 void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
@@ -247,10 +254,10 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 static DWORD WINAPI AcceptorThread(LPVOID lpParameter) {
-    int fromLen;
+    int              fromLen;
     SOCKADDR_STORAGE From;
-    DWORD error;
-    int one = 1;
+    DWORD            error;
+    int              one = 1;
 
     XCP_UNREFERENCED_PARAMETER(lpParameter);
 
@@ -274,8 +281,9 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter) {
             }
             setsockopt(XcpTl_Connection.boundSocket, IPPROTO_TCP, TCP_NODELAY, (const char *)&one, sizeof(one));
             XcpTl_Connection.socketConnected = XCP_TRUE;
-            XcpTl_RegisterIOCPHandle(XcpTl_Connection.iocp, (HANDLE)XcpTl_Connection.connectedSocket,
-                                     (ULONG_PTR)XcpTl_Connection.connectedSocket);
+            XcpTl_RegisterIOCPHandle(
+                XcpTl_Connection.iocp, (HANDLE)XcpTl_Connection.connectedSocket, (ULONG_PTR)XcpTl_Connection.connectedSocket
+            );
             XcpTl_TriggerRecv(XCP_COMM_BUFLEN);
         }
     }
@@ -284,23 +292,25 @@ static DWORD WINAPI AcceptorThread(LPVOID lpParameter) {
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     DWORD bytesWritten;
-    int addrLen;
+    int   addrLen;
 
     sendOlap.wsabuf.buf = (char *)buf;
     sendOlap.wsabuf.len = len;
-    sendOlap.opcode = IoWrite;
+    sendOlap.opcode     = IoWrite;
 
     SecureZeroMemory(&sendOlap.overlapped, sizeof(OVERLAPPED));
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         addrLen = sizeof(SOCKADDR_STORAGE);
-        if (WSASendTo(XcpTl_Connection.boundSocket, &sendOlap.wsabuf, 1, &bytesWritten, 0,
-                      (LPSOCKADDR)&XcpTl_Connection.currentAddress, addrLen, (LPWSAOVERLAPPED)&sendOlap.overlapped,
-                      NULL) == SOCKET_ERROR) {
+        if (WSASendTo(
+                XcpTl_Connection.boundSocket, &sendOlap.wsabuf, 1, &bytesWritten, 0, (LPSOCKADDR)&XcpTl_Connection.currentAddress,
+                addrLen, (LPWSAOVERLAPPED)&sendOlap.overlapped, NULL
+            ) == SOCKET_ERROR) {
             XcpHw_ErrorMsg("XcpTl_Send:WSASendTo()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
-        if (WSASend(XcpTl_Connection.connectedSocket, &sendOlap.wsabuf, 1, &bytesWritten, 0, (LPWSAOVERLAPPED)&sendOlap.overlapped,
-                    NULL) == SOCKET_ERROR) {
+        if (WSASend(
+                XcpTl_Connection.connectedSocket, &sendOlap.wsabuf, 1, &bytesWritten, 0, (LPWSAOVERLAPPED)&sendOlap.overlapped, NULL
+            ) == SOCKET_ERROR) {
             XcpHw_ErrorMsg("XcpTl_Send:WSASend()", WSAGetLastError());
             closesocket(XcpTl_Connection.connectedSocket);
         }
@@ -312,18 +322,24 @@ void XcpTl_SaveConnection(void) {
     XcpTl_Connection.xcpConnected = XCP_TRUE;
 }
 
-void XcpTl_ReleaseConnection(void) { XcpTl_Connection.xcpConnected = XCP_FALSE; }
+void XcpTl_ReleaseConnection(void) {
+    XcpTl_Connection.xcpConnected = XCP_FALSE;
+}
 
 bool XcpTl_VerifyConnection(void) {
     bool res = memcmp(&XcpTl_Connection.connectionAddress, &XcpTl_Connection.currentAddress, sizeof(SOCKADDR_STORAGE)) == 0;
     return res;
 }
 
-void XcpTl_SetOptions(Xcp_OptionsType const *options) { CopyMemory(&Xcp_Options, options, sizeof(Xcp_OptionsType)); }
+void XcpTl_SetOptions(Xcp_OptionsType const *options) {
+    CopyMemory(&Xcp_Options, options, sizeof(Xcp_OptionsType));
+}
 
 void XcpTl_PrintConnectionInformation(void) {
-    printf("\nXCPonEth -- Listening on port %s / %s [%s]\n", DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP",
-           Xcp_Options.ipv6 ? "IPv6" : "IPv4");
+    printf(
+        "\nXCPonEth -- Listening on port %s / %s [%s]\n", DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP",
+        Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+    );
 }
 
 ///////////////////
@@ -334,13 +350,13 @@ void XcpTl_PrintConnectionInformation(void) {
 */
 
 static DWORD WINAPI WorkerThread(LPVOID lpParameter) {
-    HANDLE hCompletionPort = (HANDLE)lpParameter;
-    DWORD numBytesReceived = 0;
-    ULONG_PTR CompletionKey;
-    PerIoData *iod = NULL;
-    OVERLAPPED *olap = NULL;
-    bool exitLoop = FALSE;
-    DWORD error;
+    HANDLE      hCompletionPort  = (HANDLE)lpParameter;
+    DWORD       numBytesReceived = 0;
+    ULONG_PTR   CompletionKey;
+    PerIoData  *iod      = NULL;
+    OVERLAPPED *olap     = NULL;
+    bool        exitLoop = FALSE;
+    DWORD       error;
 
     while (!exitLoop) {
         if (GetQueuedCompletionStatus(hCompletionPort, &numBytesReceived, &CompletionKey, (LPOVERLAPPED *)&olap, INFINITE)) {
@@ -413,13 +429,15 @@ static bool XcpTl_RegisterIOCPHandle(HANDLE port, HANDLE object, ULONG_PTR key) 
     return (bool)(handle == port);
 }
 
-void XcpTl_PostQuitMessage(void) { PostQueuedCompletionStatus(XcpTl_Connection.iocp, 0, (ULONG_PTR)NULL, NULL); }
+void XcpTl_PostQuitMessage(void) {
+    PostQueuedCompletionStatus(XcpTl_Connection.iocp, 0, (ULONG_PTR)NULL, NULL);
+}
 
 static void XcpTl_TriggerRecv(DWORD numBytes) {
     DWORD numReceived = (DWORD)0;
-    DWORD flags = (DWORD)0;
-    DWORD err = 0;
-    int addrLen;
+    DWORD flags       = (DWORD)0;
+    DWORD err         = 0;
+    int   addrLen;
 
     XCP_UNREFERENCED_PARAMETER(numBytes);
 
@@ -429,8 +447,10 @@ static void XcpTl_TriggerRecv(DWORD numBytes) {
         if (XcpTl_Connection.socketConnected == XCP_FALSE) {
             return;
         }
-        if (WSARecv(XcpTl_Connection.connectedSocket, &recvOlap.wsabuf, 1, &numReceived, &flags, (LPWSAOVERLAPPED)&recvOlap,
-                    (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL) == SOCKET_ERROR) {
+        if (WSARecv(
+                XcpTl_Connection.connectedSocket, &recvOlap.wsabuf, 1, &numReceived, &flags, (LPWSAOVERLAPPED)&recvOlap,
+                (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL
+            ) == SOCKET_ERROR) {
             err = WSAGetLastError();
             if (err != WSA_IO_PENDING) {
                 XcpHw_ErrorMsg("XcpTl_TriggerRecv::WSARecv()", err);
@@ -438,9 +458,11 @@ static void XcpTl_TriggerRecv(DWORD numBytes) {
         }
     } else if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         addrLen = sizeof(SOCKADDR_STORAGE);
-        if (WSARecvFrom(XcpTl_Connection.boundSocket, &recvOlap.wsabuf, 1, &numReceived, &flags,
-                        (LPSOCKADDR)&XcpTl_Connection.currentAddress, &addrLen, (LPWSAOVERLAPPED)&recvOlap,
-                        (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL)) {
+        if (WSARecvFrom(
+                XcpTl_Connection.boundSocket, &recvOlap.wsabuf, 1, &numReceived, &flags,
+                (LPSOCKADDR)&XcpTl_Connection.currentAddress, &addrLen, (LPWSAOVERLAPPED)&recvOlap,
+                (LPWSAOVERLAPPED_COMPLETION_ROUTINE)NULL
+            )) {
             err = WSAGetLastError();
             if (err != WSA_IO_PENDING) {
                 XcpHw_ErrorMsg("XcpTl_TriggerRecv:WSARecvFrom()", WSAGetLastError());
@@ -459,7 +481,7 @@ static void XcpTl_Feed(DWORD numBytesReceived) {
         dlc = MAKEWORD(recvOlap.wsabuf.buf[0], recvOlap.wsabuf.buf[1]);
 #endif  // XCP_TRANSPORT_LAYER_LENGTH_SIZE
         if (!XcpTl_Connection.xcpConnected || (XcpTl_VerifyConnection())) {
-            Xcp_CtoIn.len = dlc;
+            Xcp_CtoIn.len  = dlc;
             Xcp_CtoIn.data = (uint8_t *)(recvOlap.wsabuf.buf + XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
             Xcp_DispatchCommand(&Xcp_CtoIn);
         }

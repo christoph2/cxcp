@@ -24,11 +24,11 @@
  */
 
 #if !defined(__TERMINAL_H)
-#define __TERMINAL_H
+    #define __TERMINAL_H
 
-/*!!! START-INCLUDE-SECTION !!!*/
-#include "xcp.h"
-#include "xcp_threads.h"
+    /*!!! START-INCLUDE-SECTION !!!*/
+    #include "xcp.h"
+    #include "xcp_threads.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #endif /* __TERMINAL_H */

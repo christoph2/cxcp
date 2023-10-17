@@ -35,31 +35,30 @@
 #define __XCP_TL_TIMEOUT_H
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 extern "C" {
-#endif /* __cplusplus */
-#endif /* XCP_EXTERN_C_GUARDS */
+    #endif /* __cplusplus */
+#endif     /* XCP_EXTERN_C_GUARDS */
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_types.h"
 
-/*!!! END-INCLUDE-SECTION !!!*/
+    /*!!! END-INCLUDE-SECTION !!!*/
 
-static void XcpTl_TimeoutInit(uint16_t timeout_value,
-                              void (*timeout_function)(void));
+    static void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void));
 
-static void XcpTl_TimeoutStart(void);
+    static void XcpTl_TimeoutStart(void);
 
-static void XcpTl_TimeoutStop(void);
+    static void XcpTl_TimeoutStop(void);
 
-static void XcpTl_TimeoutCheck(void);
+    static void XcpTl_TimeoutCheck(void);
 
-static void XcpTl_TimeoutReset(void);
+    static void XcpTl_TimeoutReset(void);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 }
-#endif /* __cplusplus */
-#endif /* XCP_EXTERN_C_GUARDS */
+    #endif /* __cplusplus */
+#endif     /* XCP_EXTERN_C_GUARDS */
 
-#endif // __XCP_TL_TIMEOUT_H
+#endif  // __XCP_TL_TIMEOUT_H
