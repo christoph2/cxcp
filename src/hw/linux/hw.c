@@ -105,14 +105,6 @@ static struct timespec Timespec_Diff(struct timespec start, struct timespec end)
 static void InitTUI(void);
 static void DeinitTUI(void);
 
-/*
-**  External Function Prototypes.
-*/
-
-void *XcpHw_MainFunction();
-
-bool XcpDaq_QueueEmpty(void);
-bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
 
 void exitFunc(void);
 
@@ -139,8 +131,6 @@ static struct timespec XcpHw_TimerResolution = {0};
 static timer_t XcpHw_AppMsTimer;
 static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
 static XcpHw_ApplicationStateType XcpHw_ApplicationState;
-static pthread_cond_t XcpHw_TransmissionEvent;
-static pthread_mutex_t XcpHw_TransmissionMutex;
 
 /*
 **  Global Functions.
@@ -263,16 +253,7 @@ void XcpHw_Init(void) {
     if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::sigprocmask()", errno);
     }
-    XcpHw_InitLocks();
-    pthread_cond_init(&XcpHw_TransmissionEvent, NULL);
-    pthread_mutex_init(&XcpHw_TransmissionMutex, NULL);
-}
-
-void XcpHw_Deinit(void) {
-    XcpHw_DeinitLocks();
-    pthread_cond_destroy(&XcpHw_TransmissionEvent);
-    pthread_cond_destroy(&XcpHw_TransmissionEvent);
-    pthread_mutex_destroy(&XcpHw_TransmissionMutex);
+    XcpHw_PosixInit();
 }
 
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end) {
@@ -311,6 +292,28 @@ uint32_t XcpHw_GetTimerCounter(void) {
     uint64_t timestamp = XcpHw_GetElapsedTime(XCP_HW_TIMER_PRESCALER);
 
     timestamp = XcpHw_FreeRunningCounter % UINT_MAX;
+
+#if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
+    timestamp &= TIMER_MASK_1;
+#elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_2
+    timestamp &= TIMER_MASK_2;
+#elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_4
+    timestamp &= TIMER_MASK_4;
+#else
+#error Timestamp-size not supported.
+#endif  // XCP_DAQ_TIMESTAMP_SIZE
+
+    return (uint32_t)timestamp;
+}
+
+
+uint32_t XcpHw_GetTimerCounterMS(void) {
+    uint64_t timestamp = XcpHw_GetElapsedTime(TIMER_PS_1MS);
+
+    return (uint32_t)timestamp & TIMER_MASK_4;
+}
+
+amp = XcpHw_FreeRunningCounter % UINT_MAX;
 
 #if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
     timestamp &= TIMER_MASK_1;

@@ -149,7 +149,7 @@ void XcpTl_RxHandler(void) {
     if (res == -1) {
 #if defined(_WIN32)
       XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", WSAGetLastError());
-#elif defined(__unix__)
+#elif defined(__unix__)  || defined(__APPLE__)
       XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", errno);
 #endif
       exit(2);
@@ -163,7 +163,7 @@ void XcpTl_RxHandler(void) {
       if (res == -1) {
 #if defined(_WIN32)
         XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
-#elif defined(__unix__)
+#elif defined(__unix__)  || defined(__APPLE__)
         XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", errno);
 #endif
         exit(2);
@@ -205,7 +205,7 @@ static void XcpTl_Accept(void) {
                          err); /* Not canceled by WSACancelBlockingCall(), i.e.
                                   pthread_cancel()  */
         }
-#elif defined(__unix__)
+#elif defined(__unix__)  || defined(__APPLE__)
         XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
 #endif
       }

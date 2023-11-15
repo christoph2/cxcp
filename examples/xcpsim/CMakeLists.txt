@@ -2,9 +2,15 @@ cmake_minimum_required(VERSION 3.10)
 project(xcpsim LANGUAGES C)
 
 
-# MESSAGE("CMAKE_HOST_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME}")
-# MESSAGE("CMAKE_HOST_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION}")
-# MESSAGE("CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}")
+MESSAGE("CMAKE_HOST_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME}")
+MESSAGE("CMAKE_HOST_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION}")
+MESSAGE("CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}")
+
+if (CMAKE_HOST_UNIX AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    SET(MACOS_BUILD true)
+else ()
+    SET(MACOS_BUILD false)
+endif()
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -49,12 +55,20 @@ if (CMAKE_HOST_WIN32)
     list(APPEND SOURCES "../../src/hw/win/hw.c")
     list(APPEND SOURCES "../../flsemu/win/flsemu.c")
 elseif (CMAKE_HOST_UNIX)
-    list(APPEND SOURCES "../../src/hw/linux/hw.c")
+    list(APPEND SOURCES "../../src/hw/posix/hw.c")
+    if (MACOS_BUILD)
+        list(APPEND SOURCES "../../src/hw/macos/hw.c")
+    else ()
+        list(APPEND SOURCES "../../src/hw/linux/hw.c")
+    endif ()
+
     list(APPEND SOURCES "../../flsemu/posix/flsemu.c")
-    set(ADD_LIBS
-            "pthread"
-            "rt"
-            )
+    set(ADD_LIBS "pthread")
+    if (MACOS_BUILD)
+
+    else ()
+        set(ADD_LIBS "rt")
+    endif ()
 endif (CMAKE_HOST_WIN32)
 
 if (MSVC)
@@ -105,8 +119,10 @@ elseif (CMAKE_HOST_UNIX)
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
 
-    if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN")
-        add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h)
+    if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+        add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h
+                ../../src/hw/macos/hw.c
+                ../../src/hw/posix/hw.c)
         target_compile_definitions(xcp_sim_can PUBLIC TP_CAN)
         target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})
         target_link_libraries(xcp_sim_can ${ADD_LIBS})

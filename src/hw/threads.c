@@ -177,8 +177,11 @@ static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
     XcpHw_ErrorMsg("SetThreadAffinityMask()", GetLastError());
   }
 #else
+
+#if !defined(__APPLE__)
   /* Linux only (i.e. no BSD) ??? */
   int res;
+
   cpu_set_t cpuset;
 
   CPU_ZERO(&cpuset);
@@ -193,5 +196,7 @@ static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
   if (res != 0) {
     XcpHw_ErrorMsg("pthread_getaffinity_np()", errno);
   }
+#endif
+
 #endif
 }

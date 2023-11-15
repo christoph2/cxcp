@@ -1235,7 +1235,7 @@ Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src);
 **  Hardware dependent stuff.
 */
 void XcpHw_Init(void);
-
+void XcpHw_PosixInit(void);
 void XcpHw_Deinit(void);
 
 uint32_t XcpHw_GetTimerCounter(void);

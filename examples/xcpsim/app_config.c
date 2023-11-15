@@ -26,9 +26,13 @@ uint8_t calram[CALRAM_SIZE];
 __declspec(allocate(EPK_SECTION_NAME)) const
     char epk[sizeof(EPK_CONST_NAME)] = EPK_CONST_NAME;
 #else
+#if defined(__APPLE__)
+const char epk[sizeof(EPK_CONST_NAME)] = EPK_CONST_NAME;
+#else
 __attribute__((section(EPK_SECTION_NAME)))
 const char epk[sizeof(EPK_CONST_NAME)] = EPK_CONST_NAME;
 #endif
+    #endif
 
 float triangle;
 float randomValue;

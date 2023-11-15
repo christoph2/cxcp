@@ -40,6 +40,10 @@
 #include "flsemu.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
+#if defined(__APPLE__)
+#define O_DIRECT    (0)
+#endif
+
 #define handle_error(msg)   \
     do {                    \
         perror(msg);        \
@@ -122,10 +126,23 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(char const* fileName
                 handle_error("creat");
                 return OPEN_ERROR;
             } else {
+#if defined(__APPLE__)
+                fstore_t store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, size};
+                // Try to get a continous chunk of disk space
+                int ret = fcntl(fd, F_PREALLOCATE, &store);
+                if(-1 == ret){
+                    // OK, perhaps we are too fragmented, allocate non-continuous
+                    store.fst_flags = F_ALLOCATEALL;
+                    ret = fcntl(fd, F_PREALLOCATE, &store);
+                    if (-1 == ret)
+                        return false;
+                }
+#else
                 if (fallocate(fd, 0, 0, size) == -1) {
                     handle_error("fallocate");
                     return OPEN_ERROR;
                 }
+#endif
                 newFile = XCP_TRUE;
             }
         } else {

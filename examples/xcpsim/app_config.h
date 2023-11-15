@@ -11,7 +11,9 @@
 #if defined(_MSC_VER)
 #pragma section("calparams", read)
 #define CAL_PARAM __declspec(allocate("calparams"))
-#else
+#elif defined(__APPLE__)
+        #define CAL_PARAM
+    #else
 #define CAL_PARAM __attribute__((section("calparams")))
 #endif
 

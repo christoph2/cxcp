@@ -29,7 +29,8 @@
 #if defined(_WIN32)
 #include <WinSock2.h>
 #include <Ws2tcpip.h>
-#elif defined(__unix__)
+#elif defined(__unix__) || defined(__APPLE__)
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -53,7 +54,7 @@ typedef struct tagXcpTl_ConnectionType {
   bool connected;
   int socketType;
 } XcpTl_ConnectionType;
-#elif defined(__unix__)
+#elif defined(__unix__)  || defined(__APPLE__)
 typedef struct tagXcpTl_ConnectionType {
   struct sockaddr_storage connectionAddress;
   struct sockaddr_storage currentAddress;
@@ -65,7 +66,7 @@ typedef struct tagXcpTl_ConnectionType {
 } XcpTl_ConnectionType;
 #endif
 
-#if defined(__unix__)
+#if defined(__unix__)  || defined(__APPLE__)
 #define SOCKET_ERROR (-1)
 #define INVALID_SOCKET (-1)
 #define ZeroMemory(b, l) memset((b), 0, (l))

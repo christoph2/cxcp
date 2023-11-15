@@ -139,9 +139,9 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
       // FIXME!!!
       offset = ((Xcp_PointerSizeType)segment->persistentArray->mappingAddress) +
                (pageIdx * pageSize);
-      XcpUtl_MemSet(offset, FLSEMU_ERASED_VALUE, segment->pageSize);
+      XcpUtl_MemSet((void *)offset, FLSEMU_ERASED_VALUE, segment->pageSize);
       if (fillerSize > 0) {
-        XcpUtl_MemSet(offset + segment->pageSize, FLSEMU_FILLER_VALUE,
+        XcpUtl_MemSet((void *)(offset + segment->pageSize), FLSEMU_FILLER_VALUE,
                       fillerSize);
       }
     }
