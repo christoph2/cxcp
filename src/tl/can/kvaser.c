@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2019 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2023 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -212,12 +212,13 @@ void XcpTl_DeInit(void) {
     // Kv_Check("canClose", stat);
 }
 
-#if 0
+/*
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
 {
+    canStatus stat;
     return 1;
 }
-#endif
+*/
 
 static uint16_t XcpTl_SetDLC(uint16_t len) {
     static const uint16_t FD_DLCS[] = { 12, 16, 20, 24, 32, 48, 64 };
@@ -282,14 +283,23 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_LEAVE_CRITICAL();
 }
 
+void *XcpTl_Thread(void *param) {
+    XCP_UNREFERENCED_PARAMETER(param);
+    XCP_FOREVER {
+        XcpHw_Sleep(20 * 1000);
+        // XcpTl_MainFunction();
+    }
+    return NULL;
+}
+
+/*
 void XcpTl_MainFunction(void) {
-    Sleep(1);
-#if 0
+    //Sleep(1);
     if (XcpTl_FrameAvailable(0, 1000) > 0) {
         XcpTl_RxHandler();
     }
-#endif
 }
+*/
 
 #if 0
 void XcpTl_RxHandler(void)

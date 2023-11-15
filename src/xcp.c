@@ -918,7 +918,7 @@ XCP_STATIC void Xcp_Upload(uint8_t len) {
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_OFF
     Xcp_MtaType dst = { 0 };
     dataOut[0]      = (uint8_t)ERR_SUCCESS;
-    dst.address     = (uint32_t)(dataOut + 1);
+    dst.address     = (Xcp_PointerSizeType)(dataOut + 1);
     dst.ext         = (uint8_t)0;
 
     Xcp_CopyMemory(dst, Xcp_State.mta, (uint32_t)len);

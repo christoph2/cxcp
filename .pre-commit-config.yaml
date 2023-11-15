@@ -31,14 +31,6 @@ repos:
     language: python
     types_or: [c, c++, python]
     stages: [commit]
-  - id: clang-format
-    name: clang-format
-    entry: clang-format -i
-    types_or: [c, c++]
-    stages: [commit]
-    language: system
-    types_or: [c, c++, python]
-    exclude: ".*py"
     #- id: clang-tidy
     #name: clang-tidy
     #entry: clang-tidy --extra-arg="-Iinc" -extra-arg="-I." -extra-arg="-DETHER"

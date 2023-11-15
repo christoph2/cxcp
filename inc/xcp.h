@@ -896,7 +896,7 @@ extern "C" {
     char interface2[6];
     #elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
     bool fd;
-    char interface[64];
+    char can_interf[64];
     #elif XCP_TRANSPORT_LAYER == XCP_ON_SXI
     bool dummy;
     #endif
