@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2023 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -108,31 +108,14 @@ static void            DeinitTUI(void);
 
 void exitFunc(void);
 
-/*
-** Global Variables.
-*/
-pthread_t XcpHw_ThreadID[4];
-
-/*
- * Local Types.
- */
-#define XCPHW_APPLICATION_STATES (32)
-
-typedef struct tagXcpHw_ApplicationStateType {
-    volatile uint8_t counter[XCPHW_APPLICATION_STATES];
-} XcpHw_ApplicationStateType;
 
 /*
 **  Local Variables.
 */
 static HwStateType                HwState = { 0 };
-pthread_mutex_t                   XcpHw_Locks[XCP_HW_LOCK_COUNT];
 static struct timespec            XcpHw_TimerResolution = { 0 };
 static timer_t                    XcpHw_AppMsTimer;
 static unsigned long long         XcpHw_FreeRunningCounter = 0ULL;
-static XcpHw_ApplicationStateType XcpHw_ApplicationState;
-static pthread_cond_t             XcpHw_TransmissionEvent;
-static pthread_mutex_t            XcpHw_TransmissionMutex;
 
 /*
 **  Global Functions.
@@ -308,69 +291,4 @@ uint32_t XcpHw_GetTimerCounterMS(void) {
     uint64_t timestamp = XcpHw_GetElapsedTime(TIMER_PS_1MS);
 
     return (uint32_t)timestamp & TIMER_MASK_4;
-}
-
-void XcpHw_TransmitDtos(void) {
-    uint16_t len;
-    uint8_t  data[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET];
-    uint8_t *dataOut = Xcp_GetDtoOutPtr();
-
-    while (!XcpDaq_QueueEmpty()) {
-        XcpDaq_QueueDequeue(&len, dataOut);
-        // printf("\tDTO -- len: %d data: \t", len);
-        Xcp_SetDtoOutLen(len);
-        Xcp_SendDto();
-    }
-}
-
-static void XcpHw_InitLocks(void) {
-    uint8_t idx = UINT8(0);
-
-    for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
-        pthread_mutex_init(&XcpHw_Locks[idx], NULL);
-    }
-}
-
-static void XcpHw_DeinitLocks(void) {
-    uint8_t idx = UINT8(0);
-
-    for (idx = UINT8(0); idx < XCP_HW_LOCK_COUNT; ++idx) {
-        pthread_mutex_destroy(&XcpHw_Locks[idx]);
-    }
-}
-
-void XcpHw_AcquireLock(uint8_t lockIdx) {
-    if (lockIdx >= XCP_HW_LOCK_COUNT) {
-        return;
-    }
-    pthread_mutex_lock(&XcpHw_Locks[lockIdx]);
-}
-
-void XcpHw_ReleaseLock(uint8_t lockIdx) {
-    if (lockIdx >= XCP_HW_LOCK_COUNT) {
-        return;
-    }
-    pthread_mutex_unlock(&XcpHw_Locks[lockIdx]);
-}
-
-void XcpHw_SignalTransmitRequest(void) {
-    pthread_mutex_lock(&XcpHw_TransmissionMutex);
-    pthread_cond_signal(&XcpHw_TransmissionEvent);
-}
-
-void XcpHw_WaitTransmitRequest(void) {
-    pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
-}
-
-void XcpHw_ErrorMsg(char * const fun, int errorCode) {
-    fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
-}
-
-/*
- *
- * Sleep for `usec` microseconds.
- *
- */
-void XcpHw_Sleep(uint64_t usec) {
-    usleep(usec);
 }

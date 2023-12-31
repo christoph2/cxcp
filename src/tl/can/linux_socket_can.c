@@ -109,7 +109,7 @@ void XcpTl_Init(void) {
 
     /* Select that CAN interface, and bind the socket to it. */
     addr.can_family  = AF_CAN;
-    addr.can_ifindex = locate_interface(XcpTl_Connection.can_socket, Xcp_Options.interface);
+    addr.can_ifindex = locate_interface(XcpTl_Connection.can_socket, Xcp_Options.can_interf);
     bind(XcpTl_Connection.can_socket, (struct sockaddr*)&addr, sizeof(addr));
     if (XcpTl_Connection.can_socket == -1) {
         errno_abort("XcpTl_Init::bind()");

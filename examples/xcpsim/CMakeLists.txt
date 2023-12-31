@@ -121,11 +121,13 @@ elseif (CMAKE_HOST_UNIX)
 
     if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
         add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h
-                ../../src/hw/macos/hw.c
+                ../../src/hw/linux/hw.c
                 ../../src/hw/posix/hw.c)
         target_compile_definitions(xcp_sim_can PUBLIC TP_CAN)
         target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})
         target_link_libraries(xcp_sim_can ${ADD_LIBS})
         target_compile_features(xcp_sim_can PRIVATE c_std_11)
+    elseif(MACOS_BUILD)
+
     endif ()
 endif ()

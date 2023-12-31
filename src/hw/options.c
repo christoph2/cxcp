@@ -166,7 +166,7 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
                 break;
             case 'i':
                 if_assigned = 1;
-                strcpy(options->interface, optarg);
+                strcpy(options->can_interf, optarg);
                 break;
     #endif
         }
@@ -174,7 +174,7 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
     if (!if_assigned) {
-        strcpy(options->interface, XCP_SOCKET_CAN_DEFAULT_IF);
+        strcpy(options->can_interf, XCP_SOCKET_CAN_DEFAULT_IF);
     }
     #endif
 }

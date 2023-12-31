@@ -31,7 +31,7 @@
 #if !defined(__XCP_CONFIG_H)
     #define __XCP_CONFIG_H
 
-    #define TP_CAN
+// #define TP_ETHER
     /*
     **  General Options.
     */
