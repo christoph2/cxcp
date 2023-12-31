@@ -120,14 +120,12 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
         length                    = strlen(segment->name);
 #if defined(_MSC_VER)
         strncpy_s((char *)rom, 1024, (char *)segment->name, length);
+		rom[length] = '\x00';
+		strcat_s((char *)rom, 1024, ".rom");
 #else
         strncpy((char *)rom, (char *)segment->name, length);
-#endif /* _MSC_VER */
-        rom[length] = '\x00';
-#if defined(_MSC_VER)
-        strcat_s((char *)rom, 1024, ".rom");
-#else
-        strcat((char *)rom, ".rom");
+	rom[length] = '\x00';
+		strcat((char *)rom, ".rom");
 #endif /* _MSC_VER */
         numPages = FlsEmu_NumPages(segmentIdx);
         result   = FlsEmu_OpenCreatePersitentArray(rom, pageSize * numPages, segment->persistentArray);
@@ -141,13 +139,14 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
             for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
                 // FIXME!!!
                 offset = ((Xcp_PointerSizeType)segment->persistentArray->mappingAddress) + (pageIdx * pageSize);
-                XcpUtl_MemSet(offset, FLSEMU_ERASED_VALUE, segment->pageSize);
+                XcpUtl_MemSet((void*)offset, FLSEMU_ERASED_VALUE, segment->pageSize);
                 if (fillerSize > 0) {
-                    XcpUtl_MemSet(offset + segment->pageSize, FLSEMU_FILLER_VALUE, fillerSize);
+                    XcpUtl_MemSet((void*)(offset + segment->pageSize), FLSEMU_FILLER_VALUE, fillerSize);
                 }
             }
         }
     }
+}
 
     void *FlsEmu_BasePointer(uint8_t segmentIdx) {
         /// TODO: getSegment()
