@@ -263,7 +263,7 @@ extern "C" {
         #define XCP_MIN_ST_PGM (0)
     #endif /* XCP_MIN_ST_PGM */
 
-    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO)-2)
+    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO) - 2)
 
     /*
      * Packet Identifiers.
@@ -484,7 +484,7 @@ extern "C" {
     /*
     **  XCPonCAN specific function-like macros.
     */
-    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i)&XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_STRIP_IDENTIFIER(i)       ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
     /*
@@ -642,11 +642,11 @@ extern "C" {
     } Xcp_CommandType;
 
     typedef enum tagXcp_ReturnType {
-        ERR_CMD_SYNCH = UINT8(0x00),         /* Command processor synchronization. S0 */
+        ERR_CMD_SYNCH = UINT8(0x00), /* Command processor synchronization. S0 */
 
-        ERR_CMD_BUSY   = UINT8(0x10),        /* Command was not executed. S2 */
-        ERR_DAQ_ACTIVE = UINT8(0x11),        /* Command rejected because DAQ is running. S2 */
-        ERR_PGM_ACTIVE = UINT8(0x12),        /* Command rejected because PGM is running. S2 */
+        ERR_CMD_BUSY   = UINT8(0x10), /* Command was not executed. S2 */
+        ERR_DAQ_ACTIVE = UINT8(0x11), /* Command rejected because DAQ is running. S2 */
+        ERR_PGM_ACTIVE = UINT8(0x12), /* Command rejected because PGM is running. S2 */
 
         ERR_CMD_UNKNOWN  = UINT8(0x20),      /* Unknown command or not implemented optional command. S2 */
         ERR_CMD_SYNTAX   = UINT8(0x21),      /* Command syntax invalid   S2 */
@@ -661,10 +661,10 @@ extern "C" {
         ERR_SEQUENCE          = UINT8(0x29), /* Sequence error          S2 */
         ERR_DAQ_CONFIG        = UINT8(0x2A), /* DAQ configuration not valid        S2 */
 
-        ERR_MEMORY_OVERFLOW = UINT8(0x30),   /* Memory overflow error S2 */
-        ERR_GENERIC         = UINT8(0x31),   /* Generic error.         S2 */
-        ERR_VERIFY          = UINT8(0x32),   /* The slave internal program verify routine detects
-                                              an error.   S3 */
+        ERR_MEMORY_OVERFLOW = UINT8(0x30), /* Memory overflow error S2 */
+        ERR_GENERIC         = UINT8(0x31), /* Generic error.         S2 */
+        ERR_VERIFY          = UINT8(0x32), /* The slave internal program verify routine detects
+                                            an error.   S3 */
 
         /* NEW IN 1.1 */
         ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33), /* Access to the requested resource is temporary not
@@ -1039,7 +1039,7 @@ extern "C" {
 
         #endif  // XCP_BUILD_TYPE
 
-    #endif      /* XCP_ENABLE_DAQ_COMMANDS */
+    #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
     /*
     ** PGM Functions.
@@ -1222,4 +1222,4 @@ typedef uint32_t Xcp_ChecksumType;
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
-#endif         /* __CXCP_H */
+#endif /* __CXCP_H */
