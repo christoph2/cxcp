@@ -165,7 +165,7 @@ extern "C" {
         #define DBG_TRACE4(a, b, c, d)
         #define DBG_TRACE5(a, b, c, d, e)
         #define DBG_TRACE6(a, b, c, d, e, f)
-    #endif                                                         /* XCP_BUILD_TYPE == XCP_DEBUG_BUILD */
+    #endif /* XCP_BUILD_TYPE == XCP_DEBUG_BUILD */
 
     #define XCP_ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr)[0])) /**< Calculates the number of elements of \a arr */
 
