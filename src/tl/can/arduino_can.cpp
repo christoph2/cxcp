@@ -28,14 +28,17 @@
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
     #include <CAN.h>
-    #include <stdint.h>
 
-    /*!!! START-INCLUDE-SECTION !!!*/
-    #include "xcp.h"
-    #include "xcp_hw.h"
-/*!!! END-INCLUDE-SECTION !!!*/
+    #include <atomic>
+    #include <cstdint>
 
-static bool connected = false;
+static bool             connected = false;
+static std::atomic_bool XcpTl_FrameReceived{ false };
+
+static char XcpTl_Buffer[64];
+static int  XcpTl_Dlc = 0;
+
+static void on_receive(int packetSize);
 
 void XcpTl_Init(void) {
     Serial.begin(9600);
@@ -51,6 +54,7 @@ void XcpTl_Init(void) {
         }
     }
     CAN.setTimeout(1000);
+    CAN.onReceive(on_receive);
 }
 
 void XcpTl_DeInit(void) {
@@ -65,80 +69,64 @@ void *XcpTl_Thread(void *param) {
 
 void XcpTl_MainFunction(void) {
     if (XcpTl_FrameAvailable(0, 1000) > 0) {
+        XcpTl_FrameReceived = false;
         XcpTl_RxHandler();
     }
 }
 
-void XcpTl_RxHandler(void) {
-    static byte buffer[64];
-    byte        dlc;
+// ARDUINO_API_VERSION
 
-    digitalWrite(LED_BUILTIN, HIGH);
-    Serial.print("Received ");
+static void on_receive(int packetSize) {
+    uint_least8_t idx = 0;
 
-    dlc = CAN.packetDlc();
+    XcpTl_Dlc           = packetSize;
+    XcpTl_FrameReceived = true;
+
+    // received a packet
+    // Serial.print("Received ");
+
     if (CAN.packetExtended()) {
-        Serial.print("extended ");
+        // Serial.print("extended ");
     }
 
     if (CAN.packetRtr()) {
         // Remote transmission request, packet contains no data
-        Serial.print("RTR ");
+        // Serial.print("RTR ");
     }
 
-    Serial.print("packet with id 0x");
-    Serial.print(CAN.packetId(), HEX);
+    // Serial.print("packet with id 0x");
+    // Serial.print(CAN.packetId(), HEX);
 
     if (CAN.packetRtr()) {
-        Serial.print(" and requested length ");
-        Serial.println(dlc);
-        return;
+        // Serial.print(" and requested length ");
+        // Serial.println(CAN.packetDlc());
     } else {
-        Serial.print(" and length ");
-        Serial.println(dlc);
+        // Serial.print(" and length ");
+        // Serial.println(packetSize);
 
-        int actual = CAN.readBytes(buffer, dlc);
-        Serial.print("actual length: ");
-        Serial.print(actual);
-        Serial.println();
-
-        Xcp_CtoIn.len = dlc;
-        // Xcp_CtoIn.data = buffer + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-
-        XcpUtl_MemCopy(Xcp_CtoIn.data, &buffer, dlc);
-
-        Xcp_DispatchCommand(&Xcp_CtoIn);
-        for (int idx = 0; idx < actual; idx++) {
-            Serial.print(buffer[idx]);
-            Serial.print(" ");
-        }
-        Serial.println();
         // only print packet data for non-RTR packets
-        // while (CAN.available()) {
-        //    Serial.print((char)CAN.read());
-        //}
-        Serial.println();
+        while (CAN.available()) {
+            XcpTl_Buffer[idx++] = CAN.read();
+        }
     }
+    // Serial.println();
+}
 
-    Serial.println();
-    digitalWrite(LED_BUILTIN, LOW);
+void XcpTl_RxHandler(void) {
+    // Serial.print(" Buffer: ");
+    // XcpUtl_Hexdump((uint8_t*)XcpTl_Buffer, XcpTl_Dlc);
+    // Serial.print(" DLC: ");
+    // Serial.print(XcpTl_Dlc);
+    // Serial.println();
+    XcpUtl_MemCopy(Xcp_CtoIn.data, &XcpTl_Buffer, XcpTl_Dlc);
+    Xcp_DispatchCommand(&Xcp_CtoIn);
 }
 
 void XcpTl_TxHandler(void) {
 }
 
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
-    int res;
-    XCP_UNREFERENCED_PARAMETER(sec);
-    XCP_UNREFERENCED_PARAMETER(usec);
-
-    res = CAN.parsePacket();
-    if (res != 0) {
-        Serial.print("Frames avail!!!");
-        Serial.println();
-    }
-
-    return res;
+    return static_cast<int16_t>(XcpTl_FrameReceived);
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
