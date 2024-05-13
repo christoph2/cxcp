@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2024 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -28,7 +28,7 @@
 
     #include <assert.h>
 
-    /*!!! START-INCLUDE-SECTION !!!*/
+/*!!! START-INCLUDE-SECTION !!!*/
     #include "xcp_macros.h"
     #include "xcp_types.h"
     #include "xcp_util.h"
@@ -102,7 +102,14 @@ extern "C" {
         #error XCP_MAX_CTO must be <= 255
     #endif
 
+    #define XCP_DAQ_ENABLE_QUEUING (XCP_ON) /* Private setting for now. */
+
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
+
+        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
+             (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
+            #define XCP_ENABLE_TRANSPORT_LAYER_CMD (XCP_ON)
+        #endif
 
         #if (!defined(XCP_ENABLE_CAN_FD)) || (XCP_ENABLE_CAN_FD == XCP_OFF)
             #ifdef XCP_MAX_CTO
@@ -263,7 +270,7 @@ extern "C" {
         #define XCP_MIN_ST_PGM (0)
     #endif /* XCP_MIN_ST_PGM */
 
-    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO)-2)
+    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO) - 2)
 
     /*
      * Packet Identifiers.
@@ -454,6 +461,12 @@ extern "C" {
     #define XCP_DAQ_DEFINE_EVENT(name, props, timebase, cycle)                                                                     \
         { (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle), }
 
+    #define XCP_DAQ_BEGIN_ID_LIST const uint32_t Xcp_DaqIDs[] = {
+    #define XCP_DAQ_END_ID_LIST                                                                                                    \
+        }                                                                                                                          \
+        ;                                                                                                                          \
+        const uint16_t Xcp_DaqIDCount = XCP_ARRAY_SIZE(Xcp_DaqIDs);
+
     /*
      * PAG Processor Properties.
      */
@@ -484,7 +497,7 @@ extern "C" {
     /*
     **  XCPonCAN specific function-like macros.
     */
-    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i)&XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_STRIP_IDENTIFIER(i)       ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
     /*
@@ -642,11 +655,11 @@ extern "C" {
     } Xcp_CommandType;
 
     typedef enum tagXcp_ReturnType {
-        ERR_CMD_SYNCH = UINT8(0x00),         /* Command processor synchronization. S0 */
+        ERR_CMD_SYNCH = UINT8(0x00), /* Command processor synchronization. S0 */
 
-        ERR_CMD_BUSY   = UINT8(0x10),        /* Command was not executed. S2 */
-        ERR_DAQ_ACTIVE = UINT8(0x11),        /* Command rejected because DAQ is running. S2 */
-        ERR_PGM_ACTIVE = UINT8(0x12),        /* Command rejected because PGM is running. S2 */
+        ERR_CMD_BUSY   = UINT8(0x10), /* Command was not executed. S2 */
+        ERR_DAQ_ACTIVE = UINT8(0x11), /* Command rejected because DAQ is running. S2 */
+        ERR_PGM_ACTIVE = UINT8(0x12), /* Command rejected because PGM is running. S2 */
 
         ERR_CMD_UNKNOWN  = UINT8(0x20),      /* Unknown command or not implemented optional command. S2 */
         ERR_CMD_SYNTAX   = UINT8(0x21),      /* Command syntax invalid   S2 */
@@ -661,10 +674,10 @@ extern "C" {
         ERR_SEQUENCE          = UINT8(0x29), /* Sequence error          S2 */
         ERR_DAQ_CONFIG        = UINT8(0x2A), /* DAQ configuration not valid        S2 */
 
-        ERR_MEMORY_OVERFLOW = UINT8(0x30),   /* Memory overflow error S2 */
-        ERR_GENERIC         = UINT8(0x31),   /* Generic error.         S2 */
-        ERR_VERIFY          = UINT8(0x32),   /* The slave internal program verify routine detects
-                                              an error.   S3 */
+        ERR_MEMORY_OVERFLOW = UINT8(0x30), /* Memory overflow error S2 */
+        ERR_GENERIC         = UINT8(0x31), /* Generic error.         S2 */
+        ERR_VERIFY          = UINT8(0x32), /* The slave internal program verify routine detects
+                                            an error.   S3 */
 
         /* NEW IN 1.1 */
         ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33), /* Access to the requested resource is temporary not
@@ -673,6 +686,13 @@ extern "C" {
         /* Internal Success Code - not related to XCP spec. */
         ERR_SUCCESS = UINT8(0xff)
     } Xcp_ReturnType;
+
+    /*
+     **  Transport Layer Commands / XcpOnCAN
+     */
+    #define XCP_GET_SLAVE_ID (0xFF)
+    #define XCP_GET_DAQ_ID   (0xFE)
+    #define XCP_SET_DAQ_ID   (0xFD)
 
     typedef struct tagXcp_MtaType {
         uint8_t             ext;
@@ -1039,7 +1059,7 @@ extern "C" {
 
         #endif  // XCP_BUILD_TYPE
 
-    #endif      /* XCP_ENABLE_DAQ_COMMANDS */
+    #endif /* XCP_ENABLE_DAQ_COMMANDS */
 
     /*
     ** PGM Functions.
@@ -1186,7 +1206,7 @@ extern "C" {
 
     void XcpHw_ReleaseLock(uint8_t lockIdx);
 
-    void XcpHw_TransmitDtos(void);
+    void XcpDaq_TransmitDtos(void);
 
     extern Xcp_PduType Xcp_CtoIn;
     extern Xcp_PduType Xcp_CtoOut;
@@ -1222,4 +1242,4 @@ typedef uint32_t Xcp_ChecksumType;
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
-#endif         /* __CXCP_H */
+#endif /* __CXCP_H */

@@ -108,14 +108,13 @@ static void            DeinitTUI(void);
 
 void exitFunc(void);
 
-
 /*
 **  Local Variables.
 */
-static HwStateType                HwState = { 0 };
-static struct timespec            XcpHw_TimerResolution = { 0 };
-static timer_t                    XcpHw_AppMsTimer;
-static unsigned long long         XcpHw_FreeRunningCounter = 0ULL;
+static HwStateType        HwState               = { 0 };
+static struct timespec    XcpHw_TimerResolution = { 0 };
+static timer_t            XcpHw_AppMsTimer;
+static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
 
 /*
 **  Global Functions.

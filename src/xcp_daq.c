@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2024 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -41,8 +41,7 @@
 /*
 ** Private Parameters for now.
 */
-#define XCP_DAQ_QUEUE_SIZE     (4)
-#define XCP_DAQ_ENABLE_QUEUING XCP_ON
+#define XCP_DAQ_QUEUE_SIZE (4)
 
 /*
 ** Local Types.
@@ -110,16 +109,16 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
 */
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
-  /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
-  /* ALLOC_IDLE*/ {UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
- /* AFTER_FREE_DAQ  */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
- /* AFTER_ALLOC_DAQ */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR)},
- /* AFTER_ALLOC_ODT */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK) },
- /* AFTER_ALLOC_ODT_ENTRY */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK) },
+    /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
+    /* ALLOC_IDLE*/ { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
+    /* AFTER_FREE_DAQ  */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
+    /* AFTER_ALLOC_DAQ */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR) },
+    /* AFTER_ALLOC_ODT */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK)  },
+    /* AFTER_ALLOC_ODT_ENTRY */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)  },
 };
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -391,9 +390,8 @@ void XcpDaq_SetPointer(
 bool XcpDaq_ValidateConfiguration(void) {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    return (bool
-    )((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
-      (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
+    return (bool)((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
+                  (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
     return (bool)XCP_TRUE;
@@ -493,9 +491,14 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     XcpDaq_ODTEntryType                *entry             = XCP_NULL;
     XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
     uint16_t                            offset            = UINT16(0);
-    uint32_t                            timestamp         = UINT32(0);
     uint8_t                             data[XCP_MAX_DTO] = { 0 };
+#if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
+    XcpDaq_ListStateType *listState        = XCP_NULL;
+    uint32_t              timestamp        = UINT32(0);
+    bool                  insert_timestamp = XCP_FALSE;
 
+    timestamp = XcpHw_GetTimerCounter();
+#endif /* XCP_DAQ_ENABLE_TIMESTAMPING */
     state = Xcp_GetState();
     if (state->daqProcessor.state != XCP_DAQ_STATE_RUNNING) {
         return;
@@ -503,8 +506,6 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     if (eventChannelNumber >= UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)) {
         return;
     }
-
-    timestamp = XcpHw_GetTimerCounter();
 
 #if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_OFF
     daqListNumber = XcpDaq_ListForEvent[eventChannelNumber];
@@ -514,13 +515,24 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
         return;
     }
     listConf = XcpDaq_GetListConfiguration(daqListNumber);
+#if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
+    listState = XcpDaq_GetListState(daqListNumber);
+    if ((listState->mode & XCP_DAQ_LIST_MODE_TIMESTAMP) == XCP_DAQ_LIST_MODE_TIMESTAMP) {
+        insert_timestamp = XCP_TRUE;
+    }
+#endif /* XCP_DAQ_ENABLE_TIMESTAMPING */
     for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < listConf->numOdts; ++odtIdx) {
         offset = UINT16(0);
         odt    = XcpDaq_GetOdt(daqListNumber, odtIdx);
 
         data[0] = pid; /* Absolute ODT number. */
         offset += UINT16(1);
-
+#if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
+        if ((odtIdx == (XcpDaq_ODTIntegerType)0) && (insert_timestamp == XCP_TRUE)) {
+            XcpDaq_CopyMemory(&data[offset], (void *)&timestamp, XCP_DAQ_TIMESTAMP_SIZE);
+            offset += XCP_DAQ_TIMESTAMP_SIZE;
+        }
+#endif /* XCP_DAQ_ENABLE_TIMESTAMPING */
         for (odtEntryIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntryIdx < odt->numOdtEntries; ++odtEntryIdx) {
             entry = XcpDaq_GetOdtEntry(daqListNumber, odtIdx, odtEntryIdx);
             // printf("\tAddress: 0x%08x Length: %d\n", entry->mta.address,
@@ -535,7 +547,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
         XcpDaq_QueueEnqueue(offset, data);
         //        XcpUtl_Hexdump(data, offset);
     }
-    XcpHw_TransmitDtos();
+    XcpDaq_TransmitDtos();
 }
 
 /** @brief Copies bytes from a source memory area to a destination memory area,
@@ -553,6 +565,10 @@ void XcpDaq_GetProperties(uint8_t *properties) {
 #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
     *properties |= XCP_DAQ_PROP_PRESCALER_SUPPORTED;
 #endif /*XCP_DAQ_ENABLE_PRESCALER */
+
+#if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
+    *properties |= XCP_DAQ_PROP_TIMESTAMP_SUPPORTED;
+#endif /*XCP_DAQ_ENABLE_TIMESTAMPING */
 
 #if (XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE) || (XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_STATIC)
     *properties |= UINT8(XCP_DAQ_CONFIG_TYPE_STATIC);
@@ -580,6 +596,16 @@ void XcpDaq_StopSelectedLists(void) {
 
 void XcpDaq_StopAllLists(void) {
     XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_STOP);
+}
+
+void XcpDaq_TransmitDtos(void) {
+    uint16_t len;
+    uint8_t *dataOut = Xcp_GetDtoOutPtr();
+    while (!XcpDaq_QueueEmpty()) {
+        XcpDaq_QueueDequeue(&len, dataOut);
+        Xcp_SetDtoOutLen(len);
+        Xcp_SendDto();
+    }
 }
 
 /*

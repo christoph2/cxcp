@@ -48,5 +48,5 @@ XCP_DAQ_DEFINE_EVENT(
     return 0xaaaa;
 }
 
-void XcpHw_TransmitDtos(void) {
+void XcpDaq_TransmitDtos(void) {
 }

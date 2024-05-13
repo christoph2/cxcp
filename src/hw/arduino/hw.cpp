@@ -79,14 +79,6 @@ void XcpHw_ReleaseLock(uint8_t lockIdx) {
     }
 }
 
-#include <vector>
-
-class Timer {
-   public:
-
-    Timer();
-
-   private:
-
-    std::vector<int> m_timers;
-};
+void XcpHw_Sleep(uint64_t usec) {
+    delayMicroseconds(usec);
+}

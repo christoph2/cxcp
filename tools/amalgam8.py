@@ -24,6 +24,7 @@ def builder(files, stoplist = None):
     state = StateType.IDLE
     stoplist = stoplist or []
     for fn in files:
+        state = StateType.IDLE
         if str(fn) in stoplist:
             continue
         with open(fn) as source:
@@ -31,25 +32,24 @@ def builder(files, stoplist = None):
             source_includes[fn] = []
             for idx, line in enumerate(source, 1):
                 if state == StateType.IDLE:
-                    match = START.match(line)
+                    match = START.match(line.strip())
                     if match:
                         state = StateType.COLLECTING
                     else:
                         source_files[fn].append(line)
                 if state == StateType.COLLECTING:
-                    match = END.match(line)
+                    match = END.match(line.strip())
                     if match:
                         state = StateType.IDLE
                     else:
                         line = line.strip()
                         if not line:
                             continue
-                        match = INCLUDE.match(line)
+                        match = INCLUDE.match(line.strip())
                         if match:
                             incf = match.group(1)
                             source_includes[fn].append(incf)
     for k,v in source_files.items():
-        #print(k)
         source_files[k] = "".join(v)
     return source_includes, source_files
 
@@ -79,6 +79,8 @@ STOP_LIST = [   # don't include these files.
     r'..\src\hw\terminal.c',
     r'..\src\hw\threads.c',
     r'..\src\hw\linux\hw.c',
+    r'..\src\hw\macos\hw.c',
+    r'..\src\hw\posix\hw.c',
     r'..\src\hw\win\hw.c',
     r'..\src\tl\bt\winbt.c',
     r'..\src\tl\can\kvaser.c',
@@ -92,22 +94,19 @@ STOP_LIST = [   # don't include these files.
 pth = pathlib.Path("../src")
 SOURCES = list(pth.glob('**/*.c')) + list(pth.glob('**/*.cpp'))
 INCS = list(pathlib.Path("../inc").glob("**/*.h"))
-
 source_includes, source_files = builder(INCS, stoplist = [r"..\inc\xcp_ow.h", r'..\inc\xcp_terminal.h', r'..\inc\xcp_threads.h', r'..\inc\xcp_tui.h'])
 
 ts = graphlib.TopologicalSorter(convert_to_paths(source_includes))
 static_ordered_files = tuple(ts.static_order())
-
 with open("xcp.h", "wt") as sf:
     for item in static_ordered_files:
         print_file_name(sf, item)
         if item in source_files:
             sf.write(source_files[item])
         else:
-            raise RuntimeError("Something went wrong")
+            raise RuntimeError("Something went wrong", item, source_files.keys())
     source_includes, source_files = builder(SOURCES, STOP_LIST)
     for k, v in source_files.items():
-        #print("KK", k)
         print_file_name(sf, k)
         sf.write(v)
 

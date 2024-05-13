@@ -27,7 +27,7 @@
     #include <process.h>
     #include <windows.h>
 #else
-	#define _GNU_SOURCE
+    #define _GNU_SOURCE
     #include <pthread.h>
     #include <sched.h>
 #endif
@@ -69,7 +69,7 @@ typedef void (*XcpThrd_ThreadFuncType)(void *);
 #if defined(_WIN32)
 typedef HANDLE XcpThrd_ThreadType;
 #else
-typedef pthread_t  XcpThrd_ThreadType;
+typedef pthread_t XcpThrd_ThreadType;
 #endif
 
 XcpThrd_ThreadType threads[NUM_THREADS];

@@ -85,7 +85,6 @@
     #define XCP_DAQ_ENABLE_ADDR_EXT                     XCP_OFF
     #define XCP_DAQ_ENABLE_BIT_OFFSET                   XCP_OFF
     #define XCP_DAQ_ENABLE_PRIORITIZATION               XCP_OFF
-    #define XCP_DAQ_ENABLE_QUEUING                      XCP_ON
     #define XCP_DAQ_ENABLE_ALTERNATING                  XCP_OFF
     #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          XCP_ON
     #define XCP_DAQ_ENABLE_WRITE_THROUGH                XCP_OFF
@@ -105,17 +104,16 @@
     /*
     **  Optional Services.
     */
-    #define XCP_ENABLE_GET_COMM_MODE_INFO  XCP_ON
-    #define XCP_ENABLE_GET_ID              XCP_ON
-    #define XCP_ENABLE_SET_REQUEST         XCP_OFF
-    #define XCP_ENABLE_GET_SEED            XCP_OFF
-    #define XCP_ENABLE_UNLOCK              XCP_OFF
-    #define XCP_ENABLE_SET_MTA             XCP_ON
-    #define XCP_ENABLE_UPLOAD              XCP_ON
-    #define XCP_ENABLE_SHORT_UPLOAD        XCP_ON
-    #define XCP_ENABLE_BUILD_CHECKSUM      XCP_ON
-    #define XCP_ENABLE_TRANSPORT_LAYER_CMD XCP_OFF /* TODO: TL dependend include file! */
-    #define XCP_ENABLE_USER_CMD            XCP_OFF
+    #define XCP_ENABLE_GET_COMM_MODE_INFO XCP_ON
+    #define XCP_ENABLE_GET_ID             XCP_ON
+    #define XCP_ENABLE_SET_REQUEST        XCP_OFF
+    #define XCP_ENABLE_GET_SEED           XCP_OFF
+    #define XCP_ENABLE_UNLOCK             XCP_OFF
+    #define XCP_ENABLE_SET_MTA            XCP_ON
+    #define XCP_ENABLE_UPLOAD             XCP_ON
+    #define XCP_ENABLE_SHORT_UPLOAD       XCP_ON
+    #define XCP_ENABLE_BUILD_CHECKSUM     XCP_ON
+    #define XCP_ENABLE_USER_CMD           XCP_OFF
 
     #define XCP_ENABLE_CAL_COMMANDS XCP_ON
 

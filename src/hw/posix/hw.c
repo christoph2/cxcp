@@ -82,14 +82,13 @@ typedef struct tagXcpHw_ApplicationStateType {
 /*
 **  Local Variables.
 */
-pthread_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT];
+pthread_mutex_t                   XcpHw_Locks[XCP_HW_LOCK_COUNT];
 static XcpHw_ApplicationStateType XcpHw_ApplicationState;
-static pthread_cond_t XcpHw_TransmissionEvent;
-static pthread_mutex_t XcpHw_TransmissionMutex;
-
+static pthread_cond_t             XcpHw_TransmissionEvent;
+static pthread_mutex_t            XcpHw_TransmissionMutex;
 
 void XcpHw_PosixInit(void) {
-	XcpHw_InitLocks();
+    XcpHw_InitLocks();
     pthread_cond_init(&XcpHw_TransmissionEvent, NULL);
     pthread_mutex_init(&XcpHw_TransmissionMutex, NULL);
 }
@@ -99,19 +98,6 @@ void XcpHw_Deinit(void) {
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
     pthread_mutex_destroy(&XcpHw_TransmissionMutex);
-}
-
-void XcpHw_TransmitDtos(void) {
-    uint16_t len;
-    uint8_t data[XCP_MAX_DTO + XCP_TRANSPORT_LAYER_BUFFER_OFFSET];
-    uint8_t *dataOut = Xcp_GetDtoOutPtr();
-
-    while (!XcpDaq_QueueEmpty()) {
-        XcpDaq_QueueDequeue(&len, dataOut);
-        // printf("\tDTO -- len: %d data: \t", len);
-        Xcp_SetDtoOutLen(len);
-        Xcp_SendDto();
-    }
 }
 
 static void XcpHw_InitLocks(void) {
@@ -149,10 +135,14 @@ void XcpHw_SignalTransmitRequest(void) {
     pthread_cond_signal(&XcpHw_TransmissionEvent);
 }
 
-void XcpHw_WaitTransmitRequest(void) { pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex); }
+void XcpHw_WaitTransmitRequest(void) {
+    pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
+}
 
-void XcpHw_ErrorMsg(char *const fun, int errorCode) { fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode); }
+void XcpHw_ErrorMsg(char * const fun, int errorCode) {
+    fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
+}
 
-void XcpHw_Sleep(uint64_t usec) { 
-	usleep(usec); 
+void XcpHw_Sleep(uint64_t usec) {
+    usleep(usec);
 }

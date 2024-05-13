@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2022 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2022-2024 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -25,15 +25,22 @@
 
 #include "xcp_config.h"
 
+/*!!! START-INCLUDE-SECTION !!!*/
+#include "queue.h"
+/*!!! END-INCLUDE-SECTION !!!*/
+
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
     #include <CAN.h>
+    #include <stdint.h>
 
-    #include <atomic>
-    #include <cstdint>
+extern const uint32_t Xcp_DaqIDs[];
+extern const uint16_t Xcp_DaqIDCount;
 
-static bool             connected = false;
-static std::atomic_bool XcpTl_FrameReceived{ false };
+static const char XCP_MAGIC[] = "XCP";
+
+static bool          connected = false;
+static volatile bool XcpTl_FrameReceived{ false };
 
 static char XcpTl_Buffer[64];
 static int  XcpTl_Dlc = 0;
@@ -48,7 +55,7 @@ void XcpTl_Init(void) {
     Serial.println("Starting Blueparrot XCP...");
 
     // start the CAN bus at 500 kbps
-    if (!CAN.begin(250E3)) {
+    if (!CAN.begin(XCP_ON_CAN_FREQ)) {
         Serial.println("Starting CAN failed!");
         while (1) {
         }
@@ -159,4 +166,80 @@ bool XcpTl_VerifyConnection(void) {
 void XcpTl_PrintConnectionInformation(void) {
 }
 
+    #if XCP_ENABLE_TRANSPORT_LAYER_CMD == XCP_ON
+        #if (XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON)
+void XcpTl_GetSlaveId_Res(Xcp_PduType const * const pdu) {
+    uint8_t mask = 0x00;
+
+    if (pdu->data[2]) {
+    }
+
+    if (pdu->data[5] == 1) {
+        /*
+         Mode
+            0 = identify by echo
+            1 = confirm by inverse echo
+        */
+        mask = 0xff;
+    }
+
+    Xcp_Send8(
+        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0x58 ^ mask), UINT8(0x43 ^ mask), UINT8(0x50 ^ mask),
+        XCP_LOBYTE(XCP_LOWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_LOWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER)),
+        XCP_LOBYTE(XCP_HIWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_HIWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER))
+    );
+}
+        #endif /* XCP_ENABLE_CAN_GET_SLAVE_ID */
+
+        #if (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON)
+void XcpTl_GetDaqId_Res(Xcp_PduType const * const pdu) {
+    uint8_t daq_id = pdu->data[2];
+
+    if (daq_id > (Xcp_DaqIDCount - 1)) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    };
+    Xcp_Send8(
+        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(1), UINT8(0), UINT8(0), XCP_LOBYTE(XCP_LOWORD(Xcp_DaqIDs[daq_id])),
+        XCP_HIBYTE(XCP_LOWORD(Xcp_DaqIDs[daq_id])), XCP_LOBYTE(XCP_HIWORD(Xcp_DaqIDs[daq_id])),
+        XCP_HIBYTE(XCP_HIWORD(Xcp_DaqIDs[daq_id]))
+    );
+}
+        #endif /* XCP_ENABLE_CAN_GET_DAQ_ID */
+
+        #if (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)
+void XcpTl_SetDaqId_Res(Xcp_PduType const * const pdu) {
+}
+        #endif /* XCP_ENABLE_CAN_SET_DAQ_ID */
+
+void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
+        #if (XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON)
+    if (pdu->data[1] == UINT8(XCP_GET_SLAVE_ID)) {
+        XcpTl_GetSlaveId_Res(pdu);  // TODO: This is a response to a broadcast message.
+        return;
+    }
+        #endif /* XCP_ENABLE_CAN_GET_SLAVE_ID */
+
+        #if (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON)
+    if (pdu->data[1] == UINT8(XCP_GET_DAQ_ID)) {
+        XcpTl_GetDaqId_Res(pdu);
+        return;
+    }
+        #endif /* XCP_ENABLE_CAN_GET_DAQ_ID */
+
+        #if (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)
+    if (pdu->data[1] == UINT8(XCP_SET_DAQ_ID)) {
+        XcpTl_SetDaqId_Res(pdu);
+        return;
+    }
+        #endif /* XCP_ENABLE_CAN_SET_DAQ_ID */
+    Xcp_ErrorResponse(UINT8(ERR_CMD_UNKNOWN));
+}
+    #endif /* XCP_ENABLE_TRANSPORT_LAYER_CMD */
+
 #endif /* XCP_TRANSPORT_LAYER == XCP_ON_CAN */
+
+/////
+#define SIZE 1000
+
+// A class to store a queue

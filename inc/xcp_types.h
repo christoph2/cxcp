@@ -48,7 +48,7 @@ extern "C" {
         #endif
     #endif
 
-    #if defined(__CSMC__) || !defined(C99_COMPILER) || !defined(C11_COMPILER)
+    #if (defined(__CSMC__) || !defined(C99_COMPILER) || !defined(C11_COMPILER)) && !defined(__cplusplus)
 
         #if defined(_MSC_VER)
 

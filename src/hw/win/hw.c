@@ -199,16 +199,6 @@ void XcpHw_ErrorMsg(char * const fun, int errorCode) {
     fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
 }
 
-void XcpHw_TransmitDtos(void) {
-    uint16_t len;
-    uint8_t *dataOut = Xcp_GetDtoOutPtr();
-    while (!XcpDaq_QueueEmpty()) {
-        XcpDaq_QueueDequeue(&len, dataOut);
-        Xcp_SetDtoOutLen(len);
-        Xcp_SendDto();
-    }
-}
-
 /*
  *
  * Sleep for `usec` microseconds.

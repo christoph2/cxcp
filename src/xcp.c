@@ -747,7 +747,7 @@ void Xcp_SendCto(void) {
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -777,7 +777,7 @@ void Xcp_SendDto(void) {
     Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
     #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
     Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
     #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -1124,7 +1124,7 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const * const pdu) {
     #else
     else {
         response_len = 0;
-        valid = XCP_FALSE;
+        valid        = XCP_FALSE;
     }
     #endif /* XCP_ENABLE_GET_ID_HOOK */
     if (valid) {
@@ -1344,11 +1344,6 @@ XCP_STATIC void Xcp_BuildChecksum_Res(Xcp_PduType const * const pdu) {
 }
 
 #endif /* XCP_ENABLE_BUILD_CHECKSUM */
-
-#if 0
-XCP_VALIDATE_ADRESS
-    Callout der die gültigkeit eines Speicherzugriffs überprüft [addr;length]
-#endif
 
 #if XCP_ENABLE_TRANSPORT_LAYER_CMD
 XCP_STATIC void Xcp_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
@@ -1641,11 +1636,15 @@ XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     }
     #endif /* XCP_DAQ_ENABLE_ALTERNATING */
     #if XCP_DAQ_PRIORITIZATION_SUPPORTED == XCP_OFF
-    /* Needs to be 0 */
+        /* Needs to be 0 */
+
+        #if 0  // Ignored for now.
     if (priority > UINT8(0)) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
     }
+        #endif
+
     #endif /* XCP_DAQ_ENABLE_PRIORITIZATION */
     #if XCP_DAQ_PRESCALER_SUPPORTED == XCP_OFF
     /* Needs to be 1 */
@@ -1727,6 +1726,7 @@ XCP_STATIC void Xcp_GetDaqListMode_Res(Xcp_PduType const * const pdu) {
     DBG_TRACE1("GET_DAQ_LIST_MODE\n\r");
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
     Xcp_PositiveResponse();
 }
 
@@ -1881,11 +1881,9 @@ XCP_STATIC void Xcp_GetDaqResolutionInfo_Res(Xcp_PduType const * const pdu) {
 
     Xcp_Send8(
         UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(1), /* Granularity for size of ODT entry (DIRECTION = DAQ) */
-        UINT8(XCP_DAQ_MAX_ODT_ENTRY_SIZE),                    /* Maximum size of ODT entry
-                                                               (DIRECTION = DAQ) */
+        UINT8(XCP_DAQ_MAX_ODT_ENTRY_SIZE),                    /* Maximum size of ODT entry (DIRECTION = DAQ) */
         UINT8(1),                                             /* Granularity for size of ODT entry (DIRECTION = STIM) */
-        UINT8(XCP_DAQ_MAX_ODT_ENTRY_SIZE),                    /* Maximum size of ODT entry
-                                                               (DIRECTION = STIM) */
+        UINT8(XCP_DAQ_MAX_ODT_ENTRY_SIZE),                    /* Maximum size of ODT entry (DIRECTION = STIM) */
         UINT8(0x34),                                          /* Timestamp unit and size */
         UINT8(1),                                             /* Timestamp ticks per unit (WORD) */
         UINT8(0)
@@ -2188,7 +2186,7 @@ INLINE void Xcp_SetWord(Xcp_PduType const * const pdu, uint8_t offs, uint16_t va
     (*(pdu->data + offs))            = value & UINT8(0xff);
     (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
 #elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
-    (*(pdu->data + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
+    (*(pdu->data + offs))            = (value & UINT16(0xff00)) >> UINT8(8);
     (*(pdu->data + UINT8(1) + offs)) = value & UINT8(0xff);
 #endif
 }
