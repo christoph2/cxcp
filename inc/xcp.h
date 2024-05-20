@@ -106,8 +106,7 @@ extern "C" {
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
-        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
-             (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
+        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) || (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
             #define XCP_ENABLE_TRANSPORT_LAYER_CMD (XCP_ON)
         #endif
 
@@ -270,7 +269,7 @@ extern "C" {
         #define XCP_MIN_ST_PGM (0)
     #endif /* XCP_MIN_ST_PGM */
 
-    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO) - 2)
+    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO)-2)
 
     /*
      * Packet Identifiers.
@@ -497,7 +496,7 @@ extern "C" {
     /*
     **  XCPonCAN specific function-like macros.
     */
-    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i)&XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_STRIP_IDENTIFIER(i)       ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
     /*
@@ -517,6 +516,22 @@ extern "C" {
     #define XCP_SOCKET_CAN_DEFAULT_IF ("vcan0")
 
     #define XCP_ETH_HEADER_SIZE (4)
+
+    /*
+     * CAN Interfaces.
+     */
+    #define XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD    (0x01)
+    #define XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD (0x02)
+    #define XCP_CAN_IF_MKR_ZERO_CAN_SHIELD       (0x03)
+
+    // Set defaults for MCP25XX CAN controllers.
+    #if !defined(XCP_CAN_IF_MCP25XX_PIN_CS)
+        #define XCP_CAN_IF_MCP25XX_PIN_CS UINT8(9)
+    #endif
+
+    #if !defined(XCP_CAN_IF_MCP25XX_PIN_INT)
+        #define XCP_CAN_IF_MCP25XX_PIN_INT UINT8(2)
+    #endif
 
     /*
     ** Bounds-checking macros.

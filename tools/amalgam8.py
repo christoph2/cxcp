@@ -75,6 +75,7 @@ def print_file_name(out_file, item):
 
 
 STOP_LIST = [   # don't include these files.
+    r"..\inc\queue.h",
     r'..\src\hw\options.c',
     r'..\src\hw\terminal.c',
     r'..\src\hw\threads.c',

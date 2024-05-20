@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2024 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -34,9 +34,10 @@
     /*
     **  General Options.
     */
-
-#define TP_CAN
+    #define TP_CAN
 // #define TP_SXI
+
+    #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
     #define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
     #define XCP_GET_ID_1 "BlueParrot_XCP_on_Arduino"
@@ -79,14 +80,8 @@
     /*
     **  DAQ Settings.
     */
-    #define XCP_DAQ_CONFIG_TYPE         XCP_DAQ_CONFIG_TYPE_DYNAMIC
-    #define XCP_DAQ_DTO_BUFFER_SIZE     (24)
-    #define XCP_DAQ_ENABLE_TIMESTAMPING (XCP_ON)
-    // #define XCP_DAQ_ENABLE_EVENT_CHANNEL                (XCP_ON)
-    // #define XCP_DAQ_ENABLE_DYNAMIC_LISTS                (XCP_ON)
-    // #define XCP_DAQ_ENABLE_DYNAMIC_LISTS_PER_EVENT      (XCP_ON)
-    // #define XCP_DAQ_ENABLE_DYNAMIC_LISTS_PER_CHANNEL    (XCP_ON)
-    // #define XCP_DAQ_ENABLE_DYNAMIC_LISTS_PER_EVENT_TYPE (XCP_ON)
+    #define XCP_DAQ_CONFIG_TYPE                         XCP_DAQ_CONFIG_TYPE_DYNAMIC
+    #define XCP_DAQ_DTO_BUFFER_SIZE                     (40)
     #define XCP_DAQ_ENABLE_PREDEFINED_LISTS             (XCP_OFF)
     #define XCP_DAQ_TIMESTAMP_UNIT                      (XCP_DAQ_TIMESTAMP_UNIT_1US)
     #define XCP_DAQ_TIMESTAMP_SIZE                      (XCP_DAQ_TIMESTAMP_SIZE_4)
@@ -97,7 +92,7 @@
     #define XCP_DAQ_ENABLE_ALTERNATING                  (XCP_OFF)
     #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          (XCP_ON)
     #define XCP_DAQ_ENABLE_WRITE_THROUGH                (XCP_OFF)
-    #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (20)
+    #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (16)
     #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
     #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT (XCP_OFF)
 
@@ -175,14 +170,19 @@
 
         #define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x300)
         #define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x301)
-        #define XCP_ON_CAN_MAX_DLC_REQUIRED     (XCP_OFF)
+        #define XCP_ON_CAN_MAX_DLC_REQUIRED     (XCP_ON)
         #define XCP_ON_CAN_BROADCAST_IDENTIFIER (0x222)
-        #define XCP_ON_CAN_FREQ                 (500E3)
-        #define XCP_ON_CAN_BTQ                  (16)
-        #define XCP_ON_CAN_TSEG1                (14)
-        #define XCP_ON_CAN_TSEG2                (2)
-        #define XCP_ON_CAN_SJW                  (2)
-        #define XCP_ON_CAN_NOSAMP               (1)
+
+        // Chip-Select- and Interrupt-Pins / SeeedStudio CAN Shield v2.
+        #define XCP_CAN_IF_MCP25XX_PIN_CS  (9)
+        #define XCP_CAN_IF_MCP25XX_PIN_INT (2)
+
+        #define XCP_ON_CAN_FREQ   (CAN_500KBPS)
+        #define XCP_ON_CAN_BTQ    (16)
+        #define XCP_ON_CAN_TSEG1  (14)
+        #define XCP_ON_CAN_TSEG2  (2)
+        #define XCP_ON_CAN_SJW    (2)
+        #define XCP_ON_CAN_NOSAMP (1)
 
         /* Transport-Layer Commands.    */
         #define XCP_ENABLE_CAN_GET_SLAVE_ID (XCP_ON)

@@ -25,15 +25,24 @@
 
 #include "xcp_config.h"
 
-/*!!! START-INCLUDE-SECTION !!!*/
-#include "queue.h"
-/*!!! END-INCLUDE-SECTION !!!*/
-
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
-    #include <CAN.h>
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+        #include <SPI.h>
+        #include <can-serial.h>
+        #include <mcp2515_can.h>
+        #include <mcp2515_can_dfs.h>
+        #include <mcp2518fd_can.h>
+        #include <mcp2518fd_can_dfs.h>
+        #include <mcp_can.h>
+    #else
+    // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
+        #include <CAN.h>
+    #endif
+
     #include <stdint.h>
 
+uint32_t              filter_mask(uint32_t identifier);
 extern const uint32_t Xcp_DaqIDs[];
 extern const uint16_t Xcp_DaqIDCount;
 
@@ -42,10 +51,24 @@ static const char XCP_MAGIC[] = "XCP";
 static bool          connected = false;
 static volatile bool XcpTl_FrameReceived{ false };
 
-static char XcpTl_Buffer[64];
-static int  XcpTl_Dlc = 0;
+static unsigned char XcpTl_Buffer[64];
+static unsigned char XcpTl_Dlc = 0;
+static int           XcpTl_ID  = 0;
 
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+static void on_receive();
+    #else
 static void on_receive(int packetSize);
+    #endif
+
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+        #if XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD
+mcp2515_can CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
+        #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD
+mcp2518fd CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
+        #endif
+    #else
+    #endif
 
 void XcpTl_Init(void) {
     Serial.begin(9600);
@@ -54,7 +77,30 @@ void XcpTl_Init(void) {
 
     Serial.println("Starting Blueparrot XCP...");
 
-    // start the CAN bus at 500 kbps
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+    attachInterrupt(digitalPinToInterrupt(XCP_CAN_IF_MCP25XX_PIN_INT), on_receive, FALLING);
+
+    while (CAN_OK != CAN.begin(XCP_ON_CAN_FREQ)) {
+        Serial.println("CAN init fail, retry...");
+        delay(100);
+    }
+
+    Serial.println("CAN init OK!");
+    // #if 0
+    CAN.init_Mask(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), filter_mask(XCP_ON_CAN_INBOUND_IDENTIFIER));
+    CAN.init_Mask(
+        1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), filter_mask(XCP_ON_CAN_BROADCAST_IDENTIFIER)
+    );
+    //   #endif
+    // CAN.init_Mask(0, 0, 0);
+    // CAN.init_Mask(1, 0, 0);
+
+    CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
+    CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
+    #else
+
+    // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
+
     if (!CAN.begin(XCP_ON_CAN_FREQ)) {
         Serial.println("Starting CAN failed!");
         while (1) {
@@ -62,6 +108,7 @@ void XcpTl_Init(void) {
     }
     CAN.setTimeout(1000);
     CAN.onReceive(on_receive);
+    #endif
 }
 
 void XcpTl_DeInit(void) {
@@ -83,40 +130,36 @@ void XcpTl_MainFunction(void) {
 
 // ARDUINO_API_VERSION
 
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+static void on_receive() {
+    #else
 static void on_receive(int packetSize) {
     uint_least8_t idx = 0;
+    XcpTl_Dlc = packetSize;
+    #endif
 
-    XcpTl_Dlc           = packetSize;
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+
+    if (CAN.checkReceive() == CAN_MSGAVAIL) {
+        XcpTl_FrameReceived = true;
+        CAN.readMsgBuf(&XcpTl_Dlc, static_cast<byte *>(XcpTl_Buffer));
+        // XcpTl_ID
+        //  canBusPacket.id = CAN.getCanId();
+    }
+
+    #else
     XcpTl_FrameReceived = true;
-
-    // received a packet
-    // Serial.print("Received ");
-
     if (CAN.packetExtended()) {
-        // Serial.print("extended ");
     }
-
     if (CAN.packetRtr()) {
-        // Remote transmission request, packet contains no data
-        // Serial.print("RTR ");
     }
-
-    // Serial.print("packet with id 0x");
-    // Serial.print(CAN.packetId(), HEX);
-
     if (CAN.packetRtr()) {
-        // Serial.print(" and requested length ");
-        // Serial.println(CAN.packetDlc());
     } else {
-        // Serial.print(" and length ");
-        // Serial.println(packetSize);
-
-        // only print packet data for non-RTR packets
         while (CAN.available()) {
             XcpTl_Buffer[idx++] = CAN.read();
         }
     }
-    // Serial.println();
+    #endif
 }
 
 void XcpTl_RxHandler(void) {
@@ -141,6 +184,12 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
     can_id = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
 
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+
+    CAN.sendMsgBuf(can_id, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER), len, buf);
+
+    #else
+
     if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER)) {
         CAN.beginExtendedPacket(can_id, len);
     } else {
@@ -149,6 +198,15 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
     CAN.write(buf, len);
     CAN.endPacket();
+    #endif
+}
+
+uint32_t filter_mask(uint32_t identifier) {
+    if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(identifier)) {
+        return (2 << (29 - 1)) - 1;
+    } else {
+        return (2 << (11 - 1)) - 1;
+    }
 }
 
 void XcpTl_SaveConnection(void) {

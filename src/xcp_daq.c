@@ -109,16 +109,16 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
 */
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
-    /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
-    /* ALLOC_IDLE*/ { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
-    /* AFTER_FREE_DAQ  */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
-    /* AFTER_ALLOC_DAQ */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR) },
-    /* AFTER_ALLOC_ODT */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK)  },
-    /* AFTER_ALLOC_ODT_ENTRY */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)  },
+  /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
+  /* ALLOC_IDLE*/ {UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
+ /* AFTER_FREE_DAQ  */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
+ /* AFTER_ALLOC_DAQ */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR)},
+ /* AFTER_ALLOC_ODT */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK) },
+ /* AFTER_ALLOC_ODT_ENTRY */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK) },
 };
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -390,8 +390,9 @@ void XcpDaq_SetPointer(
 bool XcpDaq_ValidateConfiguration(void) {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    return (bool)((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
-                  (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
+    return (bool
+    )((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
+      (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
     return (bool)XCP_TRUE;
@@ -482,16 +483,16 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
  *  @param eventChannelNumber   Number of event to trigger.
  */
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
-    Xcp_StateType const                *state             = XCP_NULL;
-    XcpDaq_ListIntegerType              daqListNumber     = 0;
-    XcpDaq_ODTIntegerType               odtIdx            = 0;
-    XcpDaq_ODTIntegerType               pid               = 0;
-    XcpDaq_ODTEntryIntegerType          odtEntryIdx       = 0;
-    XcpDaq_ODTType const               *odt               = XCP_NULL;
-    XcpDaq_ODTEntryType                *entry             = XCP_NULL;
-    XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
-    uint16_t                            offset            = UINT16(0);
-    uint8_t                             data[XCP_MAX_DTO] = { 0 };
+    Xcp_StateType const                *state         = XCP_NULL;
+    XcpDaq_ListIntegerType              daqListNumber = 0;
+    XcpDaq_ODTIntegerType               odtIdx        = 0;
+    XcpDaq_ODTIntegerType               pid           = 0;
+    XcpDaq_ODTEntryIntegerType          odtEntryIdx   = 0;
+    XcpDaq_ODTType const               *odt           = XCP_NULL;
+    XcpDaq_ODTEntryType                *entry         = XCP_NULL;
+    XcpDaq_ListConfigurationType const *listConf      = XCP_NULL;
+    uint16_t                            offset        = UINT16(0);
+    uint8_t                             data[k]       = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
     XcpDaq_ListStateType *listState        = XCP_NULL;
     uint32_t              timestamp        = UINT32(0);

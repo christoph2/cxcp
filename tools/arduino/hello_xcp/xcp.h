@@ -1,128 +1,5 @@
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                  queue.h                                   //
-////////////////////////////////////////////////////////////////////////////////
-
-
-#ifndef CXCP_QUEUE_HPP
-#define CXCP_QUEUE_HPP
-
-template<typename T>
-class Queue {
-   public:
-
-    explicit Queue(size_t size) {
-        arr        = new T[size];
-        m_capacity = size;
-        m_front    = 0;
-        m_rear     = -1;
-        m_count    = 0;
-    }
-
-    Queue() = delete;
-
-    ~Queue() {
-        delete[] arr;
-    }
-
-    T pop() {
-        if (isEmpty()) {
-            exit(EXIT_FAILURE);
-        }
-        T x = arr[m_front];
-
-        m_front = (m_front + 1) % m_capacity;
-        m_count--;
-
-        return x;
-    }
-
-    void push(const T &item) {
-        if (isFull()) {
-            exit(EXIT_FAILURE);
-        }
-
-        m_rear      = (m_rear + 1) % m_capacity;
-        arr[m_rear] = item;
-        m_count++;
-    }
-#if 0
-    T peek() {
-        if (isEmpty()) {
-            exit(EXIT_FAILURE);
-        }
-        return arr[m_front];
-    }
-#endif
-    size_t size() {
-        return m_count;
-    }
-
-    bool isEmpty() {
-        return (size() == 0);
-    }
-
-    bool isFull() {
-        return (size() == m_capacity);
-    }
-
-   private:
-
-    T     *arr;
-    size_t m_capacity;
-    int    m_front;
-    int    m_rear;
-    size_t m_count;
-};
-
-template<typename T>
-class Observers {
-   public:
-
-    explicit Observers(size_t size) {
-        arr        = new T[size];
-        m_capacity = size;
-        m_count    = 0;
-    }
-
-    Observers() = delete;
-
-    ~Observers() {
-        delete[] arr;
-    }
-
-    void append(const T &item) {
-        if (isFull()) {
-            exit(EXIT_FAILURE);
-        }
-        arr[m_count++] = item;
-    }
-
-    bool isFull() {
-        return (size() == m_capacity);
-    }
-
-    size_t size() {
-        return m_count;
-    }
-
-    template<typename V>
-    void notify(const V &value) {
-        for (size_t i = 0; i < m_capacity; ++i) {
-            arr[i]->update(value);
-        }
-    }
-
-   private:
-
-    T     *arr;
-    size_t m_capacity;
-    size_t m_count;
-};
-
-#endif  // CXCP_QUEUE_HPP
-
-////////////////////////////////////////////////////////////////////////////////
 //                                xcp_macros.h                                //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -536,14 +413,13 @@ typedef struct tagXcpTl_ConnectionType {
  */
 
 #ifndef __XCP_TL_TIMEOUT_H
-#define __XCP_TL_TIMEOUT_H
+    #define __XCP_TL_TIMEOUT_H
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-    #if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 extern "C" {
-    #endif /* __cplusplus */
-#endif     /* XCP_EXTERN_C_GUARDS */
-
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
     static void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void));
 
@@ -555,11 +431,11 @@ extern "C" {
 
     static void XcpTl_TimeoutReset(void);
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-    #if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 }
-    #endif /* __cplusplus */
-#endif     /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
 #endif  // __XCP_TL_TIMEOUT_H
 
@@ -601,12 +477,11 @@ extern "C" {
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
-
-    void XcpUtl_MemCopy(void* dst, void const * src, uint32_t len);
-    void XcpUtl_MemSet(void* dest, uint8_t fill_char, uint32_t len);
-    bool XcpUtl_MemCmp(void const * dst, void const * src, uint32_t len);
-    void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
-    void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t* buf);
+    void XcpUtl_MemCopy(void *dst, void const *src, uint32_t len);
+    void XcpUtl_MemSet(void *dest, uint8_t fill_char, uint32_t len);
+    bool XcpUtl_MemCmp(void const *dst, void const *src, uint32_t len);
+    void XcpUtl_Hexdump(uint8_t const *buf, uint16_t sz);
+    void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf);
 
     #define XcpUtl_ZeroMem(dest, len) XcpUtl_MemSet((dest), '\0', (len))
 
@@ -651,7 +526,6 @@ extern "C" {
     #define __CXCP_H
 
     #include <assert.h>
-
 
     #define XCP_PROTOCOL_VERSION_MAJOR   (1)
     #define XCP_PROTOCOL_VERSION_RELEASE (0)
@@ -725,8 +599,7 @@ extern "C" {
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
-        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
-             (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
+        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) || (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
             #define XCP_ENABLE_TRANSPORT_LAYER_CMD (XCP_ON)
         #endif
 
@@ -889,7 +762,7 @@ extern "C" {
         #define XCP_MIN_ST_PGM (0)
     #endif /* XCP_MIN_ST_PGM */
 
-    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO) - 2)
+    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO)-2)
 
     /*
      * Packet Identifiers.
@@ -1116,7 +989,7 @@ extern "C" {
     /*
     **  XCPonCAN specific function-like macros.
     */
-    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i)&XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_STRIP_IDENTIFIER(i)       ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
     /*
@@ -1136,6 +1009,21 @@ extern "C" {
     #define XCP_SOCKET_CAN_DEFAULT_IF ("vcan0")
 
     #define XCP_ETH_HEADER_SIZE (4)
+
+    /*
+     * CAN Interfaces.
+     */
+    #define XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD    (0x01)
+    #define XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD (0x02)
+
+    // Set defaults for MCP25XX CAN controllers.
+    #if !defined(XCP_CAN_IF_MCP25XX_PIN_CS)
+        #define XCP_CAN_IF_MCP25XX_PIN_CS UINT8(9)
+    #endif
+
+    #if !defined(XCP_CAN_IF_MCP25XX_PIN_INT)
+        #define XCP_CAN_IF_MCP25XX_PIN_INT UINT8(2)
+    #endif
 
     /*
     ** Bounds-checking macros.
@@ -1901,7 +1789,6 @@ extern "C" {
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
-
     /*
     **  Global Functions.
     */
@@ -1945,7 +1832,6 @@ extern "C" {
  *
  * s. FLOSS-EXCEPTION.txt
  */
-
 
 /*
 ** Private Options.
@@ -2665,7 +2551,7 @@ void Xcp_SendCto(void) {
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -2687,8 +2573,8 @@ void Xcp_SendDto(void) {
     #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
     Xcp_DtoOut.data[0] = XCP_LOBYTE(len);
     #elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-    Xcp_DtoOut.data[0] = XCP_LOBYTE(len);
-    Xcp_DtoOut.data[1] = XCP_HIBYTE(len);
+    Xcp_DtoOut.data[0]                                   = XCP_LOBYTE(len);
+    Xcp_DtoOut.data[1]                                   = XCP_HIBYTE(len);
     #endif /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
 
     #if XCP_TRANSPORT_LAYER_COUNTER_SIZE == 1
@@ -4104,7 +3990,7 @@ INLINE void Xcp_SetWord(Xcp_PduType const * const pdu, uint8_t offs, uint16_t va
     (*(pdu->data + offs))            = value & UINT8(0xff);
     (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
 #elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
-    (*(pdu->data + offs))            = (value & UINT16(0xff00)) >> UINT8(8);
+    (*(pdu->data + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
     (*(pdu->data + UINT8(1) + offs)) = value & UINT8(0xff);
 #endif
 }
@@ -4318,7 +4204,6 @@ XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t a
  * notice must not be changed or removed and no warranty is either
  * expressed or implied by its publication or distribution.
  **********************************************************************/
-
 
 /*
 ** Local Types
@@ -4711,7 +4596,6 @@ void Xcp_ChecksumMainFunction(void) {
     #include <stdio.h>
 #endif /* _WIN32 */
 
-
 /*
 ** Private Parameters for now.
 */
@@ -4783,16 +4667,16 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
 */
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
-    /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
-    /* ALLOC_IDLE*/ { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
-    /* AFTER_FREE_DAQ  */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
-    /* AFTER_ALLOC_DAQ */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR) },
-    /* AFTER_ALLOC_ODT */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK)  },
-    /* AFTER_ALLOC_ODT_ENTRY */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)  },
+  /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
+  /* ALLOC_IDLE*/ {UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
+ /* AFTER_FREE_DAQ  */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
+ /* AFTER_ALLOC_DAQ */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR)},
+ /* AFTER_ALLOC_ODT */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK) },
+ /* AFTER_ALLOC_ODT_ENTRY */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK) },
 };
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -5064,8 +4948,9 @@ void XcpDaq_SetPointer(
 bool XcpDaq_ValidateConfiguration(void) {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    return (bool)((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
-                  (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
+    return (bool
+    )((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
+      (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
     return (bool)XCP_TRUE;
@@ -5456,7 +5341,6 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
  * s. FLOSS-EXCEPTION.txt
  */
 
-
 void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len) {
     uint8_t       *pd = (uint8_t *)dst;
     uint8_t const *ps = (uint8_t const *)src;
@@ -5572,7 +5456,6 @@ void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf) {
  * s. FLOSS-EXCEPTION.txt
  */
 
-
 /*
  *
  * Time-out handling functions for Transport-Layer.
@@ -5651,7 +5534,6 @@ static void XcpTl_TimeoutReset(void) {
     #if defined(ARDUINO)
         #include "Arduino.h"
     #endif
-
 
     #define XCP_SXI_MAKEWORD(buf, offs) ((*((buf) + (offs))) | ((*((buf) + (offs) + 1) << 8)))
 
@@ -5832,7 +5714,6 @@ void serialEvent()
 #include <Arduino.h>
 #include <stdint.h>
 
-
 typedef struct tagHwStateType {
     uint32_t StartingTime;
 } HwStateType;
@@ -5916,12 +5797,23 @@ void XcpHw_Sleep(uint64_t usec) {
 
 #include "xcp_config.h"
 
-
 #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
-    #include <CAN.h>
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+        #include <SPI.h>
+        #include <can-serial.h>
+        #include <mcp2515_can.h>
+        #include <mcp2515_can_dfs.h>
+        #include <mcp2518fd_can.h>
+        #include <mcp2518fd_can_dfs.h>
+        #include <mcp_can.h>
+    #else
+        #include <CAN.h>
+    #endif
+
     #include <stdint.h>
 
+uint32_t              filter_mask(uint32_t identifier);
 extern const uint32_t Xcp_DaqIDs[];
 extern const uint16_t Xcp_DaqIDCount;
 
@@ -5930,10 +5822,24 @@ static const char XCP_MAGIC[] = "XCP";
 static bool          connected = false;
 static volatile bool XcpTl_FrameReceived{ false };
 
-static char XcpTl_Buffer[64];
-static int  XcpTl_Dlc = 0;
+static unsigned char XcpTl_Buffer[64];
+static unsigned char XcpTl_Dlc = 0;
+static int           XcpTl_ID  = 0;
 
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+static void on_receive();
+    #else
 static void on_receive(int packetSize);
+    #endif
+
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+        #if XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD
+mcp2515_can CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
+        #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD
+mcp2518fd CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
+        #endif
+    #else
+    #endif
 
 void XcpTl_Init(void) {
     Serial.begin(9600);
@@ -5942,7 +5848,29 @@ void XcpTl_Init(void) {
 
     Serial.println("Starting Blueparrot XCP...");
 
-    // start the CAN bus at 500 kbps
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+    attachInterrupt(digitalPinToInterrupt(XCP_CAN_IF_MCP25XX_PIN_INT), on_receive, FALLING);
+
+    while (CAN_OK != CAN.begin(XCP_ON_CAN_FREQ)) {
+        Serial.println("CAN init fail, retry...");
+        delay(100);
+    }
+    // XCP_ON_CAN_IS_EXTENDED_IDENTIFIER()
+
+    Serial.println("CAN init OK!");
+    // #if 0
+    CAN.init_Mask(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), filter_mask(XCP_ON_CAN_INBOUND_IDENTIFIER));
+    CAN.init_Mask(
+        1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), filter_mask(XCP_ON_CAN_BROADCAST_IDENTIFIER)
+    );
+    //   #endif
+    // CAN.init_Mask(0, 0, 0);
+    // CAN.init_Mask(1, 0, 0);
+
+    CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
+    CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
+    #else
+
     if (!CAN.begin(XCP_ON_CAN_FREQ)) {
         Serial.println("Starting CAN failed!");
         while (1) {
@@ -5950,6 +5878,7 @@ void XcpTl_Init(void) {
     }
     CAN.setTimeout(1000);
     CAN.onReceive(on_receive);
+    #endif
 }
 
 void XcpTl_DeInit(void) {
@@ -5971,40 +5900,36 @@ void XcpTl_MainFunction(void) {
 
 // ARDUINO_API_VERSION
 
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+static void on_receive() {
+    #else
 static void on_receive(int packetSize) {
-    uint_least8_t idx = 0;
-
+    uint_least8_t idx   = 0;
     XcpTl_Dlc           = packetSize;
+    #endif
+
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+
+    if (CAN.checkReceive() == CAN_MSGAVAIL) {
+        XcpTl_FrameReceived = true;
+        CAN.readMsgBuf(&XcpTl_Dlc, static_cast<byte *>(XcpTl_Buffer));
+        // XcpTl_ID
+        //  canBusPacket.id = CAN.getCanId();
+    }
+
+    #else
     XcpTl_FrameReceived = true;
-
-    // received a packet
-    // Serial.print("Received ");
-
     if (CAN.packetExtended()) {
-        // Serial.print("extended ");
     }
-
     if (CAN.packetRtr()) {
-        // Remote transmission request, packet contains no data
-        // Serial.print("RTR ");
     }
-
-    // Serial.print("packet with id 0x");
-    // Serial.print(CAN.packetId(), HEX);
-
     if (CAN.packetRtr()) {
-        // Serial.print(" and requested length ");
-        // Serial.println(CAN.packetDlc());
     } else {
-        // Serial.print(" and length ");
-        // Serial.println(packetSize);
-
-        // only print packet data for non-RTR packets
         while (CAN.available()) {
             XcpTl_Buffer[idx++] = CAN.read();
         }
     }
-    // Serial.println();
+    #endif
 }
 
 void XcpTl_RxHandler(void) {
@@ -6029,6 +5954,12 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
     can_id = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
 
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+
+    CAN.sendMsgBuf(can_id, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER), len, buf);
+
+    #else
+
     if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER)) {
         CAN.beginExtendedPacket(can_id, len);
     } else {
@@ -6037,6 +5968,15 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
     CAN.write(buf, len);
     CAN.endPacket();
+    #endif
+}
+
+uint32_t filter_mask(uint32_t identifier) {
+    if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(identifier)) {
+        return (2 << (29 - 1)) - 1;
+    } else {
+        return (2 << (11 - 1)) - 1;
+    }
 }
 
 void XcpTl_SaveConnection(void) {

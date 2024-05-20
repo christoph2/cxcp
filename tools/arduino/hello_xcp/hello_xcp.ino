@@ -29,7 +29,7 @@ XCP_DAQ_DEFINE_EVENT(
     __attribute__((section(".measurements"))) volatile uint16_t triangle_wave = 0U;
 __attribute__((section(".measurements"))) volatile uint8_t sq0_wave           = 0U;
 __attribute__((section(".measurements"))) volatile uint8_t sq1_wave           = 0U;
-__attribute__((section(".measurements"))) volatile float        sine_wave          = 0U;
+__attribute__((section(".measurements"))) volatile float   sine_wave          = 0U;
 
 // Parameters
 volatile uint16_t triangle_min = 0x00;
@@ -60,7 +60,7 @@ class AbstractWave {
     }
 
     void notify_observers() noexcept {
-      m_observers.notify(m_wave);
+        m_observers.notify(m_wave);
 #if 0
         for (auto element : m_observers) {
             element->update(m_wave);
@@ -73,10 +73,10 @@ class AbstractWave {
 
    protected:
 
-    uint16_t               m_wave;
-    uint16_t               m_min;
-    uint16_t               m_max;
-    Observers<AbstractWave*> m_observers;
+    uint16_t                  m_wave;
+    uint16_t                  m_min;
+    uint16_t                  m_max;
+    Observers<AbstractWave *> m_observers;
 };
 
 class TriangleWave : public AbstractWave {
@@ -117,7 +117,7 @@ class SquareWave : public AbstractWave {
     }
 
     void update(uint16_t value) noexcept override {
-        if (m_skew > 0) {            
+        if (m_skew > 0) {
             auto tmp_value = m_queue.pop();
             m_queue.push(value);
             value = tmp_value;
@@ -137,9 +137,9 @@ class SquareWave : public AbstractWave {
         }
     }
 
-    uint16_t             m_level;
-    uint16_t             m_skew;
-    bool                      m_raising_edge;
+    uint16_t        m_level;
+    uint16_t        m_skew;
+    bool            m_raising_edge;
     Queue<uint16_t> m_queue;
 };
 
@@ -163,10 +163,10 @@ class SineWave : public AbstractWave {
    private:
 
     uint16_t m_steps;
-    float         m_amplitude;
-    bool          m_symetrical;
-    float         m_angle;
-    float         m_value;
+    float    m_amplitude;
+    bool     m_symetrical;
+    float    m_angle;
+    float    m_value;
 };
 
 void setup() {
@@ -175,15 +175,17 @@ void setup() {
     startTime = millis();
 }
 
+#if 0
 auto triangle = TriangleWave();
 auto square0  = SquareWave(&triangle, 64);
 auto square1  = SquareWave(&triangle, 64, 96, false);
 auto sin0     = SineWave(&triangle, 0xff, 100.0, true);
+#endif
 
 void loop() {
     XcpTl_MainFunction();
     Xcp_MainFunction();
- #if 0
+#if 0
     if ((millis() - startTime) >= 10) {
         startTime = millis();
         triangle.step();
@@ -193,5 +195,5 @@ void loop() {
         sine_wave     = sin0.get_float_value();
         XcpDaq_TriggerEvent(0);
     }
- #endif    
+#endif
 }
