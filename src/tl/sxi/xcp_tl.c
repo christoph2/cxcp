@@ -125,10 +125,10 @@ void XcpTl_FeedReceiver(uint8_t octet) {
         XcpTl_TimeoutReset();
         XcpTl_Receiver.Remaining--;
         if (XcpTl_Receiver.Remaining == 0u) {
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
             Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
             Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
+            XcpTl_ResetSM();
+            XcpTl_TimeoutStop();
             Xcp_DispatchCommand(&Xcp_CtoIn);
         }
     }

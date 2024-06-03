@@ -413,29 +413,30 @@ typedef struct tagXcpTl_ConnectionType {
  */
 
 #ifndef __XCP_TL_TIMEOUT_H
-    #define __XCP_TL_TIMEOUT_H
+#define __XCP_TL_TIMEOUT_H
 
-    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-        #if defined(__cplusplus)
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+    #if defined(__cplusplus)
 extern "C" {
-        #endif /* __cplusplus */
-    #endif     /* XCP_EXTERN_C_GUARDS */
+    #endif /* __cplusplus */
+#endif     /* XCP_EXTERN_C_GUARDS */
 
-    static void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void));
 
-    static void XcpTl_TimeoutStart(void);
+    void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void));
 
-    static void XcpTl_TimeoutStop(void);
+    void XcpTl_TimeoutStart(void);
 
-    static void XcpTl_TimeoutCheck(void);
+    void XcpTl_TimeoutStop(void);
 
-    static void XcpTl_TimeoutReset(void);
+    void XcpTl_TimeoutCheck(void);
 
-    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-        #if defined(__cplusplus)
+    void XcpTl_TimeoutReset(void);
+
+#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+    #if defined(__cplusplus)
 }
-        #endif /* __cplusplus */
-    #endif     /* XCP_EXTERN_C_GUARDS */
+    #endif /* __cplusplus */
+#endif     /* XCP_EXTERN_C_GUARDS */
 
 #endif  // __XCP_TL_TIMEOUT_H
 
@@ -477,11 +478,12 @@ extern "C" {
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
-    void XcpUtl_MemCopy(void *dst, void const *src, uint32_t len);
-    void XcpUtl_MemSet(void *dest, uint8_t fill_char, uint32_t len);
-    bool XcpUtl_MemCmp(void const *dst, void const *src, uint32_t len);
-    void XcpUtl_Hexdump(uint8_t const *buf, uint16_t sz);
-    void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf);
+
+    void XcpUtl_MemCopy(void* dst, void const * src, uint32_t len);
+    void XcpUtl_MemSet(void* dest, uint8_t fill_char, uint32_t len);
+    bool XcpUtl_MemCmp(void const * dst, void const * src, uint32_t len);
+    void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
+    void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t* buf);
 
     #define XcpUtl_ZeroMem(dest, len) XcpUtl_MemSet((dest), '\0', (len))
 
@@ -526,6 +528,7 @@ extern "C" {
     #define __CXCP_H
 
     #include <assert.h>
+
 
     #define XCP_PROTOCOL_VERSION_MAJOR   (1)
     #define XCP_PROTOCOL_VERSION_RELEASE (0)
@@ -1015,6 +1018,7 @@ extern "C" {
      */
     #define XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD    (0x01)
     #define XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD (0x02)
+    #define XCP_CAN_IF_MKR_ZERO_CAN_SHIELD       (0x03)
 
     // Set defaults for MCP25XX CAN controllers.
     #if !defined(XCP_CAN_IF_MCP25XX_PIN_CS)
@@ -1789,6 +1793,7 @@ extern "C" {
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
+
     /*
     **  Global Functions.
     */
@@ -1832,6 +1837,7 @@ extern "C" {
  *
  * s. FLOSS-EXCEPTION.txt
  */
+
 
 /*
 ** Private Options.
@@ -2551,7 +2557,7 @@ void Xcp_SendCto(void) {
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -2573,8 +2579,8 @@ void Xcp_SendDto(void) {
     #if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
     Xcp_DtoOut.data[0] = XCP_LOBYTE(len);
     #elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
-    Xcp_DtoOut.data[0]                                   = XCP_LOBYTE(len);
-    Xcp_DtoOut.data[1]                                   = XCP_HIBYTE(len);
+    Xcp_DtoOut.data[0] = XCP_LOBYTE(len);
+    Xcp_DtoOut.data[1] = XCP_HIBYTE(len);
     #endif /* XCP_TRANSPORT_LAYER_LENGTH_SIZE */
 
     #if XCP_TRANSPORT_LAYER_COUNTER_SIZE == 1
@@ -3990,7 +3996,7 @@ INLINE void Xcp_SetWord(Xcp_PduType const * const pdu, uint8_t offs, uint16_t va
     (*(pdu->data + offs))            = value & UINT8(0xff);
     (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
 #elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
-    (*(pdu->data + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
+    (*(pdu->data + offs))            = (value & UINT16(0xff00)) >> UINT8(8);
     (*(pdu->data + UINT8(1) + offs)) = value & UINT8(0xff);
 #endif
 }
@@ -4204,6 +4210,7 @@ XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t a
  * notice must not be changed or removed and no warranty is either
  * expressed or implied by its publication or distribution.
  **********************************************************************/
+
 
 /*
 ** Local Types
@@ -4595,6 +4602,7 @@ void Xcp_ChecksumMainFunction(void) {
 #if defined(_WIN32)
     #include <stdio.h>
 #endif /* _WIN32 */
+
 
 /*
 ** Private Parameters for now.
@@ -5041,16 +5049,16 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
  *  @param eventChannelNumber   Number of event to trigger.
  */
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
-    Xcp_StateType const                *state             = XCP_NULL;
-    XcpDaq_ListIntegerType              daqListNumber     = 0;
-    XcpDaq_ODTIntegerType               odtIdx            = 0;
-    XcpDaq_ODTIntegerType               pid               = 0;
-    XcpDaq_ODTEntryIntegerType          odtEntryIdx       = 0;
-    XcpDaq_ODTType const               *odt               = XCP_NULL;
-    XcpDaq_ODTEntryType                *entry             = XCP_NULL;
-    XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
-    uint16_t                            offset            = UINT16(0);
-    uint8_t                             data[XCP_MAX_DTO] = { 0 };
+    Xcp_StateType const                *state         = XCP_NULL;
+    XcpDaq_ListIntegerType              daqListNumber = 0;
+    XcpDaq_ODTIntegerType               odtIdx        = 0;
+    XcpDaq_ODTIntegerType               pid           = 0;
+    XcpDaq_ODTEntryIntegerType          odtEntryIdx   = 0;
+    XcpDaq_ODTType const               *odt           = XCP_NULL;
+    XcpDaq_ODTEntryType                *entry         = XCP_NULL;
+    XcpDaq_ListConfigurationType const *listConf      = XCP_NULL;
+    uint16_t                            offset        = UINT16(0);
+    uint8_t                             data[k]       = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
     XcpDaq_ListStateType *listState        = XCP_NULL;
     uint32_t              timestamp        = UINT32(0);
@@ -5341,6 +5349,7 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
  * s. FLOSS-EXCEPTION.txt
  */
 
+
 void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len) {
     uint8_t       *pd = (uint8_t *)dst;
     uint8_t const *ps = (uint8_t const *)src;
@@ -5456,6 +5465,7 @@ void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf) {
  * s. FLOSS-EXCEPTION.txt
  */
 
+
 /*
  *
  * Time-out handling functions for Transport-Layer.
@@ -5468,22 +5478,22 @@ static uint32_t      XcpTl_TimeoutValue    = 0UL;
 static void_function XcpTl_TimeoutFunction = XCP_NULL;
 static bool          XcpTl_TimeoutRunning  = XCP_FALSE;
 
-static void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void)) {
+void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void)) {
     XcpTl_TimeoutValue    = timeout_value;
     XcpTl_TimeoutRunning  = XCP_FALSE;
     XcpTl_TimeoutFunction = timeout_function;
 }
 
-static void XcpTl_TimeoutStart(void) {
+void XcpTl_TimeoutStart(void) {
     XcpTl_TimeoutValue   = XcpHw_GetTimerCounterMS();
     XcpTl_TimeoutRunning = XCP_TRUE;
 }
 
-static void XcpTl_TimeoutStop(void) {
+void XcpTl_TimeoutStop(void) {
     XcpTl_TimeoutRunning = XCP_FALSE;
 }
 
-static void XcpTl_TimeoutCheck(void) {
+void XcpTl_TimeoutCheck(void) {
     if (!XcpTl_TimeoutRunning) {
         return;
     }
@@ -5494,7 +5504,7 @@ static void XcpTl_TimeoutCheck(void) {
     }
 }
 
-static void XcpTl_TimeoutReset(void) {
+void XcpTl_TimeoutReset(void) {
     XcpTl_TimeoutValue = XcpHw_GetTimerCounterMS();
 }
 
@@ -5534,6 +5544,7 @@ static void XcpTl_TimeoutReset(void) {
     #if defined(ARDUINO)
         #include "Arduino.h"
     #endif
+
 
     #define XCP_SXI_MAKEWORD(buf, offs) ((*((buf) + (offs))) | ((*((buf) + (offs) + 1) << 8)))
 
@@ -5714,6 +5725,7 @@ void serialEvent()
 #include <Arduino.h>
 #include <stdint.h>
 
+
 typedef struct tagHwStateType {
     uint32_t StartingTime;
 } HwStateType;
@@ -5808,6 +5820,7 @@ void XcpHw_Sleep(uint64_t usec) {
         #include <mcp2518fd_can_dfs.h>
         #include <mcp_can.h>
     #else
+    // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
         #include <CAN.h>
     #endif
 
@@ -5855,7 +5868,6 @@ void XcpTl_Init(void) {
         Serial.println("CAN init fail, retry...");
         delay(100);
     }
-    // XCP_ON_CAN_IS_EXTENDED_IDENTIFIER()
 
     Serial.println("CAN init OK!");
     // #if 0
@@ -5870,6 +5882,8 @@ void XcpTl_Init(void) {
     CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
     CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
     #else
+
+    // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
     if (!CAN.begin(XCP_ON_CAN_FREQ)) {
         Serial.println("Starting CAN failed!");
@@ -5904,8 +5918,8 @@ void XcpTl_MainFunction(void) {
 static void on_receive() {
     #else
 static void on_receive(int packetSize) {
-    uint_least8_t idx   = 0;
-    XcpTl_Dlc           = packetSize;
+    uint_least8_t idx = 0;
+    XcpTl_Dlc = packetSize;
     #endif
 
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)

@@ -170,7 +170,7 @@
 
         #define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x300)
         #define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x301)
-        #define XCP_ON_CAN_MAX_DLC_REQUIRED     (XCP_ON)
+        #define XCP_ON_CAN_MAX_DLC_REQUIRED     (XCP_OFF)
         #define XCP_ON_CAN_BROADCAST_IDENTIFIER (0x222)
 
         // Chip-Select- and Interrupt-Pins / SeeedStudio CAN Shield v2.

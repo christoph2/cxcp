@@ -41,22 +41,22 @@ static uint32_t      XcpTl_TimeoutValue    = 0UL;
 static void_function XcpTl_TimeoutFunction = XCP_NULL;
 static bool          XcpTl_TimeoutRunning  = XCP_FALSE;
 
-static void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void)) {
+void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void)) {
     XcpTl_TimeoutValue    = timeout_value;
     XcpTl_TimeoutRunning  = XCP_FALSE;
     XcpTl_TimeoutFunction = timeout_function;
 }
 
-static void XcpTl_TimeoutStart(void) {
+void XcpTl_TimeoutStart(void) {
     XcpTl_TimeoutValue   = XcpHw_GetTimerCounterMS();
     XcpTl_TimeoutRunning = XCP_TRUE;
 }
 
-static void XcpTl_TimeoutStop(void) {
+void XcpTl_TimeoutStop(void) {
     XcpTl_TimeoutRunning = XCP_FALSE;
 }
 
-static void XcpTl_TimeoutCheck(void) {
+void XcpTl_TimeoutCheck(void) {
     if (!XcpTl_TimeoutRunning) {
         return;
     }
@@ -67,6 +67,6 @@ static void XcpTl_TimeoutCheck(void) {
     }
 }
 
-static void XcpTl_TimeoutReset(void) {
+void XcpTl_TimeoutReset(void) {
     XcpTl_TimeoutValue = XcpHw_GetTimerCounterMS();
 }

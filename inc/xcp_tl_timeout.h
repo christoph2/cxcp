@@ -45,15 +45,15 @@ extern "C" {
 
     /*!!! END-INCLUDE-SECTION !!!*/
 
-    static void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void));
+    void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void));
 
-    static void XcpTl_TimeoutStart(void);
+    void XcpTl_TimeoutStart(void);
 
-    static void XcpTl_TimeoutStop(void);
+    void XcpTl_TimeoutStop(void);
 
-    static void XcpTl_TimeoutCheck(void);
+    void XcpTl_TimeoutCheck(void);
 
-    static void XcpTl_TimeoutReset(void);
+    void XcpTl_TimeoutReset(void);
 
 #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
     #if defined(__cplusplus)
