@@ -1,7 +1,7 @@
 
 
 #include <math.h>
-//#include <queue>
+// #include <queue>
 
 #include "xcp.h"
 
@@ -185,7 +185,7 @@ auto sin0     = SineWave(&triangle, 0xff, 100.0, true);
 void loop() {
     XcpTl_MainFunction();
     Xcp_MainFunction();
-//#if 0
+    // #if 0
     if ((millis() - startTime) >= 10) {
         startTime = millis();
         triangle.step();
@@ -195,5 +195,5 @@ void loop() {
         sine_wave     = sin0.get_float_value();
         XcpDaq_TriggerEvent(0);
     }
-//#endif
+    // #endif
 }

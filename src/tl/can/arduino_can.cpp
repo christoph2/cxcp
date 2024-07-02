@@ -135,7 +135,7 @@ static void on_receive() {
     #else
 static void on_receive(int packetSize) {
     uint_least8_t idx = 0;
-    XcpTl_Dlc = packetSize;
+    XcpTl_Dlc         = packetSize;
     #endif
 
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)

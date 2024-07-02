@@ -106,7 +106,8 @@ extern "C" {
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
-        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) || (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
+        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
+             (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
             #define XCP_ENABLE_TRANSPORT_LAYER_CMD (XCP_ON)
         #endif
 
@@ -250,8 +251,7 @@ extern "C" {
         #define XCP_DAQ_ENTITY_TYPE uint32_t
     #endif
 
-    #define XCP_SET_ID(name)                                                                                                       \
-        { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
+    #define XCP_SET_ID(name) { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
 
     #if !defined(XCP_MAX_BS)
         #define XCP_MAX_BS (0)
@@ -269,7 +269,7 @@ extern "C" {
         #define XCP_MIN_ST_PGM (0)
     #endif /* XCP_MIN_ST_PGM */
 
-    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO)-2)
+    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO) - 2)
 
     /*
      * Packet Identifiers.
@@ -449,8 +449,7 @@ extern "C" {
     #define XCP_DAQ_PREDEFINDED_LIST_COUNT (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
     /* DAQ Implementation Macros */
-    #define XCP_DAQ_DEFINE_ODT_ENTRY(meas)                                                                                         \
-        { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
+    #define XCP_DAQ_DEFINE_ODT_ENTRY(meas) { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
 
     /* DAQ Event Implementation Macros */
     #define XCP_DAQ_BEGIN_EVENTS const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
@@ -458,7 +457,9 @@ extern "C" {
         }                                                                                                                          \
         ;
     #define XCP_DAQ_DEFINE_EVENT(name, props, timebase, cycle)                                                                     \
-        { (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle), }
+        {                                                                                                                          \
+            (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle),                                       \
+        }
 
     #define XCP_DAQ_BEGIN_ID_LIST const uint32_t Xcp_DaqIDs[] = {
     #define XCP_DAQ_END_ID_LIST                                                                                                    \
@@ -496,7 +497,7 @@ extern "C" {
     /*
     **  XCPonCAN specific function-like macros.
     */
-    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i)&XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_STRIP_IDENTIFIER(i)       ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
     /*

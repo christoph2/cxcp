@@ -667,7 +667,7 @@ void Xcp_SendPdu(void) {
     Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
     Xcp_PduOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */

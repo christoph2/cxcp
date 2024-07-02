@@ -413,14 +413,13 @@ typedef struct tagXcpTl_ConnectionType {
  */
 
 #ifndef __XCP_TL_TIMEOUT_H
-#define __XCP_TL_TIMEOUT_H
+    #define __XCP_TL_TIMEOUT_H
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-    #if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 extern "C" {
-    #endif /* __cplusplus */
-#endif     /* XCP_EXTERN_C_GUARDS */
-
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
     void XcpTl_TimeoutInit(uint16_t timeout_value, void (*timeout_function)(void));
 
@@ -432,11 +431,11 @@ extern "C" {
 
     void XcpTl_TimeoutReset(void);
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-    #if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 }
-    #endif /* __cplusplus */
-#endif     /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
 #endif  // __XCP_TL_TIMEOUT_H
 
@@ -478,12 +477,11 @@ extern "C" {
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
-
-    void XcpUtl_MemCopy(void* dst, void const * src, uint32_t len);
-    void XcpUtl_MemSet(void* dest, uint8_t fill_char, uint32_t len);
-    bool XcpUtl_MemCmp(void const * dst, void const * src, uint32_t len);
-    void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
-    void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t* buf);
+    void XcpUtl_MemCopy(void *dst, void const *src, uint32_t len);
+    void XcpUtl_MemSet(void *dest, uint8_t fill_char, uint32_t len);
+    bool XcpUtl_MemCmp(void const *dst, void const *src, uint32_t len);
+    void XcpUtl_Hexdump(uint8_t const *buf, uint16_t sz);
+    void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf);
 
     #define XcpUtl_ZeroMem(dest, len) XcpUtl_MemSet((dest), '\0', (len))
 
@@ -528,7 +526,6 @@ extern "C" {
     #define __CXCP_H
 
     #include <assert.h>
-
 
     #define XCP_PROTOCOL_VERSION_MAJOR   (1)
     #define XCP_PROTOCOL_VERSION_RELEASE (0)
@@ -602,7 +599,8 @@ extern "C" {
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
-        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) || (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
+        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
+             (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
             #define XCP_ENABLE_TRANSPORT_LAYER_CMD (XCP_ON)
         #endif
 
@@ -746,8 +744,7 @@ extern "C" {
         #define XCP_DAQ_ENTITY_TYPE uint32_t
     #endif
 
-    #define XCP_SET_ID(name)                                                                                                       \
-        { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
+    #define XCP_SET_ID(name) { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
 
     #if !defined(XCP_MAX_BS)
         #define XCP_MAX_BS (0)
@@ -765,7 +762,7 @@ extern "C" {
         #define XCP_MIN_ST_PGM (0)
     #endif /* XCP_MIN_ST_PGM */
 
-    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO)-2)
+    #define XCP_DOWNLOAD_PAYLOAD_LENGTH ((XCP_MAX_CTO) - 2)
 
     /*
      * Packet Identifiers.
@@ -945,8 +942,7 @@ extern "C" {
     #define XCP_DAQ_PREDEFINDED_LIST_COUNT (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
     /* DAQ Implementation Macros */
-    #define XCP_DAQ_DEFINE_ODT_ENTRY(meas)                                                                                         \
-        { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
+    #define XCP_DAQ_DEFINE_ODT_ENTRY(meas) { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
 
     /* DAQ Event Implementation Macros */
     #define XCP_DAQ_BEGIN_EVENTS const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
@@ -954,7 +950,9 @@ extern "C" {
         }                                                                                                                          \
         ;
     #define XCP_DAQ_DEFINE_EVENT(name, props, timebase, cycle)                                                                     \
-        { (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle), }
+        {                                                                                                                          \
+            (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle),                                       \
+        }
 
     #define XCP_DAQ_BEGIN_ID_LIST const uint32_t Xcp_DaqIDs[] = {
     #define XCP_DAQ_END_ID_LIST                                                                                                    \
@@ -992,7 +990,7 @@ extern "C" {
     /*
     **  XCPonCAN specific function-like macros.
     */
-    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i)&XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
+    #define XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(i) (((i) & XCP_ON_CAN_EXT_IDENTIFIER) == XCP_ON_CAN_EXT_IDENTIFIER)
     #define XCP_ON_CAN_STRIP_IDENTIFIER(i)       ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
     /*
@@ -1793,7 +1791,6 @@ extern "C" {
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
-
     /*
     **  Global Functions.
     */
@@ -1837,7 +1834,6 @@ extern "C" {
  *
  * s. FLOSS-EXCEPTION.txt
  */
-
 
 /*
 ** Private Options.
@@ -4211,7 +4207,6 @@ XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t a
  * expressed or implied by its publication or distribution.
  **********************************************************************/
 
-
 /*
 ** Local Types
 */
@@ -4603,7 +4598,6 @@ void Xcp_ChecksumMainFunction(void) {
     #include <stdio.h>
 #endif /* _WIN32 */
 
-
 /*
 ** Private Parameters for now.
 */
@@ -4675,16 +4669,16 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
 */
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
 XCP_STATIC const uint8_t XcpDaq_AllocTransitionTable[5][4] = {
-  /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
-  /* ALLOC_IDLE*/ {UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
- /* AFTER_FREE_DAQ  */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR)},
- /* AFTER_ALLOC_DAQ */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR)},
- /* AFTER_ALLOC_ODT */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK) },
- /* AFTER_ALLOC_ODT_ENTRY */
-    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK) },
+    /* FREE_DAQ           ALLOC_DAQ             ALLOC_ODT ALLOC_ODT_ENTRY */
+    /* ALLOC_IDLE*/ { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
+    /* AFTER_FREE_DAQ  */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR) },
+    /* AFTER_ALLOC_DAQ */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_ERR) },
+    /* AFTER_ALLOC_ODT */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK),  UINT8(DAQ_ALLOC_OK)  },
+    /* AFTER_ALLOC_ODT_ENTRY */
+    { UINT8(DAQ_ALLOC_OK), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_ERR), UINT8(DAQ_ALLOC_OK)  },
 };
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -4956,9 +4950,8 @@ void XcpDaq_SetPointer(
 bool XcpDaq_ValidateConfiguration(void) {
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    return (bool
-    )((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
-      (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
+    return (bool)((XcpDaq_EntityCount > (XCP_DAQ_ENTITY_TYPE)0) && (XcpDaq_ListCount > (XCP_DAQ_ENTITY_TYPE)0) &&
+                  (XcpDaq_OdtCount > (XCP_DAQ_ENTITY_TYPE)0));
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
     return (bool)XCP_TRUE;
@@ -5349,7 +5342,6 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
  * s. FLOSS-EXCEPTION.txt
  */
 
-
 void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len) {
     uint8_t       *pd = (uint8_t *)dst;
     uint8_t const *ps = (uint8_t const *)src;
@@ -5465,7 +5457,6 @@ void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf) {
  * s. FLOSS-EXCEPTION.txt
  */
 
-
 /*
  *
  * Time-out handling functions for Transport-Layer.
@@ -5544,7 +5535,6 @@ void XcpTl_TimeoutReset(void) {
     #if defined(ARDUINO)
         #include "Arduino.h"
     #endif
-
 
     #define XCP_SXI_MAKEWORD(buf, offs) ((*((buf) + (offs))) | ((*((buf) + (offs) + 1) << 8)))
 
@@ -5724,7 +5714,6 @@ void serialEvent()
 
 #include <Arduino.h>
 #include <stdint.h>
-
 
 typedef struct tagHwStateType {
     uint32_t StartingTime;
@@ -5919,7 +5908,7 @@ static void on_receive() {
     #else
 static void on_receive(int packetSize) {
     uint_least8_t idx = 0;
-    XcpTl_Dlc = packetSize;
+    XcpTl_Dlc         = packetSize;
     #endif
 
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
