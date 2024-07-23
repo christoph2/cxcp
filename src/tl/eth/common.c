@@ -78,16 +78,17 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
-    uint8_t header_buffer[8];
-    uint8_t bytes_remaining = XCP_ETH_HEADER_SIZE;
-    uint8_t offset          = 0;
-    uint8_t nbytes          = 0;
+    uint8_t  header_buffer[8];
+    uint8_t  bytes_remaining = XCP_ETH_HEADER_SIZE;
+    uint8_t  offset          = 0;
+    uint8_t  nbytes          = 0;
+    uint16_t from_len        = sizeof(&XcpTl_Connection.currentAddress);
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             nbytes = recvfrom(
                 XcpTl_Connection.boundSocket, (char *)header_buffer + offset, bytes_remaining, 0,
-                (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL
+                (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
             );
             if (XcpThrd_IsShuttingDown()) {
                 return 0;
@@ -116,12 +117,13 @@ static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
     uint16_t bytes_remaining = len;
     uint16_t offset          = 0;
     uint16_t nbytes          = 0;
+    uint16_t from_len        = sizeof(&XcpTl_Connection.currentAddress);
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             nbytes = recvfrom(
                 XcpTl_Connection.boundSocket, (char *)data + offset, bytes_remaining, 0,
-                (struct sockaddr *)&XcpTl_Connection.currentAddress, NULL
+                (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
             );
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
             nbytes = recv(XcpTl_Connection.connectedSocket, (char *)data + offset, bytes_remaining, 0);
