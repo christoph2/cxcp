@@ -706,7 +706,7 @@ extern "C" {
         #error XCP_ENABLE_WRITE_DAQ_MULTIPLE requires XCP_MAX_CTO of at least 10
     #endif
 
-    #define XCP_DAQ_ODT_ENTRY_OFFSET   ((1) + (1)) /* Currently fixed (only abs. ODT numbers supported). */
+    #define XCP_DAQ_ODT_ENTRY_OFFSET   ((1)) /* Currently fixed (only abs. ODT numbers supported). */
     #define XCP_DAQ_MAX_ODT_ENTRY_SIZE (XCP_MAX_DTO - XCP_DAQ_ODT_ENTRY_OFFSET) /* Max. payload. */
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
@@ -2466,8 +2466,6 @@ void Xcp_Init(void) {
 #endif /* XCP_ENABLE_MASTER_BLOCKMODE */
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
-    Xcp_State.daqProcessor.state = XCP_DAQ_STATE_STOPPED;
-    XcpDaq_SetPointer(0, 0, 0);
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
     Xcp_State.pgmProcessor.state = XCP_PGM_STATE_UNINIT;
@@ -4847,10 +4845,12 @@ XCP_DAQ_ENTITY_TYPE XcpDaq_GetDynamicDaqEntityCount(void) {
 void XcpDaq_Init(void) {
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     XcpDaq_ListIntegerType idx = 0;
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
     XcpDaq_StopAllLists();
     XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
-
+    XcpDaq_SetPointer(0, 0, 0);
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     for (idx = (XcpDaq_ListIntegerType)0; idx < XcpDaq_PredefinedListCount; ++idx) {
         XcpDaq_PredefinedListsState[idx].mode = UINT8(0);
     #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
@@ -5870,6 +5870,7 @@ void XcpTl_Init(void) {
     }
 
     Serial.println("CAN init OK!");
+
     // #if 0
     CAN.init_Mask(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), filter_mask(XCP_ON_CAN_INBOUND_IDENTIFIER));
     CAN.init_Mask(
@@ -5987,9 +5988,9 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
 uint32_t filter_mask(uint32_t identifier) {
     if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(identifier)) {
-        return (2 << (29 - 1)) - 1;
+        return (2UL << (29 - 1)) - 1;
     } else {
-        return (2 << (11 - 1)) - 1;
+        return (2UL << (11 - 1)) - 1;
     }
 }
 

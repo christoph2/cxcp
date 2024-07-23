@@ -656,8 +656,6 @@ void Xcp_Init(void) {
 #endif /* XCP_ENABLE_MASTER_BLOCKMODE */
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     XcpDaq_Init();
-    Xcp_State.daqProcessor.state = XCP_DAQ_STATE_STOPPED;
-    XcpDaq_SetPointer(0, 0, 0);
 #endif /* XCP_ENABLE_DAQ_COMMANDS */
 #if XCP_ENABLE_PGM_COMMANDS == XCP_ON
     Xcp_State.pgmProcessor.state = XCP_PGM_STATE_UNINIT;
@@ -747,7 +745,7 @@ void Xcp_SendCto(void) {
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -777,7 +775,7 @@ void Xcp_SendDto(void) {
     Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
     #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
     #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -1124,7 +1122,7 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const * const pdu) {
     #else
     else {
         response_len = 0;
-        valid        = XCP_FALSE;
+        valid = XCP_FALSE;
     }
     #endif /* XCP_ENABLE_GET_ID_HOOK */
     if (valid) {
@@ -2186,7 +2184,7 @@ INLINE void Xcp_SetWord(Xcp_PduType const * const pdu, uint8_t offs, uint16_t va
     (*(pdu->data + offs))            = value & UINT8(0xff);
     (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
 #elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
-    (*(pdu->data + offs))            = (value & UINT16(0xff00)) >> UINT8(8);
+    (*(pdu->data + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
     (*(pdu->data + UINT8(1) + offs)) = value & UINT8(0xff);
 #endif
 }

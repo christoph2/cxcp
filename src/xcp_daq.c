@@ -281,10 +281,12 @@ XCP_DAQ_ENTITY_TYPE XcpDaq_GetDynamicDaqEntityCount(void) {
 void XcpDaq_Init(void) {
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     XcpDaq_ListIntegerType idx = 0;
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
     XcpDaq_StopAllLists();
     XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
-
+    XcpDaq_SetPointer(0, 0, 0);
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     for (idx = (XcpDaq_ListIntegerType)0; idx < XcpDaq_PredefinedListCount; ++idx) {
         XcpDaq_PredefinedListsState[idx].mode = UINT8(0);
     #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
@@ -483,16 +485,16 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
  *  @param eventChannelNumber   Number of event to trigger.
  */
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
-    Xcp_StateType const                *state         = XCP_NULL;
-    XcpDaq_ListIntegerType              daqListNumber = 0;
-    XcpDaq_ODTIntegerType               odtIdx        = 0;
-    XcpDaq_ODTIntegerType               pid           = 0;
-    XcpDaq_ODTEntryIntegerType          odtEntryIdx   = 0;
-    XcpDaq_ODTType const               *odt           = XCP_NULL;
-    XcpDaq_ODTEntryType                *entry         = XCP_NULL;
-    XcpDaq_ListConfigurationType const *listConf      = XCP_NULL;
-    uint16_t                            offset        = UINT16(0);
-    uint8_t                             data[k]       = { 0 };
+    Xcp_StateType const                *state             = XCP_NULL;
+    XcpDaq_ListIntegerType              daqListNumber     = 0;
+    XcpDaq_ODTIntegerType               odtIdx            = 0;
+    XcpDaq_ODTIntegerType               pid               = 0;
+    XcpDaq_ODTEntryIntegerType          odtEntryIdx       = 0;
+    XcpDaq_ODTType const               *odt               = XCP_NULL;
+    XcpDaq_ODTEntryType                *entry             = XCP_NULL;
+    XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
+    uint16_t                            offset            = UINT16(0);
+    uint8_t                             data[XCP_MAX_DTO] = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
     XcpDaq_ListStateType *listState        = XCP_NULL;
     uint32_t              timestamp        = UINT32(0);
