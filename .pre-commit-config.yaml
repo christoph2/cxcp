@@ -12,25 +12,25 @@ repos:
     entry: check-json
     language: python
     types: [json]
-    stages: [commit]
+    stages: [Nonepre-commitNone]
   - id: check-toml
     name: check-toml
     entry: check-toml
     language: python
     types: [toml]
-    stages: [commit]
+    stages: [Nonepre-commitNone]
   - id: check-merge-conflict
     name: check-merge-conflict
     entry: check-merge-conflict
     language: python
     types: [text]
-    stages: [commit]
+    stages: [Nonepre-commitNone]
   - id: mixed-line-ending
     name: mixed-line-ending
     entry: mixed-line-ending
     language: python
     types_or: [c, c++, python]
-    stages: [commit]
+    stages: [Nonepre-commitNone]
     #- id: clang-tidy
     #name: clang-tidy
     #entry: clang-tidy --extra-arg="-Iinc" -extra-arg="-I." -extra-arg="-DETHER"
@@ -57,8 +57,8 @@ repos:
     entry: trailing-whitespace-fixer
     language: python
     types_or: [c, c++, python]
-    stages: [commit]
+    stages: [Nonepre-commitNone]
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v14.0.6
+  rev: v19.1.1
   hooks:
   - id: clang-format
