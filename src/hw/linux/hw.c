@@ -123,12 +123,6 @@ static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
 static void termination_handler(int sig) {
     printf("Terminating due to ");
     switch (sig) {
-        case SIGKILL:
-            printf("SIGKILL");
-            break;
-        case SIGSTOP:
-            printf("SIGSTOP");
-            break;
         case SIGQUIT:
             printf("SIGQUIT");
             break;
@@ -176,8 +170,6 @@ void XcpHw_Init(void) {
     XCP_UNREFERENCED_PARAMETER(timerid);
     XCP_UNREFERENCED_PARAMETER(status);
 
-    signal(SIGKILL, termination_handler);
-    signal(SIGSTOP, termination_handler);
     signal(SIGQUIT, termination_handler);
     signal(SIGILL, termination_handler);
     signal(SIGTRAP, termination_handler);
@@ -185,6 +177,13 @@ void XcpHw_Init(void) {
     signal(SIGSEGV, termination_handler);
 
     XcpHw_FreeRunningCounter = 0ULL;
+    XcpUtl_MemSet(&XcpHw_AppMsTimer, '\x00', sizeof(XcpHw_AppMsTimer));
+
+    /*
+     struct timespec  it_interval;
+           struct timespec  it_value;
+
+    */
 
     if (clock_getres(CLOCK_MONOTONIC, &XcpHw_TimerResolution) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);

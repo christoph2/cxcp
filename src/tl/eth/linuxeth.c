@@ -71,7 +71,6 @@ static bool Xcp_DisableSocketOption(int sock, int option) {
 void XcpTl_Init(void) {
     struct addrinfo  hints;
     struct addrinfo *addr_info = NULL;
-    char            *address   = NULL;
     char             port[16];
     int              sock = 0;
     int              ret  = 0;
@@ -83,7 +82,7 @@ void XcpTl_Init(void) {
     hints.ai_family   = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
     hints.ai_socktype = XcpTl_Connection.socketType;
     hints.ai_flags    = AI_NUMERICHOST | AI_PASSIVE;
-    ret               = getaddrinfo(address, port, &hints, &addr_info);
+    ret               = getaddrinfo(NULL, port, &hints, &addr_info);
 
     if (ret != 0) {
         XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", errno);
