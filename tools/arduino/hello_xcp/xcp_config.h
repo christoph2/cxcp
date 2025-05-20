@@ -34,8 +34,8 @@
     /*
     **  General Options.
     */
-    #define TP_CAN
-// #define TP_SXI
+//    #define TP_CAN
+ #define TP_SXI
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -56,6 +56,8 @@
     #define XCP_CHECKSUM_CHUNKED_CALCULATION (XCP_ON)
     #define XCP_CHECKSUM_CHUNK_SIZE          (64)
     #define XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE  (0) /* 0 ==> unlimited */
+
+    #define XCP_DAQ_ENABLE_TIMESTAMPING     (XCP_ON)
 
     #define XCP_BYTE_ORDER          XCP_BYTE_ORDER_INTEL
     #define XCP_ADDRESS_GRANULARITY XCP_ADDRESS_GRANULARITY_BYTE

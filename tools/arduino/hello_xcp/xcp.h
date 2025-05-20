@@ -1343,7 +1343,7 @@ extern "C" {
         XCP_DIRECTION_DAQ_STIM
     } XcpDaq_DirectionType;
 
-    typedef struct tagXcpDaq_XcpDaq_DynamicListType {
+    typedef struct tagXcpDaq_DynamicListType {
         XcpDaq_ODTIntegerType numOdts;
         uint16_t              firstOdt;
         uint8_t               mode;
@@ -5058,7 +5058,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     XcpDaq_ODTEntryType                *entry         = XCP_NULL;
     XcpDaq_ListConfigurationType const *listConf      = XCP_NULL;
     uint16_t                            offset        = UINT16(0);
-    uint8_t                             data[k]       = { 0 };
+    uint8_t                             data[XCP_MAX_DTO]       = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
     XcpDaq_ListStateType *listState        = XCP_NULL;
     uint32_t              timestamp        = UINT32(0);
@@ -5634,10 +5634,10 @@ void XcpTl_FeedReceiver(uint8_t octet) {
         XcpTl_TimeoutReset();
         XcpTl_Receiver.Remaining--;
         if (XcpTl_Receiver.Remaining == 0u) {
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
             Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
             Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
+            XcpTl_ResetSM();
+            XcpTl_TimeoutStop();
             Xcp_DispatchCommand(&Xcp_CtoIn);
         }
     }
