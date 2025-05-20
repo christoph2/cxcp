@@ -847,7 +847,7 @@ extern "C" {
         XCP_DIRECTION_DAQ_STIM
     } XcpDaq_DirectionType;
 
-    typedef struct tagXcpDaq_XcpDaq_DynamicListType {
+    typedef struct tagXcpDaq_DynamicListType {
         XcpDaq_ODTIntegerType numOdts;
         uint16_t              firstOdt;
         uint8_t               mode;
@@ -1030,18 +1030,6 @@ extern "C" {
         XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber
     );
 
-        #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-
-    void XcpDaq_QueueInit(void);
-
-    XCP_STATIC bool XcpDaq_QueueFull(void);
-
-    bool XcpDaq_QueueEmpty(void);
-
-    bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
-
-        #endif /* XCP_DAQ_ENABLE_QUEUING */
-
         /*
         **  Predefined DAQ constants.
         */
@@ -1071,6 +1059,23 @@ extern "C" {
     XcpDaq_EntityType *XcpDaq_GetDynamicEntity(uint16_t num);
 
     uint8_t *XcpDaq_GetDtoBuffer(void);
+
+    #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
+
+    typedef struct tagXcpDaq_QueueType {
+        uint8_t head;
+        uint8_t tail;
+        bool    overload;
+    } XcpDaq_QueueType;
+
+    void XcpDaq_QueueGetVar(XcpDaq_QueueType *var);
+    void XcpDaq_QueueInit(void);
+    XCP_STATIC bool XcpDaq_QueueFull(void);
+    bool XcpDaq_QueueEmpty(void);
+    bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
+    bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
+
+    #endif /* XCP_DAQ_ENABLE_QUEUING */
 
         #endif  // XCP_BUILD_TYPE
 

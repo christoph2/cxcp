@@ -76,14 +76,6 @@ typedef enum tagXcpDaq_ListTransitionType {
     DAQ_LIST_TRANSITION_STOP
 } XcpDaq_ListTransitionType;
 
-#if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-typedef struct tagXcpDaq_QueueType {
-    uint8_t head;
-    uint8_t tail;
-    bool    overload;
-} XcpDaq_QueueType;
-#endif /* XCP_DAQ_ENABLE_QUEUING */
-
 /*
 ** Local Function-like Macros.
 */
@@ -99,10 +91,6 @@ XCP_STATIC void XcpDaq_InitMessageQueue(void);
 XCP_STATIC bool                   XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition);
 XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
-
-#if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
-#endif /* XCP_DAQ_ENABLE_QUEUING */
 
 /*
 ** Local Constants.
@@ -492,7 +480,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     XcpDaq_ODTEntryType                *entry         = XCP_NULL;
     XcpDaq_ListConfigurationType const *listConf      = XCP_NULL;
     uint16_t                            offset        = UINT16(0);
-    uint8_t                             data[k]       = { 0 };
+    uint8_t                             data[XCP_MAX_DTO]       = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
     XcpDaq_ListStateType *listState        = XCP_NULL;
     uint32_t              timestamp        = UINT32(0);
