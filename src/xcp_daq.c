@@ -36,12 +36,12 @@
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_util.h"
+
 /*!!! END-INCLUDE-SECTION !!!*/
 
 /*
 ** Private Parameters for now.
 */
-#define XCP_DAQ_QUEUE_SIZE (4)
 
 /*
 ** Local Types.
@@ -472,16 +472,16 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
  *  @param eventChannelNumber   Number of event to trigger.
  */
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
-    Xcp_StateType const                *state         = XCP_NULL;
-    XcpDaq_ListIntegerType              daqListNumber = 0;
-    XcpDaq_ODTIntegerType               odtIdx        = 0;
-    XcpDaq_ODTIntegerType               pid           = 0;
-    XcpDaq_ODTEntryIntegerType          odtEntryIdx   = 0;
-    XcpDaq_ODTType const               *odt           = XCP_NULL;
-    XcpDaq_ODTEntryType                *entry         = XCP_NULL;
-    XcpDaq_ListConfigurationType const *listConf      = XCP_NULL;
-    uint16_t                            offset        = UINT16(0);
-    uint8_t                             data[XCP_MAX_DTO]       = { 0 };
+    Xcp_StateType const                *state             = XCP_NULL;
+    XcpDaq_ListIntegerType              daqListNumber     = 0;
+    XcpDaq_ODTIntegerType               odtIdx            = 0;
+    XcpDaq_ODTIntegerType               pid               = 0;
+    XcpDaq_ODTEntryIntegerType          odtEntryIdx       = 0;
+    XcpDaq_ODTType const               *odt               = XCP_NULL;
+    XcpDaq_ODTEntryType                *entry             = XCP_NULL;
+    XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
+    uint16_t                            offset            = UINT16(0);
+    uint8_t                             data[XCP_MAX_DTO] = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
     XcpDaq_ListStateType *listState        = XCP_NULL;
     uint32_t              timestamp        = UINT32(0);
@@ -529,7 +529,11 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
             // entry->length);
             if (odtEntryIdx == (XcpDaq_ODTEntryIntegerType)0) {
             }
-            XCP_ASSERT_LE(entry->length, (unsigned int)(XCP_MAX_DTO - offset));
+            // XCP_ASSERT_LE(entry->length, (unsigned int)(XCP_MAX_DTO - offset));
+            if (entry->length > (unsigned int)(XCP_MAX_DTO - offset)) {
+                return;  // Error: Out of memory.
+            }
+
             XcpDaq_CopyMemory(&data[offset], (void *)entry->mta.address, entry->length);
             offset += entry->length;
         }
@@ -720,7 +724,11 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
 
     XcpDaq_QueueDTOs[XcpDaq_Queue.head].len = len;
 
-    XCP_ASSERT_LE(len, XCP_MAX_DTO);
+    // XCP_ASSERT_LE(len, XCP_MAX_DTO);
+    if (len > XCP_MAX_DTO) {
+        return (bool)XCP_FALSE;
+    }
+
     XcpUtl_MemCopy(XcpDaq_QueueDTOs[XcpDaq_Queue.head].data, data, len);
     XcpDaq_Queue.head = (XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1);
     return (bool)XCP_TRUE;
@@ -733,7 +741,10 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
         return (bool)XCP_FALSE;
     }
     dto_len = XcpDaq_QueueDTOs[XcpDaq_Queue.tail].len;
-    XCP_ASSERT_LE(dto_len, XCP_MAX_DTO);
+    // XCP_ASSERT_LE(dto_len, XCP_MAX_DTO);
+    if (dto_len > XCP_MAX_DTO) {
+        return (bool)XCP_FALSE;
+    }
     *len = dto_len;
     XcpUtl_MemCopy(data, XcpDaq_QueueDTOs[XcpDaq_Queue.tail].data, dto_len);
     XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1);

@@ -87,6 +87,7 @@
     #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          XCP_ON
     #define XCP_DAQ_ENABLE_WRITE_THROUGH                XCP_OFF
     #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (100)
+    #define XCP_DAQ_QUEUE_SIZE                          (16)
     #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
     #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT XCP_OFF
 

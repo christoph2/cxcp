@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2024 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -34,8 +34,8 @@
     /*
     **  General Options.
     */
-//    #define TP_CAN
- #define TP_SXI
+    #define TP_CAN
+// #define TP_SXI
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -45,7 +45,7 @@
     // #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
     #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
 
-    #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_OFF)
+    #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_ON)
 
     #define XCP_ENABLE_SLAVE_BLOCKMODE  (XCP_ON)
     #define XCP_ENABLE_MASTER_BLOCKMODE (XCP_OFF)
@@ -56,8 +56,6 @@
     #define XCP_CHECKSUM_CHUNKED_CALCULATION (XCP_ON)
     #define XCP_CHECKSUM_CHUNK_SIZE          (64)
     #define XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE  (0) /* 0 ==> unlimited */
-
-    #define XCP_DAQ_ENABLE_TIMESTAMPING     (XCP_ON)
 
     #define XCP_BYTE_ORDER          XCP_BYTE_ORDER_INTEL
     #define XCP_ADDRESS_GRANULARITY XCP_ADDRESS_GRANULARITY_BYTE
@@ -95,6 +93,7 @@
     #define XCP_DAQ_ENABLE_ALTERNATING                  (XCP_OFF)
     #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          (XCP_ON)
     #define XCP_DAQ_ENABLE_WRITE_THROUGH                (XCP_OFF)
+    #define XCP_DAQ_QUEUE_SIZE                          (16)
     #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (16)
     #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
     #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT (XCP_OFF)

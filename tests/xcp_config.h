@@ -49,8 +49,8 @@
     #define XCP_ENABLE_SLAVE_BLOCKMODE  (XCP_ON)
     #define XCP_ENABLE_MASTER_BLOCKMODE (XCP_OFF)
 
-    #define XCP_ENABLE_STIM (XCP_OFF)
-    #define XCP_DAQ_ENABLE_QUEUING      (XCP_ON)
+    #define XCP_ENABLE_STIM        (XCP_OFF)
+    #define XCP_DAQ_ENABLE_QUEUING (XCP_ON)
 
     #define XCP_CHECKSUM_METHOD              XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
     #define XCP_CHECKSUM_CHUNKED_CALCULATION (XCP_ON)
@@ -93,6 +93,7 @@
     #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          (XCP_ON)
     #define XCP_DAQ_ENABLE_WRITE_THROUGH                (XCP_OFF)
     #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (16)
+    #define XCP_DAQ_QUEUE_SIZE                          (16)
     #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
     #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT (XCP_OFF)
 
@@ -135,7 +136,7 @@
     #define XCP_ENABLE_GET_SEGMENT_MODE       (XCP_OFF)
     #define XCP_ENABLE_COPY_CAL_PAGE          (XCP_OFF)
 
-    #define XCP_ENABLE_DAQ_COMMANDS             (XCP_ON)
+    #define XCP_ENABLE_DAQ_COMMANDS (XCP_ON)
 
     #define XCP_ENABLE_GET_DAQ_CLOCK           (XCP_ON)
     #define XCP_ENABLE_READ_DAQ                (XCP_OFF)
