@@ -227,7 +227,7 @@ static uint16_t XcpTl_SetDLC(uint16_t len) {
     if (len <= 8) {
         return len;
     } else {
-        for (idx = 0; idx < sizeof(FD_DLCS); ++idx) {
+        for (idx = 0; idx < XCP_ARRAY_SIZE(FD_DLCS); ++idx) {
             if (len <= FD_DLCS[idx]) {
                 return FD_DLCS[idx];
             }
