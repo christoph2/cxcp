@@ -35,7 +35,6 @@
     **  General Options.
     */
     #define TP_CAN
-// #define TP_SXI
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -51,6 +50,7 @@
     #define XCP_ENABLE_MASTER_BLOCKMODE (XCP_OFF)
 
     #define XCP_ENABLE_STIM (XCP_OFF)
+    #define XCP_DAQ_ENABLE_QUEUING      (XCP_ON)
 
     #define XCP_CHECKSUM_METHOD              XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT
     #define XCP_CHECKSUM_CHUNKED_CALCULATION (XCP_ON)
@@ -135,7 +135,7 @@
     #define XCP_ENABLE_GET_SEGMENT_MODE       (XCP_OFF)
     #define XCP_ENABLE_COPY_CAL_PAGE          (XCP_OFF)
 
-    #define XCP_ENABLE_DAQ_COMMANDS (XCP_ON)
+    #define XCP_ENABLE_DAQ_COMMANDS             (XCP_ON)
 
     #define XCP_ENABLE_GET_DAQ_CLOCK           (XCP_ON)
     #define XCP_ENABLE_READ_DAQ                (XCP_OFF)

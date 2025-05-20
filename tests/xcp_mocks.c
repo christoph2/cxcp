@@ -48,5 +48,48 @@ XCP_DAQ_DEFINE_EVENT(
     return 0xaaaa;
 }
 
+void XcpTl_Init(void) {
+
+}
+
+void XcpHw_Init(void) {
+
+}
+
+#if 0
 void XcpDaq_TransmitDtos(void) {
+}
+#endif
+
+void XcpHw_AcquireLock(uint8_t lockIdx) {
+    if (lockIdx >= XCP_HW_LOCK_COUNT) {
+        return;
+    }
+}
+
+void XcpHw_ReleaseLock(uint8_t lockIdx) {
+    if (lockIdx >= XCP_HW_LOCK_COUNT) {
+        return;
+    }
+}
+
+void XcpTl_SaveConnection() {
+
+}
+
+void XcpTl_ReleaseConnection() {
+
+}
+
+void XcpHw_Sleep(uint64_t usec) {
+    //    delayMicroseconds(usec);
+}
+
+void XcpTl_Send(uint8_t const *buf, uint16_t len) {
+    XCP_TL_ENTER_CRITICAL();
+
+    XCP_TL_LEAVE_CRITICAL();
+}
+
+void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
 }

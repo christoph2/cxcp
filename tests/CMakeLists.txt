@@ -1,93 +1,89 @@
-cmake_minimum_required(VERSION 3.10)
-project(xcpsim LANGUAGES C)
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-    message(STATUS "Build type not specified: defaulting to release.")
-endif()
+cmake_minimum_required(VERSION 3.20...3.30)
+project(cxcp LANGUAGES C CXX)
 
-IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    SET(CMAKE_C_STANDARD 11)
-ELSEIF(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    SET(CMAKE_C_STANDARD 11)
-ELSE()
-    #message(WARNING "C standard could not be set because compiler is not GNU or Clang.")
-    SET(CMAKE_C_STANDARD 11)
-ENDIF()
 
-option(PROFILE "Enable profiling" ON)
+if (POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif ()
+cmake_policy(SET CMP0094 NEW)
 
-set(SOURCES
-    checksum_mocks.c
-    xcp_init.c
-    ../src/xcp_checksum.c
-    ../src/xcp_daq.c
-    ../src/xcp_util.c
-    ../flsemu/common.c
-    fls_mocks.c
-    xcp_mocks.c
+find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(pybind11 CONFIG)
+
+SET(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
+
+message(STATUS "Found pybind11 v${pybind11_VERSION} ${pybind11_VERSION_TYPE}: ${pybind11_INCLUDE_DIRS}")
+
+# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/dist")
+
+
+SET(GCC_N_CLANG_BASE_OPTIONS "-std=c++23 -Wall -Wextra -Wpedantic -Warray-bounds -mtune=native -fexceptions")
+SET(MSVC_BASE_OPTIONS "/W3 /permissive- /EHsc /bigobj /Zc:__cplusplus /std:c++latest")
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (MSVC)
+        SET(MSVC_BASE_OPTIONS "${MSVC_BASE_OPTIONS}  /Od /fsanitize=address /Zi")
+    else ()
+        SET(GCC_N_CLANG_BASE_OPTIONS "${GCC_N_CLANG_BASE_OPTIONS} -Og -g3 -ggdb -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined -fsanitize=bounds") # -fsanitize=hwaddress
+    endif ()
+else ()
+    if (MSVC)
+        SET(MSVC_BASE_OPTIONS "${MSVC_BASE_OPTIONS} /Ox")
+    else ()
+        SET(GCC_N_CLANG_BASE_OPTIONS "${GCC_N_CLANG_BASE_OPTIONS} -O3 -fomit-frame-pointer")
+    endif ()
+endif ()
+
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(ENV{MACOSX_DEPLOYMENT_TARGET} "11.0")
+    SET(GCC_N_CLANG_EXTRA_OPTIONS "-stdlib=libc++")
+    message("Platform is Darwin")
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    message("Platform is WINDOWS")
+    SET(MSVC_EXTRA_OPTIONS "")
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    SET(GCC_N_CLANG_EXTRA_OPTIONS "-fvisibility=hidden -g0") # -fcoroutines
+    message("Platform is LINUX")
+endif ()
+
+
+IF (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+
+ELSEIF (CMAKE_C_COMPILER_ID MATCHES "Clang")
+
+ELSEIF (CMAKE_C_COMPILER_ID MATCHES "MSVC")
+
+ELSE ()
+
+ENDIF ()
+
+IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+
+ELSEIF (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+
+ELSEIF (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+
+ELSE ()
+
+
+ENDIF ()
+
+message("Compiling C with: " ${CMAKE_C_COMPILER_ID})
+message("Compiling Cpp with: " ${CMAKE_CXX_COMPILER_ID})
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(EXTENSION_INCS ${CMAKE_CURRENT_SOURCE_DIR}/../inc ${CMAKE_CURRENT_SOURCE_DIR}/. ${CMAKE_CURRENT_SOURCE_DIR}/../flsemu)
+
+pybind11_add_module(cxcp wrapper.cpp checksum_mocks.c ../src/xcp.c ../src/xcp_checksum.c
+        ../src/xcp_daq.c ../src/xcp_util.c
+        ../flsemu/common.c fls_mocks.c xcp_mocks.c
 )
+# xcp_init.c
 
-set(INCLUDES
-    .
-    ../inc
-    ../flsemu
-)
+target_include_directories(cxcp PRIVATE ${EXTENSION_INCS})
 
-if(WIN32)
-    set(ADD_LIBS
-        "ws2_32"
-    )
-elseif(UNIX)
-    set(ADD_LIBS
-        "pthread"
-        "rt"
-    )
-endif(WIN32)
-
-IF(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    add_link_options("-fuse-ld=lld")
-ENDIF()
-
-add_definitions(-D_GNU_SOURCE)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable  -ffunction-sections")
-
-if ("${PROFILE}" STREQUAL "ON")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg -fprofile-arcs -ftest-coverage --coverage")
-endif()
-
-if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls")
-    if (NOT WIN32)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check -fsanitize=address -fsanitize=undefined ")
-        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wthread-safety")
-        endif()
-    endif()
-else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O3 -flto ")
-endif()
-
-
-
-if (WIN32)
-    add_library(xcp_test SHARED ${SOURCES})
-    target_compile_definitions(xcp_test PUBLIC TP_ETHER)
-    target_include_directories(xcp_test PUBLIC ${INCLUDES})
-    target_link_libraries(xcp_test ${ADD_LIBS})
-    target_compile_features(xcp_test PRIVATE c_std_11)
-    add_compile_options("-m32")
-    set(STATIC_LIBRARY_OPTIONS "-m32")
-elseif(UNIX)
-    add_library(xcp_test SHARED ${SOURCES})
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
-    endif()
-    target_compile_definitions(xcp_test PUBLIC TP_ETHER)
-    target_include_directories(xcp_test PUBLIC ${INCLUDES})
-    target_link_libraries(xcp_test ${ADD_LIBS})
-    target_compile_features(xcp_test PRIVATE c_std_11)
-endif()
-
+# install(TARGETS cxcp LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/.)
