@@ -269,10 +269,12 @@ XCP_DAQ_ENTITY_TYPE XcpDaq_GetDynamicDaqEntityCount(void) {
 void XcpDaq_Init(void) {
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     XcpDaq_ListIntegerType idx = 0;
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
     XcpDaq_StopAllLists();
     XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
-
+    XcpDaq_SetPointer(0, 0, 0);
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     for (idx = (XcpDaq_ListIntegerType)0; idx < XcpDaq_PredefinedListCount; ++idx) {
         XcpDaq_PredefinedListsState[idx].mode = UINT8(0);
     #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON

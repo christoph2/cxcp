@@ -86,6 +86,7 @@ void XcpTl_Init(void) {
     }
 
     Serial.println("CAN init OK!");
+
     // #if 0
     CAN.init_Mask(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), filter_mask(XCP_ON_CAN_INBOUND_IDENTIFIER));
     CAN.init_Mask(
@@ -203,9 +204,9 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
 uint32_t filter_mask(uint32_t identifier) {
     if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(identifier)) {
-        return (2 << (29 - 1)) - 1;
+        return (2UL << (29 - 1)) - 1;
     } else {
-        return (2 << (11 - 1)) - 1;
+        return (2UL << (11 - 1)) - 1;
     }
 }
 
