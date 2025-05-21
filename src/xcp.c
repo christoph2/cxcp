@@ -70,10 +70,6 @@ void Xcp_ReadMemory(void *dest, void *src, uint16_t count);
 /*
 ** Local Macros.
 */
-#define STOP_ALL       UINT8(0x00)
-#define START_SELECTED UINT8(0x01)
-#define STOP_SELECTED  UINT8(0x02)
-
 #define XCP_INCREMENT_MTA(i) Xcp_State.mta.address += UINT32((i))
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
@@ -131,8 +127,6 @@ void Xcp_ReadMemory(void *dest, void *src, uint16_t count);
 /*
 ** Local Function Prototypes.
 */
-XCP_STATIC uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
-
 XCP_STATIC Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const *src, Xcp_MtaType *dst);
 
 XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len);
@@ -152,8 +146,6 @@ XCP_STATIC void Xcp_SendSpecialPacket(uint8_t packetType, uint8_t code, uint8_t 
 XCP_STATIC bool Xcp_IsProtected(uint8_t resource);
 
 XCP_STATIC void Xcp_DefaultResourceProtection(void);
-
-XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, uint32_t address);
 
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
 XCP_STATIC bool Xcp_SlaveBlockTransferIsActive(void);
@@ -745,7 +737,7 @@ void Xcp_SendCto(void) {
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
     Xcp_CtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
 #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -775,7 +767,7 @@ void Xcp_SendDto(void) {
     Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
     Xcp_State.counter++;
     #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
-    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE] = XCP_LOBYTE(Xcp_State.counter);
+    Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE]     = XCP_LOBYTE(Xcp_State.counter);
     Xcp_DtoOut.data[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] = XCP_HIBYTE(Xcp_State.counter);
     Xcp_State.counter++;
     #endif /* XCP_TRANSPORT_LAYER_COUNTER_SIZE */
@@ -1122,7 +1114,7 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const * const pdu) {
     #else
     else {
         response_len = 0;
-        valid = XCP_FALSE;
+        valid        = XCP_FALSE;
     }
     #endif /* XCP_ENABLE_GET_ID_HOOK */
     if (valid) {
@@ -1558,7 +1550,7 @@ XCP_STATIC void Xcp_WriteDaq_Res(Xcp_PduType const * const pdu) {
         return;
     }
     #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
-    Xcp_WriteDaqEntry(bitOffset, elemSize, adddrExt, address);
+    XcpDaq_WriteEntry(bitOffset, elemSize, adddrExt, address);
     Xcp_PositiveResponse();
 }
 
@@ -1594,14 +1586,13 @@ XCP_STATIC void Xcp_WriteDaqMultiple_Res(Xcp_PduType const * const pdu) {
         elemSize   = Xcp_GetByte(pdu, daq_offset + UINT8(1));
         address    = Xcp_GetDWord(pdu, daq_offset + UINT8(2));
         adddrExt   = Xcp_GetByte(pdu, daq_offset + UINT8(6));
-        Xcp_WriteDaqEntry(bitOffset, elemSize, adddrExt, address);
+        XcpDaq_WriteEntry(bitOffset, elemSize, adddrExt, address);
     }
     Xcp_PositiveResponse();
 }
     #endif  // XCP_ENABLE_WRITE_DAQ_MULTIPLE
 
 XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
-    XcpDaq_ListStateType        *entry              = XCP_NULL;
     const uint8_t                mode               = Xcp_GetByte(pdu, UINT8(1));
     const XcpDaq_ListIntegerType daqListNumber      = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
     const uint16_t               eventChannelNumber = Xcp_GetWord(pdu, UINT8(4));
@@ -1652,24 +1643,12 @@ XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     }
     #endif /* XCP_DAQ_ENABLE_PRESCALER */
 
-    entry = XcpDaq_GetListState(daqListNumber);
-    XcpDaq_AddEventChannel(daqListNumber, eventChannelNumber);
-
-    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_TIMESTAMP);
-    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_ALTERNATING);
-    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_DIRECTION);
-    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_PID_OFF);
-    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_SELECTED);
-    entry->mode = Xcp_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_STARTED);
-    #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
-    entry->prescaler = prescaler;
-    #endif /* XCP_DAQ_ENABLE_PRESCALER */
+    XcpDaq_SetListMode(daqListNumber, mode, eventChannelNumber, prescaler, priority);
 
     Xcp_PositiveResponse();
 }
 
 XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PduType const * const pdu) {
-    XcpDaq_ListStateType        *entry         = XCP_NULL;
     const uint8_t                mode          = Xcp_GetByte(pdu, UINT8(1));
     XcpDaq_ODTIntegerType        firstPid      = (XcpDaq_ODTIntegerType)0;
     const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
@@ -1682,17 +1661,12 @@ XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PduType const * const pdu) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
     }
 
-    entry = XcpDaq_GetListState(daqListNumber);
-
-    if (mode == UINT8(0)) {
-    } else if (mode == UINT8(1)) {
-    } else if (mode == UINT8(2)) {
-        entry->mode |= XCP_DAQ_LIST_MODE_SELECTED;
-    } else {
+    if (mode > 2) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE)); /* correct? */
         return;
     }
 
+    XcpDaq_StartStopSingleList(daqListNumber, mode);
     XcpDaq_GetFirstPid(daqListNumber, &firstPid);
 
     Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), firstPid, UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
@@ -1705,18 +1679,12 @@ XCP_STATIC void Xcp_StartStopSynch_Res(Xcp_PduType const * const pdu) {
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
 
-    if (mode == START_SELECTED) {
-        XcpDaq_StartSelectedLists();
-        XcpDaq_SetProcessorState(XCP_DAQ_STATE_RUNNING);
-    } else if (mode == STOP_ALL) {
-        XcpDaq_StopAllLists();
-        XcpDaq_SetProcessorState(XCP_DAQ_STATE_STOPPED);
-    } else if (mode == STOP_SELECTED) {
-        XcpDaq_StopSelectedLists();
-    } else {
+    if (mode > 2) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
     }
+
+    XcpDaq_StartStopSynch(mode);
     Xcp_PositiveResponse();
 }
 
@@ -2184,7 +2152,7 @@ INLINE void Xcp_SetWord(Xcp_PduType const * const pdu, uint8_t offs, uint16_t va
     (*(pdu->data + offs))            = value & UINT8(0xff);
     (*(pdu->data + UINT8(1) + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
 #elif XCP_BYTE_ORDER == XCP_BYTE_ORDER_MOTOROLA
-    (*(pdu->data + offs)) = (value & UINT16(0xff00)) >> UINT8(8);
+    (*(pdu->data + offs))            = (value & UINT16(0xff00)) >> UINT8(8);
     (*(pdu->data + UINT8(1) + offs)) = value & UINT8(0xff);
 #endif
 }
@@ -2197,15 +2165,6 @@ INLINE void Xcp_SetDWord(Xcp_PduType const * const pdu, uint8_t offs, uint32_t v
     Xcp_SetWord(pdu, offs + 0, (value & UINT32(0xffff0000)) >> UINT8(16));
     Xcp_SetWord(pdu, offs + 2, value & UINT32(0x0000ffff));
 #endif
-}
-
-XCP_STATIC uint8_t Xcp_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag) {
-    if ((value & flag) == flag) {
-        result |= flag;
-    } else {
-        result &= ~flag;
-    }
-    return result;
 }
 
 #if XCP_ENABLE_RESOURCE_PROTECTION == XCP_ON
@@ -2338,26 +2297,4 @@ void XcpPgm_SetProcessorState(XcpPgm_ProcessorStateType state) {
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 
-XCP_STATIC void Xcp_WriteDaqEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, uint32_t address) {
-    XcpDaq_ODTEntryType *entry = XCP_NULL;
-
-    DBG_TRACE5("\tentry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", address, adddrExt, elemSize, bitOffset);
-
-    entry = XcpDaq_GetOdtEntry(Xcp_State.daqPointer.daqList, Xcp_State.daqPointer.odt, Xcp_State.daqPointer.odtEntry);
-
-    #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
-    entry->bitOffset = bitOffset;
-    #endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
-    entry->length      = elemSize;
-    entry->mta.address = address;
-    #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
-    entry->mta.ext = adddrExt;
-    #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
-
-    /* Advance ODT entry pointer within one and the same ODT.
-     * After writing to the last ODT entry of an ODT, the value
-     * of the DAQ pointer is undefined!
-     */
-    Xcp_State.daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;
-}
 #endif /* XCP_ENABLE_DAQ_COMMANDS */

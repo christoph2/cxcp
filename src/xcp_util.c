@@ -69,6 +69,15 @@ bool XcpUtl_MemCmp(/*@in@*/ void const *lhs, /*@in@*/ void const *rhs, uint32_t 
     return (bool)(len == UINT32(0));
 }
 
+uint8_t XcpUtl_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag) {
+    if ((value & flag) == flag) {
+        result |= flag;
+    } else {
+        result &= ~flag;
+    }
+    return result;
+}
+
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
 void XcpUtl_Hexdump(/*@in@*/ uint8_t const *buf, uint16_t sz) {
     uint16_t idx;

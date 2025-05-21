@@ -36,12 +36,12 @@ extern "C" {
     #include "xcp_types.h"
     /*!!! END-INCLUDE-SECTION !!!*/
 
-    void XcpUtl_MemCopy(void* dst, void const * src, uint32_t len);
-    void XcpUtl_MemSet(void* dest, uint8_t fill_char, uint32_t len);
-    bool XcpUtl_MemCmp(void const * dst, void const * src, uint32_t len);
-    void XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
-    void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t* buf);
-
+    void    XcpUtl_MemCopy(void* dst, void const * src, uint32_t len);
+    void    XcpUtl_MemSet(void* dest, uint8_t fill_char, uint32_t len);
+    bool    XcpUtl_MemCmp(void const * dst, void const * src, uint32_t len);
+    void    XcpUtl_Hexdump(uint8_t const * buf, uint16_t sz);
+    void    XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t* buf);
+    uint8_t XcpUtl_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag);
     #define XcpUtl_ZeroMem(dest, len) XcpUtl_MemSet((dest), '\0', (len))
 
     #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON

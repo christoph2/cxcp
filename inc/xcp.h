@@ -251,6 +251,10 @@ extern "C" {
         #define XCP_DAQ_ENTITY_TYPE uint32_t
     #endif
 
+    #define XCP_DAQ_LISTS_STOP_ALL       UINT8(0x00)
+    #define XCP_DAQ_LISTS_START_SELECTED UINT8(0x01)
+    #define XCP_DAQ_LISTS_STOP_SELECTED  UINT8(0x02)
+
     #define XCP_SET_ID(name) { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
 
     #if !defined(XCP_MAX_BS)
@@ -1025,11 +1029,21 @@ extern "C" {
 
     void XcpDaq_StopAllLists(void);
 
+    void XcpDaq_StartStopSingleList(XcpDaq_ListIntegerType daqListNumber, uint8_t mode);
+
+    void XcpDaq_StartStopSynch(uint8_t mode);
+
     bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType *firstPID);
 
     void XcpDaq_SetPointer(
         XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber
     );
+
+    void XcpDaq_SetListMode(
+        XcpDaq_ListIntegerType daqListNumber, uint8_t mode, uint16_t eventChannelNumber, uint8_t prescaler, uint8_t priority
+    );
+
+    void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xcp_PointerSizeType address);
 
         /*
         **  Predefined DAQ constants.
