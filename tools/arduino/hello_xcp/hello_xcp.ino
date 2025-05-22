@@ -167,10 +167,10 @@ class SineWave : public AbstractWave {
 };
 #endif
 
-volatile float voltage1;
-volatile float voltage2;
-volatile float voltage3;
-volatile float voltage4;
+volatile uint32_t voltage1;
+volatile uint32_t voltage2;
+volatile uint32_t voltage3;
+volatile uint32_t voltage4;
 // Measurements.
 volatile uint16_t triangle_wave;
 volatile uint8_t  sq0_wave;
@@ -178,10 +178,10 @@ volatile uint8_t  sq1_wave;
 volatile float    sine_wave;
 
 void setup() {
-    voltage1 = 0xaaaaaaaa;
-    voltage2 = 0xbbbbbbbb;
-    voltage3 = 0xcccccccc;
-    voltage4 = 0xdddddddd;
+    voltage1 = 0xAAAAAAAA;
+    voltage2 = 0xBBBBBBBB;
+    voltage3 = 0xCCCCCCCC;
+    voltage4 = 0xDDDDDDDD;
 
     triangle_wave = 0xee;
     sq0_wave      = 0xff;
@@ -189,6 +189,7 @@ void setup() {
     sine_wave     = 0x88;
 
     startTime = millis();
+    Xcp_Init();
 }
 
 void loop() {

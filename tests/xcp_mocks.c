@@ -4,6 +4,18 @@
 
 #include "xcp.h"
 
+uint32_t start_marker;
+uint32_t voltage1;
+uint32_t voltage2;
+uint32_t voltage3;
+uint32_t voltage4;
+// Measurements.
+uint16_t triangle_wave;
+uint8_t  sq0_wave;
+uint8_t  sq1_wave;
+float    sine_wave;
+uint32_t end_marker;
+
 #if 0
 typedef struct {
     uint8_t value;
@@ -49,17 +61,21 @@ XCP_DAQ_DEFINE_EVENT(
 }
 
 void XcpTl_Init(void) {
-
 }
 
 void XcpHw_Init(void) {
-
+    printf("XcpHw_Init\n");
+    printf("start_marker: %p\n", &start_marker);
+    voltage1 = 0xaaaaaaaa;
+    voltage2 = 0xbbbbbbbb;
+    voltage3 = 0xccccccc;
+    voltage4 = 0xddddddd;
+    printf("voltage1: %p %f\n", &voltage1, voltage1);
+    triangle_wave = 0xee;
+    sq0_wave      = 0xff;
+    sq1_wave      = 0x99;
+    sine_wave     = 0x88;
 }
-
-#if 0
-void XcpDaq_TransmitDtos(void) {
-}
-#endif
 
 void XcpHw_AcquireLock(uint8_t lockIdx) {
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
@@ -74,22 +90,38 @@ void XcpHw_ReleaseLock(uint8_t lockIdx) {
 }
 
 void XcpTl_SaveConnection() {
-
 }
 
 void XcpTl_ReleaseConnection() {
-
 }
 
 void XcpHw_Sleep(uint64_t usec) {
     //    delayMicroseconds(usec);
 }
 
+void Hexdump(uint8_t const *buf, uint16_t sz) {
+    uint16_t idx;
+
+    for (idx = UINT16(0); idx < sz; ++idx) {
+        printf("%02X ", buf[idx]);
+    }
+    printf("\n\r");
+}
+
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
-
+    printf("Send: %d bytes [%p]\n", len, buf);
+    Hexdump(buf, len);
     XCP_TL_LEAVE_CRITICAL();
 }
 
 void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
+}
+
+char *data_start() {
+    return (char *)&start_marker;
+}
+
+char *data_end() {
+    return (char *)&end_marker;
 }
