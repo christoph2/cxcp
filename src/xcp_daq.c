@@ -366,7 +366,9 @@ XcpDaq_ListStateType *XcpDaq_GetListState(XcpDaq_ListIntegerType daqListNumber) 
 #endif
 }
 
-void XcpDaq_SetListMode(XcpDaq_ListIntegerType daqListNumber, uint8_t mode, uint16_t eventChannelNumber,uint8_t prescaler, uint8_t priority) {
+void XcpDaq_SetListMode(
+    XcpDaq_ListIntegerType daqListNumber, uint8_t mode, uint16_t eventChannelNumber, uint8_t prescaler, uint8_t priority
+) {
     XcpDaq_ListStateType *entry = XcpDaq_GetListState(daqListNumber);
 
     XcpDaq_AddEventChannel(daqListNumber, eventChannelNumber);
@@ -377,9 +379,9 @@ void XcpDaq_SetListMode(XcpDaq_ListIntegerType daqListNumber, uint8_t mode, uint
     entry->mode = XcpUtl_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_SELECTED);
     entry->mode = XcpUtl_SetResetBit8(entry->mode, mode, XCP_DAQ_LIST_MODE_STARTED);
 
-    #if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
+#if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
     entry->prescaler = prescaler;
-    #endif /* XCP_DAQ_ENABLE_PRESCALER */
+#endif /* XCP_DAQ_ENABLE_PRESCALER */
 }
 
 void XcpDaq_SetPointer(
@@ -393,25 +395,24 @@ void XcpDaq_SetPointer(
     Xcp_State->daqPointer.odtEntry = odtEntryNumber;
 }
 
-
 void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xcp_PointerSizeType address) {
-    XcpDaq_ODTEntryType *entry = XCP_NULL;
-    Xcp_StateType *Xcp_State = XCP_NULL;
+    XcpDaq_ODTEntryType *entry     = XCP_NULL;
+    Xcp_StateType       *Xcp_State = XCP_NULL;
 
-    Xcp_State                      = Xcp_GetState();
+    Xcp_State = Xcp_GetState();
 
     DBG_TRACE5("\tentry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", address, adddrExt, elemSize, bitOffset);
 
     entry = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
 
-    #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
+#if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
     entry->bitOffset = bitOffset;
-    #endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
+#endif /* XCP_DAQ_ENABLE_BIT_OFFSET */
     entry->length      = elemSize;
     entry->mta.address = address;
-    #if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
+#if XCP_DAQ_ADDR_EXT_SUPPORTED == XCP_ON
     entry->mta.ext = adddrExt;
-    #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
+#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
     /* Advance ODT entry pointer within one and the same ODT.
      * After writing to the last ODT entry of an ODT, the value
@@ -635,8 +636,8 @@ void XcpDaq_StopAllLists(void) {
     XcpDaq_StartStopLists(DAQ_LIST_TRANSITION_STOP);
 }
 
-void XcpDaq_StartStopSingleList(XcpDaq_ListIntegerType daqListNumber, uint8_t mode)  {
-    XcpDaq_ListStateType        *list_state         = XCP_NULL;
+void XcpDaq_StartStopSingleList(XcpDaq_ListIntegerType daqListNumber, uint8_t mode) {
+    XcpDaq_ListStateType *list_state = XCP_NULL;
 
     list_state = XcpDaq_GetListState(daqListNumber);
 
@@ -776,7 +777,7 @@ void XcpDaq_QueueInit(void) {
 }
 
 XCP_STATIC bool XcpDaq_QueueFull(void) {
-    return ((XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1)) == XcpDaq_Queue.tail;
+    return ((XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE)) == XcpDaq_Queue.tail;
 }
 
 bool XcpDaq_QueueEmpty(void) {
@@ -797,7 +798,7 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
     }
 
     XcpUtl_MemCopy(XcpDaq_QueueDTOs[XcpDaq_Queue.head].data, data, len);
-    XcpDaq_Queue.head = (XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1);
+    XcpDaq_Queue.head = (XcpDaq_Queue.head + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE);
     return (bool)XCP_TRUE;
 }
 
@@ -814,7 +815,7 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
     }
     *len = dto_len;
     XcpUtl_MemCopy(data, XcpDaq_QueueDTOs[XcpDaq_Queue.tail].data, dto_len);
-    XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE + 1);
+    XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE);
     return (bool)XCP_TRUE;
 }
 

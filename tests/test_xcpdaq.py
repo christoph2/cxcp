@@ -200,9 +200,9 @@ def test_daq_queue_enq_deq_with_wraparound(xcp):
         (13, 13),
         (14, 14),
         (15, 15),
-        (16, 16),
         (0, 0),
         (1, 1),
+        (2, 2),
     )
     xcpdaq_queue_init()
     for idx in range(16 + 1):
@@ -220,7 +220,7 @@ def test_daq_queue_empty(xcp):
 
 def test_daq_queue_full(xcp):
     xcpdaq_queue_init()
-    for _ in range(16):
+    for _ in range(15):
         assert daq_enqueue(b"test") == True    # b"test data"
     assert daq_enqueue(b"test") == False
 
