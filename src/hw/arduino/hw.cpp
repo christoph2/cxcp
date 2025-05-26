@@ -71,12 +71,14 @@ void XcpHw_AcquireLock(uint8_t lockIdx) {
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
+    noInterrupts();
 }
 
 void XcpHw_ReleaseLock(uint8_t lockIdx) {
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
+    interrupts();
 }
 
 void XcpHw_Sleep(uint64_t usec) {

@@ -1,7 +1,7 @@
 
 
 #include <math.h>
-#include <stdint.h>
+// #include <stdint.h>
 
 #include "xcp.h"
 
@@ -31,14 +31,14 @@ XCP_DAQ_DEFINE_EVENT(
 volatile uint16_t triangle_min = 0x00;
 volatile uint16_t triangle_max = 0xff;
 
-unsigned long startTime;
-unsigned long elapsedTime;
+unsigned long time_point;
+unsigned long elapsed_time;
 
-#if 0
 class AbstractWave {
    public:
 
-    explicit AbstractWave(uint16_t min = 0x00, uint16_t max = 0xff) : m_wave(0), m_min(min), m_max(max), m_observers(32) {
+    explicit AbstractWave(uint16_t min = 0x00, uint16_t max = 0xff, uint8_t increment = 1) :
+        m_counter(0), m_min(min), m_max(max), m_increment(increment) {
     }
 
     virtual ~AbstractWave() {
@@ -49,20 +49,7 @@ class AbstractWave {
     virtual void step() noexcept {};
 
     uint16_t get_value() const noexcept {
-        return m_wave;
-    }
-
-    void register_observer(AbstractWave *slave_wave) noexcept {
-        m_observers.append(slave_wave);
-    }
-
-    void notify_observers() noexcept {
-        m_observers.notify(m_wave);
-    #if 0
-        for (auto element : m_observers) {
-            element->update(m_wave);
-        }
-    #endif
+        return m_counter;
     }
 
     virtual void update(uint16_t value) noexcept {
@@ -70,43 +57,130 @@ class AbstractWave {
 
    protected:
 
-    uint16_t                  m_wave;
-    uint16_t                  m_min;
-    uint16_t                  m_max;
-    Observers<AbstractWave *> m_observers;
+    uint16_t m_counter;
+    uint16_t m_min;
+    uint16_t m_max;
+    uint8_t  m_increment;
 };
 
 class TriangleWave : public AbstractWave {
    public:
 
-    explicit TriangleWave(uint16_t min = 0x00, uint16_t max = 0xff) : AbstractWave(min, max), m_positive(true) {
+    explicit TriangleWave(uint16_t min = 0x00, uint16_t max = 0xff, uint8_t increment = 1) :
+        AbstractWave(min, max, increment), m_positive(true) {
     }
 
     void step() noexcept override {
         if (m_positive) {
-            m_wave++;
-            if (m_wave >= m_max) {
+            m_counter += m_increment;
+            if (m_counter >= m_max) {
                 m_positive = false;
-                m_wave     = m_max;
+                m_counter  = m_max;
             }
         } else {
-            m_wave--;
-            if (m_wave <= m_min) {
+            m_counter -= m_increment;
+            if (m_counter <= m_min) {
                 m_positive = true;
-                m_wave     = m_min;
+                m_counter  = m_min;
             }
         }
-        notify_observers();
+        // notify_observers();
     }
 
     bool m_positive;
 };
 
+////////////////////////////////
+
+// Subject class.
+template<typename Ty, size_t C>
+class Subject {
+   public:
+
+    void         Attach(const Ty& observer);
+    void         Detach(const Ty& observer);
+    void         Notify();
+    virtual void Update(int value) = 0;
+
+   protected:
+
+    Ty observers[C];
+};
+
+#if 0
+// Concrete Subject class.
+class ConcreteSubject : public Subject {
+public:
+    void Update(int value) override {
+        this->value = value;
+        Notify();
+    }
+
+    int GetValue() const {
+        return value;
+    }
+
+private:
+    int value;
+};
+
+
+// Observer class.
+class Observer {
+public:
+    virtual void OnUpdate(int value) = 0;
+
+protected:
+    // Subject<AbstractWave, 4> subject;
+};
+
+// Concrete Observer class.
+class ConcreteObserver : public Observer {
+public:
+    ConcreteObserver(Subject* subject) : subject(subject) {
+        subject->Attach(this);
+    }
+
+    void OnUpdate(int value) override {
+        // std::cout << "ConcreteObserver received update: " << value << std::endl;
+    }
+};
+
+// Subject implementation.
+void Subject::Attach(Observer* observer) {
+    observers.push_back(observer);
+}
+
+void Subject::Detach(Observer* observer) {
+    observers.erase(std::remove(observers.begin(), observers.end(), observer), observers.end());
+}
+
+void Subject::Notify() {
+    for (Observer* observer : observers) {
+        observer->OnUpdate(GetValue());
+    }
+}
+
+// Usage example.
+int main() {
+    ConcreteSubject subject;
+    ConcreteObserver observer1(&subject);
+    ConcreteObserver observer2(&subject);
+
+    subject.Update(10);
+    subject.Update(20);
+
+    return 0;
+}
+#endif
+/////////////////////////////////
+
+#if 0
 class SquareWave : public AbstractWave {
    public:
 
-    SquareWave(AbstractWave *wave, uint16_t level, uint16_t skew = 0U, bool raising_edge = true) :
-        AbstractWave(0x00, 0xffff), m_level(level), m_skew(skew), m_raising_edge(raising_edge), m_queue(skew) {
+    SquareWave(AbstractWave *wave, uint16_t level, uint16_t skew = 0U, uint8_t increment, bool raising_edge = true) :
+        AbstractWave(0x00, 0xffff, increment), m_level(level), m_skew(skew), m_raising_edge(raising_edge), m_queue(skew) {
         wave->register_observer(this);
         if (skew > 0U) {
             prefill_queue(skew, 0x0000u);
@@ -120,9 +194,9 @@ class SquareWave : public AbstractWave {
             value = tmp_value;
         }
         if (value >= m_level) {
-            m_wave = m_raising_edge ? m_max : m_min;
+            m_counter = m_raising_edge ? m_max : m_min;
         } else {
-            m_wave = m_raising_edge ? m_min : m_max;
+            m_counter = m_raising_edge ? m_min : m_max;
         }
     }
 
@@ -143,8 +217,8 @@ class SquareWave : public AbstractWave {
 class SineWave : public AbstractWave {
    public:
 
-    SineWave(AbstractWave *wave, uint16_t steps, float amplitude, bool symetrical = true) :
-        AbstractWave(0x00, 0xffff), m_steps(steps), m_amplitude(amplitude), m_symetrical(symetrical), m_angle(0.0f), m_value(0.0f) {
+    SineWave(AbstractWave *wave, uint16_t steps, float amplitude, uint8_t increment, bool symetrical = true) :
+        AbstractWave(0x00, 0xffff, increment), m_steps(steps), m_amplitude(amplitude), m_symetrical(symetrical), m_angle(0.0f), m_value(0.0f) {
         wave->register_observer(this);
     }
 
@@ -175,35 +249,55 @@ volatile uint32_t voltage4;
 volatile uint16_t triangle_wave;
 volatile uint8_t  sq0_wave;
 volatile uint8_t  sq1_wave;
-volatile float    sine_wave;
+
+auto tri0 = TriangleWave(0, 0xff, 1);
+auto tri1 = TriangleWave(0, 0xff, 2);
+auto tri2 = TriangleWave(0, 0xff, 4);
+auto tri3 = TriangleWave(0, 0xff, 8);
 
 void setup() {
+#if 0
     voltage1 = 0xAAAAAAAA;
     voltage2 = 0xBBBBBBBB;
     voltage3 = 0xCCCCCCCC;
     voltage4 = 0xDDDDDDDD;
-
+#endif
     triangle_wave = 0xee;
-    sq0_wave      = 0xff;
+    sq0_wave      = 0xaa;
     sq1_wave      = 0x99;
-    sine_wave     = 0x88;
 
-    startTime = millis();
+    time_point = micros();
     Xcp_Init();
 }
 
 void loop() {
+    unsigned long start = 0;
+    unsigned long stop  = 0;
+
     XcpTl_MainFunction();
     Xcp_MainFunction();
     // #if 0
-    if ((millis() - startTime) >= 10) {
-        startTime = millis();
+    if ((micros() - time_point) >= 10 * 1000) {
+        time_point = micros();
+        start      = micros();
+        tri0.step();
+        tri1.step();
+        tri2.step();
+        tri3.step();
+
+        voltage1 = static_cast<uint32_t>(tri0.get_value());
+        voltage2 = static_cast<uint32_t>(tri1.get_value());
+        voltage3 = static_cast<uint32_t>(tri2.get_value());
+        voltage4 = static_cast<uint32_t>(tri3.get_value());
         // triangle.step();
         // triangle_wave = triangle.get_value();
         // sq0_wave      = static_cast<uint8_t>(square0.get_value());
         // sq1_wave      = static_cast<uint8_t>(square1.get_value());
         // sine_wave     = sin0.get_float_value();
         XcpDaq_TriggerEvent(0);
+        stop         = micros();
+        elapsed_time = stop - start;
+        time_point -= elapsed_time;
     }
     // #endif
 }
