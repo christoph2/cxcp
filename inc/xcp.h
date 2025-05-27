@@ -513,7 +513,7 @@ extern "C" {
     #define XCP_ON_CAN_STRIP_IDENTIFIER(i)       ((i) & (~XCP_ON_CAN_EXT_IDENTIFIER))
 
     /*
-    **
+    ** Synchronization macros.
     */
     #define XCP_HW_LOCK_XCP UINT8(0)
     #define XCP_HW_LOCK_TL  UINT8(1)
@@ -521,6 +521,23 @@ extern "C" {
     #define XCP_HW_LOCK_HW  UINT8(3)
 
     #define XCP_HW_LOCK_COUNT UINT8(4)
+
+    #define XCP_ENTER_CRITICAL()     XcpHw_AcquireLock(XCP_HW_LOCK_XCP)
+    #define XCP_LEAVE_CRITICAL()     XcpHw_ReleaseLock(XCP_HW_LOCK_XCP)
+    #define XCP_HW_ENTER_CRITICAL()  XcpHw_AcquireLock(XCP_HW_LOCK_HW)
+    #define XCP_HW_LEAVE_CRITICAL()  XcpHw_ReleaseLock(XCP_HW_LOCK_HW)
+    #define XCP_TL_ENTER_CRITICAL()  XcpHw_AcquireLock(XCP_HW_LOCK_TL)
+    #define XCP_TL_LEAVE_CRITICAL()  XcpHw_ReleaseLock(XCP_HW_LOCK_TL)
+    #define XCP_DAQ_ENTER_CRITICAL() XcpHw_AcquireLock(XCP_HW_LOCK_DAQ)
+    #define XCP_DAQ_LEAVE_CRITICAL() XcpHw_ReleaseLock(XCP_HW_LOCK_DAQ)
+    #define XCP_STIM_ENTER_CRITICAL()
+    #define XCP_STIM_LEAVE_CRITICAL()
+    #define XCP_PGM_ENTER_CRITICAL()
+    #define XCP_PGM_LEAVE_CRITICAL()
+    #define XCP_CAL_ENTER_CRITICAL()
+    #define XCP_CAL_LEAVE_CRITICAL()
+    #define XCP_PAG_ENTER_CRITICAL()
+    #define XCP_PAG_LEAVE_CRITICAL()
 
     /*
      * Interface defaults.
