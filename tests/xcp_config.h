@@ -210,6 +210,8 @@
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
         #define XCP_TRANSPORT_LAYER               XCP_ON_SXI
+        #define XCP_ON_SXI_BITRATE                (38400)
+        #define XCP_ON_SXI_CONFIG	              (SERIAL_8N1)
         #define XCP_MAX_CTO                       (64)
         #define XCP_MAX_DTO                       (64)
         #define XCP_TRANSPORT_LAYER_LENGTH_SIZE   (2)

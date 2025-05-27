@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2024 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -63,7 +63,7 @@ static void XcpTl_ResetSM(void);
 static void XcpTl_SignalTimeout(void);
 
 void XcpTl_Init(void) {
-    Serial.begin(115000);
+    Serial.begin(XCP_ON_SXI_BITRATE, XCP_ON_SXI_CONFIG);
     XcpTl_ResetSM();
     XcpTl_TimeoutInit(TIMEOUT_VALUE, XcpTl_ResetSM);
 }

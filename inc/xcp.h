@@ -106,6 +106,14 @@ extern "C" {
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
+        #if !defined(XCP_ON_SXI_BITRATE)
+            #define XCP_ON_SXI_BITRATE                (38400)
+        #endif    /* XCP_ON_SXI_BITRATE */
+
+        #if !defined(XCP_ON_SXI_CONFIG)
+            #define XCP_ON_SXI_CONFIG	              (SERIAL_8N1)
+        #endif    /* XCP_ON_SXI_CONFIG */
+
         #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
              (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
             #define XCP_ENABLE_TRANSPORT_LAYER_CMD (XCP_ON)
