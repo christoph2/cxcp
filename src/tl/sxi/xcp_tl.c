@@ -154,10 +154,11 @@ void XcpTl_ReleaseConnection(void) {
 }
 
 void XcpTl_PrintConnectionInformation(void) {
-    printf("\nXCPonSxi\n"
-           //       ; DEFAULT_PORT,
-           //       Xcp_Options.tcp ? "TCP" : "UDP",
-           //       Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+    printf(
+        "\nXCPonSxi\n"
+        //       ; DEFAULT_PORT,
+        //       Xcp_Options.tcp ? "TCP" : "UDP",
+        //       Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
 }
 
