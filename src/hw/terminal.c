@@ -263,8 +263,10 @@ static void SystemInformation(void) {
     printf("CROs busy       : %d\n\r", state->statistics.crosBusy);
     printf("CROs send       : %d\n\r", state->statistics.crosSend);
 #endif /* XCP_ENABLE_STATISTICS */
-    printf("---------------------------------------------------------------------"
-           "----------\n\r");
+    printf(
+        "---------------------------------------------------------------------"
+        "----------\n\r"
+    );
 }
 
 static void DisplayHelp(void) {
@@ -281,8 +283,10 @@ void FlsEmu_Info(void) {
 
     printf("\n\rFlash-Emulator\n\r");
     printf("--------------\n\r");
-    printf("Segment              Mapped Virtual      Size(KB) Pagesize(KB) "
-           "#Pages\n\r");
+    printf(
+        "Segment              Mapped Virtual      Size(KB) Pagesize(KB) "
+        "#Pages\n\r"
+    );
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
         ptr     = FlsEmu_BasePointer(idx);
         segment = FlsEmu_GetConfig()->segments[idx];
@@ -362,8 +366,10 @@ void XcpDaq_PrintDAQDetails(void) {
         printf("                          -------------\n\r");
         printf("                          %-5d Byte(s)\n\r", total);
     }
-    printf("---------------------------------------------------------------------"
-           "----------\n\r");
+    printf(
+        "---------------------------------------------------------------------"
+        "----------\n\r"
+    );
 }
 
 void XcpDaq_Info(void) {
