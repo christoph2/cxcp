@@ -69,9 +69,7 @@ typedef enum tagXcpDaq_AllocTransitionType {
     XCP_CALL_ALLOC_DAQ,
     XCP_CALL_ALLOC_ODT,
     XCP_CALL_ALLOC_ODT_ENTRY
-} XcpDaq_AllocTransitionype;
-
-typedef enum tagXcpDaq_AllocTransitionType XcpDaq_AllocTransitionType;
+} XcpDaq_AllocTransitionType;
 
 
 typedef enum tagXcpDaq_ListTransitionType {
@@ -91,7 +89,7 @@ void            XcpDaq_PrintDAQDetails(void);
 XCP_STATIC void XcpDaq_StartStopLists(XcpDaq_ListTransitionType transition);
 XCP_STATIC void XcpDaq_InitMessageQueue(void);
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
-XCP_STATIC bool                   XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition);
+XCP_STATIC bool                   XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionType transition);
 XCP_STATIC XcpDaq_ListIntegerType XcpDaq_GetDynamicListCount(void);
 #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
@@ -251,7 +249,7 @@ Xcp_ReturnType XcpDaq_AllocOdtEntry(
     return result;
 }
 
-XCP_STATIC bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionype transition) {
+XCP_STATIC bool XcpDaq_AllocValidateTransition(XcpDaq_AllocTransitionType transition) {
     /* printf("STATE: %u TRANSITION: %u\n", XcpDaq_AllocState, transition); */
     if (XcpDaq_AllocTransitionTable[XcpDaq_AllocState][transition] == UINT8(DAQ_ALLOC_OK)) {
         return (bool)XCP_TRUE;
