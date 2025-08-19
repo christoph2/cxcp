@@ -85,27 +85,32 @@ void XcpTl_Init(void) {
     ret               = getaddrinfo(NULL, port, &hints, &addr_info);
 
     if (ret != 0) {
-        XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", errno);
+        XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", ret);
         return;
     }
 
     sock = socket(addr_info->ai_family, addr_info->ai_socktype, addr_info->ai_protocol);
     if (sock == -1) {
         XcpHw_ErrorMsg("XcpTl_Init::socket()", errno);
+        freeaddrinfo(addr_info);
         return;
     }
     if (bind(sock, addr_info->ai_addr, addr_info->ai_addrlen) == -1) {
         XcpHw_ErrorMsg("XcpTl_Init::bind()", errno);
+        close(sock);
+        freeaddrinfo(addr_info);
         return;
     }
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (listen(sock, 1) == -1) {
             XcpHw_ErrorMsg("XcpTl_Init::listen()", errno);
+            close(sock);
+            freeaddrinfo(addr_info);
             return;
         }
     }
 
-    memcpy(&XcpTl_Connection.localAddress, &addr_info->ai_addr, sizeof(XcpTl_Connection.localAddress));
+    memcpy(&XcpTl_Connection.localAddress, addr_info->ai_addr, addr_info->ai_addrlen);
 
     XcpTl_Connection.boundSocket = sock;
     freeaddrinfo(addr_info);
@@ -115,7 +120,10 @@ void XcpTl_Init(void) {
 }
 
 void XcpTl_DeInit(void) {
-    close(XcpTl_Connection.boundSocket);
+    if (XcpTl_Connection.boundSocket >= 0) {
+        close(XcpTl_Connection.boundSocket);
+        XcpTl_Connection.boundSocket = -1;
+    }
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2024 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -70,6 +70,9 @@ typedef enum tagXcpDaq_AllocTransitionType {
     XCP_CALL_ALLOC_ODT,
     XCP_CALL_ALLOC_ODT_ENTRY
 } XcpDaq_AllocTransitionype;
+
+typedef enum tagXcpDaq_AllocTransitionType XcpDaq_AllocTransitionType;
+
 
 typedef enum tagXcpDaq_ListTransitionType {
     DAQ_LIST_TRANSITION_START,

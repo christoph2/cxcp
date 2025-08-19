@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2023 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -96,9 +96,9 @@ void XcpHw_PosixInit(void) {
 void XcpHw_Deinit(void) {
     XcpHw_DeinitLocks();
     pthread_cond_destroy(&XcpHw_TransmissionEvent);
-    pthread_cond_destroy(&XcpHw_TransmissionEvent);
     pthread_mutex_destroy(&XcpHw_TransmissionMutex);
 }
+
 
 static void XcpHw_InitLocks(void) {
     uint8_t idx = UINT8(0);
@@ -133,15 +133,21 @@ void XcpHw_ReleaseLock(uint8_t lockIdx) {
 void XcpHw_SignalTransmitRequest(void) {
     pthread_mutex_lock(&XcpHw_TransmissionMutex);
     pthread_cond_signal(&XcpHw_TransmissionEvent);
+    pthread_mutex_unlock(&XcpHw_TransmissionMutex);
 }
 
+
 void XcpHw_WaitTransmitRequest(void) {
+    pthread_mutex_lock(&XcpHw_TransmissionMutex);
     pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
+    pthread_mutex_unlock(&XcpHw_TransmissionMutex);
 }
+
 
 void XcpHw_ErrorMsg(char * const fun, int errorCode) {
     fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
 }
+
 
 void XcpHw_Sleep(uint64_t usec) {
     usleep(usec);

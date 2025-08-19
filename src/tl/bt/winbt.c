@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2021-2025 by Christoph Schueler <github.com/Christoph2,
  *                                 cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -50,6 +50,7 @@ void XcpTl_Init(void) {
     GUID        Xcp_ServiceID = ASAM_XCP_ON_BT_GUID;
     WSAQUERYSET service;
     CSADDR_INFO csAddr;
+    bool        winsock_ok = false;
 
     ZeroMemory(&service, sizeof(service));
     ZeroMemory(&csAddr, sizeof(csAddr));
@@ -60,11 +61,16 @@ void XcpTl_Init(void) {
 
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         XcpHw_ErrorMsg("XcpTl_Init:WSAStartup()", WSAGetLastError());
-        exit(EXIT_FAILURE);
+        /* Kein exit() hier: aufruferseitiges Fehlerhandling erlauben. */
+        return;
     } else {
+        winsock_ok = true;
         XcpTl_Connection.boundSocket = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
         if (XcpTl_Connection.boundSocket == INVALID_SOCKET) {
             XcpHw_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
+            if (winsock_ok) {
+                WSACleanup();
+            }
             return;
         }
     }
@@ -91,11 +97,21 @@ void XcpTl_Init(void) {
 
     if (getsockname(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_LocalBtAddress, &size) == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Init::getsockname()", WSAGetLastError());
+        closesocket(XcpTl_Connection.boundSocket);
+        XcpTl_Connection.boundSocket = INVALID_SOCKET;
+        if (winsock_ok) {
+            WSACleanup();
+        }
         return;
     }
 
     if (listen(XcpTl_Connection.boundSocket, 1) == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Init::listen()", WSAGetLastError());
+        closesocket(XcpTl_Connection.boundSocket);
+        XcpTl_Connection.boundSocket = INVALID_SOCKET;
+        if (winsock_ok) {
+            WSACleanup();
+        }
         return;
     }
 
@@ -113,21 +129,46 @@ void XcpTl_Init(void) {
 
     if (WSASetService(&service, RNRSERVICE_REGISTER, 0) == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Init::WSASetService()", WSAGetLastError());
+        /* Kein Abbruch: BT-Dienst nicht registriert, jedoch weiter lauschend. */
     }
 }
 
 void XcpTl_DeInit(void) {
-    closesocket(XcpTl_Connection.boundSocket);
+    /* Optional: Dienst deregistrieren; hier minimal closing. */
+    if (XcpTl_Connection.connectedSocket != INVALID_SOCKET && XcpTl_Connection.connectedSocket != 0) {
+        closesocket(XcpTl_Connection.connectedSocket);
+        XcpTl_Connection.connectedSocket = INVALID_SOCKET;
+    }
+    if (XcpTl_Connection.boundSocket != INVALID_SOCKET && XcpTl_Connection.boundSocket != 0) {
+        closesocket(XcpTl_Connection.boundSocket);
+        XcpTl_Connection.boundSocket = INVALID_SOCKET;
+    }
     WSACleanup();
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
+    if (buf == NULL || len == 0) {
+        return;
+    }
+    if (len > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) {
+        XcpHw_ErrorMsg("XcpTl_Send: length exceeds TL buffer", EINVAL);
+        return;
+    }
+    if (XcpTl_Connection.connectedSocket == INVALID_SOCKET || XcpTl_Connection.connectedSocket == 0) {
+        XcpHw_ErrorMsg("XcpTl_Send: no connected socket", ENOTCONN);
+        return;
+    }
+
     XCP_TL_ENTER_CRITICAL();
 
-    if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
+    int sent = send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0);
+    if (sent == SOCKET_ERROR) {
         XcpHw_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
-        closesocket(XcpTl_Connection.connectedSocket);
+        /* Verbindung nicht hart schließen – Caller entscheidet über Reconnect. */
+    } else if (sent != (int)len) {
+        XcpHw_ErrorMsg("XcpTl_Send: short send", EIO);
     }
+
     XCP_TL_LEAVE_CRITICAL();
 }
 
@@ -146,7 +187,7 @@ static void PrintBthAddr(SOCKADDR_BTH *addr) {
     mac[2] = (addr->btAddr >> 24) & 0xff;
     mac[3] = (addr->btAddr >> 16) & 0xff;
     mac[4] = (addr->btAddr >> 8) & 0xff;
-    mac[5] = (addr->btAddr) & 0xff;
+    mac[5] = (uint8_t)((addr->btAddr) & 0xff);
 
     for (idx = 0; idx < 6; ++idx) {
         printf("%02X", mac[idx]);

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2021-2022 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2021-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -64,7 +64,7 @@ typedef bool atomic_bool;
 
 #define NUM_THREADS (4)
 
-typedef void (*XcpThrd_ThreadFuncType)(void *);
+typedef void *(*XcpThrd_ThreadFuncType)(void *);
 
 #if defined(_WIN32)
 typedef HANDLE XcpThrd_ThreadType;
@@ -86,34 +86,61 @@ static atomic_bool XcpThrd_ShuttingDown;
 
 void bye(void);
 
-static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd, XcpThrd_ThreadFuncType func) {
 #if defined(_WIN32)
-    XcpThrd_ThreadType res;
-    res = (HANDLE)_beginthread(func, 0, NULL);
-    CopyMemory(thrd, &res, sizeof(XcpThrd_ThreadType));
-    XcpThrd_SetAffinity(res, 1);
-#else
-    pthread_create(thrd, NULL, func, NULL);
-    XcpThrd_SetAffinity(thrd, 1);
+static unsigned __stdcall XcpThrd_WinTrampoline(void *arg) {
+    XcpThrd_ThreadFuncType func = (XcpThrd_ThreadFuncType)arg;
+    (void)func(NULL);
+    return 0U;
+}
 #endif
+
+
+static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd, XcpThrd_ThreadFuncType func) {
+    #if defined(_WIN32)
+    HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, XcpThrd_WinTrampoline, (void *)func, 0, NULL);
+    if (hThread == NULL) {
+        XcpHw_ErrorMsg("_beginthreadex()", GetLastError());
+        return;
+    }
+    CopyMemory(thrd, &hThread, sizeof(XcpThrd_ThreadType));
+    XcpThrd_SetAffinity(hThread, 1);
+    #else
+    int rc = pthread_create(thrd, NULL, func, NULL);
+    if (rc != 0) {
+        XcpHw_ErrorMsg("pthread_create()", rc);
+        return;
+    }
+    XcpThrd_SetAffinity(*thrd, 1);
+    #endif
 }
 
 void XcpThrd_RunThreads(void) {
     atexit(bye);
 
+    XcpThrd_ShuttingDown = false;
+
     XcpThrd_CreateThread(&threads[UI_THREAD], XcpTerm_Thread);
     XcpThrd_CreateThread(&threads[TL_THREAD], XcpTl_Thread);
     XcpThrd_CreateThread(&threads[XCP_THREAD], Xcp_Thread);
-#if defined(_WIN32)
+    #if defined(_WIN32)
     WaitForSingleObject(threads[UI_THREAD], INFINITE);
     XcpThrd_ShutDown();
-#else
+    /* Warte auf die anderen Threads */
+    if (threads[TL_THREAD]) {
+        WaitForSingleObject(threads[TL_THREAD], INFINITE);
+    }
+    if (threads[XCP_THREAD]) {
+        WaitForSingleObject(threads[XCP_THREAD], INFINITE);
+    }
+    #else
     pthread_join(threads[UI_THREAD], NULL);
     XcpThrd_ShutDown();
-    pthread_kill(threads[TL_THREAD], SIGINT);
-    pthread_kill(threads[XCP_THREAD], SIGINT);
-#endif
+    /* Warte auf die anderen Threads */
+    pthread_join(threads[TL_THREAD], NULL);
+    pthread_join(threads[XCP_THREAD], NULL);
+    #endif
 }
+
 
 void XcpThrd_Exit(void) {
 #if defined(_WIN32)
@@ -126,23 +153,32 @@ void XcpThrd_Exit(void) {
 void *Xcp_Thread(void *param) {
     XCP_UNREFERENCED_PARAMETER(param);
     XCP_FOREVER {
+        if (XcpThrd_IsShuttingDown()) {
+            break;
+        }
         Xcp_MainFunction();
     }
     return NULL;
 }
 
-void XcpThrd_EnableAsyncCancellation(void) {
-#if defined(_WIN32)
 
-#else
+void XcpThrd_EnableAsyncCancellation(void) {
+    #if defined(_WIN32)
+    /* Keine direkte Entsprechung unter Windows, ggf. SetThreadPriority/Waitable-Mechanik verwenden. */
+    #else
     int res;
 
-    res = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    res = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_setcancelstate()", errno);
     }
-#endif
+    res = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    if (res != 0) {
+        XcpHw_ErrorMsg("pthread_setcanceltype()", errno);
+    }
+    #endif
 }
+
 
 void XcpThrd_ShutDown(void) {
     int res;
@@ -151,20 +187,29 @@ void XcpThrd_ShutDown(void) {
     if (XcpThrd_IsShuttingDown()) {
         return;
     }
-    // Due to blocking accept().
-#if defined(_WIN32)
+    XcpThrd_ShuttingDown = true;
+
+    /* TL-Thread aus Blockaden holen */
+    #if defined(_WIN32)
+    /* Fallback: hartes Beenden, wenn TL-Thread blockiert (accept/recv). */
     res = TerminateThread(threads[TL_THREAD], 0);
     if (!res) {
         XcpHw_ErrorMsg("TerminateThread", GetLastError());
     }
-#else
+    /* XCP-Thread läuft kooperativ aus (Flag oben gesetzt). */
+    #else
+    /* POSIX: asynchron canceln, anschließend joinen in RunThreads. */
     res = pthread_cancel(threads[TL_THREAD]);
     if (res != 0) {
-        XcpHw_ErrorMsg("pthread_cancel()", errno);
+        XcpHw_ErrorMsg("pthread_cancel(TL_THREAD)", errno);
     }
-#endif
-    XcpThrd_ShuttingDown = true;
+    res = pthread_cancel(threads[XCP_THREAD]);
+    if (res != 0) {
+        XcpHw_ErrorMsg("pthread_cancel(XCP_THREAD)", errno);
+    }
+    #endif
 }
+
 
 bool XcpThrd_IsShuttingDown(void) {
     return XcpThrd_ShuttingDown;
@@ -175,11 +220,12 @@ void bye(void) {
 }
 
 static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
-#if defined(_WIN32)
-    if (SetThreadAffinityMask(thrd, cpu) == 0) {
+    #if defined(_WIN32)
+    DWORD_PTR mask = (cpu <= 0) ? 1ULL : (1ULL << cpu);
+    if (SetThreadAffinityMask(thrd, mask) == 0) {
         XcpHw_ErrorMsg("SetThreadAffinityMask()", GetLastError());
     }
-#else
+    #else
 
     #if !defined(__APPLE__)
     /* Linux only (i.e. no BSD) ??? */
@@ -188,7 +234,7 @@ static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
     cpu_set_t cpuset;
 
     CPU_ZERO(&cpuset);
-    CPU_SET(0, &cpuset);
+    CPU_SET(cpu, &cpuset);
 
     res = pthread_setaffinity_np(thrd, sizeof(cpu_set_t), &cpuset);
     if (res != 0) {
@@ -201,5 +247,7 @@ static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
     }
     #endif
 
-#endif
+    #endif
 }
+
+

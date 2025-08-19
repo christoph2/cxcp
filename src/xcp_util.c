@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -35,11 +35,15 @@ void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len)
     uint8_t const *ps = (uint8_t const *)src;
 
     XCP_ASSERT(dst != XCP_NULL);
-    // XCP_ASSERT(pd >= ps + len || ps >= pd + len);
-    XCP_ASSERT(len != 0UL);
+    XCP_ASSERT(src != XCP_NULL);
 
-    while (len--) {
-        *pd++ = *ps++;
+    if (dst == XCP_NULL || src == XCP_NULL || len == 0UL) {
+        return;
+    }
+
+
+    for (uint32_t i = 0U; i < len; ++i) {
+        pd[i] = ps[i];
     }
 }
 
@@ -47,9 +51,12 @@ void XcpUtl_MemSet(/*@out@*/ void *dest, uint8_t fill_char, uint32_t len) {
     uint8_t *p = (uint8_t *)dest;
 
     XCP_ASSERT(XCP_NULL != dest);
+    if (dest == XCP_NULL || len == 0UL) {
+        return;
+    }
 
-    while (len--) {
-        *p++ = fill_char;
+    for (uint32_t i = 0U; i < len; ++i) {
+        p[i] = fill_char;
     }
 }
 
@@ -60,10 +67,13 @@ bool XcpUtl_MemCmp(/*@in@*/ void const *lhs, /*@in@*/ void const *rhs, uint32_t 
     XCP_ASSERT(XCP_NULL != lhs);
     XCP_ASSERT(XCP_NULL != rhs);
 
-    if (len == UINT32(0)) {
+    if (lhs == XCP_NULL || rhs == XCP_NULL || len == UINT32(0)) {
         return XCP_FALSE;
     }
-    while ((*pl++ == *pr++) && (len != UINT32(0))) {
+
+    while (len && (*pl == *pr)) {
+        ++pl;
+        ++pr;
         --len;
     }
     return (bool)(len == UINT32(0));

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2023 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -165,7 +165,7 @@ static void Kv_Notification(int hnd, void *context, unsigned int notifyEvent) {
 }
 
 void XcpTl_Init(void) {
-    canStatus stat;
+    canStatus st;
     uint32_t  ts;
     // int code;
     // int ext;
@@ -179,6 +179,28 @@ void XcpTl_Init(void) {
     }
 
     XcpTl_Connection.handle = hnd;
+    XcpTl_Connection.boundSocket = -1; /* Not a socket; placeholder for channel handle mapping if used. */
+
+    /* Beispielhafte Initialisierung — mit robusten Fehlerpfaden. */
+    int chan = Xcp_Options.can_channel; /* Annahme: kommt aus Optionen. */
+    canHandle hnd = canOpenChannel(chan, canOPEN_REQUIRE_INIT_ACCESS);
+    if (hnd < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::canOpenChannel()", (int)hnd);
+        return;
+    }
+    st = canSetBusParams(hnd, Xcp_Options.can_bitrate, 0, 0, 0, 0, 0);
+    if (st != canOK) {
+        XcpHw_ErrorMsg("XcpTl_Init::canSetBusParams()", (int)st);
+        canClose(hnd);
+        return;
+    }
+    st = canBusOn(hnd);
+    if (st != canOK) {
+        XcpHw_ErrorMsg("XcpTl_Init::canBusOn()", (int)st);
+        canClose(hnd);
+        return;
+    }
+    XcpTl_Connection.connectedSocket = (SOCKET)hnd; /* Speicherung im Feld für spätere Nutzung. */
 
     stat = kvSetNotifyCallback(
         hnd, (kvCallback_t)&Kv_Notification, NULL,
@@ -210,6 +232,12 @@ void XcpTl_DeInit(void) {
     Kv_Check("canBusOff", stat);
     // stat = canClose(hnd);
     // Kv_Check("canClose", stat);
+    canHandle hnd = (canHandle)XcpTl_Connection.connectedSocket;
+    if (hnd > 0) {
+        (void)canBusOff(hnd);
+        (void)canClose(hnd);
+        XcpTl_Connection.connectedSocket = 0;
+    }
 }
 
 /*
@@ -281,6 +309,29 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     stat = canWrite(XcpTl_Connection.handle, id, (void *)buf, len, flag);
     Kv_Check("canWrite", stat);
     XCP_TL_LEAVE_CRITICAL();
+    if (buf == NULL || len == 0) {
+        return;
+    }
+    if (len > 8U) {
+        XcpHw_ErrorMsg("XcpTl_Send (Kvaser): DLC > 8 not supported", EINVAL);
+        return;
+    }
+    canHandle hnd = (canHandle)XcpTl_Connection.connectedSocket;
+    if (hnd <= 0) {
+        XcpHw_ErrorMsg("XcpTl_Send (Kvaser): channel not open", ENOTCONN);
+        return;
+    }
+    long id = Xcp_Options.can_id; /* Annahme: Standard-ID */
+    unsigned int dlc = (unsigned int)len;
+    canStatus st = canWrite(hnd, id, buf, dlc, 0);
+    if (st != canOK) {
+        XcpHw_ErrorMsg("XcpTl_Send::canWrite()", (int)st);
+        return;
+    }
+    st = canWriteSync(hnd, 100); /* 100 ms Timeout */
+    if (st != canOK) {
+        XcpHw_ErrorMsg("XcpTl_Send::canWriteSync()", (int)st);
+    }
 }
 
 void *XcpTl_Thread(void *param) {
@@ -346,4 +397,38 @@ void XcpTl_PrintConnectionInformation(void) {
         "\nXCPonCAN -- %s (channel %d), listening on 0x%X [%s]\n", name, num,
         XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
     );
+}
+
+void XcpTl_RxHandler(void) {
+    canHandle hnd = (canHandle)XcpTl_Connection.connectedSocket;
+    if (hnd <= 0) {
+        return;
+    }
+    long id;
+    unsigned int dlc = 0;
+    unsigned int flags = 0;
+    unsigned long time = 0;
+    uint8_t data[8];
+
+    while (1) {
+        canStatus st = canReadWait(hnd, &id, data, &dlc, &flags, &time, 0);
+        if (st == canERR_NOMSG) {
+            return;
+        }
+        if (st != canOK) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler::canReadWait()", (int)st);
+            return;
+        }
+        if (dlc > 8U) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler (Kvaser): DLC > 8", EPROTO);
+            continue;
+        }
+        if (dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler (Kvaser): DLC exceeds TL buffer", EOVERFLOW);
+            continue;
+        }
+        Xcp_CtoIn.len = (uint16_t)dlc;
+        XcpUtl_MemCopy(Xcp_CtoIn.data, data, dlc);
+        Xcp_DispatchCommand(&Xcp_CtoIn);
+    }
 }

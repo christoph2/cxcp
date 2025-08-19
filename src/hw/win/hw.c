@@ -45,6 +45,7 @@
 typedef struct tagHwStateType {
     LARGE_INTEGER StartingTime;
     LARGE_INTEGER TicksPerSecond;
+    bool          Initialized;
 } HwStateType;
 
 /*
@@ -123,22 +124,28 @@ void XcpHw_Init(void) {
     fflush(stdout);
     QueryPerformanceFrequency(&HwState.TicksPerSecond);
     QueryPerformanceCounter(&HwState.StartingTime);
+    HwState.Initialized = (HwState.TicksPerSecond.QuadPart != 0);
     XcpHw_InitLocks();
 }
 
 void XcpHw_Deinit(void) {
     XcpHw_DeinitLocks();
+    HwState.Initialized = false;
 }
 
 static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler) {
-    /* TODO: check initialisation state. */
     LARGE_INTEGER Now;
     LARGE_INTEGER Elapsed;
 
+    if (!HwState.Initialized || HwState.TicksPerSecond.QuadPart == 0 || prescaler == 0U) {
+        return 0ULL;
+    }
+
     QueryPerformanceCounter(&Now);
     Elapsed.QuadPart = Now.QuadPart - HwState.StartingTime.QuadPart;
-    Elapsed.QuadPart /= (HwState.TicksPerSecond.QuadPart / prescaler);
-    return Elapsed.QuadPart;
+    /* Avoid divide-by-zero and improve precision by multiplying first. */
+    Elapsed.QuadPart = (Elapsed.QuadPart * (int64_t)prescaler) / HwState.TicksPerSecond.QuadPart;
+    return (uint64_t)Elapsed.QuadPart;
 }
 
 uint32_t XcpHw_GetTimerCounter(void) {
@@ -192,11 +199,17 @@ void XcpHw_ReleaseLock(uint8_t lockIdx) {
 void XcpHw_ErrorMsg(char * const fun, int errorCode) {
     char buffer[1024];
 
-    FormatMessage(
-        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        buffer, 1024, NULL
+    ZeroMemory(buffer, sizeof(buffer));
+    DWORD len = FormatMessage(
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)errorCode,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buffer, (DWORD)sizeof(buffer), NULL
     );
+    if (len == 0) {
+        fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
+        return;
+    }
     fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
+
 }
 
 /*
@@ -211,7 +224,25 @@ void XcpHw_Sleep(uint64_t usec) {
     ZeroMemory(&ft, sizeof(LARGE_INTEGER));
     ft.QuadPart = -(10 * (int64_t)usec);
     timer       = CreateWaitableTimer(NULL, TRUE, NULL);
-    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+    if (timer == NULL) {
+        /* Fallback: millisekundengenau schlafen */
+        DWORD ms = (DWORD)(usec / 1000ULL);
+        if (ms == 0 && usec > 0) {
+            ms = 1;
+        }
+        Sleep(ms);
+        return;
+    }
+    if (!SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0)) {
+        CloseHandle(timer);
+        DWORD ms = (DWORD)(usec / 1000ULL);
+        if (ms == 0 && usec > 0) {
+            ms = 1;
+        }
+        Sleep(ms);
+        return;
+    }
     WaitForSingleObject(timer, INFINITE);
     CloseHandle(timer);
+
 }

@@ -81,8 +81,8 @@ static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
     uint8_t  header_buffer[8];
     uint8_t  bytes_remaining = XCP_ETH_HEADER_SIZE;
     uint8_t  offset          = 0;
-    uint8_t  nbytes          = 0;
-    uint16_t from_len        = sizeof(&XcpTl_Connection.currentAddress);
+    int      nbytes          = 0;
+    socklen_t from_len       = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
@@ -99,25 +99,27 @@ static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
                 return 0;
             }
         }
-        if (nbytes < 1) {
+        if (nbytes <= 0) {
             return nbytes;
         }
-        bytes_remaining -= nbytes;
+        bytes_remaining -= (uint8_t)nbytes;
         if (bytes_remaining == 0) {
             break;
         }
-        offset += nbytes;
+        offset = (uint8_t)(offset + nbytes);
     }
-    *len     = XCP_MAKEWORD(header_buffer[offset + 1], header_buffer[offset + 0]);
-    *counter = XCP_MAKEWORD(header_buffer[offset + 3], header_buffer[offset + 2]);
+
+    *len     = XCP_MAKEWORD(header_buffer[1], header_buffer[0]);
+    *counter = XCP_MAKEWORD(header_buffer[3], header_buffer[2]);
     return 1;
 }
+
 
 static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
     uint16_t bytes_remaining = len;
     uint16_t offset          = 0;
-    uint16_t nbytes          = 0;
-    uint16_t from_len        = sizeof(&XcpTl_Connection.currentAddress);
+    int      nbytes          = 0;
+    socklen_t from_len       = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
@@ -128,14 +130,14 @@ static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
             nbytes = recv(XcpTl_Connection.connectedSocket, (char *)data + offset, bytes_remaining, 0);
         }
-        if (nbytes < 1) {
+        if (nbytes <= 0) {
             return nbytes;
         }
-        bytes_remaining -= nbytes;
+        bytes_remaining = (uint16_t)(bytes_remaining - (uint16_t)nbytes);
         if (bytes_remaining == 0) {
             break;
         }
-        offset += nbytes;
+        offset = (uint16_t)(offset + (uint16_t)nbytes);
     }
     return 1;
 }
@@ -150,42 +152,51 @@ void XcpTl_RxHandler(void) {
     XCP_FOREVER {
         res = XcpTl_ReadHeader(&dlc, &counter);
         if (res == -1) {
-#if defined(_WIN32)
+            #if defined(_WIN32)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", WSAGetLastError());
-#elif defined(__unix__) || defined(__APPLE__)
+            #elif defined(__unix__) || defined(__APPLE__)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", errno);
-#endif
-            exit(2);
+            #endif
+            XcpTl_ReleaseConnection();
+            return;
         } else if (res == 0) {
             XcpTl_ReleaseConnection();
             return;
         }
+
+        /* DLC-Sanity-Check. */
+        if (dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE || dlc > (uint16_t)XCP_COMM_BUFLEN) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler: DLC too large", EINVAL);
+            XcpTl_ReleaseConnection();
+            return;
+        }
+
         if (!XcpThrd_IsShuttingDown()) {
             Xcp_CtoIn.len = dlc;
             res           = XcpTl_ReadData(&XcpTl_RxBuffer[0], dlc);
             if (res == -1) {
-#if defined(_WIN32)
+                #if defined(_WIN32)
                 XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
-#elif defined(__unix__) || defined(__APPLE__)
+                #elif defined(__unix__) || defined(__APPLE__)
                 XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", errno);
-#endif
-                exit(2);
+                #endif
+                XcpTl_ReleaseConnection();
+                return;
             } else if (res == 0) {
-                printf("Empty data\n");
+                /* Connection closed /no data. */
+                XcpTl_ReleaseConnection();
                 return;
             }
-#if 0
-            printf("\t[%02u] ", dlc);
-            XcpUtl_Hexdump(XcpTl_RxBuffer, dlc);
-#endif
             XCP_ASSERT_LE(dlc, XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE);
             XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
             Xcp_DispatchCommand(&Xcp_CtoIn);
         } else {
-            printf("shutting down\n");
+            /* Shutting down */
+            return;
         }
     }
 }
+
 
 static void XcpTl_Accept(void) {
     socklen_t               FromLen = 0;
@@ -196,24 +207,26 @@ static void XcpTl_Accept(void) {
 
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (!XcpTl_Connection.connected) {
-            FromLen = sizeof(From);
+            FromLen = (socklen_t)sizeof(From);
             XcpTl_Connection.connectedSocket =
                 accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
             if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
-#if defined(_WIN32)
+                #if defined(_WIN32)
                 err = WSAGetLastError();
                 if (err != WSAEINTR) {
-                    XcpHw_ErrorMsg("XcpTl_Accept::accept()", err); /* Not canceled by WSACancelBlockingCall(), i.e.
-                                                                      pthread_cancel()  */
+                    XcpHw_ErrorMsg("XcpTl_Accept::accept()", err);
                 }
-#elif defined(__unix__) || defined(__APPLE__)
+                #elif defined(__unix__) || defined(__APPLE__)
                 XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
-#endif
+                #endif
+            } else {
+                XcpTl_SaveConnection();
             }
         } else {
         }
     }
 }
+
 
 void XcpTl_TxHandler(void) {
 }

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -75,56 +75,98 @@ int locate_interface(int socket, char const * name) {
 }
 
 void XcpTl_Init(void) {
-    int                 enable_sockopt = 1;
-    int                 flags;
+    int ret = 0;
+    int sock = -1;
     struct sockaddr_can addr;
-    struct can_filter   rfilter[2];
+    struct ifreq ifr;
 
-    memset(&XcpTl_Connection, '\x00', sizeof(XcpTl_ConnectionType));
+    memset(&XcpTl_Connection, 0, sizeof(XcpTl_ConnectionType));
+    XcpTl_Connection.boundSocket = -1;
 
-    XcpTl_Connection.can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-    if (XcpTl_Connection.can_socket == -1) {
-        errno_abort("XcpTl_Init::socket()");
-    }
-    if (Xcp_Options.fd) {
-        if (setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_sockopt, sizeof(enable_sockopt)) ==
-            -1) {
-            errno_abort("Your kernel doesn't supports CAN-FD.\n\r");
-        }
-    }
-#if 0
-    flags = fcntl(XcpTl_Connection.can_socket, F_GETFL, 0);
-    if (flags == -1) {
-        errno_abort("fcntl(F_GETFL)");
-    }
-    flags |=  O_NONBLOCK;
-    if (fcntl(XcpTl_Connection.can_socket, F_SETFL, flags) == -1) {
-        errno_abort("fcntl(F_SETFL)");
-    }
-#endif
-    if (setsockopt(XcpTl_Connection.can_socket, SOL_SOCKET, SO_TIMESTAMP, &enable_sockopt, sizeof(enable_sockopt)) < 0) {
-        // Enable precision timestamps.
-        errno_abort("setsockopt(SO_TIMESTAMP)");
+    /*---[ socket(PF_CAN, SOCK_RAW, CAN_RAW) ]---*/
+    /* open socket */
+    sock = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    if (sock < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::socket(PF_CAN)", errno);
+        return;
     }
 
-    /* Select that CAN interface, and bind the socket to it. */
-    addr.can_family  = AF_CAN;
-    addr.can_ifindex = locate_interface(XcpTl_Connection.can_socket, Xcp_Options.can_interf);
-    bind(XcpTl_Connection.can_socket, (struct sockaddr*)&addr, sizeof(addr));
-    if (XcpTl_Connection.can_socket == -1) {
-        errno_abort("XcpTl_Init::bind()");
+    /*---[ setsockopt(..., CAN_RAW_FILTER, ...) ]---*/
+    /* setup filter */
+    struct can_filter rfilter[2];
+    rfilter[0].can_id = Xcp_Options.can_id; /* required due to the specification */
+    rfilter[0].can_mask = CAN_SFF_MASK;
+    rfilter[1].can_id = Xcp_Options.can_broadcast_id; /* required due to the specification */
+    rfilter[1].can_mask = CAN_SFF_MASK;
+    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+    if (ret < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_FILTER)", errno);
+        close(sock);
+        return;
     }
 
-    rfilter[0].can_id   = XCP_ON_CAN_INBOUND_IDENTIFIER;
-    rfilter[0].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER) ? CAN_EFF_FLAG : CAN_SFF_MASK;
-    rfilter[1].can_id   = XCP_ON_CAN_BROADCAST_IDENTIFIER;
-    rfilter[1].can_mask = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER) ? CAN_EFF_FLAG : CAN_SFF_MASK;
+    /*---[ setsockopt(..., CAN_RAW_ERR_FILTER, ...) ]---*/
+    /* error filter (only standard errors, no extended errors) */
+    can_err_mask_t err_mask = (CAN_ERR_TX_TIMEOUT | CAN_ERR_BUSOFF | CAN_ERR_BUS_ERROR);
+    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask));
+    if (ret < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_ERR_FILTER)", errno);
+        close(sock);
+        return;
+    }
 
-    setsockopt(XcpTl_Connection.can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+    /*---[ setsockopt(..., CAN_RAW_LOOPBACK, ...) ]---*/
+    /* loopback */
+    int loopback = 0; /* 0 = disabled, 1 = enabled */
+    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback, sizeof(loopback));
+    if (ret < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_LOOPBACK)", errno);
+        close(sock);
+        return;
+    }
+
+    /*---[ setsockopt(..., CAN_RAW_RECV_OWN_MSGS, ...) ]---*/
+    /* recv own messages */
+    int recv_own_msgs = 0; /* 0 = disabled, 1 = enabled */
+    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &recv_own_msgs, sizeof(recv_own_msgs));
+    if (ret < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_RECV_OWN_MSGS)", errno);
+        close(sock);
+        return;
+    }
+
+    /*---[ setsockopt(..., SO_BINDTODEVICE, ...) ]---*/
+    /* interface */
+    strncpy(ifr.ifr_name, Xcp_Options.can_device, IFNAMSIZ - 1);
+    ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+    ioctl(sock, SIOCGIFINDEX, &ifr);
+    ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &ifr.ifr_name, sizeof(ifr.ifr_name));
+    if (ret < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::setsockopt(SO_BINDTODEVICE)", errno);
+        close(sock);
+        return;
+    }
+
+    /*---[ bind(..., sockaddr_can, ...) ]---*/
+    addr.can_family = AF_CAN;
+    addr.can_ifindex = ifr.ifr_ifindex;
+    memset(&addr.can_addr, 0, sizeof(addr.can_addr));
+    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        XcpHw_ErrorMsg("XcpTl_Init::bind(PF_CAN)", errno);
+        close(sock);
+        return;
+    }
+
+    XcpTl_Connection.boundSocket = sock;
+
+    XcpTl_PrintConnectionInformation();
 }
 
 void XcpTl_DeInit(void) {
-    close(XcpTl_Connection.can_socket);
+    if (XcpTl_Connection.boundSocket >= 0) {
+        close(XcpTl_Connection.boundSocket);
+        XcpTl_Connection.boundSocket = -1;
+    }
 }
 
 void* XcpTl_Thread(void* param) {
@@ -141,27 +183,31 @@ void XcpTl_MainFunction(void) {
 }
 
 void XcpTl_RxHandler(void) {
-    struct canfd_frame frame;
-    int                nbytes = 0;
+    struct can_frame frame;
+    for (;;) {
+        ssize_t n = read(XcpTl_Connection.boundSocket, &frame, sizeof(frame));
+        if (n < 0) {
+            if (errno == EAGAIN || errno == EINTR) {
+                return;
+            }
+            XcpHw_ErrorMsg("XcpTl_RxHandler::read(CAN)", errno);
+            return;
+        }
+        if ((size_t)n < sizeof(struct can_frame)) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler::read(CAN) short frame", EIO);
+            return;
+        }
+        if (frame.can_dlc > 8U) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler: DLC > 8 not supported", EPROTO);
+            continue;
+        }
+        if (frame.can_dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler: DLC exceeds TL buffer", EOVERFLOW);
+            continue;
+        }
 
-    nbytes = read(XcpTl_Connection.can_socket, &frame, CANFD_MTU);
-
-    if (nbytes == CANFD_MTU) {
-        // printf("got CAN FD frame with length %d\n\r", frame.len);
-        /* FD frame.flags could be used here */
-    } else if (nbytes == CAN_MTU) {
-        // printf("got legacy CAN frame with length %d\n", frame.len);
-    } else {
-        errno_abort("can raw socket read");
-    }
-    // printf("#%d bytes received from '%04x' DLC: %d .\n\r", nbytes, frame.can_id, frame.len);
-    if (frame.len > 0) {
-        Xcp_CtoIn.len = frame.len;
-        // Xcp_CtoIn.data = (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
-        // XcpUtl_MemCopy(Xcp_CtoIn.data, (__u8*)&frame.data + XCP_TRANSPORT_LAYER_BUFFER_OFFSET, nbytes -
-        // XCP_TRANSPORT_LAYER_BUFFER_OFFSET);
-        XcpUtl_MemCopy(Xcp_CtoIn.data, &frame.data, frame.len);
-        // XcpUtl_Hexdump(Xcp_CtoIn.data, frame.len);
+        Xcp_CtoIn.len = frame.can_dlc;
+        XcpUtl_MemCopy(Xcp_CtoIn.data, frame.data, frame.can_dlc);
         Xcp_DispatchCommand(&Xcp_CtoIn);
     }
 }
@@ -198,21 +244,30 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
     return 1;
 }
 
-void XcpTl_Send(uint8_t const * buf, uint16_t len) {
-    struct can_frame   frame    = { 0 };
-    struct canfd_frame frame_fd = { 0 };
+void XcpTl_Send(uint8_t const *buf, uint16_t len) {
+    /* SocketCAN unterstützt max. 8 Bytes im klassischen CAN-Frame. */
+    if (buf == NULL || len == 0) {
+        return;
+    }
+    if (len > 8U) {
+        XcpHw_ErrorMsg("XcpTl_Send: DLC > 8 not supported (classical CAN)", EINVAL);
+        return;
+    }
 
+    struct can_frame frame;
     XCP_TL_ENTER_CRITICAL();
-    if (Xcp_Options.fd) {
-        frame_fd.len    = len;
-        frame_fd.can_id = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
-        memcpy(frame_fd.data, buf, len);
-        (void)write(XcpTl_Connection.can_socket, &frame_fd, sizeof(struct canfd_frame));
-    } else {
-        frame.can_dlc = len;
-        frame.can_id  = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
-        memcpy(frame.data, buf, len);
-        (void)write(XcpTl_Connection.can_socket, &frame, sizeof(struct can_frame));
+    memset(&frame, 0, sizeof(frame));
+    /* Erwartet: erste 4/8 Bytes im PDU-Puffer sind die Nutzlast für CAN.
+       An dieser Stelle wird nur sicher kopiert und gesendet. */
+    frame.can_id = Xcp_Options.can_id; /* Annahme: ID kommt aus Optionen/Konfiguration. */
+    frame.can_dlc = (uint8_t)len;
+    memcpy(frame.data, buf, len);
+
+    ssize_t n = write(XcpTl_Connection.boundSocket, &frame, sizeof(frame));
+    if (n < 0) {
+        XcpHw_ErrorMsg("XcpTl_Send::write(CAN)", errno);
+    } else if ((size_t)n != sizeof(frame)) {
+        XcpHw_ErrorMsg("XcpTl_Send::write(CAN) short write", EIO);
     }
     XCP_TL_LEAVE_CRITICAL();
 }

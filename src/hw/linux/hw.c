@@ -49,6 +49,7 @@
 
 typedef struct tagHwStateType {
     struct timespec StartingTime;
+bool            Initialized;
 } HwStateType;
 
 /*
@@ -66,29 +67,31 @@ typedef struct tagHwStateType {
 #define TIMER_PS_1S    (1000000000UL)
 
 /* Set timer prescaler */
+// ... existing code ...
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100NS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US=
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
-    #define XCP_HW_TIMER_PRESCALRE (TIMER_PS_100MS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1S
-    #define XCP_HW_TIMER_PRESCALRE (TIMER_PS_1S)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1S)
 #else
-    #error Timestamp-unit not supported.
+#error Timestamp-unit not supported.
 #endif  // XCP_DAQ_TIMESTAMP_UNIT
+
 
 #define TIMER_MASK_1 (0x000000FFUL)
 #define TIMER_MASK_2 (0x0000FFFFUL)
@@ -115,48 +118,23 @@ static HwStateType        HwState               = { 0 };
 static struct timespec    XcpHw_TimerResolution = { 0 };
 static timer_t            XcpHw_AppMsTimer;
 static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
-
-/*
-**  Global Functions.
-*/
+static volatile sig_atomic_t XcpHw_TimerSignalSeen = 0;
 
 static void termination_handler(int sig) {
-    printf("Terminating due to ");
-    switch (sig) {
-        case SIGQUIT:
-            printf("SIGQUIT");
-            break;
-        case SIGILL:
-            printf("SIGILL");
-            break;
-        case SIGTRAP:
-            printf("SIGTRAP");
-            break;
-        case SIGABRT:
-            printf("SIGABRT");
-            break;
-        case SIGSEGV:
-            printf("SIGSEGV");
-            break;
-        default:
-            printf("Signal: %u", sig);
-    }
-    printf(".\n");
-    exit(9);
+    const char *msg = "Terminating due to signal.\n";
+    /* Use async-signal-safe functions only */
+    (void)write(STDERR_FILENO, msg, (unsigned)strlen(msg));
+    _exit(128 + sig);
 }
 
 static void handler(int sig, siginfo_t *si, void *uc) {
-    /* Note: calling printf() from a signal handler is not safe
-     * (and should not be done in production programs), since
-     * printf() is not async-signal-safe; see signal-safety(7).
-     *  Nevertheless, we use printf() here as a simple way of
-     * showing that the handler was called. */
-
-    // printf("Caught signal %u %lu\n", sig, XcpHw_GetTimerCounter());
-
-    // print_siginfo(si);
-    // signal(sig, SIG_IGN);
+    (void)sig;
+    (void)si;
+    (void)uc;
+    /* Only set a flag — keep handler async-signal-safe */
+    XcpHw_TimerSignalSeen = 1;
 }
+
 
 void XcpHw_Init(void) {
     int               status        = 0;
@@ -179,19 +157,15 @@ void XcpHw_Init(void) {
     XcpHw_FreeRunningCounter = 0ULL;
     XcpUtl_MemSet(&XcpHw_AppMsTimer, '\x00', sizeof(XcpHw_AppMsTimer));
 
-    /*
-     struct timespec  it_interval;
-           struct timespec  it_value;
-
-    */
-
-    if (clock_getres(CLOCK_MONOTONIC, &XcpHw_TimerResolution) == -1) {
+    if (clock_getres(CLOCK_MONOTONIC_RAW, &XcpHw_TimerResolution) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
     }
 
-    if (clock_gettime(CLOCK_MONOTONIC, &HwState.StartingTime) == -1) {
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &HwState.StartingTime) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_gettime()", errno);
     }
+    HwState.Initialized = true;
+
     fflush(stdout);
 #if 0
     _setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
@@ -257,8 +231,13 @@ static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler) {
     struct timespec dt        = { 0 };
     uint64_t        timestamp = 0ULL;
 
+    if (!HwState.Initialized || prescaler == 0U) {
+        return 0ULL;
+    }
+
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &now) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_getres()", errno);
+        return 0ULL;
     }
     dt = Timespec_Diff(HwState.StartingTime, now);
     XcpHw_FreeRunningCounter =
@@ -269,8 +248,6 @@ static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler) {
 
 uint32_t XcpHw_GetTimerCounter(void) {
     uint64_t timestamp = XcpHw_GetElapsedTime(XCP_HW_TIMER_PRESCALER);
-
-    timestamp = XcpHw_FreeRunningCounter % UINT_MAX;
 
 #if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
     timestamp &= TIMER_MASK_1;

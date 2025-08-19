@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -50,7 +50,9 @@
 
 typedef struct tagHwStateType {
     struct timespec StartingTime;
+    bool            Initialized;
 } HwStateType;
+
 
 /*
 ** Local Defines.
@@ -68,31 +70,32 @@ typedef struct tagHwStateType {
 
 /* Set timer prescaler */
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100NS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US=
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
-    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
-    #define XCP_HW_TIMER_PRESCALRE (TIMER_PS_100MS)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1S
-    #define XCP_HW_TIMER_PRESCALRE (TIMER_PS_1S)
+#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1S)
 #else
-    #error Timestamp-unit not supported.
+#error Timestamp-unit not supported.
 #endif  // XCP_DAQ_TIMESTAMP_UNIT
 
-static dispatch_queue_t timer_queue;
 
+static dispatch_queue_t timer_queue;
+static HwStateType HwState;
 int i = 0;
 
 dispatch_source_t timer1;
@@ -122,52 +125,68 @@ void vector2(dispatch_source_t timer) {
 }
 
 void XcpHw_Init(void) {
+
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) == -1) {
+        XcpHw_ErrorMsg("XcpHw_Init::clock_gettime()", errno);
+        HwState.Initialized = false;
+    } else {
+        HwState.StartingTime = ts;
+        HwState.Initialized  = true;
+    }
+    /* Optional: falls Dispatch-Timer benötigt werden, hier initialisieren – aber nicht exit() auf Cancel. */
     timer_queue = dispatch_queue_create("XCPTimerQueue", DISPATCH_QUEUE_SERIAL);
-
-    // Create dispatch timer sources
-    timer1 = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, timer_queue);
-    timer2 = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, timer_queue);
-
-    // Set event handlers for the timers
-    dispatch_source_set_event_handler(timer1, ^{
-        vector1(timer1);
-    });
-    dispatch_source_set_event_handler(timer2, ^{
-        vector2(timer2);
-    });
-
-    // Set cancel handlers for the timers
-    dispatch_source_set_cancel_handler(timer1, ^{
-        dispatch_release(timer1);
-        dispatch_release(timer_queue);
-        printf("end\n");
-        exit(0);
-    });
-    dispatch_source_set_cancel_handler(timer2, ^{
-        dispatch_release(timer2);
-        dispatch_release(timer_queue);
-        printf("end\n");
-        // exit(0);
-    });
-
-    dispatch_time_t start = dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC);  // Start after 1 second
-
-    // Set timer intervals (0.2 sec and 0.5 sec)
-    dispatch_source_set_timer(timer1, start, NSEC_PER_SEC / 5, 0);  // 0.2 sec
-    dispatch_source_set_timer(timer2, start, NSEC_PER_SEC / 2, 0);  // 0.5 sec
-
-    printf("start\n");
-    dispatch_resume(timer1);
-    dispatch_resume(timer2);
-
     XcpHw_PosixInit();
 }
 
+
 static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler) {
+    struct timespec now = {0};
+    struct timespec dt  = {0};
+    uint64_t        timestamp = 0ULL;
+
+    if (!HwState.Initialized || prescaler == 0U) {
+        return 0ULL;
+    }
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &now) == -1) {
+        XcpHw_ErrorMsg("XcpHw_GetElapsedTime::clock_gettime()", errno);
+        return 0ULL;
+    }
+
+    if ((now.tv_nsec - HwState.StartingTime.tv_nsec) < 0) {
+        dt.tv_sec  = now.tv_sec - HwState.StartingTime.tv_sec - 1;
+        dt.tv_nsec = 1000000000L + now.tv_nsec - HwState.StartingTime.tv_nsec;
+    } else {
+        dt.tv_sec  = now.tv_sec - HwState.StartingTime.tv_sec;
+        dt.tv_nsec = now.tv_nsec - HwState.StartingTime.tv_nsec;
+    }
+
+    uint64_t free_running =
+        ((uint64_t)dt.tv_sec * (uint64_t)1000 * 1000 * 1000) + (uint64_t)dt.tv_nsec;
+    timestamp = free_running / (uint64_t)prescaler;
+    return timestamp;
 }
+
 
 uint32_t XcpHw_GetTimerCounter(void) {
+    uint64_t timestamp = XcpHw_GetElapsedTime(XCP_HW_TIMER_PRESCALER);
+
+    #if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
+    timestamp &= 0x000000FFULL;
+    #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_2
+    timestamp &= 0x0000FFFFULL;
+    #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_4
+    timestamp &= 0xFFFFFFFFULL;
+    #else
+    #error Timestamp-size not supported.
+    #endif  // XCP_DAQ_TIMESTAMP_SIZE
+
+    return (uint32_t)timestamp;
 }
 
+
 uint32_t XcpHw_GetTimerCounterMS(void) {
+    uint64_t timestamp = XcpHw_GetElapsedTime(TIMER_PS_1MS);
+    return (uint32_t)(timestamp & 0xFFFFFFFFULL);
 }
+
