@@ -57,7 +57,7 @@
 
 typedef struct tagXcpTl_ConnectionType {
     int  can_socket;
-    SOCKET           boundSocket;
+    int boundSocket;
     bool connected;
 } XcpTl_ConnectionType;
 
