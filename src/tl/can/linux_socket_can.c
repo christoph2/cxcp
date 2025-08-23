@@ -56,6 +56,7 @@
 
 typedef struct tagXcpTl_ConnectionType {
     int  can_socket;
+    SOCKET           boundSocket;
     bool connected;
 } XcpTl_ConnectionType;
 
@@ -94,9 +95,9 @@ void XcpTl_Init(void) {
     /*---[ setsockopt(..., CAN_RAW_FILTER, ...) ]---*/
     /* setup filter */
     struct can_filter rfilter[2];
-    rfilter[0].can_id = Xcp_Options.can_id; /* required due to the specification */
+    rfilter[0].can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
     rfilter[0].can_mask = CAN_SFF_MASK;
-    rfilter[1].can_id = Xcp_Options.can_broadcast_id; /* required due to the specification */
+    rfilter[1].can_id = XCP_ON_CAN_BROADCAST_IDENTIFIER;
     rfilter[1].can_mask = CAN_SFF_MASK;
     ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
     if (ret < 0) {
@@ -107,7 +108,13 @@ void XcpTl_Init(void) {
 
     /*---[ setsockopt(..., CAN_RAW_ERR_FILTER, ...) ]---*/
     /* error filter (only standard errors, no extended errors) */
+#if 0
     can_err_mask_t err_mask = (CAN_ERR_TX_TIMEOUT | CAN_ERR_BUSOFF | CAN_ERR_BUS_ERROR);
+#endif
+    can_err_mask_t err_mask = (CAN_ERR_TX_TIMEOUT | CAN_ERR_LOSTARB | CAN_ERR_CRTL | CAN_ERR_PROT |
+                                   CAN_ERR_TRX | CAN_ERR_ACK | CAN_ERR_BUSOFF | CAN_ERR_BUSERROR |
+                                   CAN_ERR_RESTARTED | CAN_ERR_CNT);
+
     ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask));
     if (ret < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_ERR_FILTER)", errno);
