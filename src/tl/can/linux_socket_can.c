@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#include <linux/can/error.h>
 #include <memory.h>
 #include <net/if.h>
 #include <stdint.h>
@@ -107,10 +108,6 @@ void XcpTl_Init(void) {
     }
 
     /*---[ setsockopt(..., CAN_RAW_ERR_FILTER, ...) ]---*/
-    /* error filter (only standard errors, no extended errors) */
-#if 0
-    can_err_mask_t err_mask = (CAN_ERR_TX_TIMEOUT | CAN_ERR_BUSOFF | CAN_ERR_BUS_ERROR);
-#endif
     can_err_mask_t err_mask = (CAN_ERR_TX_TIMEOUT | CAN_ERR_LOSTARB | CAN_ERR_CRTL | CAN_ERR_PROT |
                                    CAN_ERR_TRX | CAN_ERR_ACK | CAN_ERR_BUSOFF | CAN_ERR_BUSERROR |
                                    CAN_ERR_RESTARTED | CAN_ERR_CNT);
