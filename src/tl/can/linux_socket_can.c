@@ -141,7 +141,7 @@ void XcpTl_Init(void) {
 
     /*---[ setsockopt(..., SO_BINDTODEVICE, ...) ]---*/
     /* interface */
-    strncpy(ifr.ifr_name, Xcp_Options.can_device, IFNAMSIZ - 1);
+    strncpy(ifr.ifr_name, Xcp_Options.can_interf, IFNAMSIZ - 1);
     ifr.ifr_name[IFNAMSIZ - 1] = '\0';
     ioctl(sock, SIOCGIFINDEX, &ifr);
     ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &ifr.ifr_name, sizeof(ifr.ifr_name));
@@ -263,7 +263,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     memset(&frame, 0, sizeof(frame));
     /* Erwartet: erste 4/8 Bytes im PDU-Puffer sind die Nutzlast für CAN.
        An dieser Stelle wird nur sicher kopiert und gesendet. */
-    frame.can_id = Xcp_Options.can_id; /* Annahme: ID kommt aus Optionen/Konfiguration. */
+    frame.can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
     frame.can_dlc = (uint8_t)len;
     memcpy(frame.data, buf, len);
 
