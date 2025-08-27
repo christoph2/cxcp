@@ -15,11 +15,11 @@ endif()
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Build type not specified: defaulting to release.")
-endif ()
+endif()
 
 IF (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     SET(CMAKE_C_STANDARD 11)
-ELSEIF (CMAKE_C_COMPILER_ID MATCHES "Clang")
+ELSEIF(CMAKE_C_COMPILER_ID MATCHES "Clang")
     SET(CMAKE_C_STANDARD 11)
 ELSE ()
     #message(WARNING "C standard could not be set because compiler is not GNU or Clang.")
@@ -131,3 +131,4 @@ elseif (CMAKE_HOST_UNIX)
 
     endif ()
 endif ()
+
