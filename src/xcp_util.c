@@ -41,7 +41,6 @@ void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len)
         return;
     }
 
-
     for (uint32_t i = 0U; i < len; ++i) {
         pd[i] = ps[i];
     }

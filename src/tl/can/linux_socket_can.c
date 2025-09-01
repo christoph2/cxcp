@@ -26,8 +26,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/can.h>
-#include <linux/can/raw.h>
 #include <linux/can/error.h>
+#include <linux/can/raw.h>
 #include <memory.h>
 #include <net/if.h>
 #include <stdint.h>
@@ -57,7 +57,7 @@
 
 typedef struct tagXcpTl_ConnectionType {
     int  can_socket;
-    int boundSocket;
+    int  boundSocket;
     bool connected;
 } XcpTl_ConnectionType;
 
@@ -65,7 +65,7 @@ unsigned char buf[XCP_COMM_BUFLEN];
 
 static XcpTl_ConnectionType XcpTl_Connection;
 
-int locate_interface(int socket, char const * name) {
+int locate_interface(int socket, char const *name) {
     struct ifreq ifr;
 
     strcpy(ifr.ifr_name, name);
@@ -77,10 +77,10 @@ int locate_interface(int socket, char const * name) {
 }
 
 void XcpTl_Init(void) {
-    int ret = 0;
-    int sock = -1;
+    int                 ret  = 0;
+    int                 sock = -1;
     struct sockaddr_can addr;
-    struct ifreq ifr;
+    struct ifreq        ifr;
 
     memset(&XcpTl_Connection, 0, sizeof(XcpTl_ConnectionType));
     XcpTl_Connection.boundSocket = -1;
@@ -96,11 +96,11 @@ void XcpTl_Init(void) {
     /*---[ setsockopt(..., CAN_RAW_FILTER, ...) ]---*/
     /* setup filter */
     struct can_filter rfilter[2];
-    rfilter[0].can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
+    rfilter[0].can_id   = XCP_ON_CAN_INBOUND_IDENTIFIER;
     rfilter[0].can_mask = CAN_SFF_MASK;
-    rfilter[1].can_id = XCP_ON_CAN_BROADCAST_IDENTIFIER;
+    rfilter[1].can_id   = XCP_ON_CAN_BROADCAST_IDENTIFIER;
     rfilter[1].can_mask = CAN_SFF_MASK;
-    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+    ret                 = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
     if (ret < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_FILTER)", errno);
         close(sock);
@@ -108,9 +108,9 @@ void XcpTl_Init(void) {
     }
 
     /*---[ setsockopt(..., CAN_RAW_ERR_FILTER, ...) ]---*/
-    can_err_mask_t err_mask = (CAN_ERR_TX_TIMEOUT | CAN_ERR_LOSTARB | CAN_ERR_CRTL | CAN_ERR_PROT |
-                                   CAN_ERR_TRX | CAN_ERR_ACK | CAN_ERR_BUSOFF | CAN_ERR_BUSERROR |
-                                   CAN_ERR_RESTARTED | CAN_ERR_CNT);
+    can_err_mask_t err_mask =
+        (CAN_ERR_TX_TIMEOUT | CAN_ERR_LOSTARB | CAN_ERR_CRTL | CAN_ERR_PROT | CAN_ERR_TRX | CAN_ERR_ACK | CAN_ERR_BUSOFF |
+         CAN_ERR_BUSERROR | CAN_ERR_RESTARTED | CAN_ERR_CNT);
 
     ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask));
     if (ret < 0) {
@@ -122,7 +122,7 @@ void XcpTl_Init(void) {
     /*---[ setsockopt(..., CAN_RAW_LOOPBACK, ...) ]---*/
     /* loopback */
     int loopback = 0; /* 0 = disabled, 1 = enabled */
-    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback, sizeof(loopback));
+    ret          = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback, sizeof(loopback));
     if (ret < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_LOOPBACK)", errno);
         close(sock);
@@ -132,7 +132,7 @@ void XcpTl_Init(void) {
     /*---[ setsockopt(..., CAN_RAW_RECV_OWN_MSGS, ...) ]---*/
     /* recv own messages */
     int recv_own_msgs = 0; /* 0 = disabled, 1 = enabled */
-    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &recv_own_msgs, sizeof(recv_own_msgs));
+    ret               = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &recv_own_msgs, sizeof(recv_own_msgs));
     if (ret < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_RECV_OWN_MSGS)", errno);
         close(sock);
@@ -152,7 +152,7 @@ void XcpTl_Init(void) {
     }
 
     /*---[ bind(..., sockaddr_can, ...) ]---*/
-    addr.can_family = AF_CAN;
+    addr.can_family  = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
     memset(&addr.can_addr, 0, sizeof(addr.can_addr));
     if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
@@ -173,7 +173,7 @@ void XcpTl_DeInit(void) {
     }
 }
 
-void* XcpTl_Thread(void* param) {
+void *XcpTl_Thread(void *param) {
     XCP_FOREVER {
         XcpTl_MainFunction();
     }
@@ -263,7 +263,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     memset(&frame, 0, sizeof(frame));
     /* Erwartet: erste 4/8 Bytes im PDU-Puffer sind die Nutzlast für CAN.
        An dieser Stelle wird nur sicher kopiert und gesendet. */
-    frame.can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
+    frame.can_id  = XCP_ON_CAN_INBOUND_IDENTIFIER;
     frame.can_dlc = (uint8_t)len;
     memcpy(frame.data, buf, len);
 

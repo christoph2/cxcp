@@ -209,7 +209,6 @@ void XcpHw_ErrorMsg(char * const fun, int errorCode) {
         return;
     }
     fprintf(stderr, "[%s] failed with: [%d] %s", fun, errorCode, buffer);
-
 }
 
 /*
@@ -244,5 +243,4 @@ void XcpHw_Sleep(uint64_t usec) {
     }
     WaitForSingleObject(timer, INFINITE);
     CloseHandle(timer);
-
 }
