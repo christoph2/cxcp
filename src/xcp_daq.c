@@ -71,7 +71,6 @@ typedef enum tagXcpDaq_AllocTransitionType {
     XCP_CALL_ALLOC_ODT_ENTRY
 } XcpDaq_AllocTransitionType;
 
-
 typedef enum tagXcpDaq_ListTransitionType {
     DAQ_LIST_TRANSITION_START,
     DAQ_LIST_TRANSITION_STOP
