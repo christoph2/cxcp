@@ -317,6 +317,11 @@ XcpDaq_ODTEntryType *XcpDaq_GetOdtEntry(
     /* Predefined DAQs only */
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
+    if (daqListNumber >= XcpDaq_PredefinedListCount) {
+        return &XcpDaq_Entities[idx].entity.odtEntry;
+    } else {
+        return (XcpDaq_ODTEntryType *)&XcpDaq_PredefinedOdtEntries[idx];
+    }
 #endif  // XCP_DAQ_ENABLE_DYNAMIC_LISTS
 }
 
@@ -339,7 +344,16 @@ XcpDaq_ListConfigurationType const *XcpDaq_GetListConfiguration(XcpDaq_ListInteg
     return &XcpDaq_PredefinedLists[daqListNumber];
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
-    return;
+    if (daqListNumber >= XcpDaq_PredefinedListCount) {
+        XcpDaq_DynamicListType const *dl = &XcpDaq_Entities[daqListNumber].entity.daqList;
+
+        XcpDaq_ListConfiguration.firstOdt = dl->firstOdt;
+        XcpDaq_ListConfiguration.numOdts  = dl->numOdts;
+
+        return &XcpDaq_ListConfiguration;
+    } else {
+        return &XcpDaq_PredefinedLists[daqListNumber];
+    }
 #endif
 }
 
@@ -790,7 +804,7 @@ bool XcpDaq_QueueEmpty(void) {
 
 bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
     if (XcpDaq_QueueFull()) {
-        XcpDaq_Queue.overload = (bool)XCP_TRUE;
+        XcpDaq_Queue.overload = (bool)XCP_FALSE;
         return (bool)XCP_FALSE;
     }
 
