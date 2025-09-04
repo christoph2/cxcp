@@ -1,3 +1,4 @@
+
 /*
  * BlueParrot XCP
  *
@@ -209,8 +210,10 @@ Xcp_ReturnType XcpDaq_AllocOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTI
             for (idx = XcpDaq_EntityCount; idx < (XcpDaq_EntityCount + odtCount); ++idx) {
                 XcpDaq_Entities[idx].kind = UINT8(XCP_ENTITY_ODT);
             }
+            if (XcpDaq_Entities[daqListNumber].entity.daqList.numOdts == 0) {
+                XcpDaq_Entities[daqListNumber].entity.daqList.firstOdt = XcpDaq_EntityCount;
+            }
             XcpDaq_Entities[daqListNumber].entity.daqList.numOdts += odtCount;
-            XcpDaq_Entities[daqListNumber].entity.daqList.firstOdt = XcpDaq_EntityCount;
             XcpDaq_OdtCount += odtCount;
             XcpDaq_EntityCount += odtCount;
         } else {
