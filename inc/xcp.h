@@ -145,12 +145,12 @@ extern "C" {
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
         #if !defined(XCP_ON_SXI_BITRATE)
-            #define XCP_ON_SXI_BITRATE                (38400)
-        #endif    /* XCP_ON_SXI_BITRATE */
+            #define XCP_ON_SXI_BITRATE (38400)
+        #endif /* XCP_ON_SXI_BITRATE */
 
         #if !defined(XCP_ON_SXI_CONFIG)
-            #define XCP_ON_SXI_CONFIG	              (SERIAL_8N1)
-        #endif    /* XCP_ON_SXI_CONFIG */
+            #define XCP_ON_SXI_CONFIG (SERIAL_8N1)
+        #endif /* XCP_ON_SXI_CONFIG */
 
         #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
              (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
@@ -574,7 +574,32 @@ extern "C" {
     #define XCP_DAQ_PREDEFINDED_LIST_COUNT (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
     /* DAQ Implementation Macros */
-    #define XCP_DAQ_DEFINE_ODT_ENTRY(meas) { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
+    // #define XCP_DAQ_DEFINE_ODT_ENTRY(meas) { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
+    #define XCP_DAQ_PREDEFINED_LISTS_BEGIN const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[] = {
+    #define XCP_DAQ_PREDEFINED_LISTS_END                                                                                           \
+        }                                                                                                                          \
+        ;                                                                                                                          \
+        XcpDaq_ListStateType         XcpDaq_PredefinedListsState[XCP_DAQ_PREDEFINDED_LIST_COUNT];                                  \
+        const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount = XCP_DAQ_PREDEFINDED_LIST_COUNT;
+
+    #define XCP_DAQ_PREDEFINED_ODTS_BEGIN const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {
+    #define XCP_DAQ_PREDEFINED_ODTS_END                                                                                            \
+        }                                                                                                                          \
+        ;
+
+    #define XCP_DAQ_PREDEFINED_ODT_ENTRIES_BEGIN const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
+    #define XCP_DAQ_PREDEFINED_ODT_ENTRIES_END                                                                                     \
+        }                                                                                                                          \
+        ;
+
+    #define XCP_DAQ_PREDEFINED_MEASUREMENT_VARIABLES_BEGIN XcpDaq_MeasurementVariable XcpDaq_PredefinedMeasurementVariables[] = {
+    #define XCP_DAQ_PREDEFINED_MEASUREMENT_VARIABLES_END                                                                           \
+        }                                                                                                                          \
+        ;
+
+    #define XCP_DAQ_DEFINE_ODT_VARIABLE_IDX(idx) { { (idx) }, 0 }
+
+    #define XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(meas) { &(meas), sizeof((meas)) }
 
     /* DAQ Event Implementation Macros */
     #define XCP_DAQ_BEGIN_EVENTS const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
@@ -990,6 +1015,11 @@ extern "C" {
         XCP_DIRECTION_DAQ_STIM
     } XcpDaq_DirectionType;
 
+    typedef struct tagXcpDaq_MeasurementVariable {
+        volatile void *variable;
+        uint32_t       length;
+    } XcpDaq_MeasurementVariable;
+
     typedef struct tagXcpDaq_DynamicListType {
         XcpDaq_ODTIntegerType numOdts;
         uint16_t              firstOdt;
@@ -1187,16 +1217,38 @@ extern "C" {
         **  Predefined DAQ constants.
         */
         #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
-    extern XcpDaq_ODTEntryType                XcpDaq_PredefinedOdtEntries[];
+    extern const XcpDaq_ODTEntryType          XcpDaq_PredefinedOdtEntries[];
     extern const XcpDaq_ODTType               XcpDaq_PredefinedOdts[];
     extern const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[];
     extern const XcpDaq_ListIntegerType       XcpDaq_PredefinedListCount;
     extern XcpDaq_ListStateType               XcpDaq_PredefinedListsState[];
+    extern XcpDaq_MeasurementVariable         XcpDaq_PredefinedMeasurementVariables[];
         #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
     extern const XcpDaq_EventType XcpDaq_Events[];
 
     XCP_DAQ_ENTITY_TYPE XcpDaq_GetDynamicDaqEntityCount(void);
+
+        #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
+
+    /*
+    ** DAQ Queuing Support.
+    */
+
+    typedef struct tagXcpDaq_QueueType {
+        uint8_t head;
+        uint8_t tail;
+        bool    overload;
+    } XcpDaq_QueueType;
+
+    void            XcpDaq_QueueGetVar(XcpDaq_QueueType *var);
+    void            XcpDaq_QueueInit(void);
+    XCP_STATIC bool XcpDaq_QueueFull(void);
+    bool            XcpDaq_QueueEmpty(void);
+    bool            XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
+    bool            XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
+
+        #endif /* XCP_DAQ_ENABLE_QUEUING */
 
         /*
         ** Debugging / Testing interface.
@@ -1212,23 +1264,6 @@ extern "C" {
     XcpDaq_EntityType *XcpDaq_GetDynamicEntity(uint16_t num);
 
     uint8_t *XcpDaq_GetDtoBuffer(void);
-
-            #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-
-    typedef struct tagXcpDaq_QueueType {
-        uint8_t head;
-        uint8_t tail;
-        bool    overload;
-    } XcpDaq_QueueType;
-
-    void            XcpDaq_QueueGetVar(XcpDaq_QueueType *var);
-    void            XcpDaq_QueueInit(void);
-    XCP_STATIC bool XcpDaq_QueueFull(void);
-    bool            XcpDaq_QueueEmpty(void);
-    bool            XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
-    bool            XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
-
-            #endif /* XCP_DAQ_ENABLE_QUEUING */
 
         #endif  // XCP_BUILD_TYPE
 

@@ -138,6 +138,12 @@ XCP_STATIC uint8_t XcpDaq_ListForEvent[XCP_DAQ_MAX_EVENT_CHANNEL];
 
 /*
 **
+** Global Variables.
+**
+*/
+
+/*
+**
 ** Global Functions.
 **
 */
@@ -296,6 +302,41 @@ void XcpDaq_Init(void) {
 #endif
 }
 
+XcpDaq_MeasurementVariable XcpDaq_GetOdtEntryValues(
+    XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber
+) {
+    XcpDaq_ODTEntryType       *entry  = XcpDaq_GetOdtEntry(daqListNumber, odtNumber, odtEntryNumber);
+    XcpDaq_MeasurementVariable result = {};
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+    uint32_t                   index = 0UL;
+    XcpDaq_MeasurementVariable tmp{ 0 };
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+
+#if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
+    /* Dynamic DAQs only */
+    result.variable = entry->mta.address;
+    result.length   = entry->length;
+#elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
+    /* Predefined DAQs only */
+    index           = entry->mta.address;
+    tmp             = XcpDaq_PredefinedMeasurementVariables[index];
+    result.variable = tmp.variable;
+    result.length   = tmp.length;
+#elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
+    /* Dynamic and predefined DAQs */
+    if (daqListNumber >= XcpDaq_PredefinedListCount) {
+        result.variable = entry->mta.address;
+        result.length   = entry->length;
+    } else {
+        index           = entry->mta.address;
+        tmp             = XcpDaq_PredefinedMeasurementVariables[index];
+        result.variable = tmp.variable;
+        result.length   = tmp.length;
+    }
+#endif  // XCP_DAQ_ENABLE_DYNAMIC_LISTS
+    return result;
+}
+
 XcpDaq_ODTEntryType *XcpDaq_GetOdtEntry(
     XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber
 ) {
@@ -325,8 +366,8 @@ XcpDaq_ODTEntryType *XcpDaq_GetOdtEntry(
     /* Dynamic DAQs only */
     return &XcpDaq_Entities[idx].entity.odtEntry;
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
-    return (XcpDaq_ODTEntryType *)&XcpDaq_PredefinedOdtEntries[idx];
     /* Predefined DAQs only */
+    return (XcpDaq_ODTEntryType *)&XcpDaq_PredefinedOdtEntries[idx];
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
     if (daqListNumber >= XcpDaq_PredefinedListCount) {
@@ -554,13 +595,14 @@ void XcpDaq_AddEventChannel(XcpDaq_ListIntegerType daqListNumber, uint16_t event
  *  @param eventChannelNumber   Number of event to trigger.
  */
 void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
-    Xcp_StateType const                *state             = XCP_NULL;
-    XcpDaq_ListIntegerType              daqListNumber     = 0;
-    XcpDaq_ODTIntegerType               odtIdx            = 0;
-    XcpDaq_ODTIntegerType               pid               = 0;
-    XcpDaq_ODTEntryIntegerType          odtEntryIdx       = 0;
-    XcpDaq_ODTType const               *odt               = XCP_NULL;
-    XcpDaq_ODTEntryType                *entry             = XCP_NULL;
+    Xcp_StateType const       *state         = XCP_NULL;
+    XcpDaq_ListIntegerType     daqListNumber = 0;
+    XcpDaq_ODTIntegerType      odtIdx        = 0;
+    XcpDaq_ODTIntegerType      pid           = 0;
+    XcpDaq_ODTEntryIntegerType odtEntryIdx   = 0;
+    XcpDaq_ODTType const      *odt           = XCP_NULL;
+    // XcpDaq_ODTEntryType                *entry             = XCP_NULL;
+    XcpDaq_MeasurementVariable          entry{ 0 };
     XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
     uint16_t                            offset            = UINT16(0);
     uint8_t                             data[XCP_MAX_DTO] = { 0 };
@@ -606,18 +648,14 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
         }
 #endif /* XCP_DAQ_ENABLE_TIMESTAMPING */
         for (odtEntryIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntryIdx < odt->numOdtEntries; ++odtEntryIdx) {
-            entry = XcpDaq_GetOdtEntry(daqListNumber, odtIdx, odtEntryIdx);
-            // printf("\tAddress: 0x%08x Length: %d\n", entry->mta.address,
-            // entry->length);
-            if (odtEntryIdx == (XcpDaq_ODTEntryIntegerType)0) {
-            }
-            // XCP_ASSERT_LE(entry->length, (unsigned int)(XCP_MAX_DTO - offset));
-            if (entry->length > (unsigned int)(XCP_MAX_DTO - offset)) {
+            entry = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, odtEntryIdx);
+            // XCP_ASSERT_LE(entry.length, (unsigned int)(XCP_MAX_DTO - offset));
+            if (entry.length > (unsigned int)(XCP_MAX_DTO - offset)) {
                 return;  // Error: Out of memory.
             }
 
-            XcpDaq_CopyMemory(&data[offset], (void *)entry->mta.address, entry->length);
-            offset += entry->length;
+            XcpDaq_CopyMemory(&data[offset], (void *)entry.variable, entry.length);
+            offset += entry.length;
         }
         pid++;
         XcpDaq_QueueEnqueue(offset, data);

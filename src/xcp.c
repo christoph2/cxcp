@@ -58,6 +58,10 @@ static uint8_t                     Xcp_CtoInBuffer[XCP_TRANSPORT_LAYER_CTO_BUFFE
 Xcp_PduType Xcp_CtoIn  = { 0, &Xcp_CtoInBuffer[0] };
 Xcp_PduType Xcp_CtoOut = { 0, &Xcp_CtoOutBuffer[0] };
 
+#if XCP_ENABLE_GET_ID_EPK == XCP_ON
+extern const char Xcp_EEPROM_Kennung[];
+#endif /* XCP_ENABLE_GET_ID_EPK */
+
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 static uint8_t     Xcp_DtoOutBuffer[XCP_TRANSPORT_LAYER_DTO_BUFFER_SIZE] = { 0 };
 static Xcp_PduType Xcp_DtoOut                                            = { 0, &Xcp_DtoOutBuffer[0] };
@@ -1097,26 +1101,33 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const * const pdu) {
 
     DBG_TRACE2("GET_ID [type: 0x%02x]\n\r", idType);
 
-    if (idType == UINT8(0)) {
-        response     = Xcp_GetId0.name;
-        response_len = Xcp_GetId0.len;
-    } else if (idType == UINT8(1)) {
-        response     = Xcp_GetId1.name;
-        response_len = Xcp_GetId1.len;
-    }
+    switch (idType) {
+        case 0:
+            response     = Xcp_GetId0.name;
+            response_len = Xcp_GetId0.len;
+            break;
+        case 1:
+            response     = Xcp_GetId1.name;
+            response_len = Xcp_GetId1.len;
+            break;
+    #if XCP_ENABLE_GET_ID_EPK == XCP_ON
+        case 5:
+            response     = (uint8_t const *)&Xcp_EEPROM_Kennung[0];
+            response_len = XcpUtl_StrLen(Xcp_EEPROM_Kennung);
+            break;
+    #endif /* XCP_ENABLE_GET_ID_EPK */
+        default:
     #if XCP_ENABLE_GET_ID_HOOK == XCP_ON
-    else {
-        if (!Xcp_HookFunction_GetId(idType, &response, &response_len)) {
+            if (!Xcp_HookFunction_GetId(idType, &response, &response_len)) {
+                response_len = 0;
+                valid        = XCP_FALSE;
+            }
+    #else
             response_len = 0;
             valid        = XCP_FALSE;
-        }
-    }
-    #else
-    else {
-        response_len = 0;
-        valid        = XCP_FALSE;
-    }
     #endif /* XCP_ENABLE_GET_ID_HOOK */
+            break;
+    }
     if (valid) {
         Xcp_SetMta(Xcp_GetNonPagedAddress(response));
     }
