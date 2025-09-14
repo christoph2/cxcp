@@ -29,6 +29,8 @@
 
     #if defined(ARDUINO)
         #include "Arduino.h"
+    #else
+        #include <stdio.h>
     #endif
 
     /*!!! START-INCLUDE-SECTION !!!*/
@@ -37,7 +39,7 @@
     #include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-    #define XCP_SXI_MAKEWORD(buf, offs) ((*((buf) + (offs))) | ((*((buf) + (offs) + 1) << 8)))
+    #define XCP_SXI_MAKEWORD(buf, offs) ((uint16_t)(*(((buf)) + (offs))) | ((uint16_t)(*(((buf)) + (offs) + 1)) << 8))
 
     #define TIMEOUT_VALUE (100)
 
@@ -63,7 +65,10 @@ static void XcpTl_ResetSM(void);
 static void XcpTl_SignalTimeout(void);
 
 void XcpTl_Init(void) {
+    #if defined(ARDUINO)
     Serial.begin(XCP_ON_SXI_BITRATE, XCP_ON_SXI_CONFIG);
+    #endif
+
     XcpTl_ResetSM();
     XcpTl_TimeoutInit(TIMEOUT_VALUE, XcpTl_ResetSM);
 }
@@ -74,6 +79,7 @@ void XcpTl_DeInit(void) {
 void XcpTl_MainFunction(void) {
     uint8_t octet = 0;
 
+    #if defined(ARDUINO)
     if (Serial.available()) {
         digitalWrite(LED_BUILTIN, HIGH);
         octet = Serial.read();
@@ -81,6 +87,7 @@ void XcpTl_MainFunction(void) {
 
         digitalWrite(LED_BUILTIN, LOW);
     }
+    #endif
     XcpTl_TimeoutCheck();
 }
 
@@ -106,6 +113,14 @@ void XcpTl_RxHandler(void) {
 void XcpTl_FeedReceiver(uint8_t octet) {
     XCP_TL_ENTER_CRITICAL();
 
+    /* Bounds check to protect Buffer[] */
+    if (XcpTl_Receiver.Index >= (uint16_t)sizeof(XcpTl_Receiver.Buffer)) {
+        /* Overflow/malformed frame: reset receiver */
+        XcpTl_ResetSM();
+        XcpTl_TimeoutStop();
+        XCP_TL_LEAVE_CRITICAL();
+        return;
+    }
     XcpTl_Receiver.Buffer[XcpTl_Receiver.Index] = octet;
 
     if (XcpTl_Receiver.State == XCP_RCV_IDLE) {
@@ -113,7 +128,15 @@ void XcpTl_FeedReceiver(uint8_t octet) {
         XcpTl_TimeoutStart();
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
-            XcpTl_Receiver.Dlc       = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
+            XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
+            /* Validate DLC against buffer capacity (account for 2-byte LEN + 2-byte CTR) */
+            if (XcpTl_Receiver.Dlc > ((uint16_t)sizeof(XcpTl_Receiver.Buffer) - 4u)) {
+                /* Length too large: reset */
+                XcpTl_ResetSM();
+                XcpTl_TimeoutStop();
+                XCP_TL_LEAVE_CRITICAL();
+                return;
+            }
             XcpTl_Receiver.State     = XCP_RCV_REMAINING;
             XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc + 2;
             XcpTl_TimeoutReset();
@@ -154,12 +177,11 @@ void XcpTl_ReleaseConnection(void) {
 }
 
 void XcpTl_PrintConnectionInformation(void) {
-    printf(
-        "\nXCPonSxi\n"
-        //       ; DEFAULT_PORT,
-        //       Xcp_Options.tcp ? "TCP" : "UDP",
-        //       Xcp_Options.ipv6 ? "IPv6" : "IPv4"
-    );
+    #if defined(ARDUINO)
+    Serial.println("XCPonSxi");
+    #else
+    printf("\nXCPonSxi\n");
+    #endif
 }
 
 static void XcpTl_SignalTimeout(void) {
