@@ -302,7 +302,6 @@ XcpDaq_ODTEntryType *XcpDaq_GetOdtEntry(
     XcpDaq_ODTType const *odt = XCP_NULL;
     XcpDaq_ODTIntegerType idx = 0;
 
-
     /* Range checking. */
     if (daqListNumber >= XcpDaq_GetListCount()) {
         return XCP_NULL;
@@ -719,7 +718,7 @@ XcpDaq_ODTType const *XcpDaq_GetOdt(XcpDaq_ListIntegerType daqListNumber, XcpDaq
     if (daqListNumber >= XcpDaq_GetListCount()) {
         return XCP_NULL;
     }
-    dl  = XcpDaq_GetListConfiguration(daqListNumber);
+    dl = XcpDaq_GetListConfiguration(daqListNumber);
     if ((dl == XCP_NULL) || (odtNumber >= dl->numOdts)) {
         return XCP_NULL;
     }

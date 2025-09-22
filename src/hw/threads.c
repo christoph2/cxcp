@@ -94,9 +94,8 @@ static unsigned __stdcall XcpThrd_WinTrampoline(void *arg) {
 }
 #endif
 
-
 static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd, XcpThrd_ThreadFuncType func) {
-    #if defined(_WIN32)
+#if defined(_WIN32)
     HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, XcpThrd_WinTrampoline, (void *)func, 0, NULL);
     if (hThread == NULL) {
         XcpHw_ErrorMsg("_beginthreadex()", GetLastError());
@@ -104,14 +103,14 @@ static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd, XcpThrd_ThreadFuncTyp
     }
     CopyMemory(thrd, &hThread, sizeof(XcpThrd_ThreadType));
     XcpThrd_SetAffinity(hThread, 1);
-    #else
+#else
     int rc = pthread_create(thrd, NULL, func, NULL);
     if (rc != 0) {
         XcpHw_ErrorMsg("pthread_create()", rc);
         return;
     }
     XcpThrd_SetAffinity(*thrd, 1);
-    #endif
+#endif
 }
 
 void XcpThrd_RunThreads(void) {
@@ -122,7 +121,7 @@ void XcpThrd_RunThreads(void) {
     XcpThrd_CreateThread(&threads[UI_THREAD], XcpTerm_Thread);
     XcpThrd_CreateThread(&threads[TL_THREAD], XcpTl_Thread);
     XcpThrd_CreateThread(&threads[XCP_THREAD], Xcp_Thread);
-    #if defined(_WIN32)
+#if defined(_WIN32)
     WaitForSingleObject(threads[UI_THREAD], INFINITE);
     XcpThrd_ShutDown();
     /* Warte auf die anderen Threads */
@@ -132,15 +131,14 @@ void XcpThrd_RunThreads(void) {
     if (threads[XCP_THREAD]) {
         WaitForSingleObject(threads[XCP_THREAD], INFINITE);
     }
-    #else
+#else
     pthread_join(threads[UI_THREAD], NULL);
     XcpThrd_ShutDown();
     /* Warte auf die anderen Threads */
     pthread_join(threads[TL_THREAD], NULL);
     pthread_join(threads[XCP_THREAD], NULL);
-    #endif
+#endif
 }
-
 
 void XcpThrd_Exit(void) {
 #if defined(_WIN32)
@@ -161,11 +159,10 @@ void *Xcp_Thread(void *param) {
     return NULL;
 }
 
-
 void XcpThrd_EnableAsyncCancellation(void) {
-    #if defined(_WIN32)
-    /* Keine direkte Entsprechung unter Windows, ggf. SetThreadPriority/Waitable-Mechanik verwenden. */
-    #else
+#if defined(_WIN32)
+/* Keine direkte Entsprechung unter Windows, ggf. SetThreadPriority/Waitable-Mechanik verwenden. */
+#else
     int res;
 
     res = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -176,9 +173,8 @@ void XcpThrd_EnableAsyncCancellation(void) {
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_setcanceltype()", errno);
     }
-    #endif
+#endif
 }
-
 
 void XcpThrd_ShutDown(void) {
     int res;
@@ -189,15 +185,15 @@ void XcpThrd_ShutDown(void) {
     }
     XcpThrd_ShuttingDown = true;
 
-    /* TL-Thread aus Blockaden holen */
-    #if defined(_WIN32)
+/* TL-Thread aus Blockaden holen */
+#if defined(_WIN32)
     /* Fallback: hartes Beenden, wenn TL-Thread blockiert (accept/recv). */
     res = TerminateThread(threads[TL_THREAD], 0);
     if (!res) {
         XcpHw_ErrorMsg("TerminateThread", GetLastError());
     }
-    /* XCP-Thread läuft kooperativ aus (Flag oben gesetzt). */
-    #else
+/* XCP-Thread läuft kooperativ aus (Flag oben gesetzt). */
+#else
     /* POSIX: asynchron canceln, anschließend joinen in RunThreads. */
     res = pthread_cancel(threads[TL_THREAD]);
     if (res != 0) {
@@ -207,9 +203,8 @@ void XcpThrd_ShutDown(void) {
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_cancel(XCP_THREAD)", errno);
     }
-    #endif
+#endif
 }
-
 
 bool XcpThrd_IsShuttingDown(void) {
     return XcpThrd_ShuttingDown;
@@ -220,12 +215,12 @@ void bye(void) {
 }
 
 static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
-    #if defined(_WIN32)
+#if defined(_WIN32)
     DWORD_PTR mask = (cpu <= 0) ? 1ULL : (1ULL << cpu);
     if (SetThreadAffinityMask(thrd, mask) == 0) {
         XcpHw_ErrorMsg("SetThreadAffinityMask()", GetLastError());
     }
-    #else
+#else
 
     #if !defined(__APPLE__)
     /* Linux only (i.e. no BSD) ??? */
@@ -247,7 +242,5 @@ static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
     }
     #endif
 
-    #endif
+#endif
 }
-
-
