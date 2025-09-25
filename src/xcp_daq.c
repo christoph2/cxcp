@@ -286,6 +286,11 @@ void XcpDaq_Init(void) {
     }
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
+    /* Always reset the event-to-list mapping on init if single mapping is used */
+#if XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT == XCP_OFF
+    XcpUtl_MemSet(XcpDaq_ListForEvent, UINT8(0), UINT32(sizeof(XcpDaq_ListForEvent[0]) * UINT8(XCP_DAQ_MAX_EVENT_CHANNEL)));
+#endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
+
 #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
     XcpDaq_AllocState = XCP_ALLOC_IDLE;
     (void)XcpDaq_Free();
@@ -562,10 +567,10 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     XcpDaq_ODTType const               *odt               = XCP_NULL;
     XcpDaq_ODTEntryType                *entry             = XCP_NULL;
     XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
+    XcpDaq_ListStateType               *listState         = XCP_NULL;
     uint16_t                            offset            = UINT16(0);
     uint8_t                             data[XCP_MAX_DTO] = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
-    XcpDaq_ListStateType *listState        = XCP_NULL;
     uint32_t              timestamp        = UINT32(0);
     bool                  insert_timestamp = XCP_FALSE;
 
@@ -583,12 +588,26 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     daqListNumber = XcpDaq_ListForEvent[eventChannelNumber];
 #endif /* XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT */
 
+    /* Ensure DAQ list is started and handle prescaler if configured */
+    listState = XcpDaq_GetListState(daqListNumber);
+    if ((listState == XCP_NULL) || ((listState->mode & XCP_DAQ_LIST_MODE_STARTED) != XCP_DAQ_LIST_MODE_STARTED)) {
+        return;
+    }
+#if XCP_DAQ_ENABLE_PRESCALER == XCP_ON
+    if (listState->prescaler > UINT8(1)) {
+        listState->counter++;
+        if (listState->counter < listState->prescaler) {
+            return; /* Not yet time to send */
+        }
+        listState->counter = UINT8(0);
+    }
+#endif /* XCP_DAQ_ENABLE_PRESCALER */
+
     if (!XcpDaq_GetFirstPid(daqListNumber, &pid)) {
         return;
     }
     listConf = XcpDaq_GetListConfiguration(daqListNumber);
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
-    listState = XcpDaq_GetListState(daqListNumber);
     if ((listState->mode & XCP_DAQ_LIST_MODE_TIMESTAMP) == XCP_DAQ_LIST_MODE_TIMESTAMP) {
         insert_timestamp = XCP_TRUE;
     }
@@ -680,8 +699,13 @@ void XcpDaq_StartStopSingleList(XcpDaq_ListIntegerType daqListNumber, uint8_t mo
     list_state = XcpDaq_GetListState(daqListNumber);
 
     if (mode == UINT8(0)) {
+        /* Stop DAQ list immediately */
+        list_state->mode &= UINT8(~XCP_DAQ_LIST_MODE_STARTED);
     } else if (mode == UINT8(1)) {
+        /* Start DAQ list immediately */
+        list_state->mode |= XCP_DAQ_LIST_MODE_STARTED;
     } else if (mode == UINT8(2)) {
+        /* Select DAQ list for synchronized start/stop */
         list_state->mode |= XCP_DAQ_LIST_MODE_SELECTED;
     }
 }
