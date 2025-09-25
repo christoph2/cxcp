@@ -1543,6 +1543,23 @@ XCP_STATIC void Xcp_SetDaqPtr_Res(Xcp_PduType const * const pdu) {
     Xcp_PositiveResponse();
 }
 
+    #if XCP_ENABLE_READ_DAQ == XCP_ON
+XCP_STATIC void Xcp_ReadDaq_Res(Xcp_PduType const * const pdu) {
+    uint8_t             bitOffset;
+    uint8_t             elemSize;
+    uint8_t             adddrExt;
+    Xcp_PointerSizeType address;
+
+    XcpDaq_ReadEntry(&bitOffset, &elemSize, &adddrExt, &address);
+
+    Xcp_Send8(
+        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(bitOffset), UINT8(elemSize), UINT8(adddrExt),
+        XCP_LOBYTE(XCP_LOWORD(address)), XCP_HIBYTE(XCP_LOWORD(address)), XCP_LOBYTE(XCP_HIWORD(address)),
+        XCP_HIBYTE(XCP_HIWORD(address))
+    );
+}
+    #endif /* XCP_ENABLE_READ_DAQ */
+
 XCP_STATIC void Xcp_WriteDaq_Res(Xcp_PduType const * const pdu) {
     const uint8_t  bitOffset = Xcp_GetByte(pdu, UINT8(1));
     const uint8_t  elemSize  = Xcp_GetByte(pdu, UINT8(2));
@@ -1601,7 +1618,7 @@ XCP_STATIC void Xcp_WriteDaqMultiple_Res(Xcp_PduType const * const pdu) {
     }
     Xcp_PositiveResponse();
 }
-    #endif  // XCP_ENABLE_WRITE_DAQ_MULTIPLE
+    #endif /* XCP_ENABLE_WRITE_DAQ_MULTIPLE */
 
 XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     const uint8_t                mode               = Xcp_GetByte(pdu, UINT8(1));
@@ -1659,6 +1676,28 @@ XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     Xcp_PositiveResponse();
 }
 
+XCP_STATIC void Xcp_GetDaqListMode_Res(Xcp_PduType const * const pdu) {
+    XcpDaq_ListStateType        *entry         = NULL;
+    const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+
+    DBG_TRACE1("GET_DAQ_LIST_MODE\n\r");
+    XCP_ASSERT_PGM_IDLE();
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    entry = XcpDaq_GetListState(daqListNumber);
+
+    Xcp_Send8(
+        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(entry->mode), UINT8(0), UINT8(0),
+
+        // XCP_LOBYTE(UINT16(XCP_DAQ_MAX_EVENT_CHANNEL)), XCP_HIBYTE(UINT16(XCP_DAQ_MAX_EVENT_CHANNEL)),
+
+        UINT8(0),  // WORD    Current Event Channel Number
+        UINT8(0),
+        UINT8(1),  // BYTE    Current Prescaler
+        UINT8(0)   // BYTE    Current DAQ list Priority
+    );
+}
+
 XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PduType const * const pdu) {
     const uint8_t                mode          = Xcp_GetByte(pdu, UINT8(1));
     XcpDaq_ODTIntegerType        firstPid      = (XcpDaq_ODTIntegerType)0;
@@ -1696,14 +1735,6 @@ XCP_STATIC void Xcp_StartStopSynch_Res(Xcp_PduType const * const pdu) {
     }
 
     XcpDaq_StartStopSynch(mode);
-    Xcp_PositiveResponse();
-}
-
-XCP_STATIC void Xcp_GetDaqListMode_Res(Xcp_PduType const * const pdu) {
-    DBG_TRACE1("GET_DAQ_LIST_MODE\n\r");
-    XCP_ASSERT_PGM_IDLE();
-    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-
     Xcp_PositiveResponse();
 }
 

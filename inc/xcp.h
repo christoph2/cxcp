@@ -592,14 +592,14 @@ extern "C" {
         }                                                                                                                          \
         ;
 
-    #define XCP_DAQ_PREDEFINED_MEASUREMENT_VARIABLES_BEGIN XcpDaq_MeasurementVariable XcpDaq_PredefinedMeasurementVariables[] = {
+    #define XCP_DAQ_PREDEFINED_MEASUREMENT_VARIABLES_BEGIN XcpDaq_ODTEntryType XcpDaq_PredefinedMeasurementVariables[] = {
     #define XCP_DAQ_PREDEFINED_MEASUREMENT_VARIABLES_END                                                                           \
         }                                                                                                                          \
         ;
 
     #define XCP_DAQ_DEFINE_ODT_VARIABLE_IDX(idx) { { (idx) }, 0 }
 
-    #define XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(meas) { &(meas), sizeof((meas)) }
+    #define XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(meas) { { (Xcp_PointerSizeType)(Xcp_PointerSizeType *)&(meas) }, sizeof((meas)) }
 
     /* DAQ Event Implementation Macros */
     #define XCP_DAQ_BEGIN_EVENTS const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
@@ -1213,6 +1213,8 @@ extern "C" {
 
     void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xcp_PointerSizeType address);
 
+    void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, Xcp_PointerSizeType *address);
+
         /*
         **  Predefined DAQ constants.
         */
@@ -1222,7 +1224,7 @@ extern "C" {
     extern const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[];
     extern const XcpDaq_ListIntegerType       XcpDaq_PredefinedListCount;
     extern XcpDaq_ListStateType               XcpDaq_PredefinedListsState[];
-    extern XcpDaq_MeasurementVariable         XcpDaq_PredefinedMeasurementVariables[];
+    extern XcpDaq_ODTEntryType                XcpDaq_PredefinedMeasurementVariables[];
         #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
     extern const XcpDaq_EventType XcpDaq_Events[];
