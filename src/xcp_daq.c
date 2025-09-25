@@ -311,9 +311,14 @@ XcpDaq_ODTEntryType XcpDaq_GetOdtEntryValues(
     uint32_t index = 0UL;
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
+    if (entry == XCP_NULL) {
+        /* Out-of-range or unavailable entry; return empty result */
+        return result;
+    }
+
 #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_OFF)
     /* Dynamic DAQs only */
-    result = entry;
+    result = *entry;
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
     index  = entry->mta.address;
@@ -321,7 +326,7 @@ XcpDaq_ODTEntryType XcpDaq_GetOdtEntryValues(
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
     if (daqListNumber >= XcpDaq_PredefinedListCount) {
-        result = entry;
+        result = *entry;
     } else {
         index  = entry->mta.address;
         result = XcpDaq_PredefinedMeasurementVariables[index];
@@ -469,6 +474,10 @@ void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xc
     );
 
     entry = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
+    if (entry == XCP_NULL) {
+        /* Invalid pointer (out of range or unavailable due to configuration). */
+        return;
+    }
 
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
     entry->bitOffset = bitOffset;
@@ -493,6 +502,14 @@ void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, 
     Xcp_State = Xcp_GetState();
 
     entry = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
+    if (entry == XCP_NULL) {
+        /* Invalid pointer; return zeroed outputs and do not advance pointer. */
+        if (bitOffset) { *bitOffset = 0; }
+        if (elemSize)  { *elemSize  = 0; }
+        if (adddrExt)  { *adddrExt  = 0; }
+        if (address)   { *address   = 0; }
+        return;
+    }
 
 #if XCP_DAQ_BIT_OFFSET_SUPPORTED == XCP_ON
     *bitOffset = entry->bitOffset;

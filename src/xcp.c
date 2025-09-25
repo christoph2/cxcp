@@ -1636,6 +1636,12 @@ XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
 
+    /* Validate DAQ list index against configured lists to avoid config-dependent faults */
+    if (daqListNumber >= XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+
     #if XCP_ENABLE_STIM == XCP_OFF
     if ((mode & XCP_DAQ_LIST_MODE_DIRECTION) == XCP_DAQ_LIST_MODE_DIRECTION) {
         Xcp_ErrorResponse(UINT8(ERR_CMD_SYNTAX));
@@ -1684,6 +1690,11 @@ XCP_STATIC void Xcp_GetDaqListMode_Res(Xcp_PduType const * const pdu) {
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
 
+    if (daqListNumber >= XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+
     entry = XcpDaq_GetListState(daqListNumber);
 
     Xcp_Send8(
@@ -1709,6 +1720,7 @@ XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PduType const * const pdu) {
 
     if (daqListNumber >= XcpDaq_GetListCount()) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
     }
 
     if (mode > 2) {
