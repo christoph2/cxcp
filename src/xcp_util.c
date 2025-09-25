@@ -41,7 +41,6 @@ void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len)
         return;
     }
 
-
     for (uint32_t i = 0U; i < len; ++i) {
         pd[i] = ps[i];
     }
@@ -77,6 +76,21 @@ bool XcpUtl_MemCmp(/*@in@*/ void const *lhs, /*@in@*/ void const *rhs, uint32_t 
         --len;
     }
     return (bool)(len == UINT32(0));
+}
+
+uint32_t XcpUtl_StrLen(/*@in@*/ char const *str) {
+    uint32_t len = 0U;
+
+    XCP_ASSERT(XCP_NULL != str);
+    if (str == XCP_NULL) {
+        return 0UL;
+    }
+
+    while (str[len] != '\0') {
+        ++len;
+    }
+
+    return len;
 }
 
 uint8_t XcpUtl_SetResetBit8(uint8_t result, uint8_t value, uint8_t flag) {

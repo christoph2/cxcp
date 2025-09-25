@@ -147,7 +147,7 @@ void XcpTl_RxHandler(void) {
     uint16_t dlc     = 0U;
     uint16_t counter = 0U;
 
-    ZeroMemory(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
+    /* Avoid unnecessary buffer clearing; we read directly into destination. */
 
     XCP_FOREVER {
         res = XcpTl_ReadHeader(&dlc, &counter);
@@ -173,7 +173,8 @@ void XcpTl_RxHandler(void) {
 
         if (!XcpThrd_IsShuttingDown()) {
             Xcp_CtoIn.len = dlc;
-            res           = XcpTl_ReadData(&XcpTl_RxBuffer[0], dlc);
+            /* Read payload directly into target buffer to avoid an extra copy. */
+            res           = XcpTl_ReadData(Xcp_CtoIn.data, dlc);
             if (res == -1) {
                 #if defined(_WIN32)
                 XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
@@ -203,7 +204,7 @@ static void XcpTl_Accept(void) {
     struct sockaddr_storage From;
     uint32_t                err;
 
-    XcpUtl_ZeroMem(XcpTl_RxBuffer, XCP_COMM_BUFLEN);
+    /* Avoid clearing Rx buffer on each accept iteration; no data is read into it here. */
 
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (!XcpTl_Connection.connected) {

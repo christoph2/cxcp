@@ -58,6 +58,10 @@ static uint8_t                     Xcp_CtoInBuffer[XCP_TRANSPORT_LAYER_CTO_BUFFE
 Xcp_PduType Xcp_CtoIn  = { 0, &Xcp_CtoInBuffer[0] };
 Xcp_PduType Xcp_CtoOut = { 0, &Xcp_CtoOutBuffer[0] };
 
+#if XCP_ENABLE_GET_ID_EPK == XCP_ON
+extern const char Xcp_EEPROM_Kennung[];
+#endif /* XCP_ENABLE_GET_ID_EPK */
+
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 static uint8_t     Xcp_DtoOutBuffer[XCP_TRANSPORT_LAYER_DTO_BUFFER_SIZE] = { 0 };
 static Xcp_PduType Xcp_DtoOut                                            = { 0, &Xcp_DtoOutBuffer[0] };
@@ -1097,26 +1101,33 @@ XCP_STATIC void Xcp_GetId_Res(Xcp_PduType const * const pdu) {
 
     DBG_TRACE2("GET_ID [type: 0x%02x]\n\r", idType);
 
-    if (idType == UINT8(0)) {
-        response     = Xcp_GetId0.name;
-        response_len = Xcp_GetId0.len;
-    } else if (idType == UINT8(1)) {
-        response     = Xcp_GetId1.name;
-        response_len = Xcp_GetId1.len;
-    }
+    switch (idType) {
+        case 0:
+            response     = Xcp_GetId0.name;
+            response_len = Xcp_GetId0.len;
+            break;
+        case 1:
+            response     = Xcp_GetId1.name;
+            response_len = Xcp_GetId1.len;
+            break;
+    #if XCP_ENABLE_GET_ID_EPK == XCP_ON
+        case 5:
+            response     = (uint8_t const *)&Xcp_EEPROM_Kennung[0];
+            response_len = XcpUtl_StrLen(Xcp_EEPROM_Kennung);
+            break;
+    #endif /* XCP_ENABLE_GET_ID_EPK */
+        default:
     #if XCP_ENABLE_GET_ID_HOOK == XCP_ON
-    else {
-        if (!Xcp_HookFunction_GetId(idType, &response, &response_len)) {
+            if (!Xcp_HookFunction_GetId(idType, &response, &response_len)) {
+                response_len = 0;
+                valid        = XCP_FALSE;
+            }
+    #else
             response_len = 0;
             valid        = XCP_FALSE;
-        }
-    }
-    #else
-    else {
-        response_len = 0;
-        valid        = XCP_FALSE;
-    }
     #endif /* XCP_ENABLE_GET_ID_HOOK */
+            break;
+    }
     if (valid) {
         Xcp_SetMta(Xcp_GetNonPagedAddress(response));
     }
@@ -1532,6 +1543,23 @@ XCP_STATIC void Xcp_SetDaqPtr_Res(Xcp_PduType const * const pdu) {
     Xcp_PositiveResponse();
 }
 
+    #if XCP_ENABLE_READ_DAQ == XCP_ON
+XCP_STATIC void Xcp_ReadDaq_Res(Xcp_PduType const * const pdu) {
+    uint8_t             bitOffset;
+    uint8_t             elemSize;
+    uint8_t             adddrExt;
+    Xcp_PointerSizeType address;
+
+    XcpDaq_ReadEntry(&bitOffset, &elemSize, &adddrExt, &address);
+
+    Xcp_Send8(
+        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(bitOffset), UINT8(elemSize), UINT8(adddrExt),
+        XCP_LOBYTE(XCP_LOWORD(address)), XCP_HIBYTE(XCP_LOWORD(address)), XCP_LOBYTE(XCP_HIWORD(address)),
+        XCP_HIBYTE(XCP_HIWORD(address))
+    );
+}
+    #endif /* XCP_ENABLE_READ_DAQ */
+
 XCP_STATIC void Xcp_WriteDaq_Res(Xcp_PduType const * const pdu) {
     const uint8_t  bitOffset = Xcp_GetByte(pdu, UINT8(1));
     const uint8_t  elemSize  = Xcp_GetByte(pdu, UINT8(2));
@@ -1590,7 +1618,7 @@ XCP_STATIC void Xcp_WriteDaqMultiple_Res(Xcp_PduType const * const pdu) {
     }
     Xcp_PositiveResponse();
 }
-    #endif  // XCP_ENABLE_WRITE_DAQ_MULTIPLE
+    #endif /* XCP_ENABLE_WRITE_DAQ_MULTIPLE */
 
 XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     const uint8_t                mode               = Xcp_GetByte(pdu, UINT8(1));
@@ -1607,6 +1635,12 @@ XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     XCP_ASSERT_DAQ_STOPPED();
     XCP_ASSERT_PGM_IDLE();
     XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    /* Validate DAQ list index against configured lists to avoid config-dependent faults */
+    if (daqListNumber >= XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
 
     #if XCP_ENABLE_STIM == XCP_OFF
     if ((mode & XCP_DAQ_LIST_MODE_DIRECTION) == XCP_DAQ_LIST_MODE_DIRECTION) {
@@ -1648,6 +1682,33 @@ XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
     Xcp_PositiveResponse();
 }
 
+XCP_STATIC void Xcp_GetDaqListMode_Res(Xcp_PduType const * const pdu) {
+    XcpDaq_ListStateType        *entry         = NULL;
+    const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+
+    DBG_TRACE1("GET_DAQ_LIST_MODE\n\r");
+    XCP_ASSERT_PGM_IDLE();
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    if (daqListNumber >= XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+
+    entry = XcpDaq_GetListState(daqListNumber);
+
+    Xcp_Send8(
+        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(entry->mode), UINT8(0), UINT8(0),
+
+        // XCP_LOBYTE(UINT16(XCP_DAQ_MAX_EVENT_CHANNEL)), XCP_HIBYTE(UINT16(XCP_DAQ_MAX_EVENT_CHANNEL)),
+
+        UINT8(0),  // WORD    Current Event Channel Number
+        UINT8(0),
+        UINT8(1),  // BYTE    Current Prescaler
+        UINT8(0)   // BYTE    Current DAQ list Priority
+    );
+}
+
 XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PduType const * const pdu) {
     const uint8_t                mode          = Xcp_GetByte(pdu, UINT8(1));
     XcpDaq_ODTIntegerType        firstPid      = (XcpDaq_ODTIntegerType)0;
@@ -1659,6 +1720,7 @@ XCP_STATIC void Xcp_StartStopDaqList_Res(Xcp_PduType const * const pdu) {
 
     if (daqListNumber >= XcpDaq_GetListCount()) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
     }
 
     if (mode > 2) {
@@ -1685,14 +1747,6 @@ XCP_STATIC void Xcp_StartStopSynch_Res(Xcp_PduType const * const pdu) {
     }
 
     XcpDaq_StartStopSynch(mode);
-    Xcp_PositiveResponse();
-}
-
-XCP_STATIC void Xcp_GetDaqListMode_Res(Xcp_PduType const * const pdu) {
-    DBG_TRACE1("GET_DAQ_LIST_MODE\n\r");
-    XCP_ASSERT_PGM_IDLE();
-    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
-
     Xcp_PositiveResponse();
 }
 

@@ -34,8 +34,8 @@
     /*
     **  General Options.
     */
-    #define TP_CAN
-// #define TP_SXI
+//    #define TP_CAN
+#define TP_SXI
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -197,25 +197,26 @@
         #define XCP_MAX_CTO (64)  // (16)
         #define XCP_MAX_DTO (64)
 
-        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE   (2)
-        #define XCP_TRANSPORT_LAYER_COUNTER_SIZE  (2)
-        #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
         #define XCP_MAX_CTO (64)  // (16)
         #define XCP_MAX_DTO (64)
 
-        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE   (2)
-        #define XCP_TRANSPORT_LAYER_COUNTER_SIZE  (2)
-        #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
-        #define XCP_TRANSPORT_LAYER               XCP_ON_SXI
-        #define XCP_MAX_CTO                       (64)
-        #define XCP_MAX_DTO                       (64)
-        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE   (2)
-        #define XCP_TRANSPORT_LAYER_COUNTER_SIZE  (2)
-        #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (2)
+       #define XCP_TRANSPORT_LAYER               XCP_ON_SXI
+       #define XCP_ON_SXI_HEADER_FORMAT          (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
+       #define XCP_ON_SXI_BITRATE                (38400)
+       #define XCP_ON_SXI_CONFIG	             (SERIAL_8N1)
+       #define XCP_MAX_CTO                       (64)
+       #define XCP_MAX_DTO                       (64)
+       #define XCP_ON_SXI_TAIL_CHECKSUM          (XCP_ON_SXI_NO_CHECKSUM)
+       /* Framing and escaping (as used by xcp_tl.c) */
+       #define XCP_ON_SXI_ENABLE_FRAMING         (XCP_OFF)
+       #define XCP_ON_SXI_SYNC_CHAR              (0xAA)
+       #define XCP_ON_SXI_ESC_CHAR               (0xAB)
+       #define XCP_ON_SXI_ESC_SYNC_CHAR          (0x01)
+       #define XCP_ON_SXI_ESC_ESC_CHAR           (0x00)
     #else
         #error "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
     #endif  // KVASER_CAN

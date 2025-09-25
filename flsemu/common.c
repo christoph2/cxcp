@@ -94,7 +94,7 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
     uint32_t                    length = 0;
     char                        rom[1024];
     FlsEmu_SegmentType         *segment    = XCP_NULL;
-    FlsEmu_OpenCreateResultType result     = 0;
+    FlsEmu_OpenCreateResultType result     = OPEN_ERROR;
     uint32_t                    fillerSize = 0UL;
     Xcp_PointerSizeType         offset     = 0UL;
     uint32_t                    numPages   = 0U;
@@ -105,44 +105,46 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
         return;
     }
-    for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
-        // FIXME!!!
-        offset = ((Xcp_PointerSizeType)segment->persistentArray->mappingAddress) + (pageIdx * pageSize);
-        XcpUtl_MemSet((void *)offset, FLSEMU_ERASED_VALUE, segment->pageSize);
-        if (fillerSize > 0) {
-            XcpUtl_MemSet((void *)(offset + segment->pageSize), FLSEMU_FILLER_VALUE, fillerSize);
-        }
-        segment                   = FlsEmu_GetConfig()->segments[segmentIdx];
-        segment->persistentArray  = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
-        segment->currentPage      = 0x00;
-        segment->alloctedPageSize = FlsEmu_AllocatedSize(segmentIdx);
-        pageSize                  = XCP_MAX(segment->pageSize, segment->alloctedPageSize);
-        length                    = strlen(segment->name);
+
+    /* Initialize segment and compute sizes before creating/opening backing file. */
+    segment                   = FlsEmu_GetConfig()->segments[segmentIdx];
+    if (segment->persistentArray == NULL) {
+        segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
+        memset(segment->persistentArray, 0, sizeof(FlsEmu_PersistentArrayType));
+    }
+    segment->currentPage      = 0x00;
+    segment->alloctedPageSize = FlsEmu_AllocatedSize(segmentIdx);
+    pageSize                  = XCP_MAX(segment->pageSize, segment->alloctedPageSize);
+
+    length = (uint32_t)strlen(segment->name);
 #if defined(_MSC_VER)
-        strncpy_s((char *)rom, 1024, (char *)segment->name, length);
-        rom[length] = '\x00';
-        strcat_s((char *)rom, 1024, ".rom");
+    strncpy_s((char *)rom, 1024, (char *)segment->name, length);
+    rom[length] = '\x00';
+    strcat_s((char *)rom, 1024, ".rom");
 #else
-        strncpy((char *)rom, (char *)segment->name, length);
-        rom[length] = '\x00';
-        strcat((char *)rom, ".rom");
+    strncpy((char *)rom, (char *)segment->name, length);
+    rom[length] = '\x00';
+    strcat((char *)rom, ".rom");
 #endif /* _MSC_VER */
-        numPages = FlsEmu_NumPages(segmentIdx);
-        result   = FlsEmu_OpenCreatePersitentArray(rom, pageSize * numPages, segment->persistentArray);
-        if (result == OPEN_ERROR) {
-        } else if (result == NEW_FILE) {
-            if (segment->alloctedPageSize > segment->pageSize) {
-                fillerSize = segment->alloctedPageSize - segment->pageSize;
-            } else {
-                fillerSize = 0;
-            }
-            for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
-                // FIXME!!!
-                offset = ((Xcp_PointerSizeType)segment->persistentArray->mappingAddress) + (pageIdx * pageSize);
-                XcpUtl_MemSet((void *)offset, FLSEMU_ERASED_VALUE, segment->pageSize);
-                if (fillerSize > 0) {
-                    XcpUtl_MemSet((void *)(offset + segment->pageSize), FLSEMU_FILLER_VALUE, fillerSize);
-                }
+
+    numPages = FlsEmu_NumPages(segmentIdx);
+    result   = FlsEmu_OpenCreatePersitentArray(rom, pageSize * numPages, segment->persistentArray);
+    if (result == OPEN_ERROR) {
+        return;
+    }
+
+    /* If a new file was created, initialize all pages to erased value and optional filler. */
+    if (result == NEW_FILE) {
+        if (segment->alloctedPageSize > segment->pageSize) {
+            fillerSize = segment->alloctedPageSize - segment->pageSize;
+        } else {
+            fillerSize = 0UL;
+        }
+        for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
+            offset = ((Xcp_PointerSizeType)segment->persistentArray->mappingAddress) + (pageIdx * pageSize);
+            XcpUtl_MemSet((void *)offset, FLSEMU_ERASED_VALUE, segment->pageSize);
+            if (fillerSize > 0UL) {
+                XcpUtl_MemSet((void *)(offset + segment->pageSize), FLSEMU_FILLER_VALUE, fillerSize);
             }
         }
     }
@@ -174,7 +176,7 @@ uint32_t FlsEmu_NumPages(uint8_t segmentIdx) {
 
 void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address) {
     uint32_t                  mask    = 0UL;
-    uint16_t                 *ptr     = XCP_NULL;
+    uint8_t                  *base    = XCP_NULL;
     FlsEmu_SegmentType const *segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
@@ -183,13 +185,21 @@ void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address) {
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
     mask    = (uint32_t)segment->sectorSize - 1UL;
-    ptr     = (uint16_t *)segment->persistentArray->mappingAddress;
-    if ((address & mask) != 0UL) {
-        // TODO: warn misalignment.
-        // ("address (%#X) should be aligned to %u-byte sector boundary.", address,
-        // segment->sectorSize)
+    base    = (uint8_t *)segment->persistentArray->mappingAddress;
+
+    /* Bounds check */
+    if (address >= segment->memSize) {
+        return; /* Out of range */
     }
-    XcpUtl_MemSet(ptr + (address & ~mask), FLSEMU_ERASED_VALUE, segment->sectorSize);
+    if ((address & mask) != 0UL) {
+        /* Misaligned address: round down to sector boundary. */
+        address &= ~mask;
+    }
+    if (address + segment->sectorSize > segment->memSize) {
+        /* Clamp to available memory */
+        return;
+    }
+    XcpUtl_MemSet(base + address, FLSEMU_ERASED_VALUE, segment->sectorSize);
 }
 
 void FlsEmu_ErasePage(uint8_t segmentIdx, uint8_t page) {
@@ -257,6 +267,8 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst, Xcp_MtaType co
  */
 uint32_t FlsEmu_AllocatedSize(uint8_t segmentIdx) {
     FlsEmu_SegmentType const *segment = XCP_NULL;
+    uint32_t                  gran    = 0U;
+    uint32_t                  size    = 0U;
     FLSEMU_ASSERT_INITIALIZED();
 
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
@@ -264,10 +276,10 @@ uint32_t FlsEmu_AllocatedSize(uint8_t segmentIdx) {
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
 
-    return FlsEmu_SystemMemory.AllocationGranularity * (((segment->pageSize / FlsEmu_SystemMemory.AllocationGranularity) +
-                                                         ((segment->pageSize % FlsEmu_SystemMemory.AllocationGranularity) != 0)) ?
-                                                            1 :
-                                                            0);
+    gran = FlsEmu_SystemMemory.AllocationGranularity;
+    size = segment->pageSize;
+    /* Round up to allocation granularity */
+    return (uint32_t)(((size + gran - 1U) / gran) * gran);
 }
 
 FlsEmu_ConfigType const *FlsEmu_GetConfig(void) {

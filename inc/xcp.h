@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2024 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -21,6 +21,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * s. FLOSS-EXCEPTION.txt
+ */
+
+/*
+ * File: xcp.h
+ * Purpose:
+ *   Central public header for BlueParrot XCP core and transport layers.
+ *   This header collects protocol/transport version information, compile-time
+ *   feature switches, transport selection, and a large set of constants and
+ *   types used by the implementation and by applications.
+ *
  */
 
 #if !defined(__CXCP_H)
@@ -54,6 +64,34 @@
     #define XCP_DAQ_CONFIG_TYPE_STATIC  (0)
     #define XCP_DAQ_CONFIG_TYPE_DYNAMIC (1)
     #define XCP_DAQ_CONFIG_TYPE_NONE    (3)
+
+    /*
+    **  XCPonSXI Header Formats.
+    */
+    #define XCP_ON_SXI_HEADER_LEN_BYTE      (1)
+    #define XCP_ON_SXI_HEADER_LEN_CTR_BYTE  (2)
+    #define XCP_ON_SXI_HEADER_LEN_FILL_BYTE (3)
+    #define XCP_ON_SXI_HEADER_LEN_WORD      (4)
+    #define XCP_ON_SXI_HEADER_LEN_CTR_WORD  (5)
+    #define XCP_ON_SXI_HEADER_LEN_FILL_WORD (6)
+
+    /*
+    ** XCPonSXI Checksum Variants.
+    */
+    #define XCP_ON_SXI_NO_CHECKSUM          (0)
+    #define XCP_ON_SXI_CHECKSUM_BYTE        (1)
+    #define XCP_ON_SXI_CHECKSUM_WORD        (2)
+
+	/*
+	** XCPonSXI Framing.
+	*/
+	#define XCP_ON_SXI_ENABLE_FRAMING (XCP_ON)
+	#define XCP_ON_SXI_SYNC_CHAR      (0xAA)
+	#define XCP_ON_SXI_ESC_CHAR       (0xAB)
+
+	#define XCP_ON_SXI_ESC_SYNC_CHAR  (0x01)
+	#define XCP_ON_SXI_ESC_ESC_CHAR   (0x00)
+
 
     #include "xcp_config.h"
 
@@ -107,12 +145,12 @@ extern "C" {
     #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
         #if !defined(XCP_ON_SXI_BITRATE)
-            #define XCP_ON_SXI_BITRATE                (38400)
-        #endif    /* XCP_ON_SXI_BITRATE */
+            #define XCP_ON_SXI_BITRATE (38400)
+        #endif /* XCP_ON_SXI_BITRATE */
 
         #if !defined(XCP_ON_SXI_CONFIG)
-            #define XCP_ON_SXI_CONFIG	              (SERIAL_8N1)
-        #endif    /* XCP_ON_SXI_CONFIG */
+            #define XCP_ON_SXI_CONFIG (SERIAL_8N1)
+        #endif /* XCP_ON_SXI_CONFIG */
 
         #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
              (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
@@ -156,6 +194,81 @@ extern "C" {
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
 
     #endif /* XCP_TRANSPORT_LAYER */
+    #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
+        #if !defined(XCP_ON_SXI_HEADER_FORMAT)
+            #error "XCP_ON_SXI_HEADER_FORMAT is not defined."
+        #endif
+
+        #ifdef XCP_TRANSPORT_LAYER_LENGTH_SIZE
+            #undef XCP_TRANSPORT_LAYER_LENGTH_SIZE
+        #endif
+        #ifdef XCP_TRANSPORT_LAYER_COUNTER_SIZE
+            #undef XCP_TRANSPORT_LAYER_COUNTER_SIZE
+        #endif
+
+        #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_BYTE)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (1)
+            #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
+        #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (1)
+            #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (1)
+        #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_BYTE)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (1)
+            #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
+        #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_WORD)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+            #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
+        #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+            #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
+        #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_WORD)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+            #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
+        #else
+            #error "Unknown XCP_ON_SXI_HEADER_FORMAT."
+        #endif
+    #endif /* XCP_TRANSPORT_LAYER == XCP_ON_SXI */
+
+    #ifdef XCP_TRANSPORT_LAYER_LENGTH_SIZE
+        #undef XCP_TRANSPORT_LAYER_LENGTH_SIZE
+    #endif
+    #ifdef XCP_TRANSPORT_LAYER_COUNTER_SIZE
+        #undef XCP_TRANSPORT_LAYER_COUNTER_SIZE
+    #endif
+
+    #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
+        /* Already derived per header format above. */
+    #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
+        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+        #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
+    #else
+        /* For remaining transports (e.g., CAN), length/counter are not used. */
+        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (0)
+        #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
+    #endif
+
+    /* Derive transport-layer checksum size centrally: depends on transport.
+       For SXI, bind to XCP_ON_SXI_TAIL_CHECKSUM. Others default to 0. */
+    #ifdef XCP_TRANSPORT_LAYER_CHECKSUM_SIZE
+        #undef XCP_TRANSPORT_LAYER_CHECKSUM_SIZE
+    #endif /* XCP_TRANSPORT_LAYER_CHECKSUM_SIZE */
+
+    #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
+        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
+            #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
+        #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
+            #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (1)
+        #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+            #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (2)
+        #else
+            #error "Unknown XCP_ON_SXI_TAIL_CHECKSUM value."
+        #endif
+    #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
+        #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
+    #else
+        /* For remaining transports (e.g., CAN), checksum size is not used */
+        #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
+    #endif
 
     #if (XCP_ENABLE_GET_SEED == XCP_ON) && (XCP_ENABLE_UNLOCK == XCP_ON)
         #define XCP_ENABLE_RESOURCE_PROTECTION (XCP_ON)
@@ -461,7 +574,32 @@ extern "C" {
     #define XCP_DAQ_PREDEFINDED_LIST_COUNT (sizeof(XcpDaq_PredefinedLists) / sizeof(XcpDaq_PredefinedLists[0]))
 
     /* DAQ Implementation Macros */
-    #define XCP_DAQ_DEFINE_ODT_ENTRY(meas) { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
+    // #define XCP_DAQ_DEFINE_ODT_ENTRY(meas) { { /*(uint32_t)*/ &(meas) }, sizeof((meas)) }
+    #define XCP_DAQ_PREDEFINED_LISTS_BEGIN const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[] = {
+    #define XCP_DAQ_PREDEFINED_LISTS_END                                                                                           \
+        }                                                                                                                          \
+        ;                                                                                                                          \
+        XcpDaq_ListStateType         XcpDaq_PredefinedListsState[XCP_DAQ_PREDEFINDED_LIST_COUNT];                                  \
+        const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount = XCP_DAQ_PREDEFINDED_LIST_COUNT;
+
+    #define XCP_DAQ_PREDEFINED_ODTS_BEGIN const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {
+    #define XCP_DAQ_PREDEFINED_ODTS_END                                                                                            \
+        }                                                                                                                          \
+        ;
+
+    #define XCP_DAQ_PREDEFINED_ODT_ENTRIES_BEGIN const XcpDaq_ODTEntryType XcpDaq_PredefinedOdtEntries[] = {
+    #define XCP_DAQ_PREDEFINED_ODT_ENTRIES_END                                                                                     \
+        }                                                                                                                          \
+        ;
+
+    #define XCP_DAQ_PREDEFINED_MEASUREMENT_VARIABLES_BEGIN XcpDaq_ODTEntryType XcpDaq_PredefinedMeasurementVariables[] = {
+    #define XCP_DAQ_PREDEFINED_MEASUREMENT_VARIABLES_END                                                                           \
+        }                                                                                                                          \
+        ;
+
+    #define XCP_DAQ_DEFINE_ODT_VARIABLE_IDX(idx) { { (idx) }, 0 }
+
+    #define XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(meas) { { (Xcp_PointerSizeType)(Xcp_PointerSizeType *)&(meas) }, sizeof((meas)) }
 
     /* DAQ Event Implementation Macros */
     #define XCP_DAQ_BEGIN_EVENTS const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
@@ -877,6 +1015,11 @@ extern "C" {
         XCP_DIRECTION_DAQ_STIM
     } XcpDaq_DirectionType;
 
+    typedef struct tagXcpDaq_MeasurementVariable {
+        volatile void *variable;
+        uint32_t       length;
+    } XcpDaq_MeasurementVariable;
+
     typedef struct tagXcpDaq_DynamicListType {
         XcpDaq_ODTIntegerType numOdts;
         uint16_t              firstOdt;
@@ -1070,20 +1213,44 @@ extern "C" {
 
     void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xcp_PointerSizeType address);
 
+    void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, Xcp_PointerSizeType *address);
+
         /*
         **  Predefined DAQ constants.
         */
         #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
-    extern XcpDaq_ODTEntryType                XcpDaq_PredefinedOdtEntries[];
+    extern const XcpDaq_ODTEntryType          XcpDaq_PredefinedOdtEntries[];
     extern const XcpDaq_ODTType               XcpDaq_PredefinedOdts[];
     extern const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[];
     extern const XcpDaq_ListIntegerType       XcpDaq_PredefinedListCount;
     extern XcpDaq_ListStateType               XcpDaq_PredefinedListsState[];
+    extern XcpDaq_ODTEntryType                XcpDaq_PredefinedMeasurementVariables[];
         #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 
     extern const XcpDaq_EventType XcpDaq_Events[];
 
     XCP_DAQ_ENTITY_TYPE XcpDaq_GetDynamicDaqEntityCount(void);
+
+        #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
+
+    /*
+    ** DAQ Queuing Support.
+    */
+
+    typedef struct tagXcpDaq_QueueType {
+        uint8_t head;
+        uint8_t tail;
+        bool    overload;
+    } XcpDaq_QueueType;
+
+    void            XcpDaq_QueueGetVar(XcpDaq_QueueType *var);
+    void            XcpDaq_QueueInit(void);
+    XCP_STATIC bool XcpDaq_QueueFull(void);
+    bool            XcpDaq_QueueEmpty(void);
+    bool            XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
+    bool            XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
+
+        #endif /* XCP_DAQ_ENABLE_QUEUING */
 
         /*
         ** Debugging / Testing interface.
@@ -1099,23 +1266,6 @@ extern "C" {
     XcpDaq_EntityType *XcpDaq_GetDynamicEntity(uint16_t num);
 
     uint8_t *XcpDaq_GetDtoBuffer(void);
-
-            #if XCP_DAQ_ENABLE_QUEUING == XCP_ON
-
-    typedef struct tagXcpDaq_QueueType {
-        uint8_t head;
-        uint8_t tail;
-        bool    overload;
-    } XcpDaq_QueueType;
-
-    void            XcpDaq_QueueGetVar(XcpDaq_QueueType *var);
-    void            XcpDaq_QueueInit(void);
-    XCP_STATIC bool XcpDaq_QueueFull(void);
-    bool            XcpDaq_QueueEmpty(void);
-    bool            XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
-    bool            XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
-
-            #endif /* XCP_DAQ_ENABLE_QUEUING */
 
         #endif  // XCP_BUILD_TYPE
 
