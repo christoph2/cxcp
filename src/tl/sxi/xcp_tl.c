@@ -697,57 +697,76 @@ static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
-    #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
+
+#if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
     {
-        uint8_t            txBuf[XCP_TL_MAX_PDU_SIZE + 1 /* fill */ + sizeof(XcpSxiChecksumType)];
-        uint16_t           txLen = len;
-        XcpSxiChecksumType checksum;
+        XcpSxiChecksumType checksum = 0;
         uint16_t           i;
 
-        /* Copy original data */
+        /* Calculate checksum over original data */
         for (i = 0; i < len; i++) {
-            txBuf[i] = buf[i];
+            checksum += buf[i];
         }
 
-        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+#if defined(ARDUINO)
+#if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+        XcpTl_TransformAndSend(buf, len);
+#else
+        Serial.write(buf, len);
+#endif
+#endif
+
+#if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
         /* Add fill byte if length is odd for word checksum */
         if ((len % 2) != 0) {
-            txBuf[txLen] = 0x00; /* Fill byte */
-            txLen++;
+            uint8_t fill_byte = 0x00;
+            checksum += fill_byte;
+#if defined(ARDUINO)
+#if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+            XcpTl_TransformAndSend(&fill_byte, 1);
+#else
+            Serial.write(&fill_byte, 1);
+#endif
+#endif
         }
-        #endif
+#endif
 
-        /* Calculate checksum over data and optional fill byte */
-        checksum = 0;
-        for (i = 0; i < txLen; i++) {
-            checksum += txBuf[i];
+        /* Append checksum to buffer */
+#if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+        {
+            uint8_t checksum_bytes[2];
+            checksum_bytes[0] = (uint8_t)(checksum >> 8);
+            checksum_bytes[1] = (uint8_t)(checksum);
+#if defined(ARDUINO)
+#if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+            XcpTl_TransformAndSend(checksum_bytes, 2);
+#else
+            Serial.write(checksum_bytes, 2);
+#endif
+#endif
         }
-
-            /* Append checksum to buffer */
-        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-        txBuf[txLen++] = (uint8_t)(checksum >> 8);
-        txBuf[txLen++] = (uint8_t)(checksum);
-        #else /* XCP_ON_SXI_CHECKSUM_BYTE */
-        txBuf[txLen++] = (uint8_t)checksum;
-        #endif
-
-        #if defined(ARDUINO)
-            #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
-        XcpTl_TransformAndSend(txBuf, txLen);
-            #else
-        Serial.write(txBuf, txLen);
-            #endif
-        #endif
+#else /* XCP_ON_SXI_CHECKSUM_BYTE */
+        {
+            uint8_t checksum_byte = (uint8_t)checksum;
+#if defined(ARDUINO)
+#if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+            XcpTl_TransformAndSend(&checksum_byte, 1);
+#else
+            Serial.write(&checksum_byte, 1);
+#endif
+#endif
+        }
+#endif
     }
-    #else
-        #if defined(ARDUINO)
-            #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+#else
+#if defined(ARDUINO)
+#if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
     XcpTl_TransformAndSend(buf, len);
-            #else
+#else
     Serial.write(buf, len);
-            #endif
-        #endif
-    #endif /* XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM */
+#endif
+#endif
+#endif /* XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM */
 
     XCP_TL_LEAVE_CRITICAL();
 }
