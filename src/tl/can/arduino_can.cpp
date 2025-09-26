@@ -110,7 +110,7 @@ void XcpTl_Init(void) {
     CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
     CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
-    if (Canbus.init(CANSPEED_500K)) { // TODO: Make speed configurable
+    if (Canbus.init(CANSPEED_500)) { // TDO: Make speed configurable
         Serial.println("CAN init OK!");
     } else {
         Serial.println("CAN init fail!");
@@ -153,7 +153,7 @@ void XcpTl_MainFunction(void) {
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
 static void on_receive() {
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
-// Polling
+// Polling, no on_receive handler used.
     #else
 static void on_receive(int packetSize) {
     uint_least8_t idx = 0;
@@ -167,18 +167,6 @@ static void on_receive(int packetSize) {
         CAN.readMsgBuf(&XcpTl_Dlc, static_cast<byte *>(XcpTl_Buffer));
         // XcpTl_ID
         //  canBusPacket.id = CAN.getCanId();
-    }
-
-    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
-    if (mcp2515_check_message()) {
-        if (mcp2515_get_message(&message)) {
-            XcpTl_FrameReceived = true;
-            XcpTl_Dlc = message.header.length;
-            XcpTl_ID = message.id;
-            for (int i = 0; i < message.header.length; i++) {
-                XcpTl_Buffer[i] = message.data[i];
-            }
-        }
     }
     #else
     XcpTl_FrameReceived = true;
@@ -209,7 +197,22 @@ void XcpTl_TxHandler(void) {
 }
 
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
+    #if XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
+    if (mcp2515_check_message()) {
+        if (mcp2515_get_message(&message)) {
+            XcpTl_FrameReceived = true;
+            XcpTl_Dlc           = message.header.length;
+            XcpTl_ID            = message.id;
+            for (int i = 0; i < message.header.length; i++) {
+                XcpTl_Buffer[i] = message.data[i];
+            }
+            return 1;
+        }
+    }
+    return 0;
+    #else
     return static_cast<int16_t>(XcpTl_FrameReceived);
+    #endif
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
