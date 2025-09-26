@@ -35,9 +35,10 @@
         #include <mcp2518fd_can.h>
         #include <mcp2518fd_can_dfs.h>
         #include <mcp_can.h>
-    #else
-    // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
         #include <CAN.h>
+    #else
+        #error "Unsupported XCP_CAN_INTERFACE"
     #endif
 
     #include <stdint.h>
@@ -55,11 +56,8 @@ static unsigned char XcpTl_Buffer[64];
 static unsigned char XcpTl_Dlc = 0;
 static int           XcpTl_ID  = 0;
 
-    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
-static void on_receive();
-    #else
-static void on_receive(int packetSize);
-    #endif
+static void on_receive_seedstudio();
+static void on_receive_mkr(int packetSize);
 
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
         #if XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD
@@ -67,7 +65,10 @@ mcp2515_can CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
         #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD
 mcp2518fd CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
         #endif
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
+        /* MKR Zero CAN shield uses built-in CAN object; no explicit declaration needed here. */
     #else
+        #error "Unsupported XCP_CAN_INTERFACE"
     #endif
 
 void XcpTl_Init(void) {
@@ -78,7 +79,7 @@ void XcpTl_Init(void) {
     Serial.println("Starting Blueparrot XCP...");
 
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
-    attachInterrupt(digitalPinToInterrupt(XCP_CAN_IF_MCP25XX_PIN_INT), on_receive, FALLING);
+    attachInterrupt(digitalPinToInterrupt(XCP_CAN_IF_MCP25XX_PIN_INT), on_receive_seedstudio, FALLING);
 
     while (CAN_OK != CAN.begin(XCP_ON_CAN_FREQ)) {
         Serial.println("CAN init fail, retry...");
@@ -98,7 +99,7 @@ void XcpTl_Init(void) {
 
     CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
     CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
-    #else
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
     // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
@@ -108,7 +109,9 @@ void XcpTl_Init(void) {
         }
     }
     CAN.setTimeout(1000);
-    CAN.onReceive(on_receive);
+    CAN.onReceive(on_receive_mkr);
+    #else
+    #error "Unsupported XCP_CAN_INTERFACE"
     #endif
 }
 
@@ -129,30 +132,21 @@ void XcpTl_MainFunction(void) {
     }
 }
 
-// ARDUINO_API_VERSION
-
-    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
-static void on_receive() {
-    #else
-static void on_receive(int packetSize) {
-    uint_least8_t idx = 0;
-    XcpTl_Dlc         = packetSize;
-    #endif
-
-    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
-
+#if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+static void on_receive_seedstudio() {
     if (CAN.checkReceive() == CAN_MSGAVAIL) {
         XcpTl_FrameReceived = true;
         CAN.readMsgBuf(&XcpTl_Dlc, static_cast<byte *>(XcpTl_Buffer));
         // XcpTl_ID
         //  canBusPacket.id = CAN.getCanId();
     }
-
-    #else
+}
+#elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
+static void on_receive_mkr(int packetSize) {
+    uint_least8_t idx = 0;
+    XcpTl_Dlc         = packetSize;
     XcpTl_FrameReceived = true;
     if (CAN.packetExtended()) {
-    }
-    if (CAN.packetRtr()) {
     }
     if (CAN.packetRtr()) {
     } else {
@@ -160,16 +154,11 @@ static void on_receive(int packetSize) {
             XcpTl_Buffer[idx++] = CAN.read();
         }
     }
-    #endif
 }
+#endif
 
 void XcpTl_RxHandler(void) {
-    // Serial.print(" Buffer: ");
-    // XcpUtl_Hexdump((uint8_t*)XcpTl_Buffer, XcpTl_Dlc);
-    // Serial.print(" DLC: ");
-    // Serial.print(XcpTl_Dlc);
-    // Serial.println();
-    XcpUtl_MemCopy(Xcp_CtoIn.data, &XcpTl_Buffer, XcpTl_Dlc);
+    XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_Buffer, XcpTl_Dlc);
     Xcp_DispatchCommand(&Xcp_CtoIn);
 }
 
@@ -189,7 +178,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
     CAN.sendMsgBuf(can_id, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER), len, buf);
 
-    #else
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
     if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER)) {
         CAN.beginExtendedPacket(can_id, len);
@@ -199,6 +188,8 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
     CAN.write(buf, len);
     CAN.endPacket();
+    #else
+    #error "Unsupported XCP_CAN_INTERFACE"
     #endif
 }
 
