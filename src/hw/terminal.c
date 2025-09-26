@@ -132,6 +132,49 @@ void *XcpTerm_Thread(void *param) {
     }
 }
 #else
+
+#if 0
+#include <stdio.h>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <sys/select.h>
+
+static void init_termios(void) {
+    static int initialized = 0;
+    static struct termios oldt, newt;
+
+    if (initialized) return;
+
+    tcgetattr(STDIN_FILENO, &oldt);           // get current terminal attributes
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);         // disable canonical mode and echo
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);  // apply changes immediately
+
+    initialized = 1;
+}
+
+static void reset_termios(void) {
+    static struct termios oldt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    oldt.c_lflag |= (ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+}
+
+static int kbhit(void) {
+    struct timeval tv = { 0L, 0L };
+    fd_set fds;
+
+    init_termios();  // ensure terminal is in raw mode
+
+    FD_ZERO(&fds);
+    FD_SET(STDIN_FILENO, &fds);
+    return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+}
+
+#endif
+
+
 static void reset_terminal_mode(void) {
     tcsetattr(0, TCSANOW, &orig_termios);
 }
