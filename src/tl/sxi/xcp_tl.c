@@ -680,15 +680,15 @@ typedef uint16_t XcpSxiChecksumType;
 static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
     uint16_t i;
 
-    (void)Serial.write(XCP_ON_SXI_SYNC_CHAR);
+    (void)Serial.write((uint8_t)XCP_ON_SXI_SYNC_CHAR);
 
     for (i = 0; i < len; i++) {
         if (buf[i] == XCP_ON_SXI_SYNC_CHAR) {
-            (void)Serial.write(XCP_ON_SXI_ESC_CHAR);
-            (void)Serial.write(XCP_ON_SXI_ESC_SYNC_CHAR);
+            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_CHAR);
+            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_SYNC_CHAR);
         } else if (buf[i] == XCP_ON_SXI_ESC_CHAR) {
-            (void)Serial.write(XCP_ON_SXI_ESC_CHAR);
-            (void)Serial.write(XCP_ON_SXI_ESC_ESC_CHAR);
+            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_CHAR);
+            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_ESC_CHAR);
         } else {
             (void)Serial.write(buf[i]);
         }
