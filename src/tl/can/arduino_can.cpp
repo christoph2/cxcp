@@ -89,39 +89,35 @@ void XcpTl_Init(void) {
     attachInterrupt(digitalPinToInterrupt(XCP_CAN_IF_MCP25XX_PIN_INT), on_receive_seedstudio, FALLING);
 
     while (CAN_OK != CAN.begin(XCP_ON_CAN_FREQ)) {
-        Serial.println("CAN init fail, retry...");
+        Serial.println("CAN init (SeedStudio) failed!, retry...");
         delay(100);
     }
 
-    Serial.println("CAN init OK!");
+    Serial.println("CAN init (SeedStudio) OK!");
 
-    // #if 0
     CAN.init_Mask(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), filter_mask(XCP_ON_CAN_INBOUND_IDENTIFIER));
     CAN.init_Mask(
         1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), filter_mask(XCP_ON_CAN_BROADCAST_IDENTIFIER)
     );
-    //   #endif
-    // CAN.init_Mask(0, 0, 0);
-    // CAN.init_Mask(1, 0, 0);
 
     CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
     CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
     if (Canbus.init(CANSPEED_500)) { // TDO: Make speed configurable
-        Serial.println("CAN init OK!");
+        Serial.println("CAN init (SparkFun) OK!");
     } else {
-        Serial.println("CAN init fail!");
+        Serial.println("CAN init (SparkFun) failed!");
         while (1) {
         }
     }
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
-    // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
-
     if (!CAN.begin(XCP_ON_CAN_FREQ)) {
-        Serial.println("Starting CAN failed!");
+        Serial.println("Starting CAN (MKR Zero) failed!");
         while (1) {
         }
+    } else {
+        Serial.println("CAN init ((MKR Zero) OK!");
     }
     CAN.setTimeout(1000);
     CAN.onReceive(on_receive_mkr);
