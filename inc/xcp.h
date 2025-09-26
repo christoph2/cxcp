@@ -679,6 +679,7 @@ extern "C" {
     #define XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD    (0x01)
     #define XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD (0x02)
     #define XCP_CAN_IF_MKR_ZERO_CAN_SHIELD       (0x03)
+    #define XCP_CAN_IF_SPARKFUN_CAN_SHIELD       (0x04)
 
     // Set defaults for MCP25XX CAN controllers.
     #if !defined(XCP_CAN_IF_MCP25XX_PIN_CS)
