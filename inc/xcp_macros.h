@@ -68,15 +68,15 @@ extern "C" {
 
     #if !defined(XCP_MAKEWORD)
         #define XCP_MAKEWORD(h, l)                                                                                                 \
-            ((((uint16_t)((h) & ((uint8_t)0xff))) << (uint16_t)8) |                                                                \
-             ((uint16_t)((l) & ((uint8_t)0xff)))) /**< Make word from high and low bytes. */
+            ((((uint16_t)((h) & ((uint8_t)0xff))) << (uint16_t)8) | ((uint16_t)((l) & ((uint8_t)0xff)))                            \
+            ) /**< Make word from high and low bytes. */
     #endif
 
     #if !defined(XCP_MAKEDWORD)
         #define XCP_MAKEDWORD(h, l)                                                                                                \
-            ((((uint32_t)((h) & ((uint16_t)0xffffu))) << (uint32_t)16) |                                                           \
-             ((uint32_t)((l) & ((uint16_t)0xffffu)))) /**< Make double-word from high                                              \
-                                                         and low words. */
+            ((((uint32_t)((h) & ((uint16_t)0xffffu))) << (uint32_t)16) | ((uint32_t)((l) & ((uint16_t)0xffffu)))                   \
+            ) /**< Make double-word from high                                                                                      \
+                 and low words. */
     #endif
 
     #if !defined(XCP_MAX)

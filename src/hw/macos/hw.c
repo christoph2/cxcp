@@ -53,7 +53,6 @@ typedef struct tagHwStateType {
     bool            Initialized;
 } HwStateType;
 
-
 /*
 ** Local Defines.
 */
@@ -70,33 +69,32 @@ typedef struct tagHwStateType {
 
 /* Set timer prescaler */
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100NS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100MS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1S
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1S)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1S)
 #else
-#error Timestamp-unit not supported.
+    #error Timestamp-unit not supported.
 #endif  // XCP_DAQ_TIMESTAMP_UNIT
 
-
 static dispatch_queue_t timer_queue;
-static HwStateType HwState;
-int i = 0;
+static HwStateType      HwState;
+int                     i = 0;
 
 dispatch_source_t timer1;
 dispatch_source_t timer2;
@@ -125,7 +123,6 @@ void vector2(dispatch_source_t timer) {
 }
 
 void XcpHw_Init(void) {
-
     struct timespec ts;
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) == -1) {
         XcpHw_ErrorMsg("XcpHw_Init::clock_gettime()", errno);
@@ -139,10 +136,9 @@ void XcpHw_Init(void) {
     XcpHw_PosixInit();
 }
 
-
 static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler) {
-    struct timespec now = {0};
-    struct timespec dt  = {0};
+    struct timespec now       = { 0 };
+    struct timespec dt        = { 0 };
     uint64_t        timestamp = 0ULL;
 
     if (!HwState.Initialized || prescaler == 0U) {
@@ -161,32 +157,28 @@ static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler) {
         dt.tv_nsec = now.tv_nsec - HwState.StartingTime.tv_nsec;
     }
 
-    uint64_t free_running =
-        ((uint64_t)dt.tv_sec * (uint64_t)1000 * 1000 * 1000) + (uint64_t)dt.tv_nsec;
-    timestamp = free_running / (uint64_t)prescaler;
+    uint64_t free_running = ((uint64_t)dt.tv_sec * (uint64_t)1000 * 1000 * 1000) + (uint64_t)dt.tv_nsec;
+    timestamp             = free_running / (uint64_t)prescaler;
     return timestamp;
 }
-
 
 uint32_t XcpHw_GetTimerCounter(void) {
     uint64_t timestamp = XcpHw_GetElapsedTime(XCP_HW_TIMER_PRESCALER);
 
-    #if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
+#if XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_1
     timestamp &= 0x000000FFULL;
-    #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_2
+#elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_2
     timestamp &= 0x0000FFFFULL;
-    #elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_4
+#elif XCP_DAQ_TIMESTAMP_SIZE == XCP_DAQ_TIMESTAMP_SIZE_4
     timestamp &= 0xFFFFFFFFULL;
-    #else
+#else
     #error Timestamp-size not supported.
-    #endif  // XCP_DAQ_TIMESTAMP_SIZE
+#endif  // XCP_DAQ_TIMESTAMP_SIZE
 
     return (uint32_t)timestamp;
 }
-
 
 uint32_t XcpHw_GetTimerCounterMS(void) {
     uint64_t timestamp = XcpHw_GetElapsedTime(TIMER_PS_1MS);
     return (uint32_t)(timestamp & 0xFFFFFFFFULL);
 }
-

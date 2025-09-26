@@ -178,12 +178,12 @@ void XcpTl_Init(void) {
         exit(1);
     }
 
-    XcpTl_Connection.handle = hnd;
+    XcpTl_Connection.handle      = hnd;
     XcpTl_Connection.boundSocket = -1; /* Not a socket; placeholder for channel handle mapping if used. */
 
     /* Beispielhafte Initialisierung — mit robusten Fehlerpfaden. */
-    int chan = Xcp_Options.can_channel; /* Annahme: kommt aus Optionen. */
-    canHandle hnd = canOpenChannel(chan, canOPEN_REQUIRE_INIT_ACCESS);
+    int       chan = Xcp_Options.can_channel; /* Annahme: kommt aus Optionen. */
+    canHandle hnd  = canOpenChannel(chan, canOPEN_REQUIRE_INIT_ACCESS);
     if (hnd < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::canOpenChannel()", (int)hnd);
         return;
@@ -321,9 +321,9 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         XcpHw_ErrorMsg("XcpTl_Send (Kvaser): channel not open", ENOTCONN);
         return;
     }
-    long id = Xcp_Options.can_id; /* Annahme: Standard-ID */
+    long         id  = Xcp_Options.can_id; /* Annahme: Standard-ID */
     unsigned int dlc = (unsigned int)len;
-    canStatus st = canWrite(hnd, id, buf, dlc, 0);
+    canStatus    st  = canWrite(hnd, id, buf, dlc, 0);
     if (st != canOK) {
         XcpHw_ErrorMsg("XcpTl_Send::canWrite()", (int)st);
         return;
@@ -404,11 +404,11 @@ void XcpTl_RxHandler(void) {
     if (hnd <= 0) {
         return;
     }
-    long id;
-    unsigned int dlc = 0;
-    unsigned int flags = 0;
-    unsigned long time = 0;
-    uint8_t data[8];
+    long          id;
+    unsigned int  dlc   = 0;
+    unsigned int  flags = 0;
+    unsigned long time  = 0;
+    uint8_t       data[8];
 
     while (1) {
         canStatus st = canReadWait(hnd, &id, data, &dlc, &flags, &time, 0);

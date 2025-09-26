@@ -214,7 +214,7 @@
         /* Framing and escaping (as used by xcp_tl.c) */
         #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
         #define XCP_ON_SXI_SYNC_CHAR      (0xAA)
-        #define XCP_ON_SXI_ESC_CHAR       (0x55)
+        #define XCP_ON_SXI_ESC_CHAR       (0xAB)
     #else
         #error "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
     #endif  // KVASER_CAN

@@ -107,7 +107,7 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
     }
 
     /* Initialize segment and compute sizes before creating/opening backing file. */
-    segment                   = FlsEmu_GetConfig()->segments[segmentIdx];
+    segment = FlsEmu_GetConfig()->segments[segmentIdx];
     if (segment->persistentArray == NULL) {
         segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
         memset(segment->persistentArray, 0, sizeof(FlsEmu_PersistentArrayType));

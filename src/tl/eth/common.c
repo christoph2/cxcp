@@ -78,11 +78,11 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
-    uint8_t  header_buffer[8];
-    uint8_t  bytes_remaining = XCP_ETH_HEADER_SIZE;
-    uint8_t  offset          = 0;
-    int      nbytes          = 0;
-    socklen_t from_len       = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
+    uint8_t   header_buffer[8];
+    uint8_t   bytes_remaining = XCP_ETH_HEADER_SIZE;
+    uint8_t   offset          = 0;
+    int       nbytes          = 0;
+    socklen_t from_len        = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
@@ -114,12 +114,11 @@ static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
     return 1;
 }
 
-
 static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
-    uint16_t bytes_remaining = len;
-    uint16_t offset          = 0;
-    int      nbytes          = 0;
-    socklen_t from_len       = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
+    uint16_t  bytes_remaining = len;
+    uint16_t  offset          = 0;
+    int       nbytes          = 0;
+    socklen_t from_len        = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
@@ -152,11 +151,11 @@ void XcpTl_RxHandler(void) {
     XCP_FOREVER {
         res = XcpTl_ReadHeader(&dlc, &counter);
         if (res == -1) {
-            #if defined(_WIN32)
+#if defined(_WIN32)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", WSAGetLastError());
-            #elif defined(__unix__) || defined(__APPLE__)
+#elif defined(__unix__) || defined(__APPLE__)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", errno);
-            #endif
+#endif
             XcpTl_ReleaseConnection();
             return;
         } else if (res == 0) {
@@ -174,13 +173,13 @@ void XcpTl_RxHandler(void) {
         if (!XcpThrd_IsShuttingDown()) {
             Xcp_CtoIn.len = dlc;
             /* Read payload directly into target buffer to avoid an extra copy. */
-            res           = XcpTl_ReadData(Xcp_CtoIn.data, dlc);
+            res = XcpTl_ReadData(Xcp_CtoIn.data, dlc);
             if (res == -1) {
-                #if defined(_WIN32)
+#if defined(_WIN32)
                 XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
-                #elif defined(__unix__) || defined(__APPLE__)
+#elif defined(__unix__) || defined(__APPLE__)
                 XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", errno);
-                #endif
+#endif
                 XcpTl_ReleaseConnection();
                 return;
             } else if (res == 0) {
@@ -198,7 +197,6 @@ void XcpTl_RxHandler(void) {
     }
 }
 
-
 static void XcpTl_Accept(void) {
     socklen_t               FromLen = 0;
     struct sockaddr_storage From;
@@ -212,14 +210,14 @@ static void XcpTl_Accept(void) {
             XcpTl_Connection.connectedSocket =
                 accept(XcpTl_Connection.boundSocket, (struct sockaddr *)&XcpTl_Connection.currentAddress, &FromLen);
             if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
-                #if defined(_WIN32)
+#if defined(_WIN32)
                 err = WSAGetLastError();
                 if (err != WSAEINTR) {
                     XcpHw_ErrorMsg("XcpTl_Accept::accept()", err);
                 }
-                #elif defined(__unix__) || defined(__APPLE__)
+#elif defined(__unix__) || defined(__APPLE__)
                 XcpHw_ErrorMsg("XcpTl_Accept::accept()", errno);
-                #endif
+#endif
             } else {
                 XcpTl_SaveConnection();
             }
@@ -227,7 +225,6 @@ static void XcpTl_Accept(void) {
         }
     }
 }
-
 
 void XcpTl_TxHandler(void) {
 }

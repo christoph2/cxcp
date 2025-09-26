@@ -115,7 +115,7 @@ General Options
 
     .. c:macro:: XCP_MIN_ST
 
-            Indicates the required minimum separation time between the packets of a block transfer from the master 
+            Indicates the required minimum separation time between the packets of a block transfer from the master
             device to the slave device in units of 100 microseconds.
 
     .. c:macro:: XCP_QUEUE_SIZE

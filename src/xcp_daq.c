@@ -509,10 +509,18 @@ void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, 
     entry = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
     if (entry == XCP_NULL) {
         /* Invalid pointer; return zeroed outputs and do not advance pointer. */
-        if (bitOffset) { *bitOffset = 0; }
-        if (elemSize)  { *elemSize  = 0; }
-        if (adddrExt)  { *adddrExt  = 0; }
-        if (address)   { *address   = 0; }
+        if (bitOffset) {
+            *bitOffset = 0;
+        }
+        if (elemSize) {
+            *elemSize = 0;
+        }
+        if (adddrExt) {
+            *adddrExt = 0;
+        }
+        if (address) {
+            *address = 0;
+        }
         return;
     }
 
@@ -652,8 +660,8 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     uint16_t                            offset            = UINT16(0);
     uint8_t                             data[XCP_MAX_DTO] = { 0 };
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
-    uint32_t              timestamp        = UINT32(0);
-    bool                  insert_timestamp = XCP_FALSE;
+    uint32_t timestamp        = UINT32(0);
+    bool     insert_timestamp = XCP_FALSE;
 
     timestamp = XcpHw_GetTimerCounter();
 #endif /* XCP_DAQ_ENABLE_TIMESTAMPING */

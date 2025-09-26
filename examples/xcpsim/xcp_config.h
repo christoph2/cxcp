@@ -189,8 +189,8 @@
 
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
 
-        #define XCP_MAX_CTO                       (64)
-        #define XCP_MAX_DTO                       (64)
+        #define XCP_MAX_CTO (64)
+        #define XCP_MAX_DTO (64)
 
     #else
         #error "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."

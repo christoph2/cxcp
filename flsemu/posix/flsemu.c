@@ -130,7 +130,7 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(
             } else {
 #if defined(__APPLE__)
                 fstore_t store = { F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, (off_t)size };
-                int ret = fcntl(fd, F_PREALLOCATE, &store);
+                int      ret   = fcntl(fd, F_PREALLOCATE, &store);
                 if (-1 == ret) {
                     store.fst_flags = F_ALLOCATEALL;
                     ret             = fcntl(fd, F_PREALLOCATE, &store);

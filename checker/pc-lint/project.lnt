@@ -32,7 +32,7 @@ au-misra2.lnt
 +e429	// Custodial pointer 'Symbol' has not been freed or returned.
 -e537   // Repeated include file.
 +e578	// Declaration of symbol 'Symbol' hides 'Symbol'.
--e621	// 
+-e621	//
 +e714	// Symbol '___' (___) not referenced
 +e715	// Symbol '___' (___) not referenced
 +e716	// while(1)
@@ -85,9 +85,9 @@ au-misra2.lnt
 
 -width(0) //  don't break messages at any particular width
 +flm	// make sure nobody can change the output format.
-/////////////////////// 
+///////////////////////
 
-// -d__STDC_VERSION__=199901L 
+// -d__STDC_VERSION__=199901L
 
 //-d__IAR_SYSTEMS_ICC__
 //-d__ICCHCS12__
@@ -101,7 +101,7 @@ au-misra2.lnt
 +libclass(ansi)
 //lib-w32.lnt     // Win32 API options
 //lib-win.lnt     // Windows option
-//+compiler(search_actively_including_stack) 
+//+compiler(search_actively_including_stack)
 -vf
 
 -wlib(1)

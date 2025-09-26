@@ -64,7 +64,7 @@ void XcpTl_Init(void) {
         /* Kein exit() hier: aufruferseitiges Fehlerhandling erlauben. */
         return;
     } else {
-        winsock_ok = true;
+        winsock_ok                   = true;
         XcpTl_Connection.boundSocket = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
         if (XcpTl_Connection.boundSocket == INVALID_SOCKET) {
             XcpHw_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());

@@ -18,12 +18,12 @@
 
 #if (XCP_TRANSPORT_LAYER == XCP_ON_BT) && defined(ARDUINO)
 
-#include <Arduino.h>
-#include <ArduinoBLE.h>
+    #include <Arduino.h>
+    #include <ArduinoBLE.h>
 
-/*!!! START-INCLUDE-SECTION !!!*/
-#include "xcp.h"
-#include "xcp_util.h"
+    /*!!! START-INCLUDE-SECTION !!!*/
+    #include "xcp.h"
+    #include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 /* Nordic UART Service (NUS)-style UUIDs */
@@ -32,9 +32,9 @@ static const char* BLE_RX_UUID  = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"; /* Wri
 static const char* BLE_TX_UUID  = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"; /* Notify */
 
 /* BLE objects */
-static BLEService           XcpBleService(BLE_SVC_UUID);
-static BLECharacteristic    XcpBleRx(BLE_RX_UUID,  BLEWriteWithoutResponse, XCP_COMM_BUFLEN);
-static BLECharacteristic    XcpBleTx(BLE_TX_UUID,  BLENotify,               XCP_COMM_BUFLEN);
+static BLEService        XcpBleService(BLE_SVC_UUID);
+static BLECharacteristic XcpBleRx(BLE_RX_UUID, BLEWriteWithoutResponse, XCP_COMM_BUFLEN);
+static BLECharacteristic XcpBleTx(BLE_TX_UUID, BLENotify, XCP_COMM_BUFLEN);
 
 /* Simple RX buffer for one incoming frame */
 static uint8_t  XcpBle_RxBuf[XCP_COMM_BUFLEN];
@@ -143,14 +143,14 @@ void XcpTl_MainFunction(void) {
     }
 }
 
-void XcpTl_Send(uint8_t const* buf, uint16_t len) {
+void XcpTl_Send(uint8_t const * buf, uint16_t len) {
     if (!buf || len == 0U) {
         return;
     }
     /* BLE Characteristic notifications are bounded by MTU/char size.
        We chunk if needed. */
-    const uint16_t mtu = (uint16_t)XCP_COMM_BUFLEN; /* Using characteristic buffer size as cap */
-    uint16_t sent = 0U;
+    const uint16_t mtu  = (uint16_t)XCP_COMM_BUFLEN; /* Using characteristic buffer size as cap */
+    uint16_t       sent = 0U;
 
     XCP_TL_ENTER_CRITICAL();
     while (sent < len) {
@@ -177,11 +177,11 @@ void XcpTl_ReleaseConnection(void) {
 
 void XcpTl_PrintConnectionInformation(void) {
     /* On Arduino, print via Serial if available */
-#if defined(SERIAL_PORT_MONITOR) || defined(Serial)
+    #if defined(SERIAL_PORT_MONITOR) || defined(Serial)
     if (Serial) {
         Serial.println("XCP over BLE Peripheral (NUS)");
     }
-#endif
+    #endif
 }
 
 void XcpTl_RxHandler(void) {

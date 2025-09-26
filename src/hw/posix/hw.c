@@ -99,7 +99,6 @@ void XcpHw_Deinit(void) {
     pthread_mutex_destroy(&XcpHw_TransmissionMutex);
 }
 
-
 static void XcpHw_InitLocks(void) {
     uint8_t idx = UINT8(0);
 
@@ -136,18 +135,15 @@ void XcpHw_SignalTransmitRequest(void) {
     pthread_mutex_unlock(&XcpHw_TransmissionMutex);
 }
 
-
 void XcpHw_WaitTransmitRequest(void) {
     pthread_mutex_lock(&XcpHw_TransmissionMutex);
     pthread_cond_wait(&XcpHw_TransmissionEvent, &XcpHw_TransmissionMutex);
     pthread_mutex_unlock(&XcpHw_TransmissionMutex);
 }
 
-
 void XcpHw_ErrorMsg(char * const fun, int errorCode) {
     fprintf(stderr, "[%s] failed with: [%d]\n", fun, errorCode);
 }
-
 
 void XcpHw_Sleep(uint64_t usec) {
     usleep(usec);

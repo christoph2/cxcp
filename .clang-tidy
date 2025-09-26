@@ -5,7 +5,7 @@ WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: true
 FormatStyle:     none
-CheckOptions:    
+CheckOptions:
   - key:             cert-dcl59-cpp.HeaderFileExtensions
     value:           h,hh,hpp,hxx
   - key:             cert-err09-cpp.CheckThrowTemporaries
@@ -181,4 +181,3 @@ CheckOptions:
   - key:             readability-simplify-boolean-expr.ChainedConditionalReturn
     value:           '0'
 ...
-

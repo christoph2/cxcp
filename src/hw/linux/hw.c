@@ -49,7 +49,7 @@
 
 typedef struct tagHwStateType {
     struct timespec StartingTime;
-bool            Initialized;
+    bool            Initialized;
 } HwStateType;
 
 /*
@@ -69,29 +69,28 @@ bool            Initialized;
 /* Set timer prescaler */
 // ... existing code ...
 #if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100NS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100NS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100US)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_10MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_100MS)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_100MS)
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1S
-#define XCP_HW_TIMER_PRESCALER (TIMER_PS_1S)
+    #define XCP_HW_TIMER_PRESCALER (TIMER_PS_1S)
 #else
-#error Timestamp-unit not supported.
+    #error Timestamp-unit not supported.
 #endif  // XCP_DAQ_TIMESTAMP_UNIT
-
 
 #define TIMER_MASK_1 (0x000000FFUL)
 #define TIMER_MASK_2 (0x0000FFFFUL)
@@ -114,11 +113,11 @@ void exitFunc(void);
 /*
 **  Local Variables.
 */
-static HwStateType        HwState               = { 0 };
-static struct timespec    XcpHw_TimerResolution = { 0 };
-static timer_t            XcpHw_AppMsTimer;
-static unsigned long long XcpHw_FreeRunningCounter = 0ULL;
-static volatile sig_atomic_t XcpHw_TimerSignalSeen = 0;
+static HwStateType           HwState               = { 0 };
+static struct timespec       XcpHw_TimerResolution = { 0 };
+static timer_t               XcpHw_AppMsTimer;
+static unsigned long long    XcpHw_FreeRunningCounter = 0ULL;
+static volatile sig_atomic_t XcpHw_TimerSignalSeen    = 0;
 
 static void termination_handler(int sig) {
     const char *msg = "Terminating due to signal.\n";
@@ -134,7 +133,6 @@ static void handler(int sig, siginfo_t *si, void *uc) {
     /* Only set a flag — keep handler async-signal-safe */
     XcpHw_TimerSignalSeen = 1;
 }
-
 
 void XcpHw_Init(void) {
     int               status        = 0;
