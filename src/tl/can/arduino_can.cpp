@@ -1,3 +1,4 @@
+
 /*
  * BlueParrot XCP
  *
@@ -35,6 +36,12 @@
         #include <mcp2518fd_can.h>
         #include <mcp2518fd_can_dfs.h>
         #include <mcp_can.h>
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
+        #include <Canbus.h>
+        #include <defaults.h>
+        #include <global.h>
+        #include <mcp2515.h>
+        #include <mcp2515_defs.h>
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
         #include <CAN.h>
     #else
@@ -99,6 +106,14 @@ void XcpTl_Init(void) {
 
     CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
     CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
+    if (Canbus.init(CANSPEED_500)) { // TDO: Make speed configurable
+        Serial.println("CAN init OK!");
+    } else {
+        Serial.println("CAN init fail!");
+        while (1) {
+        }
+    }
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
     // XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
@@ -166,7 +181,22 @@ void XcpTl_TxHandler(void) {
 }
 
 int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
+    #if XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
+    if (mcp2515_check_message()) {
+        if (mcp2515_get_message(&message)) {
+            XcpTl_FrameReceived = true;
+            XcpTl_Dlc           = message.header.length;
+            XcpTl_ID            = message.id;
+            for (int i = 0; i < message.header.length; i++) {
+                XcpTl_Buffer[i] = message.data[i];
+            }
+            return 1;
+        }
+    }
+    return 0;
+    #else
     return static_cast<int16_t>(XcpTl_FrameReceived);
+    #endif
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
@@ -178,6 +208,15 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
     CAN.sendMsgBuf(can_id, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER), len, buf);
 
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
+    message.id = can_id;
+    message.header.rtr = 0;
+    message.header.length = len;
+    for (int i = 0; i < len; i++) {
+        message.data[i] = buf[i];
+    }
+    mcp2515_bit_modify(CANCTRL, (1<<REQOP2)|(1<<REQOP1)|(1<<REQOP0), 0);
+    mcp2515_send_message(&message);
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
     if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER)) {

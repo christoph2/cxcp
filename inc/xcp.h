@@ -78,20 +78,15 @@
     /*
     ** XCPonSXI Checksum Variants.
     */
-    #define XCP_ON_SXI_NO_CHECKSUM          (0)
-    #define XCP_ON_SXI_CHECKSUM_BYTE        (1)
-    #define XCP_ON_SXI_CHECKSUM_WORD        (2)
+    #define XCP_ON_SXI_NO_CHECKSUM   (0)
+    #define XCP_ON_SXI_CHECKSUM_BYTE (1)
+    #define XCP_ON_SXI_CHECKSUM_WORD (2)
 
-	/*
-	** XCPonSXI Framing.
-	*/
-	#define XCP_ON_SXI_ENABLE_FRAMING (XCP_ON)
-	#define XCP_ON_SXI_SYNC_CHAR      (0xAA)
-	#define XCP_ON_SXI_ESC_CHAR       (0xAB)
-
-	#define XCP_ON_SXI_ESC_SYNC_CHAR  (0x01)
-	#define XCP_ON_SXI_ESC_ESC_CHAR   (0x00)
-
+    /*
+    ** XCPonSXI Framing.
+    */
+    #define XCP_ON_SXI_ESC_SYNC_CHAR (0x01)
+    #define XCP_ON_SXI_ESC_ESC_CHAR  (0x00)
 
     #include "xcp_config.h"
 
@@ -207,43 +202,36 @@ extern "C" {
         #endif
 
         #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_BYTE)
-            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (1)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (1)
             #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
         #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE)
-            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (1)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (1)
             #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (1)
         #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_BYTE)
-            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (1)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (1)
             #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
         #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_WORD)
-            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
             #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
         #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD)
-            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
             #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
         #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_WORD)
-            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+            #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
             #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
         #else
             #error "Unknown XCP_ON_SXI_HEADER_FORMAT."
         #endif
     #endif /* XCP_TRANSPORT_LAYER == XCP_ON_SXI */
 
-    #ifdef XCP_TRANSPORT_LAYER_LENGTH_SIZE
-        #undef XCP_TRANSPORT_LAYER_LENGTH_SIZE
-    #endif
-    #ifdef XCP_TRANSPORT_LAYER_COUNTER_SIZE
-        #undef XCP_TRANSPORT_LAYER_COUNTER_SIZE
-    #endif
-
     #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
         /* Already derived per header format above. */
     #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
-        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (2)
+        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
     #else
         /* For remaining transports (e.g., CAN), length/counter are not used. */
-        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE (0)
+        #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (0)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
     #endif
 
@@ -691,6 +679,7 @@ extern "C" {
     #define XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD    (0x01)
     #define XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD (0x02)
     #define XCP_CAN_IF_MKR_ZERO_CAN_SHIELD       (0x03)
+    #define XCP_CAN_IF_SPARKFUN_CAN_SHIELD       (0x04)
 
     // Set defaults for MCP25XX CAN controllers.
     #if !defined(XCP_CAN_IF_MCP25XX_PIN_CS)

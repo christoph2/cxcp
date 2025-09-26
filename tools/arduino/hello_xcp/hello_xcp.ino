@@ -117,6 +117,11 @@ void setup() {
     sq0_wave = 0xaa;
     sq1_wave = 0x55;
 
+    voltage1 = 0.0;
+    voltage2 = 0.0;
+    voltage3 = 0.0;
+    voltage4 = 10.0;
+
     time_point = micros();
     Xcp_Init();
 }
@@ -127,7 +132,6 @@ void loop() {
 
     XcpTl_MainFunction();
     Xcp_MainFunction();
-    // #if 0
     if ((micros() - time_point) >= 10 * 1000) {
         time_point = micros();
         start      = micros();
@@ -135,12 +139,12 @@ void loop() {
         voltage1 = wg1.nextSample();
         voltage2 = wg2.nextSample();
         voltage3 = wg3.nextSample();
-        voltage4 = wg4.nextSample();
+        // voltage4 = wg4.nextSample();
+        voltage4 += 0.05f;
 
         XcpDaq_TriggerEvent(0);
         stop         = micros();
         elapsed_time = stop - start;
         time_point -= elapsed_time;
     }
-    // #endif
 }
