@@ -34,8 +34,8 @@
     /*
     **  General Options.
     */
-//    #define TP_CAN
-#define TP_SXI
+   #define TP_CAN
+#//define TP_SXI
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 

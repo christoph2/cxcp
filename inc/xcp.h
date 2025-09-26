@@ -229,13 +229,6 @@ extern "C" {
         #endif
     #endif /* XCP_TRANSPORT_LAYER == XCP_ON_SXI */
 
-    #ifdef XCP_TRANSPORT_LAYER_LENGTH_SIZE
-        #undef XCP_TRANSPORT_LAYER_LENGTH_SIZE
-    #endif
-    #ifdef XCP_TRANSPORT_LAYER_COUNTER_SIZE
-        #undef XCP_TRANSPORT_LAYER_COUNTER_SIZE
-    #endif
-
     #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
         /* Already derived per header format above. */
     #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
