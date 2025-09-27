@@ -702,12 +702,15 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     {
         XcpSxiChecksumType checksum = 0;
         uint16_t           i;
+        const uint16_t     header_off = (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET; /* LEN + CTR bytes */
+        const uint16_t     payload_len = (len >= header_off) ? (len - header_off) : 0u;
 
-        /* Calculate checksum over original data */
-        for (i = 0; i < len; i++) {
-            checksum += buf[i];
+        /* Calculate checksum over payload only (exclude header) */
+        for (i = 0; i < payload_len; i++) {
+            checksum += buf[header_off + i];
         }
 
+        /* Send header + payload */
         #if defined(ARDUINO)
             #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
         XcpTl_TransformAndSend(buf, len);
@@ -717,8 +720,8 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         #endif
 
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-        /* Add fill byte if length is odd for word checksum */
-        if ((len % 2) != 0) {
+        /* Add fill byte if payload length is odd for word checksum */
+        if ((payload_len & 1u) != 0u) {
             uint8_t fill_byte = 0x00;
             checksum += fill_byte;
             #if defined(ARDUINO)
@@ -731,7 +734,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         }
         #endif
 
-            /* Append checksum to buffer */
+        /* Append checksum to stream */
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
         {
             uint8_t checksum_bytes[2];
