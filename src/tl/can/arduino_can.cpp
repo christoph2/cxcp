@@ -95,10 +95,14 @@ void XcpTl_Init(void) {
 
     Serial.println("CAN init (SeedStudio) OK!");
 
+    // #if 0
     CAN.init_Mask(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), filter_mask(XCP_ON_CAN_INBOUND_IDENTIFIER));
     CAN.init_Mask(
         1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), filter_mask(XCP_ON_CAN_BROADCAST_IDENTIFIER)
     );
+    //   #endif
+    // CAN.init_Mask(0, 0, 0);
+    // CAN.init_Mask(1, 0, 0);
 
     CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
     CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
@@ -158,6 +162,8 @@ static void on_receive_mkr(int packetSize) {
     XcpTl_Dlc         = packetSize;
     XcpTl_FrameReceived = true;
     if (CAN.packetExtended()) {
+    }
+    if (CAN.packetRtr()) {
     }
     if (CAN.packetRtr()) {
     } else {
