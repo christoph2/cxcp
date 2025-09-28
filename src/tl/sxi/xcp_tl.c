@@ -44,6 +44,12 @@
 
     #define TIMEOUT_VALUE (100)
 
+#if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
+typedef uint8_t XcpSxiChecksumType;
+#elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+typedef uint16_t XcpSxiChecksumType;
+#endif
+
 typedef enum tagXcpTl_ReceiverStateType {
     XCP_RCV_IDLE,
     XCP_RCV_UNTIL_LENGTH,
@@ -59,7 +65,6 @@ typedef struct tagXcpTl_ReceiverType {
     uint16_t                Ctr;
     #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
     XcpSxiChecksumType ReceivedChecksum;
-    uint8_t            ChecksumBytesRemaining;
     #endif
 } XcpTl_ReceiverType;
 
@@ -125,12 +130,16 @@ static void XcpTl_ResetSM(void) {
     XcpTl_Receiver.Remaining = 0u;
     #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
     XcpTl_Receiver.ReceivedChecksum       = 0;
-    XcpTl_Receiver.ChecksumBytesRemaining = 0;
     #endif
     #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
     s_FramingState = FRM_WAIT_FOR_SYNC;
     #endif
 }
+
+#if defined(XCP_TL_TEST_HOOKS)
+/* Test hook to invoke the internal state machine reset from unit-tests. */
+void XcpTl_Test_ResetSM(void) { XcpTl_ResetSM(); }
+#endif
 
 void XcpTl_RxHandler(void) {
 }
@@ -176,6 +185,19 @@ void XcpTl_FeedReceiver(uint8_t octet) {
 }
 
 static void XcpTl_ProcessOctet(uint8_t octet) {
+#if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
+    XcpSxiChecksumType calc_checksum = 0u;
+    uint16_t i = 0u;
+    uint16_t payload_off = 0u;
+    uint16_t dlc = 0u;
+    uint16_t fill = 0u;
+#if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+    uint16_t w = 0u;
+    uint16_t w2 = 0u;
+    uint16_t off = 0u;
+#endif
+#endif
+
     XCP_TL_ENTER_CRITICAL();
 
     /* Bounds check to protect Buffer[] */
@@ -193,10 +215,10 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         XcpTl_TimeoutStart();
     #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_BYTE)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
-        if (XcpTl_Receiver.Index == 0x00) {
+        if (XcpTl_Receiver.Index == 0x01) {
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
             XcpTl_Receiver.State     = XCP_RCV_REMAINING;
-            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc;
+            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc - 1;
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
             if ((XcpTl_Receiver.Dlc & 1u) != 0u) {
                 XcpTl_Receiver.Remaining += 1u; /* fill byte before checksum */
@@ -218,9 +240,9 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_TimeoutStop();
             Xcp_DispatchCommand(&Xcp_CtoIn);
         #else
-            uint16_t payload_off = 1u;
-            uint16_t dlc         = XcpTl_Receiver.Dlc;
-            uint16_t fill        = 0u;
+            payload_off = 1u;
+            dlc         = XcpTl_Receiver.Dlc;
+            fill        = 0u;
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
             if ((dlc & 1u) != 0u) {
                 fill = 1u;
@@ -228,130 +250,39 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #endif
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
-                uint32_t calc = 0u;
-                for (uint16_t i = 0u; i < dlc; ++i)
-                    calc += XcpTl_Receiver.Buffer[payload_off + i];
-                uint8_t recv = XcpTl_Receiver.Buffer[payload_off + dlc];
-                if (((uint8_t)calc) == recv) {
+                calc_checksum = 0u;
+                for (i = 0u; i < (1u + dlc); ++i) /* Include header byte */
+                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
+                if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
                     Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 1;
                     XcpTl_ResetSM();
                     XcpTl_TimeoutStop();
                     Xcp_DispatchCommand(&Xcp_CtoIn);
                 } else {
+                    /* Checksum error */
                     XcpTl_ResetSM();
                 }
             }
-            #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            {
-                uint32_t calc = 0u;
-                uint16_t i    = 0u;
-                while (i < dlc) {
-                    uint16_t w  = XcpTl_Receiver.Buffer[payload_off + i];
-                    uint16_t w2 = (i + 1u < dlc) ? XcpTl_Receiver.Buffer[payload_off + i + 1u] : 0u;
-                    calc += (uint16_t)(w | (uint16_t)(w2 << 8));
-                    i += 2u;
-                }
-                uint16_t off  = payload_off + dlc + fill;
-                uint16_t recv = (uint16_t)(((uint16_t)XcpTl_Receiver.Buffer[off] << 8) | XcpTl_Receiver.Buffer[off + 1u]);
-                if (((uint16_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 1;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
+            #else
+            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 1;
+            XcpTl_ResetSM();
+            XcpTl_TimeoutStop();
+            Xcp_DispatchCommand(&Xcp_CtoIn);
             #endif
         #endif
         }
-    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE)
+    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE) || (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_BYTE)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
-        if (XcpTl_Receiver.Index == 0x00) {
+        if (XcpTl_Receiver.Index == 0x01) { /* DLC and CTR/FILL received */
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
             XcpTl_Receiver.State     = XCP_RCV_REMAINING;
-            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc + 1; /* CTR */
-        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            if ((XcpTl_Receiver.Dlc & 1u) != 0u) {
-                XcpTl_Receiver.Remaining += 1u; /* fill byte before checksum */
-            }
-        #endif
-        #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
-            XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
-        #endif
-            XcpTl_TimeoutReset();
-        }
-    } else if (XcpTl_Receiver.State == XCP_RCV_REMAINING) {
-        if (XcpTl_Receiver.Index == 0x01) {
+            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc;
+        #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE)
             XcpTl_Receiver.Ctr = XcpTl_Receiver.Buffer[1];
-        }
-        XcpTl_TimeoutReset();
-        XcpTl_Receiver.Remaining--;
-        if (XcpTl_Receiver.Remaining == 0u) {
-        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
-            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
-            Xcp_DispatchCommand(&Xcp_CtoIn);
-        #else
-            uint16_t payload_off = 2u;
-            uint16_t dlc         = XcpTl_Receiver.Dlc;
-            uint16_t fill        = 0u;
-            #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            if ((dlc & 1u) != 0u) {
-                fill = 1u;
-            }
-            #endif
-            #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
-            {
-                uint32_t calc = 0u;
-                for (uint16_t i = 0u; i < dlc; ++i)
-                    calc += XcpTl_Receiver.Buffer[payload_off + i];
-                uint8_t recv = XcpTl_Receiver.Buffer[payload_off + dlc];
-                if (((uint8_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
-            #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            {
-                uint32_t calc = 0u;
-                uint16_t i    = 0u;
-                while (i < dlc) {
-                    uint16_t w  = XcpTl_Receiver.Buffer[payload_off + i];
-                    uint16_t w2 = (i + 1u < dlc) ? XcpTl_Receiver.Buffer[payload_off + i + 1u] : 0u;
-                    calc += (uint16_t)(w | (uint16_t)(w2 << 8));
-                    i += 2u;
-                }
-                uint16_t off  = payload_off + dlc + fill;
-                uint16_t recv = (uint16_t)(((uint16_t)XcpTl_Receiver.Buffer[off] << 8) | XcpTl_Receiver.Buffer[off + 1u]);
-                if (((uint16_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
-            #endif
         #endif
-        }
-    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_BYTE)
-    } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
-        if (XcpTl_Receiver.Index == 0x00) {
-            XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
-            XcpTl_Receiver.State     = XCP_RCV_REMAINING;
-            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc + 1; /* FILL */
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
             if ((XcpTl_Receiver.Dlc & 1u) != 0u) {
                 XcpTl_Receiver.Remaining += 1u; /* fill byte before checksum */
@@ -368,14 +299,14 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         if (XcpTl_Receiver.Remaining == 0u) {
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
+            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2; /* Data starts after LEN and CTR/FILL */
             XcpTl_ResetSM();
             XcpTl_TimeoutStop();
             Xcp_DispatchCommand(&Xcp_CtoIn);
         #else
-            uint16_t payload_off = 2u;
-            uint16_t dlc         = XcpTl_Receiver.Dlc;
-            uint16_t fill        = 0u;
+            payload_off = 2u; /* Data starts after LEN and CTR/FILL */
+            dlc         = XcpTl_Receiver.Dlc;
+            fill        = 0u;
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
             if ((dlc & 1u) != 0u) {
                 fill = 1u;
@@ -383,42 +314,27 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #endif
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
-                uint32_t calc = 0u;
-                for (uint16_t i = 0u; i < dlc; ++i)
-                    calc += XcpTl_Receiver.Buffer[payload_off + i];
-                uint8_t recv = XcpTl_Receiver.Buffer[payload_off + dlc];
-                if (((uint8_t)calc) == recv) {
+                calc_checksum = 0u;
+                for (i = 0u; i < (2u + dlc); ++i) /* Include header bytes */
+                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
+                if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
                     Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
                     XcpTl_ResetSM();
                     XcpTl_TimeoutStop();
                     Xcp_DispatchCommand(&Xcp_CtoIn);
                 } else {
+                    /* Checksum error */
                     XcpTl_ResetSM();
                 }
             }
-            #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            {
-                uint32_t calc = 0u;
-                uint16_t i    = 0u;
-                while (i < dlc) {
-                    uint16_t w  = XcpTl_Receiver.Buffer[payload_off + i];
-                    uint16_t w2 = (i + 1u < dlc) ? XcpTl_Receiver.Buffer[payload_off + i + 1u] : 0u;
-                    calc += (uint16_t)(w | (uint16_t)(w2 << 8));
-                    i += 2u;
-                }
-                uint16_t off  = payload_off + dlc + fill;
-                uint16_t recv = (uint16_t)(((uint16_t)XcpTl_Receiver.Buffer[off] << 8) | XcpTl_Receiver.Buffer[off + 1u]);
-                if (((uint16_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
+            #else
+            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
+            XcpTl_ResetSM();
+            XcpTl_TimeoutStop();
+            Xcp_DispatchCommand(&Xcp_CtoIn);
             #endif
         #endif
         }
@@ -457,9 +373,9 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_TimeoutStop();
             Xcp_DispatchCommand(&Xcp_CtoIn);
         #else
-            uint16_t payload_off = 2u;
-            uint16_t dlc         = XcpTl_Receiver.Dlc;
-            uint16_t fill        = 0u;
+            payload_off = 2u;
+            dlc         = XcpTl_Receiver.Dlc;
+            fill        = 0u;
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
             if ((dlc & 1u) != 0u) {
                 fill = 1u;
@@ -467,130 +383,47 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #endif
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
-                uint32_t calc = 0u;
-                for (uint16_t i = 0u; i < dlc; ++i)
-                    calc += XcpTl_Receiver.Buffer[payload_off + i];
-                uint8_t recv = XcpTl_Receiver.Buffer[payload_off + dlc];
-                if (((uint8_t)calc) == recv) {
+                calc_checksum = 0u;
+                for (i = 0u; i < (2u + dlc); ++i) /* Include header bytes */
+                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
+                if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
                     Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
                     XcpTl_ResetSM();
                     XcpTl_TimeoutStop();
                     Xcp_DispatchCommand(&Xcp_CtoIn);
                 } else {
+                    /* Checksum error */
                     XcpTl_ResetSM();
                 }
             }
-            #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            {
-                uint32_t calc = 0u;
-                uint16_t i    = 0u;
-                while (i < dlc) {
-                    uint16_t w  = XcpTl_Receiver.Buffer[payload_off + i];
-                    uint16_t w2 = (i + 1u < dlc) ? XcpTl_Receiver.Buffer[payload_off + i + 1u] : 0u;
-                    calc += (uint16_t)(w | (uint16_t)(w2 << 8));
-                    i += 2u;
-                }
-                uint16_t off  = payload_off + dlc + fill;
-                uint16_t recv = (uint16_t)(((uint16_t)XcpTl_Receiver.Buffer[off] << 8) | XcpTl_Receiver.Buffer[off + 1u]);
-                if (((uint16_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
+            #else
+            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
+            XcpTl_ResetSM();
+            XcpTl_TimeoutStop();
+            Xcp_DispatchCommand(&Xcp_CtoIn);
             #endif
         #endif
         }
-    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD)
+    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD) || (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_WORD)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
-        if (XcpTl_Receiver.Index == 0x01) {
-            XcpTl_Receiver.Dlc       = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
-            XcpTl_Receiver.State     = XCP_RCV_REMAINING;
-            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc + 2; /* CTR */
-        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            if ((XcpTl_Receiver.Dlc & 1u) != 0u) {
-                XcpTl_Receiver.Remaining += 1u; /* fill byte before checksum */
+        if (XcpTl_Receiver.Index == 0x03) { /* Wait for 4 header bytes (LEN+CTR/FILL) */
+            XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
+            /* Validate DLC against buffer capacity (account for 4-byte header) */
+            if (XcpTl_Receiver.Dlc > ((uint16_t)sizeof(XcpTl_Receiver.Buffer) - 4u)) {
+                /* Length too large: reset */
+                XcpTl_ResetSM();
+                XcpTl_TimeoutStop();
+                XCP_TL_LEAVE_CRITICAL();
+                return;
             }
-        #endif
-        #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
-            XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
-        #endif
-            XcpTl_TimeoutReset();
-        }
-    } else if (XcpTl_Receiver.State == XCP_RCV_REMAINING) {
-        if (XcpTl_Receiver.Index == 0x03) {
+            XcpTl_Receiver.State     = XCP_RCV_REMAINING;
+            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc;
+        #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD)
             XcpTl_Receiver.Ctr = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x02);
-        }
-        XcpTl_TimeoutReset();
-        XcpTl_Receiver.Remaining--;
-        if (XcpTl_Receiver.Remaining == 0u) {
-        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
-            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
-            Xcp_DispatchCommand(&Xcp_CtoIn);
-        #else
-            uint16_t payload_off = 4u;
-            uint16_t dlc         = XcpTl_Receiver.Dlc;
-            uint16_t fill        = 0u;
-            #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            if ((dlc & 1u) != 0u) {
-                fill = 1u;
-            }
-            #endif
-            #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
-            {
-                uint32_t calc = 0u;
-                for (uint16_t i = 0u; i < dlc; ++i)
-                    calc += XcpTl_Receiver.Buffer[payload_off + i];
-                uint8_t recv = XcpTl_Receiver.Buffer[payload_off + dlc];
-                if (((uint8_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
-            #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            {
-                uint32_t calc = 0u;
-                uint16_t i    = 0u;
-                while (i < dlc) {
-                    uint16_t w  = XcpTl_Receiver.Buffer[payload_off + i];
-                    uint16_t w2 = (i + 1u < dlc) ? XcpTl_Receiver.Buffer[payload_off + i + 1u] : 0u;
-                    calc += (uint16_t)(w | (uint16_t)(w2 << 8));
-                    i += 2u;
-                }
-                uint16_t off  = payload_off + dlc + fill;
-                uint16_t recv = (uint16_t)(((uint16_t)XcpTl_Receiver.Buffer[off] << 8) | XcpTl_Receiver.Buffer[off + 1u]);
-                if (((uint16_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
-            #endif
         #endif
-        }
-    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_WORD)
-    } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
-        if (XcpTl_Receiver.Index == 0x01) {
-            XcpTl_Receiver.Dlc       = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
-            XcpTl_Receiver.State     = XCP_RCV_REMAINING;
-            XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc + 2; /* FILL */
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
             if ((XcpTl_Receiver.Dlc & 1u) != 0u) {
                 XcpTl_Receiver.Remaining += 1u; /* fill byte before checksum */
@@ -607,14 +440,14 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         if (XcpTl_Receiver.Remaining == 0u) {
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
+            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4; /* Data starts after LEN and CTR/FILL */
             XcpTl_ResetSM();
             XcpTl_TimeoutStop();
             Xcp_DispatchCommand(&Xcp_CtoIn);
         #else
-            uint16_t payload_off = 4u;
-            uint16_t dlc         = XcpTl_Receiver.Dlc;
-            uint16_t fill        = 0u;
+            payload_off = 4u; /* Data starts after LEN and CTR/FILL */
+            dlc         = XcpTl_Receiver.Dlc;
+            fill        = 0u;
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
             if ((dlc & 1u) != 0u) {
                 fill = 1u;
@@ -622,42 +455,27 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #endif
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
-                uint32_t calc = 0u;
-                for (uint16_t i = 0u; i < dlc; ++i)
-                    calc += XcpTl_Receiver.Buffer[payload_off + i];
-                uint8_t recv = XcpTl_Receiver.Buffer[payload_off + dlc];
-                if (((uint8_t)calc) == recv) {
+                calc_checksum = 0u;
+                for (i = 0u; i < (4u + dlc); ++i) /* Include header bytes */
+                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
+                if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
                     Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
                     XcpTl_ResetSM();
                     XcpTl_TimeoutStop();
                     Xcp_DispatchCommand(&Xcp_CtoIn);
                 } else {
+                    /* Checksum error */
                     XcpTl_ResetSM();
                 }
             }
-            #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            {
-                uint32_t calc = 0u;
-                uint16_t i    = 0u;
-                while (i < dlc) {
-                    uint16_t w  = XcpTl_Receiver.Buffer[payload_off + i];
-                    uint16_t w2 = (i + 1u < dlc) ? XcpTl_Receiver.Buffer[payload_off + i + 1u] : 0u;
-                    calc += (uint16_t)(w | (uint16_t)(w2 << 8));
-                    i += 2u;
-                }
-                uint16_t off  = payload_off + dlc + fill;
-                uint16_t recv = (uint16_t)(((uint16_t)XcpTl_Receiver.Buffer[off] << 8) | XcpTl_Receiver.Buffer[off + 1u]);
-                if (((uint16_t)calc) == recv) {
-                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
-                    XcpTl_ResetSM();
-                    XcpTl_TimeoutStop();
-                    Xcp_DispatchCommand(&Xcp_CtoIn);
-                } else {
-                    XcpTl_ResetSM();
-                }
-            }
+            #else
+            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
+            XcpTl_ResetSM();
+            XcpTl_TimeoutStop();
+            Xcp_DispatchCommand(&Xcp_CtoIn);
             #endif
         #endif
         }
@@ -677,6 +495,7 @@ typedef uint8_t XcpSxiChecksumType;
 typedef uint16_t XcpSxiChecksumType;
     #endif
 
+#if defined(ARDUINO)
 static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
     uint16_t i;
 
@@ -694,6 +513,7 @@ static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
         }
     }
 }
+#endif
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();

@@ -65,15 +65,15 @@
     #define XCP_DAQ_CONFIG_TYPE_DYNAMIC (1)
     #define XCP_DAQ_CONFIG_TYPE_NONE    (3)
 
-    /*
-    **  XCPonSXI Header Formats.
-    */
-    #define XCP_ON_SXI_HEADER_LEN_BYTE      (1)
-    #define XCP_ON_SXI_HEADER_LEN_CTR_BYTE  (2)
-    #define XCP_ON_SXI_HEADER_LEN_FILL_BYTE (3)
-    #define XCP_ON_SXI_HEADER_LEN_WORD      (4)
-    #define XCP_ON_SXI_HEADER_LEN_CTR_WORD  (5)
-    #define XCP_ON_SXI_HEADER_LEN_FILL_WORD (6)
+/*
+**  XCPonSXI Header Formats.
+*/
+#define XCP_ON_SXI_HEADER_LEN_BYTE      (1)
+#define XCP_ON_SXI_HEADER_LEN_WORD      (2)
+#define XCP_ON_SXI_HEADER_LEN_CTR_BYTE  (3)
+#define XCP_ON_SXI_HEADER_LEN_CTR_WORD  (4)
+#define XCP_ON_SXI_HEADER_LEN_FILL_BYTE (5)
+#define XCP_ON_SXI_HEADER_LEN_FILL_WORD (6)
 
     /*
     ** XCPonSXI Checksum Variants.
