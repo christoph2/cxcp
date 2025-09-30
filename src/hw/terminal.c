@@ -133,12 +133,12 @@ void *XcpTerm_Thread(void *param) {
 }
 #else
 
-#if 0
-#include <stdio.h>
-#include <unistd.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <sys/select.h>
+    #if 0
+        #include <fcntl.h>
+        #include <stdio.h>
+        #include <sys/select.h>
+        #include <termios.h>
+        #include <unistd.h>
 
 static void init_termios(void) {
     static int initialized = 0;
@@ -172,8 +172,7 @@ static int kbhit(void) {
     return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
 }
 
-#endif
-
+    #endif
 
 static void reset_terminal_mode(void) {
     tcsetattr(0, TCSANOW, &orig_termios);
