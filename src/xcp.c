@@ -1683,7 +1683,7 @@ XCP_STATIC void Xcp_SetDaqListMode_Res(Xcp_PduType const * const pdu) {
 }
 
 XCP_STATIC void Xcp_GetDaqListMode_Res(Xcp_PduType const * const pdu) {
-    XcpDaq_ListStateType        *entry         = NULL;
+    XcpDaq_ListStateType        *entry         = XCP_NULL;
     const XcpDaq_ListIntegerType daqListNumber = (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
 
     DBG_TRACE1("GET_DAQ_LIST_MODE\n\r");

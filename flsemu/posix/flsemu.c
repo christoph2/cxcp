@@ -54,6 +54,9 @@
 static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const * persistentArray, uint32_t size);
 static bool FlsEmu_Flush(uint8_t segmentIdx);
 
+static void FlsEmu_MapAddress(void* mappingAddress, int offset, uint32_t size, int fd);
+static void FlsEmu_UnmapAddress(void* addr, uint32_t size);
+
 uint32_t FlsEmu_GetAllocationGranularity(void) {
     return sysconf(_SC_PAGE_SIZE); /* don't use getpagesize() for portable appz */
 }

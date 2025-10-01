@@ -654,7 +654,7 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     XcpDaq_ODTEntryIntegerType odtEntryIdx   = 0;
     XcpDaq_ODTType const      *odt           = XCP_NULL;
     // XcpDaq_ODTEntryType                *entry             = XCP_NULL;
-    XcpDaq_ODTEntryType                 entry{ 0 };
+    XcpDaq_ODTEntryType                 entry;
     XcpDaq_ListConfigurationType const *listConf          = XCP_NULL;
     XcpDaq_ListStateType               *listState         = XCP_NULL;
     uint16_t                            offset            = UINT16(0);
