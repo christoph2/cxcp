@@ -44,11 +44,11 @@
 
     #define TIMEOUT_VALUE (100)
 
-#if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
+    #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
 typedef uint8_t XcpSxiChecksumType;
-#elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+    #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
 typedef uint16_t XcpSxiChecksumType;
-#endif
+    #endif
 
 typedef enum tagXcpTl_ReceiverStateType {
     XCP_RCV_IDLE,
@@ -129,17 +129,19 @@ static void XcpTl_ResetSM(void) {
     XcpTl_Receiver.Ctr       = 0u;
     XcpTl_Receiver.Remaining = 0u;
     #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
-    XcpTl_Receiver.ReceivedChecksum       = 0;
+    XcpTl_Receiver.ReceivedChecksum = 0;
     #endif
     #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
     s_FramingState = FRM_WAIT_FOR_SYNC;
     #endif
 }
 
-#if defined(XCP_TL_TEST_HOOKS)
+    #if defined(XCP_TL_TEST_HOOKS)
 /* Test hook to invoke the internal state machine reset from unit-tests. */
-void XcpTl_Test_ResetSM(void) { XcpTl_ResetSM(); }
-#endif
+void XcpTl_Test_ResetSM(void) {
+    XcpTl_ResetSM();
+}
+    #endif
 
 void XcpTl_RxHandler(void) {
 }
@@ -185,18 +187,18 @@ void XcpTl_FeedReceiver(uint8_t octet) {
 }
 
 static void XcpTl_ProcessOctet(uint8_t octet) {
-#if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
+    #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
     XcpSxiChecksumType calc_checksum = 0u;
-    uint16_t idx = 0u;
-    uint16_t payload_off = 0u;
-    uint16_t dlc = 0u;
-    uint16_t fill = 0u;
-#if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-    uint16_t w = 0u;
-    uint16_t w2 = 0u;
+    uint16_t           i             = 0u;
+    uint16_t           payload_off   = 0u;
+    uint16_t           dlc           = 0u;
+    uint16_t           fill          = 0u;
+        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+    uint16_t w   = 0u;
+    uint16_t w2  = 0u;
     uint16_t off = 0u;
-#endif
-#endif
+        #endif
+    #endif
 
     XCP_TL_ENTER_CRITICAL();
 
@@ -292,7 +294,8 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #endif
         #endif
         }
-    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE) || (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_BYTE)
+    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE) ||                                                          \
+        (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_BYTE)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) { /* DLC and CTR/FILL received */
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
@@ -457,7 +460,8 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #endif
         #endif
         }
-    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD) || (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_WORD)
+    #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD) ||                                                          \
+        (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_WORD)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x03) { /* Wait for 4 header bytes (LEN+CTR/FILL) */
             XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
@@ -578,7 +582,7 @@ static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
         }
     }
 }
-#endif
+    #endif
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();

@@ -65,15 +65,15 @@
     #define XCP_DAQ_CONFIG_TYPE_DYNAMIC (1)
     #define XCP_DAQ_CONFIG_TYPE_NONE    (3)
 
-/*
-**  XCPonSXI Header Formats.
-*/
-#define XCP_ON_SXI_HEADER_LEN_BYTE      (1)
-#define XCP_ON_SXI_HEADER_LEN_WORD      (2)
-#define XCP_ON_SXI_HEADER_LEN_CTR_BYTE  (3)
-#define XCP_ON_SXI_HEADER_LEN_CTR_WORD  (4)
-#define XCP_ON_SXI_HEADER_LEN_FILL_BYTE (5)
-#define XCP_ON_SXI_HEADER_LEN_FILL_WORD (6)
+    /*
+    **  XCPonSXI Header Formats.
+    */
+    #define XCP_ON_SXI_HEADER_LEN_BYTE      (1)
+    #define XCP_ON_SXI_HEADER_LEN_WORD      (2)
+    #define XCP_ON_SXI_HEADER_LEN_CTR_BYTE  (3)
+    #define XCP_ON_SXI_HEADER_LEN_CTR_WORD  (4)
+    #define XCP_ON_SXI_HEADER_LEN_FILL_BYTE (5)
+    #define XCP_ON_SXI_HEADER_LEN_FILL_WORD (6)
 
     /*
     ** XCPonSXI Checksum Variants.
@@ -364,8 +364,7 @@ extern "C" {
     #define XCP_DAQ_LISTS_START_SELECTED UINT8(0x01)
     #define XCP_DAQ_LISTS_STOP_SELECTED  UINT8(0x02)
 
-    #define XCP_SET_ID(name)                                                                                                       \
-        { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
+    #define XCP_SET_ID(name) { UINT16(sizeof((name)) - UINT16(1)), (uint8_t const *)(name) }
 
     #if !defined(XCP_MAX_BS)
         #define XCP_MAX_BS (0)
@@ -586,11 +585,9 @@ extern "C" {
         }                                                                                                                          \
         ;
 
-    #define XCP_DAQ_DEFINE_ODT_VARIABLE_IDX(idx)                                                                                   \
-        { { (idx) }, 0 }
+    #define XCP_DAQ_DEFINE_ODT_VARIABLE_IDX(idx) { { (idx) }, 0 }
 
-    #define XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(meas)                                                                              \
-        { { (Xcp_PointerSizeType)(Xcp_PointerSizeType *)&(meas) }, sizeof((meas)) }
+    #define XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(meas) { { (Xcp_PointerSizeType)(Xcp_PointerSizeType *)&(meas) }, sizeof((meas)) }
 
     /* DAQ Event Implementation Macros */
     #define XCP_DAQ_BEGIN_EVENTS const XcpDaq_EventType XcpDaq_Events[XCP_DAQ_MAX_EVENT_CHANNEL] = {
@@ -598,7 +595,9 @@ extern "C" {
         }                                                                                                                          \
         ;
     #define XCP_DAQ_DEFINE_EVENT(name, props, timebase, cycle)                                                                     \
-        { (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle), }
+        {                                                                                                                          \
+            (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle),                                       \
+        }
 
     #define XCP_DAQ_BEGIN_ID_LIST const uint32_t Xcp_DaqIDs[] = {
     #define XCP_DAQ_END_ID_LIST                                                                                                    \

@@ -73,7 +73,7 @@ mcp2515_can CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
 mcp2518fd CAN(XCP_CAN_IF_MCP25XX_PIN_CS);
         #endif
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
-        /* MKR Zero CAN shield uses built-in CAN object; no explicit declaration needed here. */
+    /* MKR Zero CAN shield uses built-in CAN object; no explicit declaration needed here. */
     #else
         #error "Unsupported XCP_CAN_INTERFACE"
     #endif
@@ -107,7 +107,7 @@ void XcpTl_Init(void) {
     CAN.init_Filt(0, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), XCP_ON_CAN_INBOUND_IDENTIFIER);
     CAN.init_Filt(1, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER), XCP_ON_CAN_BROADCAST_IDENTIFIER);
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
-    if (Canbus.init(CANSPEED_500)) { // TDO: Make speed configurable
+    if (Canbus.init(CANSPEED_500)) {  // TDO: Make speed configurable
         Serial.println("CAN init (SparkFun) OK!");
     } else {
         Serial.println("CAN init (SparkFun) failed!");
@@ -126,7 +126,7 @@ void XcpTl_Init(void) {
     CAN.setTimeout(1000);
     CAN.onReceive(on_receive_mkr);
     #else
-    #error "Unsupported XCP_CAN_INTERFACE"
+        #error "Unsupported XCP_CAN_INTERFACE"
     #endif
 }
 
@@ -147,7 +147,7 @@ void XcpTl_MainFunction(void) {
     }
 }
 
-#if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
+    #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
 static void on_receive_seedstudio() {
     if (CAN.checkReceive() == CAN_MSGAVAIL) {
         XcpTl_FrameReceived = true;
@@ -156,10 +156,10 @@ static void on_receive_seedstudio() {
         //  canBusPacket.id = CAN.getCanId();
     }
 }
-#elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
+    #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 static void on_receive_mkr(int packetSize) {
-    uint_least8_t idx = 0;
-    XcpTl_Dlc         = packetSize;
+    uint_least8_t idx   = 0;
+    XcpTl_Dlc           = packetSize;
     XcpTl_FrameReceived = true;
     if (CAN.packetExtended()) {
     }
@@ -172,7 +172,7 @@ static void on_receive_mkr(int packetSize) {
         }
     }
 }
-#endif
+    #endif
 
 void XcpTl_RxHandler(void) {
     XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_Buffer, XcpTl_Dlc);
@@ -211,13 +211,13 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     CAN.sendMsgBuf(can_id, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER), len, buf);
 
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
-    message.id = can_id;
-    message.header.rtr = 0;
+    message.id            = can_id;
+    message.header.rtr    = 0;
     message.header.length = len;
     for (int i = 0; i < len; i++) {
         message.data[i] = buf[i];
     }
-    mcp2515_bit_modify(CANCTRL, (1<<REQOP2)|(1<<REQOP1)|(1<<REQOP0), 0);
+    mcp2515_bit_modify(CANCTRL, (1 << REQOP2) | (1 << REQOP1) | (1 << REQOP0), 0);
     mcp2515_send_message(&message);
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
@@ -230,7 +230,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     CAN.write(buf, len);
     CAN.endPacket();
     #else
-    #error "Unsupported XCP_CAN_INTERFACE"
+        #error "Unsupported XCP_CAN_INTERFACE"
     #endif
 }
 
