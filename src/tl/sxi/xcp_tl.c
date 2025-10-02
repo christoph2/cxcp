@@ -187,7 +187,7 @@ void XcpTl_FeedReceiver(uint8_t octet) {
 static void XcpTl_ProcessOctet(uint8_t octet) {
 #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
     XcpSxiChecksumType calc_checksum = 0u;
-    uint16_t i = 0u;
+    uint16_t idx = 0u;
     uint16_t payload_off = 0u;
     uint16_t dlc = 0u;
     uint16_t fill = 0u;
@@ -220,8 +220,9 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_Receiver.State     = XCP_RCV_REMAINING;
             XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc - 1;
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            if ((XcpTl_Receiver.Dlc & 1u) != 0u) {
-                XcpTl_Receiver.Remaining += 1u; /* fill byte before checksum */
+            /* Even byte-count required. */
+            if (((XcpTl_Receiver.Dlc + 1u) & 1u) != 0u) {
+                XcpTl_Receiver.Remaining += 1u;
             }
         #endif
         #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
@@ -244,15 +245,17 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             dlc         = XcpTl_Receiver.Dlc;
             fill        = 0u;
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-            if ((dlc & 1u) != 0u) {
+            if (((dlc + 1u) & 1u) != 0u) {
+                /* Even byte-count required. */
                 fill = 1u;
             }
             #endif
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
                 calc_checksum = 0u;
-                for (i = 0u; i < (1u + dlc); ++i) /* Include header byte */
-                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                for (idx = 0u; idx < (1u + dlc); ++idx) {
+                    calc_checksum += XcpTl_Receiver.Buffer[idx];
+                }
                 XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
                 if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
@@ -265,12 +268,27 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
                     XcpTl_ResetSM();
                 }
             }
-            #else
-            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 1;
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
-            Xcp_DispatchCommand(&Xcp_CtoIn);
+            #else /* XCP_ON_SXI_CHECKSUM_WORD */
+            {
+                calc_checksum = 0u;
+                /* Calculate WORD checksum over header and payload */
+                for (idx = 0u; idx < ((payload_off + dlc + fill) / 2u); ++idx) {
+                    calc_checksum += (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[2u * idx] | ((uint16_t)XcpTl_Receiver.Buffer[2u * idx + 1u] << 8));
+                }
+
+                XcpTl_Receiver.ReceivedChecksum = (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill] | ((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill + 1u] << 8));
+
+                if (calc_checksum == XcpTl_Receiver.ReceivedChecksum) {
+                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 1;
+                    XcpTl_ResetSM();
+                    XcpTl_TimeoutStop();
+                    Xcp_DispatchCommand(&Xcp_CtoIn);
+                } else {
+                    /* Checksum error */
+                    XcpTl_ResetSM();
+                }
+            }
             #endif
         #endif
         }
@@ -315,8 +333,9 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
                 calc_checksum = 0u;
-                for (i = 0u; i < (2u + dlc); ++i) /* Include header bytes */
-                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                for (idx = 0u; idx < (2u + dlc); ++idx) {
+                    calc_checksum += XcpTl_Receiver.Buffer[idx];
+                }
                 XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
                 if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
@@ -329,12 +348,27 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
                     XcpTl_ResetSM();
                 }
             }
-            #else
-            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
-            Xcp_DispatchCommand(&Xcp_CtoIn);
+            #else /* XCP_ON_SXI_CHECKSUM_WORD */
+            {
+                calc_checksum = 0u;
+                /* Calculate WORD checksum over header and payload */
+                for (idx = 0u; idx < ((payload_off + dlc + fill) / 2u); ++idx) {
+                    calc_checksum += (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[2u * idx] | ((uint16_t)XcpTl_Receiver.Buffer[2u * idx + 1u] << 8));
+                }
+
+                XcpTl_Receiver.ReceivedChecksum = (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill] | ((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill + 1u] << 8));
+
+                if (calc_checksum == XcpTl_Receiver.ReceivedChecksum) {
+                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
+                    XcpTl_ResetSM();
+                    XcpTl_TimeoutStop();
+                    Xcp_DispatchCommand(&Xcp_CtoIn);
+                } else {
+                    /* Checksum error */
+                    XcpTl_ResetSM();
+                }
+            }
             #endif
         #endif
         }
@@ -384,8 +418,9 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
                 calc_checksum = 0u;
-                for (i = 0u; i < (2u + dlc); ++i) /* Include header bytes */
-                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                for (idx = 0u; idx < (2u + dlc); ++idx) {
+                    calc_checksum += XcpTl_Receiver.Buffer[idx];
+                }
                 XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
                 if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
@@ -398,12 +433,27 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
                     XcpTl_ResetSM();
                 }
             }
-            #else
-            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
-            Xcp_DispatchCommand(&Xcp_CtoIn);
+            #else /* XCP_ON_SXI_CHECKSUM_WORD */
+            {
+                calc_checksum = 0u;
+                /* Calculate WORD checksum over header and payload */
+                for (idx = 0u; idx < ((payload_off + dlc + fill) / 2u); ++idx) {
+                    calc_checksum += (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[2u * idx] | ((uint16_t)XcpTl_Receiver.Buffer[2u * idx + 1u] << 8));
+                }
+
+                XcpTl_Receiver.ReceivedChecksum = (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill] | ((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill + 1u] << 8));
+
+                if (calc_checksum == XcpTl_Receiver.ReceivedChecksum) {
+                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
+                    XcpTl_ResetSM();
+                    XcpTl_TimeoutStop();
+                    Xcp_DispatchCommand(&Xcp_CtoIn);
+                } else {
+                    /* Checksum error */
+                    XcpTl_ResetSM();
+                }
+            }
             #endif
         #endif
         }
@@ -456,8 +506,9 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
             {
                 calc_checksum = 0u;
-                for (i = 0u; i < (4u + dlc); ++i) /* Include header bytes */
-                    calc_checksum += XcpTl_Receiver.Buffer[i];
+                for (idx = 0u; idx < (4u + dlc); ++idx) {
+                    calc_checksum += XcpTl_Receiver.Buffer[idx];
+                }
                 XcpTl_Receiver.ReceivedChecksum = XcpTl_Receiver.Buffer[payload_off + dlc];
                 if (((uint8_t)calc_checksum) == XcpTl_Receiver.ReceivedChecksum) {
                     Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
@@ -470,12 +521,26 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
                     XcpTl_ResetSM();
                 }
             }
-            #else
-            Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
-            Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
-            XcpTl_ResetSM();
-            XcpTl_TimeoutStop();
-            Xcp_DispatchCommand(&Xcp_CtoIn);
+            #else /* XCP_ON_SXI_CHECKSUM_WORD */
+            {
+                calc_checksum = 0u;
+                for (idx = 0u; idx < ((payload_off + dlc + fill) / 2u); ++idx) {
+                    calc_checksum += (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[2u * idx] | ((uint16_t)XcpTl_Receiver.Buffer[2u * idx + 1u] << 8));
+                }
+
+                XcpTl_Receiver.ReceivedChecksum = (uint16_t)((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill] | ((uint16_t)XcpTl_Receiver.Buffer[payload_off + dlc + fill + 1u] << 8));
+
+                if (calc_checksum == XcpTl_Receiver.ReceivedChecksum) {
+                    Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+                    Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4;
+                    XcpTl_ResetSM();
+                    XcpTl_TimeoutStop();
+                    Xcp_DispatchCommand(&Xcp_CtoIn);
+                } else {
+                    /* Checksum error */
+                    XcpTl_ResetSM();
+                }
+            }
             #endif
         #endif
         }
@@ -497,19 +562,19 @@ typedef uint16_t XcpSxiChecksumType;
 
 #if defined(ARDUINO)
 static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
-    uint16_t i;
+    uint16_t idx;
 
     (void)Serial.write((uint8_t)XCP_ON_SXI_SYNC_CHAR);
 
-    for (i = 0; i < len; i++) {
-        if (buf[i] == XCP_ON_SXI_SYNC_CHAR) {
+    for (idx = 0; idx < len; idx++) {
+        if (buf[idx] == XCP_ON_SXI_SYNC_CHAR) {
             (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_CHAR);
             (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_SYNC_CHAR);
-        } else if (buf[i] == XCP_ON_SXI_ESC_CHAR) {
+        } else if (buf[idx] == XCP_ON_SXI_ESC_CHAR) {
             (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_CHAR);
             (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_ESC_CHAR);
         } else {
-            (void)Serial.write(buf[i]);
+            (void)Serial.write(buf[idx]);
         }
     }
 }
@@ -521,14 +586,23 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
     {
         XcpSxiChecksumType checksum = 0;
-        uint16_t           i;
-        const uint16_t     header_off = (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET; /* LEN + CTR bytes */
-        const uint16_t     payload_len = (len >= header_off) ? (len - header_off) : 0u;
+        uint16_t           idx;
 
-        /* Calculate checksum over payload only (exclude header) */
-        for (i = 0; i < payload_len; i++) {
-            checksum += buf[header_off + i];
+        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+        /* Calculate WORD checksum over header and payload */
+        for (idx = 0; idx < (len / 2u); idx++) {
+            checksum += (uint16_t)((uint16_t)buf[2u * idx] | ((uint16_t)buf[2u * idx + 1u] << 8));
         }
+        /* If the total length is odd, add the last byte and a fill byte of 0 for checksum calculation */
+        if ((len & 1u) != 0u) {
+            checksum += (uint16_t)buf[len - 1u]; /* Last byte + 0x00 fill byte */
+        }
+        #else /* XCP_ON_SXI_CHECKSUM_BYTE */
+        /* Calculate BYTE checksum over header and payload */
+        for (idx = 0; idx < len; idx++) {
+            checksum += buf[idx];
+        }
+        #endif
 
         /* Send header + payload */
         #if defined(ARDUINO)
@@ -540,17 +614,21 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         #endif
 
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-        /* Add fill byte if payload length is odd for word checksum */
-        if ((payload_len & 1u) != 0u) {
-            uint8_t fill_byte = 0x00;
-            checksum += fill_byte;
-            #if defined(ARDUINO)
-                #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
-            XcpTl_TransformAndSend(&fill_byte, 1);
-                #else
-            Serial.write(&fill_byte, 1);
+        {
+            const uint16_t header_off = (uint16_t)XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+            const uint16_t payload_len = (len >= header_off) ? (len - header_off) : 0u;
+
+            /* Add fill byte to stream if payload length is odd for word checksum */
+            if ((payload_len & 1u) != 0u) {
+                uint8_t fill_byte = 0x00;
+                #if defined(ARDUINO)
+                    #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+                XcpTl_TransformAndSend(&fill_byte, 1);
+                    #else
+                Serial.write(&fill_byte, 1);
+                    #endif
                 #endif
-            #endif
+            }
         }
         #endif
 
@@ -558,8 +636,8 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
         {
             uint8_t checksum_bytes[2];
-            checksum_bytes[0] = (uint8_t)(checksum >> 8);
-            checksum_bytes[1] = (uint8_t)(checksum);
+            checksum_bytes[0] = (uint8_t)(checksum);      /* Little Endian: LSB */
+            checksum_bytes[1] = (uint8_t)(checksum >> 8); /* Little Endian: MSB */
             #if defined(ARDUINO)
                 #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
             XcpTl_TransformAndSend(checksum_bytes, 2);
