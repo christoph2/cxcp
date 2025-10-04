@@ -107,10 +107,9 @@ void XcpTl_Init(void) {
         return;
     }
 
-    /*---[ setsockopt(..., CAN_RAW_ERR_FILTER, ...) ]---*/
     can_err_mask_t err_mask =
         (CAN_ERR_TX_TIMEOUT | CAN_ERR_LOSTARB | CAN_ERR_CRTL | CAN_ERR_PROT | CAN_ERR_TRX | CAN_ERR_ACK | CAN_ERR_BUSOFF |
-         CAN_ERR_BUSERROR | CAN_ERR_RESTARTED | CAN_ERR_CNT);
+         CAN_ERR_BUSERROR | CAN_ERR_RESTARTED);
 
     ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask));
     if (ret < 0) {
