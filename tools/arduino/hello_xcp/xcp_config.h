@@ -208,9 +208,9 @@
         #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
         #define XCP_ON_SXI_BITRATE        (38400)
         #define XCP_ON_SXI_CONFIG         (SERIAL_8N1)
-        #define XCP_MAX_CTO               (64)
-        #define XCP_MAX_DTO               (64)
-        #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_NO_CHECKSUM)
+        #define XCP_MAX_CTO               (12)
+        #define XCP_MAX_DTO               (12)
+        #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_CHECKSUM_BYTE)
         /* Framing and escaping (as used by xcp_tl.c) */
         #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
         #define XCP_ON_SXI_SYNC_CHAR      (0xAA)
