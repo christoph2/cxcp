@@ -10,6 +10,7 @@ Welcome to BlueParrot XCP's documentation!
    :maxdepth: 4
    :caption: Contents:
 
+   user_manual
    install
    tutorial
    api

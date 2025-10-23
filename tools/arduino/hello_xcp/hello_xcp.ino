@@ -36,10 +36,10 @@ unsigned long elapsed_time;
 
 // volatile uint8_t buffer[256];
 
-volatile uint32_t voltage1;
-volatile uint32_t voltage2;
-volatile uint32_t voltage3;
-volatile uint32_t voltage4;
+volatile float voltage1;
+volatile float voltage2;
+volatile float voltage3;
+volatile float voltage4;
 // Measurements.
 volatile uint8_t sq0_wave;
 volatile uint8_t sq1_wave;
