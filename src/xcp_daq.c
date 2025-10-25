@@ -899,9 +899,11 @@ bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerT
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
 
 void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE *entityCount, XCP_DAQ_ENTITY_TYPE *listCount, XCP_DAQ_ENTITY_TYPE *odtCount) {
+#if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON)
     *entityCount = XcpDaq_EntityCount;
     *listCount   = XcpDaq_ListCount;
     *odtCount    = XcpDaq_OdtCount;
+#endif
 }
 
 uint16_t XcpDaq_TotalDynamicEntityCount(void) {

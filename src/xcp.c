@@ -701,7 +701,7 @@ void Xcp_Disconnect(void) {
 
 void Xcp_MainFunction(void) {
 #if XCP_ENABLE_SLAVE_BLOCKMODE == XCP_ON
-    if (Xcp_SlaveBlockTransferIsActive) {
+    if (Xcp_SlaveBlockTransferIsActive()) {
         Xcp_UploadSingleBlock();
     }
 #endif /* XCP_ENABLE_SLAVE_BLOCKMODE */

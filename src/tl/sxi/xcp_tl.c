@@ -1,4 +1,3 @@
-
 /*
  * BlueParrot XCP
  *
@@ -28,12 +27,6 @@
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
 
-    #if defined(ARDUINO)
-        #include "Arduino.h"
-    #else
-        #include <stdio.h>
-    #endif
-
     /*!!! START-INCLUDE-SECTION !!!*/
     #include "xcp.h"
     #include "xcp_tl_timeout.h"
@@ -50,70 +43,49 @@ typedef uint8_t XcpSxiChecksumType;
 typedef uint16_t XcpSxiChecksumType;
     #endif
 
-typedef enum tagXcpTl_ReceiverStateType {
-    XCP_RCV_IDLE,
-    XCP_RCV_UNTIL_LENGTH,
-    XCP_RCV_REMAINING
-} XcpTl_ReceiverStateType;
+/* State machine moved to src/tl/xcp_tl_sm.c */
+/* typedefs now internal to the state machine module */
 
-typedef struct tagXcpTl_ReceiverType {
-    uint8_t                 Buffer[XCP_COMM_BUFLEN];
-    XcpTl_ReceiverStateType State;
-    uint16_t                Index;
-    uint16_t                Remaining;
-    uint16_t                Dlc;
-    uint16_t                Ctr;
-    #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
-    XcpSxiChecksumType ReceivedChecksum;
-    #endif
-} XcpTl_ReceiverType;
+/* Receiver state moved to src/tl/xcp_tl_sm.c */
 
-    #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
-typedef enum {
-    FRM_WAIT_FOR_SYNC,
-    FRM_RECEIVING,
-    FRM_WAIT_FOR_ESC_BYTE
-} XcpTl_FramingStateType;
+/* Framing state moved to src/tl/xcp_tl_sm.c */
 
-static XcpTl_FramingStateType s_FramingState = FRM_WAIT_FOR_SYNC;
+/* Receiver moved to src/tl/xcp_tl_sm.c */
 
-    #endif
-
-static XcpTl_ReceiverType XcpTl_Receiver;
-
-static void XcpTl_ResetSM(void);
+/* State machine now lives in src/tl/xcp_tl_sm.c */
+extern void XcpTl_ResetSM(void);
+extern void XcpTl_FeedReceiver(uint8_t octet);
 
 static void XcpTl_SignalTimeout(void);
 
-static void XcpTl_ProcessOctet(uint8_t octet);
-
 void XcpTl_Init(void) {
-    #if defined(ARDUINO)
-    Serial.begin(XCP_ON_SXI_BITRATE, XCP_ON_SXI_CONFIG);
-    #endif
+    Serial_Init();
 
     XcpTl_ResetSM();
     XcpTl_TimeoutInit(TIMEOUT_VALUE, XcpTl_ResetSM);
 }
 
 void XcpTl_DeInit(void) {
+    Serial_DeInit();
 }
 
 void XcpTl_MainFunction(void) {
     uint8_t octet = 0;
 
-    #if defined(ARDUINO)
-    if (Serial.available()) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        octet = Serial.read();
-        XcpTl_FeedReceiver(octet);
+    Serial_MainFunction();
 
-        digitalWrite(LED_BUILTIN, LOW);
+    if (Serial_Available()) {
+        // digitalWrite(LED_BUILTIN, HIGH);
+        if (Serial_Read(&octet)) {
+            XcpTl_FeedReceiver(octet);
+        }
+        // digitalWrite(LED_BUILTIN, LOW);
     }
-    #endif
+
     XcpTl_TimeoutCheck();
 }
 
+#if 0
 /**
  * \brief Initialize, i.e. reset
  *receiver state Machine
@@ -137,11 +109,8 @@ static void XcpTl_ResetSM(void) {
 }
 
     #if defined(XCP_TL_TEST_HOOKS)
-/* Test hook to invoke the internal state machine reset from unit-tests. */
-void XcpTl_Test_ResetSM(void) {
-    XcpTl_ResetSM();
-}
-    #endif
+/* Test hook now provided by src/tl/xcp_tl_sm.c */
+#endif
 
 void XcpTl_RxHandler(void) {
 }
@@ -566,31 +535,25 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     XCP_TL_LEAVE_CRITICAL();
 }
 
-    #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
-typedef uint8_t XcpSxiChecksumType;
-    #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
-typedef uint16_t XcpSxiChecksumType;
-    #endif
+#endif
 
-    #if defined(ARDUINO)
 static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
     uint16_t idx;
 
-    (void)Serial.write((uint8_t)XCP_ON_SXI_SYNC_CHAR);
+    Serial_WriteByte((uint8_t)XCP_ON_SXI_SYNC_CHAR);
 
     for (idx = 0; idx < len; idx++) {
         if (buf[idx] == XCP_ON_SXI_SYNC_CHAR) {
-            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_CHAR);
-            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_SYNC_CHAR);
+            Serial_WriteByte((uint8_t)XCP_ON_SXI_ESC_CHAR);
+            Serial_WriteByte((uint8_t)XCP_ON_SXI_ESC_SYNC_CHAR);
         } else if (buf[idx] == XCP_ON_SXI_ESC_CHAR) {
-            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_CHAR);
-            (void)Serial.write((uint8_t)XCP_ON_SXI_ESC_ESC_CHAR);
+            Serial_WriteByte((uint8_t)XCP_ON_SXI_ESC_CHAR);
+            Serial_WriteByte((uint8_t)XCP_ON_SXI_ESC_ESC_CHAR);
         } else {
-            (void)Serial.write(buf[idx]);
+            Serial_WriteByte(buf[idx]);
         }
     }
 }
-    #endif
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
@@ -617,13 +580,11 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         #endif
 
         /* Send header + payload */
-        #if defined(ARDUINO)
             #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
         XcpTl_TransformAndSend(buf, len);
             #else
-        Serial.write(buf, len);
+        Serial_WriteBuffer(buf, len);
             #endif
-        #endif
 
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
         {
@@ -633,13 +594,11 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
             /* Add fill byte to stream if payload length is odd for word checksum */
             if ((payload_len & 1u) != 0u) {
                 uint8_t fill_byte = 0x00;
-            #if defined(ARDUINO)
                 #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
                 XcpTl_TransformAndSend(&fill_byte, 1);
                 #else
-                Serial.write(&fill_byte, 1);
+                Serial_WriteBuffer(&fill_byte, 1);
                 #endif
-            #endif
             }
         }
         #endif
@@ -650,35 +609,29 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
             uint8_t checksum_bytes[2];
             checksum_bytes[0] = (uint8_t)(checksum);      /* Little Endian: LSB */
             checksum_bytes[1] = (uint8_t)(checksum >> 8); /* Little Endian: MSB */
-            #if defined(ARDUINO)
                 #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
             XcpTl_TransformAndSend(checksum_bytes, 2);
                 #else
-            Serial.write(checksum_bytes, 2);
+            Serial_WriteBuffer(checksum_bytes, 2);
                 #endif
-            #endif
         }
         #else /* XCP_ON_SXI_CHECKSUM_BYTE */
         {
             uint8_t checksum_byte = (uint8_t)checksum;
-            #if defined(ARDUINO)
                 #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
             XcpTl_TransformAndSend(&checksum_byte, 1);
                 #else
-            Serial.write(&checksum_byte, 1);
+            Serial_WriteBuffer(&checksum_byte, 1);
                 #endif
-            #endif
         }
         #endif
     }
     #else
-        #if defined(ARDUINO)
             #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
     XcpTl_TransformAndSend(buf, len);
             #else
-    Serial.write(buf, len);
+    Serial_WriteBuffer(buf, len);
             #endif
-        #endif
     #endif /* XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM */
 
     XCP_TL_LEAVE_CRITICAL();
@@ -691,10 +644,12 @@ void XcpTl_ReleaseConnection(void) {
 }
 
 void XcpTl_PrintConnectionInformation(void) {
+    #if 0
     #if defined(ARDUINO)
     Serial.println("XCPonSxi");
     #else
     printf("\nXCPonSxi\n");
+    #endif
     #endif
 }
 
@@ -703,21 +658,5 @@ static void XcpTl_SignalTimeout(void) {
     XcpTl_ResetSM();
     XCP_TL_LEAVE_CRITICAL();
 }
-
-    #if 0
-void serialEventRun(void)
-{
-    if (Serial.available()) {
-        serialEvent();
-    }
-}
-
-void serialEvent()
-{
-    digitalWrite(LED_BUILTIN, HIGH);
-    XcpTl_RxHandler();
-    digitalWrite(LED_BUILTIN, LOW);
-}
-    #endif
 
 #endif /* XCP_TRANSPORT_LAYER == XCP_ON_SXI */

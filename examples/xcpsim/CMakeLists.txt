@@ -49,9 +49,7 @@ set(INCLUDES
         )
 
 if (CMAKE_HOST_WIN32)
-    set(ADD_LIBS
-            "ws2_32"
-            )
+    set(ADD_LIBS ws2_32)
     list(APPEND SOURCES "../../src/hw/win/hw.c")
     list(APPEND SOURCES "../../flsemu/win/flsemu.c")
 elseif (CMAKE_HOST_UNIX)
@@ -63,13 +61,12 @@ elseif (CMAKE_HOST_UNIX)
     endif ()
 
     list(APPEND SOURCES "../../flsemu/posix/flsemu.c")
-    set(ADD_LIBS "pthread")
-    if (MACOS_BUILD)
-
-    else ()
-        set(ADD_LIBS "rt")
+    set(ADD_LIBS)
+    list(APPEND ADD_LIBS pthread)
+    if (NOT MACOS_BUILD)
+        list(APPEND ADD_LIBS rt)
     endif ()
-endif (CMAKE_HOST_WIN32)
+endif ()
 
 if (MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
@@ -116,7 +113,7 @@ elseif (CMAKE_HOST_UNIX)
     endif ()
     target_compile_definitions(xcp_sim_eth PUBLIC TP_ETHER)
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
-    target_link_libraries(xcp_sim_eth ${ADD_LIBS})
+    target_link_libraries(xcp_sim_eth ${ADD_LIBS} target_link_libraries)
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
 
     if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")

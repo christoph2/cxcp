@@ -1410,6 +1410,20 @@ extern "C" {
     extern Xcp_PduType Xcp_CtoIn;
     extern Xcp_PduType Xcp_CtoOut;
 
+    #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
+    /*
+    ** Serial Port Function Prototypes.
+    */
+    void Serial_Init(void);
+    void Serial_DeInit(void);
+    bool Serial_Available(void);
+    bool Serial_Read(uint8_t* in_byte);
+    void Serial_WriteByte(uint8_t out_byte);
+    void Serial_WriteBuffer(uint8_t const * out_bytes, uint32_t size);
+    void Serial_MainFunction(void);
+
+    #endif
+
     #if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT)
     typedef uint16_t Xcp_ChecksumType;
     #elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32
