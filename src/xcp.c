@@ -26,6 +26,7 @@
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 
+#include "common/tusb_debug.h"
 #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
@@ -710,7 +711,7 @@ void Xcp_MainFunction(void) {
     Xcp_ChecksumMainFunction();
 #endif /* (XCP_ENABLE_BUILD_CHECKSUM) && (XCP_CHECKSUM_CHUNKED_CALCULATION ==                                                      \
           XCP_ON) */
-    XcpHw_Sleep(XCP_MAIN_FUNCTION_PERIOD);
+   // XcpHw_Sleep(XCP_MAIN_FUNCTION_PERIOD);
 }
 
 void Xcp_SetMta(Xcp_MtaType mta) {

@@ -4,10 +4,9 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 set(FAMILY rp2040)
 set(BOARD pico_sdk)
-# set(TINYUSB_FAMILY_PROJECT_NAME_PREFIX "tinyusb_dual_")
+
 include($ENV{PICO_SDK_PATH}/lib/tinyusb/hw/bsp/family_support.cmake)
 
-# include($ENV{PICO_SDK_PATH}/external/pico_extras_import_optional.cmake)
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
@@ -52,7 +51,6 @@ set(SOURCES
         ../../src/tl/sxi/xcp_tl.c
         main.c
         ../../src/tl/xcp_tl_timeout.c
-        ../../src/tl/xcp_tl_sm.c
         usb_descriptors.c
 )
 
@@ -65,10 +63,11 @@ set(INCLUDES
 )
 
 if (MSVC)
-  if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Od /fsanitize")
+  # Use case-insensitive match to catch Debug/Release values
+  if (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug$")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Od /Zi /D_DEBUG")
   else ()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2 /Oy")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2 /Oy /DNDEBUG")
   endif ()
 else ()
   #
@@ -82,8 +81,8 @@ else ()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg -fprofile-arcs -ftest-coverage --coverage")
   endif ()
 
-  if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -UNDEBUG -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+  if (CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug$")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -D_DEBUG -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls")
     if (NOT CMAKE_HOST_WIN32)
       #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check -fsanitize=address -fsanitize=undefined ")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORTIFY_SOURCE=2 -fstack-protector-all --param=ssp-buffer-size=4 -fstack-check -fsanitize=undefined ")
@@ -92,7 +91,8 @@ else ()
       endif ()
     endif ()
   else ()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -Og -UNDEBUG")
+    # Treat non-Debug as Release here
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O2")
   endif ()
 endif (MSVC)
 

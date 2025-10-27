@@ -72,6 +72,11 @@ int main() {
     unsigned long time_point=0;
     unsigned long elapsed_time=0;
 
+    voltage1 = 10.0f;
+    voltage2 = 20.0f;
+    voltage3 = 30.0f;
+    voltage4 = 40.0f;
+
     Xcp_Init();
 
     // timer_busy_wait_until()

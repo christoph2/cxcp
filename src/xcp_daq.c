@@ -326,8 +326,7 @@ XcpDaq_ODTEntryType XcpDaq_GetOdtEntryValues(
     result = *entry;
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_OFF) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Predefined DAQs only */
-    index  = entry->mta.address;
-    result = XcpDaq_PredefinedMeasurementVariables[index];
+    result = *entry;
 #elif (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON) && (XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON)
     /* Dynamic and predefined DAQs */
     if (daqListNumber >= XcpDaq_PredefinedListCount) {

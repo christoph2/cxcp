@@ -36,8 +36,11 @@
 #if !defined(__CXCP_H)
     #define __CXCP_H
 
-    #include <assert.h>
+    #define XCP_ON  (1)
+    #define XCP_OFF (0)
 
+    #include <assert.h>
+    #include "xcp_config.h"
 /*!!! START-INCLUDE-SECTION !!!*/
     #include "xcp_macros.h"
     #include "xcp_types.h"
@@ -49,9 +52,6 @@
 
     #define XCP_TRANSPORT_LAYER_VERSION_MAJOR   (1)
     #define XCP_TRANSPORT_LAYER_VERSION_RELEASE (1)
-
-    #define XCP_ON  (1)
-    #define XCP_OFF (0)
 
     #define XCP_ON_CAN      (1)
     #define XCP_ON_CANFD    (2)
@@ -88,13 +88,25 @@
     #define XCP_ON_SXI_ESC_SYNC_CHAR (0x01)
     #define XCP_ON_SXI_ESC_ESC_CHAR  (0x00)
 
-    #include "xcp_config.h"
+    // #include "xcp_config.h"
 
     #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
         #if defined(__cplusplus)
 extern "C" {
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
+
+    #if XCP_ENABLE_DEBUG_OUTPUT == XCP_ON
+
+    #if defined(PICO_RP2040)
+
+    extern int cdc_debug_printf(const char *fmt, ...);
+    #define CFG_TUSB_DEBUG_PRINTF cdc_debug_printf
+    #include "tusb.h"
+    #endif
+
+    #endif
+
 
     /*
     ** Configuration checks.
@@ -1416,7 +1428,7 @@ extern "C" {
     */
     void Serial_Init(void);
     void Serial_DeInit(void);
-    bool Serial_Available(void);
+    uint32_t Serial_Available(void);
     bool Serial_Read(uint8_t* in_byte);
     void Serial_WriteByte(uint8_t out_byte);
     void Serial_WriteBuffer(uint8_t const * out_bytes, uint32_t size);

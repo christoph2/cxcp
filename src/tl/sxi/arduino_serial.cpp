@@ -41,8 +41,8 @@ extern "C" {
     void Serial_DeInit(void) {
     }
 
-    bool Serial_Available(void) {
-        return Serial.available() > 0;
+    uint32_t Serial_Available(void) {
+        return Serial.available();
     }
 
     bool Serial_Read(uint8_t *in_byte) {
@@ -62,5 +62,9 @@ extern "C" {
 
     void Serial_WriteBuffer(uint8_t const * out_bytes, uint32_t size) {
         Serial.write(out_bytes, size);
+    }
+
+    void Serial_MainFunction(void) {
+
     }
 }

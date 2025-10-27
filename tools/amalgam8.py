@@ -84,6 +84,7 @@ STOP_LIST = [   # don't include these files.
     r'..\src\hw\linux\hw.c',
     r'..\src\hw\macos\hw.c',
     r'..\src\hw\posix\hw.c',
+    r'..\src\hw\pico\hw.c',
     r'..\src\hw\win\hw.c',
     r'..\src\tl\bt\winbt.c',
     r'..\src\tl\can\kvaser.c',
@@ -92,6 +93,7 @@ STOP_LIST = [   # don't include these files.
     r'..\src\tl\eth\linuxeth.c',
     r'..\src\tl\eth\wineth.c',
     r'..\src\tl\eth\wineth_iocp.c',
+    r'..\src\tl\sxi\pico_cdc.c',
 ]
 
 pth = pathlib.Path("../src")

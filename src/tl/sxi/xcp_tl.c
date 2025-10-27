@@ -25,6 +25,8 @@
 
 #include "xcp_config.h"
 
+#include <stdio.h>
+
 #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
 
     /*!!! START-INCLUDE-SECTION !!!*/
@@ -43,20 +45,42 @@ typedef uint8_t XcpSxiChecksumType;
 typedef uint16_t XcpSxiChecksumType;
     #endif
 
-/* State machine moved to src/tl/xcp_tl_sm.c */
-/* typedefs now internal to the state machine module */
+typedef enum tagXcpTl_ReceiverStateType {
+    XCP_RCV_IDLE,
+    XCP_RCV_UNTIL_LENGTH,
+    XCP_RCV_REMAINING
+} XcpTl_ReceiverStateType;
 
-/* Receiver state moved to src/tl/xcp_tl_sm.c */
+typedef struct tagXcpTl_ReceiverType {
+    uint8_t                 Buffer[XCP_COMM_BUFLEN];
+    XcpTl_ReceiverStateType State;
+    uint16_t                Index;
+    uint16_t                Remaining;
+    uint16_t                Dlc;
+    uint16_t                Ctr;
+    #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
+    XcpSxiChecksumType ReceivedChecksum;
+    #endif
+} XcpTl_ReceiverType;
 
-/* Framing state moved to src/tl/xcp_tl_sm.c */
+    #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+typedef enum {
+    FRM_WAIT_FOR_SYNC,
+    FRM_RECEIVING,
+    FRM_WAIT_FOR_ESC_BYTE
+} XcpTl_FramingStateType;
 
-/* Receiver moved to src/tl/xcp_tl_sm.c */
+static XcpTl_FramingStateType s_FramingState = FRM_WAIT_FOR_SYNC;
 
-/* State machine now lives in src/tl/xcp_tl_sm.c */
-extern void XcpTl_ResetSM(void);
-extern void XcpTl_FeedReceiver(uint8_t octet);
+    #endif
+
+static XcpTl_ReceiverType XcpTl_Receiver;
+
+static void XcpTl_ResetSM(void);
 
 static void XcpTl_SignalTimeout(void);
+
+static void XcpTl_ProcessOctet(uint8_t octet);
 
 void XcpTl_Init(void) {
     Serial_Init();
@@ -70,22 +94,21 @@ void XcpTl_DeInit(void) {
 }
 
 void XcpTl_MainFunction(void) {
+    uint32_t byte_count = 0UL;
     uint8_t octet = 0;
 
     Serial_MainFunction();
-
-    if (Serial_Available()) {
-        // digitalWrite(LED_BUILTIN, HIGH);
-        if (Serial_Read(&octet)) {
-            XcpTl_FeedReceiver(octet);
+    byte_count = Serial_Available();
+    if (byte_count > 0U) {
+        while (byte_count--) {
+            if (Serial_Read(&octet)) {
+                XcpTl_FeedReceiver(octet);
+            }
         }
-        // digitalWrite(LED_BUILTIN, LOW);
     }
-
     XcpTl_TimeoutCheck();
 }
 
-#if 0
 /**
  * \brief Initialize, i.e. reset
  *receiver state Machine
@@ -109,8 +132,11 @@ static void XcpTl_ResetSM(void) {
 }
 
     #if defined(XCP_TL_TEST_HOOKS)
-/* Test hook now provided by src/tl/xcp_tl_sm.c */
-#endif
+/* Test hook to invoke the internal state machine reset from unit-tests. */
+void XcpTl_Test_ResetSM(void) {
+    XcpTl_ResetSM();
+}
+    #endif
 
 void XcpTl_RxHandler(void) {
 }
@@ -140,14 +166,15 @@ void XcpTl_FeedReceiver(uint8_t octet) {
         case FRM_WAIT_FOR_ESC_BYTE:
             if (octet == XCP_ON_SXI_ESC_SYNC_CHAR) {
                 XcpTl_ProcessOctet(XCP_ON_SXI_SYNC_CHAR);
+                s_FramingState = FRM_RECEIVING;
             } else if (octet == XCP_ON_SXI_ESC_ESC_CHAR) {
                 XcpTl_ProcessOctet(XCP_ON_SXI_ESC_CHAR);
+                s_FramingState = FRM_RECEIVING;
             } else {
                 /* Protocol error, invalid escape sequence. Reset. */
                 XcpTl_ResetSM();
                 s_FramingState = FRM_WAIT_FOR_SYNC;
             }
-            s_FramingState = FRM_RECEIVING;
             break;
     }
     #else
@@ -200,6 +227,18 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
+            /* Handle minimal-length frames immediately (e.g., LEN=1, no checksum) */
+        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
+            if (XcpTl_Receiver.Remaining == 0u) {
+                Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+                Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 1; /* payload follows 1-byte LEN */
+                XcpTl_ResetSM();
+                XcpTl_TimeoutStop();
+                Xcp_DispatchCommand(&Xcp_CtoIn);
+                XCP_TL_LEAVE_CRITICAL();
+                return;
+            }
+        #endif
         }
     } else if (XcpTl_Receiver.State == XCP_RCV_REMAINING) {
         XcpTl_TimeoutReset();
@@ -284,6 +323,18 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
+            /* Handle minimal-length frames immediately (e.g., LEN=0, no checksum) */
+        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
+            if (XcpTl_Receiver.Remaining == 0u) {
+                Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+                Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2; /* payload after LEN + CTR/FILL */
+                XcpTl_ResetSM();
+                XcpTl_TimeoutStop();
+                Xcp_DispatchCommand(&Xcp_CtoIn);
+                XCP_TL_LEAVE_CRITICAL();
+                return;
+            }
+        #endif
         }
     } else if (XcpTl_Receiver.State == XCP_RCV_REMAINING) {
         XcpTl_TimeoutReset();
@@ -371,6 +422,18 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
+            /* Handle minimal-length frames immediately (e.g., LEN=0, no checksum) */
+        #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
+            if (XcpTl_Receiver.Remaining == 0u) {
+                Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
+                Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2; /* payload after 2-byte LEN */
+                XcpTl_ResetSM();
+                XcpTl_TimeoutStop();
+                Xcp_DispatchCommand(&Xcp_CtoIn);
+                XCP_TL_LEAVE_CRITICAL();
+                return;
+            }
+        #endif
         }
     } else if (XcpTl_Receiver.State == XCP_RCV_REMAINING) {
         XcpTl_TimeoutReset();
@@ -459,7 +522,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             }
         #endif
         #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
-            XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
+           XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
         }
@@ -535,7 +598,11 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     XCP_TL_LEAVE_CRITICAL();
 }
 
-#endif
+    #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
+typedef uint8_t XcpSxiChecksumType;
+    #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+typedef uint16_t XcpSxiChecksumType;
+    #endif
 
 static void XcpTl_TransformAndSend(uint8_t const *buf, uint16_t len) {
     uint16_t idx;

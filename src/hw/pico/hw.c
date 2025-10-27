@@ -23,12 +23,13 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include "bsp/board_api.h"
-#include "tusb.h"
-#include "pico/stdlib.h"
-#include "pico/critical_section.h"
-#include "hardware/gpio.h"
 #include <stdint.h>
+
+#include "bsp/board_api.h"
+#include "hardware/gpio.h"
+#include "pico/critical_section.h"
+#include "pico/stdlib.h"
+#include "tusb.h"
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
@@ -39,7 +40,7 @@ typedef struct tagHwStateType {
     uint32_t StartingTime;
 } HwStateType;
 
-critical_section_t XcpHw_Locks[XCP_HW_LOCK_COUNT];
+recursive_mutex_t XcpHw_Locks[XCP_HW_LOCK_COUNT];
 
 static HwStateType HwState = { 0 };
 
@@ -57,7 +58,7 @@ static void XcpHw_InitLocks(void) {
     uint8_t idx = 0;
 
     for (idx = 0; idx < XCP_HW_LOCK_COUNT; ++idx) {
-        critical_section_init(&XcpHw_Locks[idx]);
+        recursive_mutex_init(&XcpHw_Locks[idx]);
     }
 }
 
@@ -65,28 +66,8 @@ static void XcpHw_DeinitLocks(void) {
     uint8_t idx = 0;
 
     for (idx = 0; idx < XCP_HW_LOCK_COUNT; ++idx) {
-        critical_section_deinit(&XcpHw_Locks[idx]);
     }
 }
-
-// Initialize the GPIO for the LED
-void pico_led_init(void) {
-    #ifdef PICO_DEFAULT_LED_PIN
-    // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
-    // so we can use normal GPIO functionality to turn the led on and off
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    #endif
-}
-
-// Turn the LED on or off
-void pico_set_led(bool led_on) {
-    #if defined(PICO_DEFAULT_LED_PIN)
-    // Just set the GPIO on or off
-    gpio_put(PICO_DEFAULT_LED_PIN, led_on);
-    #endif
-}
-
 
 void XcpHw_Init(void) {
     board_init();
@@ -100,10 +81,27 @@ void XcpHw_Deinit(void) {
 }
 
 uint32_t XcpHw_GetTimerCounter(void) {
-#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
-    return time_us_32();
+    uint64_t us = time_us_64();
+#if XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1NS
+    return (uint32_t)(us * 1000ULL);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10NS
+    return (uint32_t)(us * 100ULL);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100NS
+    return (uint32_t)(us * 10ULL);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1US
+    return (uint32_t)(us);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10US
+    return (uint32_t)(us / 10ULL);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100US
+    return (uint32_t)(us / 100ULL);
 #elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1MS
-    return XcpHw_GetMs32();
+    return (uint32_t)(us / 1000ULL);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_10MS
+    return (uint32_t)(us / 10000ULL);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_100MS
+    return (uint32_t)(us / 100000ULL);
+#elif XCP_DAQ_TIMESTAMP_UNIT == XCP_DAQ_TIMESTAMP_UNIT_1S
+    return (uint32_t)(us / 1000000ULL);
 #else
     #error Timestamp-unit not supported.
 #endif  // XCP_DAQ_TIMESTAMP_UNIT
@@ -117,14 +115,14 @@ void XcpHw_AcquireLock(uint8_t lockIdx) {
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
-     critical_section_enter_blocking(&XcpHw_Locks[lockIdx]);
+    recursive_mutex_enter_blocking(&XcpHw_Locks[lockIdx]);
 }
 
 void XcpHw_ReleaseLock(uint8_t lockIdx) {
     if (lockIdx >= XCP_HW_LOCK_COUNT) {
         return;
     }
-    critical_section_exit(&XcpHw_Locks[lockIdx]);
+    recursive_mutex_exit(&XcpHw_Locks[lockIdx]);
 }
 
 void XcpHw_Sleep(uint64_t usec) {

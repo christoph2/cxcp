@@ -45,6 +45,8 @@
     // #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
     #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
 
+    #define XCP_ENABLE_DEBUG_OUTPUT (XCP_ON)
+
     #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_ON)
 
     #define XCP_ENABLE_SLAVE_BLOCKMODE  (XCP_ON)
@@ -205,43 +207,20 @@
 
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
         /* Allow command-line or parent CMake to override these via -D defines */
-        #ifndef XCP_TRANSPORT_LAYER
+
         #define XCP_TRANSPORT_LAYER       XCP_ON_SXI
-        #endif
-        #ifndef XCP_ON_SXI_HEADER_FORMAT
-        #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_CTR_BYTE)
-        #endif
-        #ifndef XCP_ON_SXI_BITRATE
+        #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_BYTE)
         #define XCP_ON_SXI_BITRATE        (38400)
-        #endif
-        #ifndef XCP_ON_SXI_CONFIG
         #define XCP_ON_SXI_CONFIG         (SERIAL_8N1)
-        #endif
-        #ifndef XCP_MAX_CTO
         #define XCP_MAX_CTO               (64)
-        #endif
-        #ifndef XCP_MAX_DTO
         #define XCP_MAX_DTO               (64)
-        #endif
-        #ifndef XCP_ON_SXI_TAIL_CHECKSUM
         #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_NO_CHECKSUM)
-        #endif
         /* Framing and escaping (as used by xcp_tl.c) */
-        #ifndef XCP_ON_SXI_ENABLE_FRAMING
         #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
-        #endif
-        #ifndef XCP_ON_SXI_SYNC_CHAR
         #define XCP_ON_SXI_SYNC_CHAR      (0xAA)
-        #endif
-        #ifndef XCP_ON_SXI_ESC_CHAR
         #define XCP_ON_SXI_ESC_CHAR       (0xAB)
-        #endif
-        #ifndef XCP_ON_SXI_ESC_SYNC_CHAR
         #define XCP_ON_SXI_ESC_SYNC_CHAR  (0x01)
-        #endif
-        #ifndef XCP_ON_SXI_ESC_ESC_CHAR
         #define XCP_ON_SXI_ESC_ESC_CHAR   (0x00)
-        #endif
     #else
         #error "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
     #endif  // KVASER_CAN
