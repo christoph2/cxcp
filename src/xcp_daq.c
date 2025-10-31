@@ -474,7 +474,7 @@ void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xc
     Xcp_State = Xcp_GetState();
 
     DBG_TRACE5(
-        "\XcpDaq_WriteEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", address, adddrExt, elemSize, bitOffset
+        "\nXcpDaq_WriteEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", address, adddrExt, elemSize, bitOffset
     );
 
     entry = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
@@ -537,7 +537,7 @@ void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, 
 #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
     DBG_TRACE5(
-        "\XcpDaq_ReadEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", *address, *adddrExt, *elemSize, *bitOffset
+        "\nXcpDaq_ReadEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", *address, *adddrExt, *elemSize, *bitOffset
     );
 
     Xcp_State->daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;  // s. `XcpDaq_WriteEntry` comment.
@@ -898,11 +898,11 @@ bool XcpDaq_GetFirstPid(XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerT
 #if XCP_BUILD_TYPE == XCP_DEBUG_BUILD
 
 void XcpDaq_GetCounts(XCP_DAQ_ENTITY_TYPE *entityCount, XCP_DAQ_ENTITY_TYPE *listCount, XCP_DAQ_ENTITY_TYPE *odtCount) {
-#if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON)
+    #if (XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON)
     *entityCount = XcpDaq_EntityCount;
     *listCount   = XcpDaq_ListCount;
     *odtCount    = XcpDaq_OdtCount;
-#endif
+    #endif
 }
 
 uint16_t XcpDaq_TotalDynamicEntityCount(void) {

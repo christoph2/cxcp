@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2021-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -168,6 +168,11 @@ void XcpTl_RxHandler(void) {
             XcpHw_ErrorMsg("XcpTl_RxHandler: DLC too large", EINVAL);
             XcpTl_ReleaseConnection();
             return;
+        }
+
+        /* For UDP: learn peer address on first packet so replies go back via sendto(). */
+        if ((XcpTl_Connection.socketType == SOCK_DGRAM) && (!XcpTl_Connection.connected)) {
+            XcpTl_SaveConnection();
         }
 
         if (!XcpThrd_IsShuttingDown()) {

@@ -200,48 +200,31 @@
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
+        #define XCP_ON_ETHERNET_PORT (5555)
+
+        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
+        #define XCP_ON_ETHERNET_WIFI_SSID      ("")
+        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
+        #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
+
         #define XCP_MAX_CTO (64)  // (16)
         #define XCP_MAX_DTO (64)
 
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
         /* Allow command-line or parent CMake to override these via -D defines */
-        #ifndef XCP_TRANSPORT_LAYER
         #define XCP_TRANSPORT_LAYER       XCP_ON_SXI
-        #endif
-        #ifndef XCP_ON_SXI_HEADER_FORMAT
         #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
-        #endif
-        #ifndef XCP_ON_SXI_BITRATE
         #define XCP_ON_SXI_BITRATE        (38400)
-        #endif
-        #ifndef XCP_ON_SXI_CONFIG
         #define XCP_ON_SXI_CONFIG         (SERIAL_8N1)
-        #endif
-        #ifndef XCP_MAX_CTO
         #define XCP_MAX_CTO               (64)
-        #endif
-        #ifndef XCP_MAX_DTO
         #define XCP_MAX_DTO               (64)
-        #endif
-        #ifndef XCP_ON_SXI_TAIL_CHECKSUM
         #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_NO_CHECKSUM)
-        #endif
         /* Framing and escaping (as used by xcp_tl.c) */
-        #ifndef XCP_ON_SXI_ENABLE_FRAMING
         #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
-        #endif
-        #ifndef XCP_ON_SXI_SYNC_CHAR
         #define XCP_ON_SXI_SYNC_CHAR      (0xAA)
-        #endif
-        #ifndef XCP_ON_SXI_ESC_CHAR
         #define XCP_ON_SXI_ESC_CHAR       (0xAB)
-        #endif
-        #ifndef XCP_ON_SXI_ESC_SYNC_CHAR
         #define XCP_ON_SXI_ESC_SYNC_CHAR  (0x01)
-        #endif
-        #ifndef XCP_ON_SXI_ESC_ESC_CHAR
         #define XCP_ON_SXI_ESC_ESC_CHAR   (0x00)
-        #endif
     #else
         #error "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
     #endif  // KVASER_CAN

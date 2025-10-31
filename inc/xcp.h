@@ -40,6 +40,7 @@
     #define XCP_OFF (0)
 
     #include <assert.h>
+
     #include "xcp_config.h"
 /*!!! START-INCLUDE-SECTION !!!*/
     #include "xcp_macros.h"
@@ -88,7 +89,11 @@
     #define XCP_ON_SXI_ESC_SYNC_CHAR (0x01)
     #define XCP_ON_SXI_ESC_ESC_CHAR  (0x00)
 
-    // #include "xcp_config.h"
+    /*
+    ** XCP on Ethernet related.
+    */
+    #define XCP_ON_ETHERNET_DRIVER_ETHERNET (1)
+    #define XCP_ON_ETHERNET_DRIVER_WIFI     (2)
 
     #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
         #if defined(__cplusplus)
@@ -98,15 +103,14 @@ extern "C" {
 
     #if XCP_ENABLE_DEBUG_OUTPUT == XCP_ON
 
-    #if defined(PICO_RP2040)
+        #if defined(PICO_RP2040)
 
     extern int cdc_debug_printf(const char *fmt, ...);
-    #define CFG_TUSB_DEBUG_PRINTF cdc_debug_printf
-    #include "tusb.h"
-    #endif
+            #define CFG_TUSB_DEBUG_PRINTF cdc_debug_printf
+            #include "tusb.h"
+        #endif
 
     #endif
-
 
     /*
     ** Configuration checks.
@@ -1426,13 +1430,13 @@ extern "C" {
     /*
     ** Serial Port Function Prototypes.
     */
-    void Serial_Init(void);
-    void Serial_DeInit(void);
+    void     Serial_Init(void);
+    void     Serial_DeInit(void);
     uint32_t Serial_Available(void);
-    bool Serial_Read(uint8_t* in_byte);
-    void Serial_WriteByte(uint8_t out_byte);
-    void Serial_WriteBuffer(uint8_t const * out_bytes, uint32_t size);
-    void Serial_MainFunction(void);
+    bool     Serial_Read(uint8_t *in_byte);
+    void     Serial_WriteByte(uint8_t out_byte);
+    void     Serial_WriteBuffer(uint8_t const *out_bytes, uint32_t size);
+    void     Serial_MainFunction(void);
 
     #endif
 

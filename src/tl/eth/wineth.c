@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -33,10 +33,37 @@
 #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
+#include "xcp_config.h"
+
+/* Protocol/Address-Family selection: allow runtime when available, otherwise use compile-time defaults */
+#ifndef XCP_ETH_USE_TCP
+#  if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
+#    define XCP_ETH_USE_TCP   (Xcp_Options.tcp)
+#  else
+#    define XCP_ETH_USE_TCP   1
+#  endif
+#endif
+#ifndef XCP_ETH_USE_IPV6
+#  if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
+#    define XCP_ETH_USE_IPV6  (Xcp_Options.ipv6)
+#  else
+#    define XCP_ETH_USE_IPV6  0
+#  endif
+#endif
+
+/* Port selection: prefer runtime option when available, otherwise default */
+#ifndef XCP_ETH_PORT
+#  if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
+#    define XCP_ETH_PORT (Xcp_Options.port)
+#  else
+#    define XCP_ETH_PORT (XCP_ETH_DEFAULT_PORT)
+#  endif
+#endif
+
 #define DEFAULT_FAMILY   PF_UNSPEC    // Accept either IPv4 or IPv6
 #define DEFAULT_SOCKTYPE SOCK_STREAM  //
 
-#define ADDR_LEN sizeof(SOCKADDR_STORAGE)
+#define ADDR_LEN ((int)sizeof(SOCKADDR_STORAGE))
 
 extern XcpTl_ConnectionType XcpTl_Connection;
 
@@ -90,7 +117,7 @@ void XcpTl_Init(void) {
     ADDRINFO *AddrInfo;
     ADDRINFO *AI;
     char     *Address = NULL;
-    char     *Port    = "5555";
+    char      PortStr[16];
     SOCKET    serverSockets[FD_SETSIZE];
     int       boundSocketNum = -1;
     int       ret;
@@ -108,11 +135,14 @@ void XcpTl_Init(void) {
         exit(EXIT_FAILURE);
     } else {
     }
-    XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
-    Hints.ai_family             = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
+    XcpTl_Connection.socketType = XCP_ETH_USE_TCP ? SOCK_STREAM : SOCK_DGRAM;
+    Hints.ai_family             = XCP_ETH_USE_IPV6 ? PF_INET6 : PF_INET;
     Hints.ai_socktype           = XcpTl_Connection.socketType;
-    Hints.ai_flags              = AI_NUMERICHOST | AI_PASSIVE;
-    ret                         = getaddrinfo(Address, Port, &Hints, &AddrInfo);
+    Hints.ai_flags              = AI_PASSIVE;
+    /* Build port string from runtime option */
+    memset(PortStr, 0, sizeof(PortStr));
+    _snprintf(PortStr, sizeof(PortStr) - 1, "%u", (unsigned)XCP_ETH_PORT);
+    ret                         = getaddrinfo(Address, PortStr, &Hints, &AddrInfo);
     if (ret != 0) {
         XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
         WSACleanup();
@@ -131,7 +161,7 @@ void XcpTl_Init(void) {
             XcpHw_ErrorMsg("XcpTl_Init::socket()", WSAGetLastError());
             continue;
         }
-        if (bind(serverSockets[idx], AI->ai_addr, AI->ai_addrlen) != 0) {
+        if (bind(serverSockets[idx], AI->ai_addr, (int)AI->ai_addrlen) != 0) {
             XcpHw_ErrorMsg("XcpTl_Init::bind()", WSAGetLastError());
             continue;
         }
@@ -151,12 +181,15 @@ void XcpTl_Init(void) {
         break; /* Grab first address. */
     }
     freeaddrinfo(AddrInfo);
+
+    /* Print effective connection information */
+    XcpTl_PrintConnectionInformation();
     if (boundSocketNum == -1) {
         fprintf(
             stderr,
             "Fatal error: unable to serve on any address.\nPerhaps"
             " a server is already running on port %u / %s [%s]?\n",
-            XCP_ETH_DEFAULT_PORT, Xcp_Options.tcp ? "TCP" : "UDP", Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+            XCP_ETH_DEFAULT_PORT, (XCP_ETH_USE_TCP ? "TCP" : "UDP"), (XCP_ETH_USE_IPV6 ? "IPv6" : "IPv4")
         );
         WSACleanup();
         exit(2);
@@ -169,6 +202,8 @@ void XcpTl_Init(void) {
     ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &ul);
 #endif
 }
+
+void XcpTl_PrintConnectionInformation(void);
 
 void XcpTl_DeInit(void) {
     closesocket(XcpTl_Connection.boundSocket);
@@ -191,4 +226,13 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         }
     }
     XCP_TL_LEAVE_CRITICAL();
+}
+
+void XcpTl_PrintConnectionInformation(void) {
+    printf(
+        "\nXCPonEth -- Listening on port %u / %s [%s]\n",
+        (unsigned)XCP_ETH_PORT,
+        (XCP_ETH_USE_TCP ? "TCP" : "UDP"),
+        (XCP_ETH_USE_IPV6 ? "IPv6" : "IPv4")
+    );
 }

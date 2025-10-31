@@ -26,10 +26,12 @@
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 
-#include "common/tusb_debug.h"
 #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
+#include <inttypes.h> /* for PRIxPTR */
+
+// #include "common/tusb_debug.h"
 /*
 ** Private Options.
 */
@@ -711,7 +713,7 @@ void Xcp_MainFunction(void) {
     Xcp_ChecksumMainFunction();
 #endif /* (XCP_ENABLE_BUILD_CHECKSUM) && (XCP_CHECKSUM_CHUNKED_CALCULATION ==                                                      \
           XCP_ON) */
-   // XcpHw_Sleep(XCP_MAIN_FUNCTION_PERIOD);
+       // XcpHw_Sleep(XCP_MAIN_FUNCTION_PERIOD);
 }
 
 void Xcp_SetMta(Xcp_MtaType mta) {
@@ -941,7 +943,7 @@ XCP_STATIC void Xcp_Upload(uint8_t len) {
 
 void Xcp_DispatchCommand(Xcp_PduType const * const pdu) {
     const uint8_t cmd = pdu->data[0];
-    DBG_TRACE1("<- ");
+    DBG_TRACE2("<- CMD: 0x%02X\n\r", cmd);
 
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         /*DBG_PRINT2("CMD: [%02X]\n\r", cmd); */
@@ -1287,7 +1289,7 @@ XCP_STATIC void Xcp_SetMta_Res(Xcp_PduType const * const pdu) {
     Xcp_State.mta.ext     = Xcp_GetByte(pdu, UINT8(3));
     Xcp_State.mta.address = Xcp_GetDWord(pdu, UINT8(4));
 
-    DBG_TRACE3("SET_MTA [address: 0x%08x ext: 0x%02x]\n\r", Xcp_State.mta.address, Xcp_State.mta.ext);
+    DBG_TRACE3("SET_MTA [address: 0x%" PRIxPTR " ext: 0x%02x]\n\r", (uintptr_t)Xcp_State.mta.address, Xcp_State.mta.ext);
 
     Xcp_PositiveResponse();
 }
@@ -1384,7 +1386,7 @@ XCP_STATIC void Xcp_Download_Res(Xcp_PduType const * const pdu) {
         /* OK, regular first-frame transfer. */
         Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_TRUE;
         Xcp_State.masterBlockModeState.remaining           = len - XCP_DOWNLOAD_PAYLOAD_LENGTH;
-        Xcp_Download_Copy(UINT32(pdu->data + 2), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH));
+        Xcp_Download_Copy((uint32_t)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH));
         return;
     }
     #endif /* XCP_ENABLE_MASTER_BLOCKMODE */
@@ -1395,7 +1397,7 @@ XCP_STATIC void Xcp_Download_Res(Xcp_PduType const * const pdu) {
         return;
     }
     #endif
-    Xcp_Download_Copy(UINT32(pdu->data + 2), UINT8(0), UINT32(len));
+    Xcp_Download_Copy((uint32_t)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(len));
     Xcp_PositiveResponse();
 }
 
@@ -1415,7 +1417,7 @@ XCP_STATIC void Xcp_DownloadNext_Res(Xcp_PduType const * const pdu) {
         return;
     }
     len = XCP_MIN(remaining, XCP_DOWNLOAD_PAYLOAD_LENGTH);
-    Xcp_Download_Copy(UINT32(pdu->data + 2), UINT8(0), UINT32(len));
+    Xcp_Download_Copy((uint32_t)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(len));
     Xcp_State.masterBlockModeState.remaining -= len;
     if (Xcp_State.masterBlockModeState.remaining == UINT8(0)) {
         Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_FALSE;

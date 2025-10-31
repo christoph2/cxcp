@@ -23,13 +23,15 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include "Arduino.h"
-#include "xcp_config.h"
+#if (XCP_TRANSPORT_LAYER == XCP_ON_SXI) && (defined(ARDUINO))
 
-/*!!! START-INCLUDE-SECTION !!!*/
-#include "xcp.h"
-#include "xcp_tl_timeout.h"
-#include "xcp_util.h"
+    #include "Arduino.h"
+    #include "xcp_config.h"
+
+    /*!!! START-INCLUDE-SECTION !!!*/
+    #include "xcp.h"
+    #include "xcp_tl_timeout.h"
+    #include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 extern "C" {
@@ -60,11 +62,12 @@ extern "C" {
         Serial.write(out_byte);
     }
 
-    void Serial_WriteBuffer(uint8_t const * out_bytes, uint32_t size) {
+    void Serial_WriteBuffer(uint8_t const *out_bytes, uint32_t size) {
         Serial.write(out_bytes, size);
     }
 
     void Serial_MainFunction(void) {
-
     }
 }
+
+#endif /* (XCP_TRANSPORT_LAYER == XCP_ON_SXI) && (defined(ARDUINO)) */
