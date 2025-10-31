@@ -200,6 +200,7 @@
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
+        #define XCP_ON_ETHERNET_IP              ("192.168.0.100")
         #define XCP_ON_ETHERNET_PORT (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)

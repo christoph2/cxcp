@@ -59,10 +59,10 @@ class ArduinoNetworkIf {
    public:
 
     virtual bool           begin()         = 0;
-    virtual ClientWrapper* accept_client() = 0;  // gibt nullptr wenn kein Client ansteht
+    virtual ClientWrapper* accept_client() = 0;
 
     virtual void process() {
-    }  // optional periodische Arbeit
+    }
 
     virtual String getInfo() {
         return String();
@@ -109,15 +109,27 @@ class EthernetClientWrapper : public ClientWrapper {
 class EthernetAdapter : public ArduinoNetworkIf {
    public:
 
-    EthernetAdapter(uint16_t port) : m_server(port) {
+    // DHCP constructor (backward compatible)
+    EthernetAdapter(uint16_t port) : m_server(port), m_use_dhcp(true), m_ip(0, 0, 0, 0) {
+    }
+
+    // Static IP constructor
+    EthernetAdapter(IPAddress ip, uint16_t port) : m_server(port), m_use_dhcp(false), m_ip(ip) {
     }
 
     bool begin() override {
-        Ethernet.init(10);  // CS Pin for many shields; anpassen falls nötig
-        if (Ethernet.begin(XCP_ON_ETHERNET_MAC_ADDRESS) == 0) {
-            // DHCP failed, try static fallback (optional)
-            // Ethernet.begin(XCP_ON_ETHERNET_MAC_ADDRESS, IPAddress(192,168,1,177));
+        Serial.begin(115200);
+        while (!Serial) {
+            ; // wait for serial port to connect. Needed for native USB port only
         }
+        // Ethernet.init(10);  // CS Pin for many shields;
+        if (m_use_dhcp) {
+            (void)Ethernet.begin(m_mac_address); // try DHCP
+        } else {
+            (void)Ethernet.begin(m_mac_address, m_ip); // use static IP
+        }
+        Serial.print("\nBlueparrot XCP Connected to the Ethernet network -- IP: ");
+        Serial.println(Ethernet.localIP());
         delay(1000);
         m_server.begin();
         return true;
@@ -133,11 +145,15 @@ class EthernetAdapter : public ArduinoNetworkIf {
 
     String getInfo() override {
         IPAddress ip = Ethernet.localIP();
-        return String("Ethernet ") + ip.toString();
+        return String("Ethernet ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
     }
 
    private:
 
+    char m_mac_address_storage[6] = XCP_ON_ETHERNET_MAC_ADDRESS;
+    char* m_mac_address = m_mac_address_storage;
+    bool m_use_dhcp;
+    IPAddress m_ip;
     EthernetServer m_server;
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_ETHERNET
@@ -190,7 +206,7 @@ class WiFiAdapter : public ArduinoNetworkIf {
         while ((WiFi.status() != WL_CONNECTED) && (millis() - start < 10000)) {
             delay(200);
         }
-        Serial.print("\nBlueparrot XCP Connected to the WiFi network -- Local ESP32 IP: ");
+        Serial.print("\nBlueparrot XCP Connected to the WiFi network -- IP: ");
         Serial.println(WiFi.localIP());
         m_server.begin();
         return WiFi.status() == WL_CONNECTED;
@@ -216,7 +232,8 @@ class WiFiAdapter : public ArduinoNetworkIf {
     }
 
     String getInfo() override {
-        return String("WiFi ") + WiFi.localIP().toString();
+        IPAddress ip = WiFi.localIP();
+        return String("WiFi ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
     }
 
    private:
@@ -339,7 +356,17 @@ extern "C" {
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
         s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
     #else
+    #if defined(XCP_ON_ETHERNET_IP_OCTETS)
+        s_net = new EthernetAdapter(IPAddress(XCP_ON_ETHERNET_IP_OCTETS), XCP_ON_ETHERNET_PORT);
+    #elif defined(XCP_ON_ETHERNET_IP)
+        {
+            IPAddress ip;
+            ip.fromString(XCP_ON_ETHERNET_IP);
+            s_net = new EthernetAdapter(ip, XCP_ON_ETHERNET_PORT);
+        }
+    #else
         s_net = new EthernetAdapter(XCP_ON_ETHERNET_PORT);
+    #endif
     #endif
         if (s_net) {
             (void)s_net->begin();

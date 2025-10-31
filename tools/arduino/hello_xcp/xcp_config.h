@@ -35,7 +35,8 @@
 **  General Options.
 */
     //    #define TP_CAN
-    #define TP_SXI
+    //#define TP_SXI
+#define TP_ETHER
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -200,6 +201,7 @@
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
+        #define XCP_ON_ETHERNET_IP              ("192.168.0.100")
         #define XCP_ON_ETHERNET_PORT (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
