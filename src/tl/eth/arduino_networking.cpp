@@ -1,3 +1,4 @@
+
 /*
  * BlueParrot XCP
  *
@@ -175,14 +176,32 @@ class EthernetAdapter : public ArduinoNetworkIf {
         while (!Serial) {
             ;  // wait for serial port to connect. Needed for native USB port only
         }
+        Ethernet.init(10);
+        delay(1000);  // Give the hardware some time to initialize
+
+        int result = 0;
         if (m_use_dhcp) {
-            (void)Ethernet.begin(m_mac_address);  // try DHCP
+            Serial.println("Attempting to get an IP address using DHCP...");
+            result = Ethernet.begin(m_mac_address);  // try DHCP
+            if (result == 0) {
+                Serial.println("Failed to configure Ethernet using DHCP");
+                return false;
+            }
         } else {
-            (void)Ethernet.begin(m_mac_address, m_ip);  // use static IP
+            Serial.print("Configuring Ethernet with static IP: ");
+            Serial.println(m_ip);
+            Ethernet.begin(m_mac_address, m_ip);  // use static IP
+            result = 1;                           // Assume success for static IP, as begin() doesn't indicate failure
         }
+
+        // Check for a valid IP address
+        if (Ethernet.localIP() == IPAddress(0, 0, 0, 0)) {
+            Serial.println("Failed to get a valid IP address.");
+            return false;
+        }
+
         Serial.print("\nBlueparrot XCP (UDP) on Ethernet -- IP: ");
         Serial.println(Ethernet.localIP());
-        delay(1000);
         m_udp.begin(m_port);
         return true;
     }
@@ -210,8 +229,8 @@ class EthernetAdapter : public ArduinoNetworkIf {
 
    private:
 
-    char        m_mac_address_storage[6] = XCP_ON_ETHERNET_MAC_ADDRESS;
-    char*       m_mac_address            = m_mac_address_storage;
+    uint8_t     m_mac_address_storage[6] = XCP_ON_ETHERNET_MAC_ADDRESS;
+    uint8_t*    m_mac_address            = m_mac_address_storage;
     bool        m_use_dhcp;
     IPAddress   m_ip;
     uint16_t    m_port;
