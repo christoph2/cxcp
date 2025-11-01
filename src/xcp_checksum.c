@@ -41,7 +41,7 @@
  */
 #if defined(__AVR__)
     #include <avr/pgmspace.h>
-    #define XCP_PROGMEM PROGMEM
+    #define XCP_PROGMEM     PROGMEM
     #define XCP_READ16(idx) pgm_read_word(&CRC_TAB[(idx)])
     #define XCP_READ32(idx) pgm_read_dword(&CRC_TAB[(idx)])
 #else

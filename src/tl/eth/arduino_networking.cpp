@@ -29,8 +29,10 @@
 
     #ifdef ESP32
         #include <WiFi.h>
+        #include <WiFiUdp.h>
     #else
         #include <Ethernet.h>
+        #include <EthernetUdp.h>
         #include <SPI.h>
     #endif
 
@@ -88,7 +90,8 @@ class EthernetClientWrapper : public ClientWrapper {
     }
 
     size_t write_bytes(const uint8_t* buf, size_t len) override {
-        return m_client.write(buf, len);
+        size_t nbytes = m_client.write(buf, len);
+        return nbytes;
     }
 
     bool connected() override {
@@ -106,96 +109,175 @@ class EthernetClientWrapper : public ClientWrapper {
     EthernetClient m_client;
 };
 
+class EthernetUdpClientWrapper : public ClientWrapper {
+   public:
+
+    EthernetUdpClientWrapper(EthernetUDP* udp, IPAddress remoteIp, uint16_t remotePort, const uint8_t* data, size_t size) :
+        m_udp(udp), m_remoteIp(remoteIp), m_remotePort(remotePort), m_size(size), m_offset(0) {
+        if (m_size > MAX_FRAME_SIZE)
+            m_size = MAX_FRAME_SIZE;
+        memcpy(m_buf, data, m_size);
+    }
+
+    int available() override {
+        return (int)(m_size - m_offset);
+    }
+
+    int read_bytes(uint8_t* buf, size_t len) override {
+        size_t remaining = m_size - m_offset;
+        size_t toCopy    = remaining < len ? remaining : len;
+        if (toCopy == 0)
+            return 0;
+        memcpy(buf, m_buf + m_offset, toCopy);
+        m_offset += toCopy;
+        return (int)toCopy;
+    }
+
+    size_t write_bytes(const uint8_t* buf, size_t len) override {
+        if (!m_udp)
+            return 0;
+        if (m_udp->beginPacket(m_remoteIp, m_remotePort) == 0)
+            return 0;
+        size_t written = m_udp->write(buf, len);
+        m_udp->endPacket();
+        return written;
+    }
+
+    bool connected() override {
+        return m_offset < m_size;
+    }
+
+    void stop() override {
+        // no persistent connection to stop for UDP
+    }
+
+   private:
+
+    EthernetUDP* m_udp;
+    IPAddress    m_remoteIp;
+    uint16_t     m_remotePort;
+    uint8_t      m_buf[MAX_FRAME_SIZE];
+    size_t       m_size;
+    size_t       m_offset;
+};
+
 class EthernetAdapter : public ArduinoNetworkIf {
    public:
 
     // DHCP constructor (backward compatible)
-    EthernetAdapter(uint16_t port) : m_server(port), m_use_dhcp(true), m_ip(0, 0, 0, 0) {
+    EthernetAdapter(uint16_t port) : m_port(port), m_use_dhcp(true), m_ip(0, 0, 0, 0) {
     }
 
     // Static IP constructor
-    EthernetAdapter(IPAddress ip, uint16_t port) : m_server(port), m_use_dhcp(false), m_ip(ip) {
+    EthernetAdapter(IPAddress ip, uint16_t port) : m_port(port), m_use_dhcp(false), m_ip(ip) {
     }
 
     bool begin() override {
         Serial.begin(115200);
         while (!Serial) {
-            ; // wait for serial port to connect. Needed for native USB port only
+            ;  // wait for serial port to connect. Needed for native USB port only
         }
-        // Ethernet.init(10);  // CS Pin for many shields;
         if (m_use_dhcp) {
-            (void)Ethernet.begin(m_mac_address); // try DHCP
+            (void)Ethernet.begin(m_mac_address);  // try DHCP
         } else {
-            (void)Ethernet.begin(m_mac_address, m_ip); // use static IP
+            (void)Ethernet.begin(m_mac_address, m_ip);  // use static IP
         }
-        Serial.print("\nBlueparrot XCP Connected to the Ethernet network -- IP: ");
+        Serial.print("\nBlueparrot XCP (UDP) on Ethernet -- IP: ");
         Serial.println(Ethernet.localIP());
         delay(1000);
-        m_server.begin();
+        m_udp.begin(m_port);
         return true;
     }
 
     ClientWrapper* accept_client() override {
-        EthernetClient client = m_server.available();
-        if (client) {
-            return new EthernetClientWrapper(client);
+        int packetSize = m_udp.parsePacket();
+        if (packetSize > 0) {
+            if (packetSize > (int)MAX_FRAME_SIZE)
+                packetSize = (int)MAX_FRAME_SIZE;
+            uint8_t buf[MAX_FRAME_SIZE];
+            int     len = m_udp.read(buf, packetSize);
+            if (len <= 0)
+                return nullptr;
+            IPAddress rip   = m_udp.remoteIP();
+            uint16_t  rport = m_udp.remotePort();
+            return new EthernetUdpClientWrapper(&m_udp, rip, rport, buf, (size_t)len);
         }
         return nullptr;
     }
 
     String getInfo() override {
         IPAddress ip = Ethernet.localIP();
-        return String("Ethernet ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+        return String("Ethernet-UDP ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
     }
 
    private:
 
-    char m_mac_address_storage[6] = XCP_ON_ETHERNET_MAC_ADDRESS;
-    char* m_mac_address = m_mac_address_storage;
-    bool m_use_dhcp;
-    IPAddress m_ip;
-    EthernetServer m_server;
+    char        m_mac_address_storage[6] = XCP_ON_ETHERNET_MAC_ADDRESS;
+    char*       m_mac_address            = m_mac_address_storage;
+    bool        m_use_dhcp;
+    IPAddress   m_ip;
+    uint16_t    m_port;
+    EthernetUDP m_udp;
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_ETHERNET
 
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
-class WiFiClientWrapper : public ClientWrapper {
+class WiFiUdpClientWrapper : public ClientWrapper {
    public:
 
-    WiFiClientWrapper(WiFiClient c) : m_client(c) {
+    WiFiUdpClientWrapper(WiFiUDP* udp, IPAddress remoteIp, uint16_t remotePort, const uint8_t* data, size_t size) :
+        m_udp(udp), m_remoteIp(remoteIp), m_remotePort(remotePort), m_size(size), m_offset(0) {
+        if (m_size > MAX_FRAME_SIZE)
+            m_size = MAX_FRAME_SIZE;
+        memcpy(m_buf, data, m_size);
     }
 
     int available() override {
-        return m_client.available();
+        return (int)(m_size - m_offset);
     }
 
     int read_bytes(uint8_t* buf, size_t len) override {
-        return m_client.read(buf, len);
+        size_t remaining = m_size - m_offset;
+        size_t toCopy    = remaining < len ? remaining : len;
+        if (toCopy == 0)
+            return 0;
+        memcpy(buf, m_buf + m_offset, toCopy);
+        m_offset += toCopy;
+        return (int)toCopy;
     }
 
     size_t write_bytes(const uint8_t* buf, size_t len) override {
-        return m_client.write(buf, len);
+        if (!m_udp)
+            return 0;
+        if (m_udp->beginPacket(m_remoteIp, m_remotePort) == 0)
+            return 0;
+        size_t written = m_udp->write(buf, len);
+        m_udp->endPacket();
+        return written;
     }
 
     bool connected() override {
-        return m_client && m_client.connected();
+        return m_offset < m_size;
     }
 
     void stop() override {
-        if (m_client) {
-            m_client.stop();
-        }
+        // no-op for UDP
     }
 
    private:
 
-    WiFiClient m_client;
+    WiFiUDP*  m_udp;
+    IPAddress m_remoteIp;
+    uint16_t  m_remotePort;
+    uint8_t   m_buf[MAX_FRAME_SIZE];
+    size_t    m_size;
+    size_t    m_offset;
 };
 
 class WiFiAdapter : public ArduinoNetworkIf {
    public:
 
-    WiFiAdapter(const char* s, const char* p, uint16_t port) : m_server(port), m_ssid(s), m_pass(p) {
+    WiFiAdapter(const char* s, const char* p, uint16_t port) : m_port(port), m_ssid(s), m_pass(p) {
     }
 
     bool begin() override {
@@ -206,16 +288,24 @@ class WiFiAdapter : public ArduinoNetworkIf {
         while ((WiFi.status() != WL_CONNECTED) && (millis() - start < 10000)) {
             delay(200);
         }
-        Serial.print("\nBlueparrot XCP Connected to the WiFi network -- IP: ");
+        Serial.print("\nBlueparrot XCP (UDP) on WiFi -- IP: ");
         Serial.println(WiFi.localIP());
-        m_server.begin();
+        m_udp.begin(m_port);
         return WiFi.status() == WL_CONNECTED;
     }
 
     ClientWrapper* accept_client() override {
-        WiFiClient client = m_server.available();
-        if (client) {
-            return new WiFiClientWrapper(client);
+        int packetSize = m_udp.parsePacket();
+        if (packetSize > 0) {
+            if (packetSize > (int)MAX_FRAME_SIZE)
+                packetSize = (int)MAX_FRAME_SIZE;
+            uint8_t buf[MAX_FRAME_SIZE];
+            int     len = m_udp.read(buf, packetSize);
+            if (len <= 0)
+                return nullptr;
+            IPAddress rip   = m_udp.remoteIP();
+            uint16_t  rport = m_udp.remotePort();
+            return new WiFiUdpClientWrapper(&m_udp, rip, rport, buf, (size_t)len);
         }
         return nullptr;
     }
@@ -233,12 +323,13 @@ class WiFiAdapter : public ArduinoNetworkIf {
 
     String getInfo() override {
         IPAddress ip = WiFi.localIP();
-        return String("WiFi ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+        return String("WiFi-UDP ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
     }
 
    private:
 
-    WiFiServer  m_server;
+    uint16_t    m_port;
+    WiFiUDP     m_udp;
     const char* m_ssid;
     const char* m_pass;
 };
@@ -269,7 +360,6 @@ class FrameParser {
         return int(len);
     }
 
-    // Hilfsfunktion: liest exakt n Bytes mit Timeout
     static bool readN(ClientWrapper* client, uint8_t* out, size_t n, unsigned long startTime, unsigned long timeoutMs) {
         size_t got = 0;
         while (got < n) {
@@ -290,7 +380,7 @@ class FrameParser {
                 if (millis() - startTime > timeoutMs) {
                     return false;
                 }
-                delay(1);
+                // delay(1);
             }
         }
         return true;
@@ -356,17 +446,17 @@ extern "C" {
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
         s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
     #else
-    #if defined(XCP_ON_ETHERNET_IP_OCTETS)
+        #if defined(XCP_ON_ETHERNET_IP_OCTETS)
         s_net = new EthernetAdapter(IPAddress(XCP_ON_ETHERNET_IP_OCTETS), XCP_ON_ETHERNET_PORT);
-    #elif defined(XCP_ON_ETHERNET_IP)
+        #elif defined(XCP_ON_ETHERNET_IP)
         {
             IPAddress ip;
             ip.fromString(XCP_ON_ETHERNET_IP);
             s_net = new EthernetAdapter(ip, XCP_ON_ETHERNET_PORT);
         }
-    #else
+        #else
         s_net = new EthernetAdapter(XCP_ON_ETHERNET_PORT);
-    #endif
+        #endif
     #endif
         if (s_net) {
             (void)s_net->begin();
@@ -454,6 +544,15 @@ extern "C" {
 
         /* Dispatch the freshly received CTO command. */
         Xcp_DispatchCommand(&Xcp_CtoIn);
+
+        /* For UDP wrappers, the packet is fully consumed now; mark connection free. */
+        if (!s_client->connected()) {
+            XcpTl_ReleaseConnection();
+            s_client->stop();
+            delete s_client;
+            s_client    = nullptr;
+            s_connected = false;
+        }
     }
 
     void XcpTl_Send(uint8_t const * buf, uint16_t len) {
