@@ -164,11 +164,9 @@ class EthernetUdpClientWrapper : public ClientWrapper {
 class EthernetAdapter : public ArduinoNetworkIf {
    public:
 
-    // DHCP constructor (backward compatible)
     EthernetAdapter(uint16_t port) : m_port(port), m_use_dhcp(true), m_ip(0, 0, 0, 0) {
     }
 
-    // Static IP constructor
     EthernetAdapter(IPAddress ip, uint16_t port) : m_port(port), m_use_dhcp(false), m_ip(ip) {
     }
 
@@ -335,15 +333,12 @@ class WiFiAdapter : public ArduinoNetworkIf {
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 
-// ======= Frame Parser / Handler =======
-
 class FrameParser {
    public:
 
-    // liest ein Frame: returns size or -1 on error/timeout, fills buffer (must be >= MAX_FRAME_SIZE)
     static int readFrame(ClientWrapper* client, uint8_t* buffer, size_t bufSize, unsigned long timeoutMs) {
         unsigned long start = millis();
-        // Schritt 1: lese 2-Byte Länge (Big Endian)
+
         uint8_t lenBuf[2];
 
         if (!readN(client, lenBuf, 2, start, timeoutMs)) {
@@ -353,7 +348,6 @@ class FrameParser {
         if (len == 0 || len > bufSize) {
             return -1;
         }
-        // Schritt 2: lese len bytes
         if (!readN(client, buffer, len, start, timeoutMs)) {
             return -1;
         }
@@ -363,7 +357,6 @@ class FrameParser {
     static bool readN(ClientWrapper* client, uint8_t* out, size_t n, unsigned long startTime, unsigned long timeoutMs) {
         size_t got = 0;
         while (got < n) {
-            // Wenn Client disconnected -> fail
             if (!client->connected() && client->available() == 0) {
                 return false;
             }
@@ -376,29 +369,19 @@ class FrameParser {
                 }
                 got += r;
             } else {
-                // keine Daten jetzt, prüfe Timeout
                 if (millis() - startTime > timeoutMs) {
                     return false;
                 }
-                // delay(1);
             }
         }
         return true;
     }
 };
 
-// ======= XCP Transport Layer Interface Implementation =======
-
-/* The Arduino Ethernet/WiFi backend must expose the same TL entry points
-   as other drivers: XcpTl_Init, XcpTl_MainFunction, XcpTl_RxHandler,
-   XcpTl_Send, XcpTl_DeInit, XcpTl_SaveConnection, XcpTl_ReleaseConnection,
-   XcpTl_VerifyConnection. */
-
 static ArduinoNetworkIf* s_net       = nullptr;
 static ClientWrapper*    s_client    = nullptr;
 static bool              s_connected = false;
 
-/* Simple helpers to read exact N bytes from the active client with a timeout. */
 static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
     if (!s_client)
         return false;
@@ -427,9 +410,9 @@ static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
 static int ar_read_header(uint16_t* len, uint16_t* counter) {
     uint8_t hdr[4];
     if (!ar_read_n(hdr, 4, READ_TIMEOUT_MS)) {
-        return 0; /* treat as no data/closed */
+        return 0;
     }
-    /* XCP on ETH header is 4 bytes, little-endian: LEN (2), CTR (2) */
+
     *len     = (uint16_t)hdr[0] | ((uint16_t)hdr[1] << 8);
     *counter = (uint16_t)hdr[2] | ((uint16_t)hdr[3] << 8);
     return 1;
@@ -446,14 +429,8 @@ extern "C" {
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
         s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
     #else
-        #if defined(XCP_ON_ETHERNET_IP_OCTETS)
-        s_net = new EthernetAdapter(IPAddress(XCP_ON_ETHERNET_IP_OCTETS), XCP_ON_ETHERNET_PORT);
-        #elif defined(XCP_ON_ETHERNET_IP)
-        {
-            IPAddress ip;
-            ip.fromString(XCP_ON_ETHERNET_IP);
-            s_net = new EthernetAdapter(ip, XCP_ON_ETHERNET_PORT);
-        }
+        #if defined(XCP_ON_ETHERNET_IP)
+        s_net = new EthernetAdapter(IPAddress(XCP_ON_ETHERNET_IP), XCP_ON_ETHERNET_PORT);
         #else
         s_net = new EthernetAdapter(XCP_ON_ETHERNET_PORT);
         #endif

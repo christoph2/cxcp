@@ -34,7 +34,8 @@
 /*
 **  General Options.
 */
-    //    #define TP_CAN
+    // #define TP_CAN
+    // #define TP_ETHER
     #define TP_SXI
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
@@ -47,7 +48,7 @@
 
     #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_ON)
 
-    #define XCP_ENABLE_SLAVE_BLOCKMODE  (XCP_ON)
+    #define XCP_ENABLE_SLAVE_BLOCKMODE  (XCP_OFF)
     #define XCP_ENABLE_MASTER_BLOCKMODE (XCP_OFF)
 
     #define XCP_ENABLE_STIM (XCP_OFF)
@@ -200,7 +201,7 @@
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
-        #define XCP_ON_ETHERNET_IP              ("192.168.0.100")
+        #define XCP_ON_ETHERNET_IP   (192, 168, 0, 100)
         #define XCP_ON_ETHERNET_PORT (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)

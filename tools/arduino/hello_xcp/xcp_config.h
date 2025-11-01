@@ -34,8 +34,9 @@
 /*
 **  General Options.
 */
-    //    #define TP_CAN
-    #define TP_SXI
+    #define TP_CAN
+// #define TP_ETHER
+// #define TP_SXI
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -194,13 +195,13 @@
     #elif defined(TP_BLUETOOTH)
         #define XCP_TRANSPORT_LAYER XCP_ON_BTH
 
-        #define XCP_MAX_CTO (32)  // (16)
-        #define XCP_MAX_DTO (32)
+        #define XCP_MAX_CTO (64)  // (16)
+        #define XCP_MAX_DTO (64)
 
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
-        #define XCP_ON_ETHERNET_IP   ("192.168.0.100")
+        #define XCP_ON_ETHERNET_IP   (192, 168, 0, 100)
         #define XCP_ON_ETHERNET_PORT (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
@@ -215,10 +216,10 @@
         /* Allow command-line or parent CMake to override these via -D defines */
         #define XCP_TRANSPORT_LAYER       XCP_ON_SXI
         #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
-        #define XCP_ON_SXI_BITRATE        (115200)
+        #define XCP_ON_SXI_BITRATE        (38400)
         #define XCP_ON_SXI_CONFIG         (SERIAL_8N1)
-        #define XCP_MAX_CTO               (32)
-        #define XCP_MAX_DTO               (32)
+        #define XCP_MAX_CTO               (64)
+        #define XCP_MAX_DTO               (64)
         #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_NO_CHECKSUM)
         /* Framing and escaping (as used by xcp_tl.c) */
         #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
