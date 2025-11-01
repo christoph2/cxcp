@@ -36,6 +36,26 @@
 
 /*!!! END-INCLUDE-SECTION !!!*/
 
+/* Place CRC lookup tables into Flash/ROM on AVR (Arduino Uno) and
+ * provide accessor macros to read from PROGMEM.
+ */
+#if defined(__AVR__)
+    #include <avr/pgmspace.h>
+    #define XCP_PROGMEM PROGMEM
+    #define XCP_READ16(idx) pgm_read_word(&CRC_TAB[(idx)])
+    #define XCP_READ32(idx) pgm_read_dword(&CRC_TAB[(idx)])
+#else
+    #define XCP_PROGMEM
+    #define XCP_READ16(idx) (CRC_TAB[(idx)])
+    #define XCP_READ32(idx) (CRC_TAB[(idx)])
+#endif
+
+#if XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32
+    #define READ_CRC_TAB(i) XCP_READ32((i))
+#else
+    #define READ_CRC_TAB(i) XCP_READ16((i))
+#endif
+
 /*
 ** Local Types
 */
@@ -75,7 +95,7 @@ typedef struct tagXcp_ChecksumJobType {
     #define REFLECT_REMAINDER       XCP_TRUE
     #define CHECK_VALUE             ((uint16_t)0xBB3D)
 
-static const uint16_t CRC_TAB[] = {
+static const uint16_t CRC_TAB[] XCP_PROGMEM = {
     (uint16_t)0x0000, (uint16_t)0x8005, (uint16_t)0x800F, (uint16_t)0x000A, (uint16_t)0x801B, (uint16_t)0x001E, (uint16_t)0x0014,
     (uint16_t)0x8011, (uint16_t)0x8033, (uint16_t)0x0036, (uint16_t)0x003C, (uint16_t)0x8039, (uint16_t)0x0028, (uint16_t)0x802D,
     (uint16_t)0x8027, (uint16_t)0x0022, (uint16_t)0x8063, (uint16_t)0x0066, (uint16_t)0x006C, (uint16_t)0x8069, (uint16_t)0x0078,
@@ -125,7 +145,7 @@ static const uint16_t CRC_TAB[] = {
     #define REFLECT_REMAINDER       XCP_FALSE
     #define CHECK_VALUE             ((uint16_t)0x29B1)
 
-static const uint16_t CRC_TAB[] = {
+static const uint16_t CRC_TAB[] XCP_PROGMEM = {
     (uint16_t)0x0000, (uint16_t)0x1021, (uint16_t)0x2042, (uint16_t)0x3063, (uint16_t)0x4084, (uint16_t)0x50A5, (uint16_t)0x60C6,
     (uint16_t)0x70E7, (uint16_t)0x8108, (uint16_t)0x9129, (uint16_t)0xA14A, (uint16_t)0xB16B, (uint16_t)0xC18C, (uint16_t)0xD1AD,
     (uint16_t)0xE1CE, (uint16_t)0xF1EF, (uint16_t)0x1231, (uint16_t)0x0210, (uint16_t)0x3273, (uint16_t)0x2252, (uint16_t)0x52B5,
@@ -175,7 +195,7 @@ static const uint16_t CRC_TAB[] = {
     #define REFLECT_REMAINDER       XCP_TRUE
     #define CHECK_VALUE             ((uint32_t)0xCBF43926)
 
-static const uint32_t CRC_TAB[] = {
+static const uint32_t CRC_TAB[] XCP_PROGMEM = {
     (uint32_t)0x00000000, (uint32_t)0x77073096, (uint32_t)0xee0e612c, (uint32_t)0x990951ba, (uint32_t)0x076dc419,
     (uint32_t)0x706af48f, (uint32_t)0xe963a535, (uint32_t)0x9e6495a3, (uint32_t)0x0edb8832, (uint32_t)0x79dcb8a4,
     (uint32_t)0xe0d5e91e, (uint32_t)0x97d2d988, (uint32_t)0x09b64c2b, (uint32_t)0x7eb17cbd, (uint32_t)0xe7b82d07,
@@ -282,7 +302,7 @@ Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const *ptr, uint32_t length, Xcp_
 
     for (idx = (uint32_t)0UL; idx < length; ++idx) {
         data   = CRC_REFLECT_DATA(ptr[idx]) ^ UINT8(result >> (WIDTH - UINT8(8)));
-        result = CRC_TAB[data] ^ UINT16(result << 8);
+        result = READ_CRC_TAB(data) ^ UINT16(result << 8);
     }
     return CRC_REFLECT_REMAINDER(result) ^ XCP_CRC_FINAL_XOR_VALUE;
 #elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_11) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_12) ||        \
