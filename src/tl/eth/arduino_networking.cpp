@@ -42,8 +42,7 @@
     #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-const unsigned long READ_TIMEOUT_MS = 2000;  // Timeout beim Lesen eines Frames
-const size_t        MAX_FRAME_SIZE  = 1024;  // maximale erlaubte Frame-Größe
+const unsigned long READ_TIMEOUT_MS = 2000;  // Timeout when reading a frame
 
 class ClientWrapper {
    public:
@@ -113,11 +112,33 @@ class EthernetClientWrapper : public ClientWrapper {
 class EthernetUdpClientWrapper : public ClientWrapper {
    public:
 
-    EthernetUdpClientWrapper(EthernetUDP* udp, IPAddress remoteIp, uint16_t remotePort, const uint8_t* data, size_t size) :
-        m_udp(udp), m_remoteIp(remoteIp), m_remotePort(remotePort), m_size(size), m_offset(0) {
-        if (m_size > MAX_FRAME_SIZE)
-            m_size = MAX_FRAME_SIZE;
-        memcpy(m_buf, data, m_size);
+    EthernetUdpClientWrapper() : m_udp(nullptr), m_remoteIp(), m_remotePort(0), m_size(0), m_offset(0) {
+    }
+
+    void reset(EthernetUDP* udp, IPAddress remoteIp, uint16_t remotePort) {
+        m_udp        = udp;
+        m_remoteIp   = remoteIp;
+        m_remotePort = remotePort;
+        m_size       = 0;
+        m_offset     = 0;
+    }
+
+    int loadFromUdp(int packetSize) {
+        if (!m_udp)
+            return -1;
+        if (packetSize <= 0)
+            return -1;
+        if (packetSize > (int)XCP_COMM_BUFLEN)
+            packetSize = (int)XCP_COMM_BUFLEN;
+        int len = m_udp->read(m_buf, (size_t)packetSize);
+        if (len <= 0) {
+            m_size   = 0;
+            m_offset = 0;
+            return -1;
+        }
+        m_size   = (size_t)len;
+        m_offset = 0;
+        return len;
     }
 
     int available() override {
@@ -157,7 +178,7 @@ class EthernetUdpClientWrapper : public ClientWrapper {
     EthernetUDP* m_udp;
     IPAddress    m_remoteIp;
     uint16_t     m_remotePort;
-    uint8_t      m_buf[MAX_FRAME_SIZE];
+    uint8_t      m_buf[XCP_COMM_BUFLEN];
     size_t       m_size;
     size_t       m_offset;
 };
@@ -209,15 +230,15 @@ class EthernetAdapter : public ArduinoNetworkIf {
     ClientWrapper* accept_client() override {
         int packetSize = m_udp.parsePacket();
         if (packetSize > 0) {
-            if (packetSize > (int)MAX_FRAME_SIZE)
-                packetSize = (int)MAX_FRAME_SIZE;
-            uint8_t buf[MAX_FRAME_SIZE];
-            int     len = m_udp.read(buf, packetSize);
-            if (len <= 0)
-                return nullptr;
+            if (packetSize > (int)XCP_COMM_BUFLEN)
+                packetSize = (int)XCP_COMM_BUFLEN;
             IPAddress rip   = m_udp.remoteIP();
             uint16_t  rport = m_udp.remotePort();
-            return new EthernetUdpClientWrapper(&m_udp, rip, rport, buf, (size_t)len);
+            m_udpClientWrapper.reset(&m_udp, rip, rport);
+            int len = m_udpClientWrapper.loadFromUdp(packetSize);
+            if (len <= 0)
+                return nullptr;
+            return &m_udpClientWrapper;
         }
         return nullptr;
     }
@@ -242,11 +263,33 @@ class EthernetAdapter : public ArduinoNetworkIf {
 class WiFiUdpClientWrapper : public ClientWrapper {
    public:
 
-    WiFiUdpClientWrapper(WiFiUDP* udp, IPAddress remoteIp, uint16_t remotePort, const uint8_t* data, size_t size) :
-        m_udp(udp), m_remoteIp(remoteIp), m_remotePort(remotePort), m_size(size), m_offset(0) {
-        if (m_size > MAX_FRAME_SIZE)
-            m_size = MAX_FRAME_SIZE;
-        memcpy(m_buf, data, m_size);
+    WiFiUdpClientWrapper() : m_udp(nullptr), m_remoteIp(), m_remotePort(0), m_size(0), m_offset(0) {
+    }
+
+    void reset(WiFiUDP* udp, IPAddress remoteIp, uint16_t remotePort) {
+        m_udp        = udp;
+        m_remoteIp   = remoteIp;
+        m_remotePort = remotePort;
+        m_size       = 0;
+        m_offset     = 0;
+    }
+
+    int loadFromUdp(int packetSize) {
+        if (!m_udp)
+            return -1;
+        if (packetSize <= 0)
+            return -1;
+        if (packetSize > (int)XCP_COMM_BUFLEN)
+            packetSize = (int)XCP_COMM_BUFLEN;
+        int len = m_udp->read(m_buf, (size_t)packetSize);
+        if (len <= 0) {
+            m_size   = 0;
+            m_offset = 0;
+            return -1;
+        }
+        m_size   = (size_t)len;
+        m_offset = 0;
+        return len;
     }
 
     int available() override {
@@ -286,7 +329,7 @@ class WiFiUdpClientWrapper : public ClientWrapper {
     WiFiUDP*  m_udp;
     IPAddress m_remoteIp;
     uint16_t  m_remotePort;
-    uint8_t   m_buf[MAX_FRAME_SIZE];
+    uint8_t   m_buf[XCP_COMM_BUFLEN];
     size_t    m_size;
     size_t    m_offset;
 };
@@ -314,15 +357,15 @@ class WiFiAdapter : public ArduinoNetworkIf {
     ClientWrapper* accept_client() override {
         int packetSize = m_udp.parsePacket();
         if (packetSize > 0) {
-            if (packetSize > (int)MAX_FRAME_SIZE)
-                packetSize = (int)MAX_FRAME_SIZE;
-            uint8_t buf[MAX_FRAME_SIZE];
-            int     len = m_udp.read(buf, packetSize);
-            if (len <= 0)
-                return nullptr;
+            if (packetSize > (int)XCP_COMM_BUFLEN)
+                packetSize = (int)XCP_COMM_BUFLEN;
             IPAddress rip   = m_udp.remoteIP();
             uint16_t  rport = m_udp.remotePort();
-            return new WiFiUdpClientWrapper(&m_udp, rip, rport, buf, (size_t)len);
+            m_udpClientWrapper.reset(&m_udp, rip, rport);
+            int len = m_udpClientWrapper.loadFromUdp(packetSize);
+            if (len <= 0)
+                return nullptr;
+            return &m_udpClientWrapper;
         }
         return nullptr;
     }
@@ -345,10 +388,11 @@ class WiFiAdapter : public ArduinoNetworkIf {
 
    private:
 
-    uint16_t    m_port;
-    WiFiUDP     m_udp;
-    const char* m_ssid;
-    const char* m_pass;
+    uint16_t             m_port;
+    WiFiUDP              m_udp;
+    const char*          m_ssid;
+    const char*          m_pass;
+    WiFiUdpClientWrapper m_udpClientWrapper;  // preallocated UDP client wrapper
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 
@@ -463,7 +507,6 @@ extern "C" {
     void XcpTl_DeInit(void) {
         if (s_client) {
             s_client->stop();
-            delete s_client;
             s_client = nullptr;
         }
         if (s_net) {
@@ -511,7 +554,6 @@ extern "C" {
             /* Connection lost or no data */
             XcpTl_ReleaseConnection();
             s_client->stop();
-            delete s_client;
             s_client    = nullptr;
             s_connected = false;
             return;
@@ -521,7 +563,6 @@ extern "C" {
             // XcpHw_ErrorMsg((char*)"XcpTl_RxHandler: DLC too large", EINVAL);
             XcpTl_ReleaseConnection();
             s_client->stop();
-            delete s_client;
             s_client    = nullptr;
             s_connected = false;
             return;
@@ -532,7 +573,6 @@ extern "C" {
         if (dres <= 0) {
             XcpTl_ReleaseConnection();
             s_client->stop();
-            delete s_client;
             s_client    = nullptr;
             s_connected = false;
             return;
@@ -545,7 +585,6 @@ extern "C" {
         if (!s_client->connected()) {
             XcpTl_ReleaseConnection();
             s_client->stop();
-            delete s_client;
             s_client    = nullptr;
             s_connected = false;
         }
