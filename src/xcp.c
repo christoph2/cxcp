@@ -943,7 +943,7 @@ XCP_STATIC void Xcp_Upload(uint8_t len) {
 
 void Xcp_DispatchCommand(Xcp_PduType const * const pdu) {
     const uint8_t cmd = pdu->data[0];
-    DBG_TRACE2("<- CMD: 0x%02X\n\r", cmd);
+    DBG_TRACE1("<- ");
 
     if (Xcp_State.connected == (bool)XCP_TRUE) {
         /*DBG_PRINT2("CMD: [%02X]\n\r", cmd); */

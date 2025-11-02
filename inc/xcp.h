@@ -1430,13 +1430,13 @@ extern "C" {
     /*
     ** Serial Port Function Prototypes.
     */
-    void     Serial_Init(void);
-    void     Serial_DeInit(void);
-    uint32_t Serial_Available(void);
-    bool     Serial_Read(uint8_t *in_byte);
-    void     Serial_WriteByte(uint8_t out_byte);
-    void     Serial_WriteBuffer(uint8_t const *out_bytes, uint32_t size);
-    void     Serial_MainFunction(void);
+    void Serial_Init(void);
+    void Serial_DeInit(void);
+    bool Serial_Available(void);
+    bool Serial_Read(uint8_t *in_byte);
+    void Serial_WriteByte(uint8_t out_byte);
+    void Serial_WriteBuffer(uint8_t const *out_bytes, uint32_t size);
+    void Serial_MainFunction(void);
 
     #endif
 

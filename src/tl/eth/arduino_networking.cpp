@@ -175,12 +175,13 @@ class EthernetUdpClientWrapper : public ClientWrapper {
 
    private:
 
-    EthernetUDP* m_udp;
-    IPAddress    m_remoteIp;
-    uint16_t     m_remotePort;
-    uint8_t      m_buf[XCP_COMM_BUFLEN];
-    size_t       m_size;
-    size_t       m_offset;
+    EthernetUDP*             m_udp;
+    IPAddress                m_remoteIp;
+    uint16_t                 m_remotePort;
+    uint8_t                  m_buf[XCP_COMM_BUFLEN];
+    size_t                   m_size;
+    size_t                   m_offset;
+    EthernetUdpClientWrapper m_udpClientWrapper;
 };
 
 class EthernetAdapter : public ArduinoNetworkIf {
