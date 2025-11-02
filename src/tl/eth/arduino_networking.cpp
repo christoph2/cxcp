@@ -181,7 +181,6 @@ class EthernetUdpClientWrapper : public ClientWrapper {
     uint8_t                  m_buf[XCP_COMM_BUFLEN];
     size_t                   m_size;
     size_t                   m_offset;
-    EthernetUdpClientWrapper m_udpClientWrapper;
 };
 
 class EthernetAdapter : public ArduinoNetworkIf {
@@ -257,6 +256,7 @@ class EthernetAdapter : public ArduinoNetworkIf {
     IPAddress   m_ip;
     uint16_t    m_port;
     EthernetUDP m_udp;
+    EthernetUdpClientWrapper m_udpClientWrapper;  // preallocated UDP client wrapper
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_ETHERNET
 
@@ -493,8 +493,14 @@ extern "C" {
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
         s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
     #else
-        #if defined(XCP_ON_ETHERNET_IP)
-        s_net = new EthernetAdapter(IPAddress(XCP_ON_ETHERNET_IP), XCP_ON_ETHERNET_PORT);
+        #if defined(XCP_ON_ETHERNET_IP_OCTETS)
+        s_net = new EthernetAdapter(IPAddress(XCP_ON_ETHERNET_IP_OCTETS), XCP_ON_ETHERNET_PORT);
+        #elif defined(XCP_ON_ETHERNET_IP)
+        {
+            IPAddress ip;
+            ip.fromString(XCP_ON_ETHERNET_IP);
+            s_net = new EthernetAdapter(ip, XCP_ON_ETHERNET_PORT);
+        }
         #else
         s_net = new EthernetAdapter(XCP_ON_ETHERNET_PORT);
         #endif

@@ -75,7 +75,7 @@
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
-        #define XCP_ON_ETHERNET_IP   (192, 168, 0, 100)
+        #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
         #define XCP_ON_ETHERNET_PORT (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
@@ -83,8 +83,8 @@
         #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
         #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
 
-        #define XCP_MAX_CTO (64)  // (16)
-        #define XCP_MAX_DTO (64)
+        #define XCP_MAX_CTO (32)  // (16)
+        #define XCP_MAX_DTO (32)
 
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
         /* Allow command-line or parent CMake to override these via -D defines */

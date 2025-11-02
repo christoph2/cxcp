@@ -35,10 +35,75 @@
 **  General Options.
 */
     // #define TP_CAN
-    // #define TP_ETHER
-    #define TP_SXI
+    #define TP_ETHER
+    //#define TP_SXI
 
-    #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
+    /*
+    **  Transport-Layer specific Options.
+    */
+    #if defined(TP_CAN)
+        #define XCP_TRANSPORT_LAYER XCP_ON_CAN
+		#define XCP_CAN_INTERFACE 	(XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
+
+        #define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x300)
+        #define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x301)
+        #define XCP_ON_CAN_MAX_DLC_REQUIRED     (XCP_OFF)
+        #define XCP_ON_CAN_BROADCAST_IDENTIFIER (0x222)
+
+        // Chip-Select- and Interrupt-Pins / SeeedStudio CAN Shield v2.
+        #define XCP_CAN_IF_MCP25XX_PIN_CS  (9)
+        #define XCP_CAN_IF_MCP25XX_PIN_INT (2)
+
+        #define XCP_ON_CAN_FREQ   (CAN_500KBPS)
+        #define XCP_ON_CAN_BTQ    (16)
+        #define XCP_ON_CAN_TSEG1  (14)
+        #define XCP_ON_CAN_TSEG2  (2)
+        #define XCP_ON_CAN_SJW    (2)
+        #define XCP_ON_CAN_NOSAMP (1)
+
+        /* Transport-Layer Commands.    */
+        #define XCP_ENABLE_CAN_GET_SLAVE_ID (XCP_ON)
+        #define XCP_ENABLE_CAN_GET_DAQ_ID   (XCP_ON)
+        #define XCP_ENABLE_CAN_SET_DAQ_ID   (XCP_OFF)
+
+    #elif defined(TP_BLUETOOTH)
+        #define XCP_TRANSPORT_LAYER XCP_ON_BTH
+
+        #define XCP_MAX_CTO (64)  // (16)
+        #define XCP_MAX_DTO (64)
+
+    #elif defined(TP_ETHER)
+        #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
+
+        #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
+        #define XCP_ON_ETHERNET_PORT (5555)
+
+        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
+        #define XCP_ON_ETHERNET_WIFI_SSID      ("")
+        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
+        #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
+
+        #define XCP_MAX_CTO (32)  // (16)
+        #define XCP_MAX_DTO (32)
+
+    #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
+        /* Allow command-line or parent CMake to override these via -D defines */
+        #define XCP_TRANSPORT_LAYER       XCP_ON_SXI
+        #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
+        #define XCP_ON_SXI_BITRATE        (38400)
+        #define XCP_ON_SXI_CONFIG         (SERIAL_8N1)
+        #define XCP_MAX_CTO               (64)
+        #define XCP_MAX_DTO               (64)
+        #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_NO_CHECKSUM)
+        /* Framing and escaping (as used by xcp_tl.c) */
+        #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
+        #define XCP_ON_SXI_SYNC_CHAR      (0xAA)
+        #define XCP_ON_SXI_ESC_CHAR       (0xAB)
+        #define XCP_ON_SXI_ESC_SYNC_CHAR  (0x01)
+        #define XCP_ON_SXI_ESC_ESC_CHAR   (0x00)
+    #else
+        #error "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
+    #endif  // KVASER_CAN
 
     #define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
     #define XCP_GET_ID_1 "BlueParrot_XCP_on_Arduino"
@@ -164,72 +229,6 @@
 
     #define XCP_ENABLE_EVENT_PACKET_API    (XCP_ON)
     #define XCP_ENABLE_SERVICE_REQUEST_API (XCP_OFF)
-
-    /*
-    **  Transport-Layer specific Options (may not apply to every Transport).
-    */
-    #if defined(TP_CAN)
-        #define XCP_TRANSPORT_LAYER XCP_ON_CAN
-
-        #define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x300)
-        #define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x301)
-        #define XCP_ON_CAN_MAX_DLC_REQUIRED     (XCP_OFF)
-        #define XCP_ON_CAN_BROADCAST_IDENTIFIER (0x222)
-
-        // Chip-Select- and Interrupt-Pins / SeeedStudio CAN Shield v2.
-        #define XCP_CAN_IF_MCP25XX_PIN_CS  (9)
-        #define XCP_CAN_IF_MCP25XX_PIN_INT (2)
-
-        #define XCP_ON_CAN_FREQ   (CAN_500KBPS)
-        #define XCP_ON_CAN_BTQ    (16)
-        #define XCP_ON_CAN_TSEG1  (14)
-        #define XCP_ON_CAN_TSEG2  (2)
-        #define XCP_ON_CAN_SJW    (2)
-        #define XCP_ON_CAN_NOSAMP (1)
-
-        /* Transport-Layer Commands.    */
-        #define XCP_ENABLE_CAN_GET_SLAVE_ID (XCP_ON)
-        #define XCP_ENABLE_CAN_GET_DAQ_ID   (XCP_ON)
-        #define XCP_ENABLE_CAN_SET_DAQ_ID   (XCP_OFF)
-
-    #elif defined(TP_BLUETOOTH)
-        #define XCP_TRANSPORT_LAYER XCP_ON_BTH
-
-        #define XCP_MAX_CTO (64)  // (16)
-        #define XCP_MAX_DTO (64)
-
-    #elif defined(TP_ETHER)
-        #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
-
-        #define XCP_ON_ETHERNET_IP   (192, 168, 0, 100)
-        #define XCP_ON_ETHERNET_PORT (5555)
-
-        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
-        #define XCP_ON_ETHERNET_WIFI_SSID      ("")
-        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
-        #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
-
-        #define XCP_MAX_CTO (64)  // (16)
-        #define XCP_MAX_DTO (64)
-
-    #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
-        /* Allow command-line or parent CMake to override these via -D defines */
-        #define XCP_TRANSPORT_LAYER       XCP_ON_SXI
-        #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
-        #define XCP_ON_SXI_BITRATE        (38400)
-        #define XCP_ON_SXI_CONFIG         (SERIAL_8N1)
-        #define XCP_MAX_CTO               (64)
-        #define XCP_MAX_DTO               (64)
-        #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_NO_CHECKSUM)
-        /* Framing and escaping (as used by xcp_tl.c) */
-        #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
-        #define XCP_ON_SXI_SYNC_CHAR      (0xAA)
-        #define XCP_ON_SXI_ESC_CHAR       (0xAB)
-        #define XCP_ON_SXI_ESC_SYNC_CHAR  (0x01)
-        #define XCP_ON_SXI_ESC_ESC_CHAR   (0x00)
-    #else
-        #error "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
-    #endif  // KVASER_CAN
 
     /*
     **  Customization Options.
