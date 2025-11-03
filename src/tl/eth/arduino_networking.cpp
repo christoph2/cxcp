@@ -40,6 +40,7 @@
     /*!!! START-INCLUDE-SECTION !!!*/
     #include "xcp.h"
     #include "xcp_hw.h"
+    #include "xcp_tl_timeout.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 const unsigned long READ_TIMEOUT_MS = 2000;  // Timeout when reading a frame
@@ -52,6 +53,7 @@ class ClientWrapper {
     virtual size_t write_bytes(const uint8_t* buf, size_t len) = 0;
     virtual bool   connected()                                 = 0;
     virtual void   stop()                                      = 0;
+    virtual bool   is_datagram() const                         = 0;
 
     virtual ~ClientWrapper() {
     }
@@ -102,6 +104,10 @@ class EthernetClientWrapper : public ClientWrapper {
         if (m_client) {
             m_client.stop();
         }
+    }
+
+    bool is_datagram() const override {
+        return false;
     }
 
    private:
@@ -173,14 +179,18 @@ class EthernetUdpClientWrapper : public ClientWrapper {
         // no persistent connection to stop for UDP
     }
 
+    bool is_datagram() const override {
+        return true;
+    }
+
    private:
 
-    EthernetUDP*             m_udp;
-    IPAddress                m_remoteIp;
-    uint16_t                 m_remotePort;
-    uint8_t                  m_buf[XCP_COMM_BUFLEN];
-    size_t                   m_size;
-    size_t                   m_offset;
+    EthernetUDP* m_udp;
+    IPAddress    m_remoteIp;
+    uint16_t     m_remotePort;
+    uint8_t      m_buf[XCP_COMM_BUFLEN];
+    size_t       m_size;
+    size_t       m_offset;
 };
 
 class EthernetAdapter : public ArduinoNetworkIf {
@@ -197,6 +207,7 @@ class EthernetAdapter : public ArduinoNetworkIf {
         while (!Serial) {
             ;  // wait for serial port to connect. Needed for native USB port only
         }
+        Serial.println("\nBlueparrot XCP (UDP) on Ethernet");
         Ethernet.init(10);
         delay(1000);  // Give the hardware some time to initialize
 
@@ -220,9 +231,6 @@ class EthernetAdapter : public ArduinoNetworkIf {
             Serial.println("Failed to get a valid IP address.");
             return false;
         }
-
-        Serial.print("\nBlueparrot XCP (UDP) on Ethernet -- IP: ");
-        Serial.println(Ethernet.localIP());
         m_udp.begin(m_port);
         return true;
     }
@@ -250,12 +258,12 @@ class EthernetAdapter : public ArduinoNetworkIf {
 
    private:
 
-    uint8_t     m_mac_address_storage[6] = XCP_ON_ETHERNET_MAC_ADDRESS;
-    uint8_t*    m_mac_address            = m_mac_address_storage;
-    bool        m_use_dhcp;
-    IPAddress   m_ip;
-    uint16_t    m_port;
-    EthernetUDP m_udp;
+    uint8_t                  m_mac_address_storage[6] = XCP_ON_ETHERNET_MAC_ADDRESS;
+    uint8_t*                 m_mac_address            = m_mac_address_storage;
+    bool                     m_use_dhcp;
+    IPAddress                m_ip;
+    uint16_t                 m_port;
+    EthernetUDP              m_udp;
     EthernetUdpClientWrapper m_udpClientWrapper;  // preallocated UDP client wrapper
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_ETHERNET
@@ -323,6 +331,10 @@ class WiFiUdpClientWrapper : public ClientWrapper {
 
     void stop() override {
         // no-op for UDP
+    }
+
+    bool is_datagram() const override {
+        return true;
     }
 
    private:
@@ -393,9 +405,19 @@ class WiFiAdapter : public ArduinoNetworkIf {
     WiFiUDP              m_udp;
     const char*          m_ssid;
     const char*          m_pass;
-    WiFiUdpClientWrapper m_udpClientWrapper;  // preallocated UDP client wrapper
+    WiFiUdpClientWrapper m_udpClientWrapper;
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
+
+static ArduinoNetworkIf* s_net       = nullptr;
+static ClientWrapper*    s_client    = nullptr;
+static bool              s_connected = false;
+
+static volatile bool s_timeout_triggered = false;
+
+static void XcpTl_OnTimeout(void) {
+    s_timeout_triggered = true;
+}
 
 class FrameParser {
    public:
@@ -442,16 +464,15 @@ class FrameParser {
     }
 };
 
-static ArduinoNetworkIf* s_net       = nullptr;
-static ClientWrapper*    s_client    = nullptr;
-static bool              s_connected = false;
-
 static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
     if (!s_client)
         return false;
     unsigned long start = millis();
     size_t        got   = 0;
     while (got < n) {
+        if (s_timeout_triggered) {
+            return false;
+        }
         if (!s_client->connected() && s_client->available() == 0) {
             return false;
         }
@@ -462,9 +483,13 @@ static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
             if (r <= 0)
                 return false;
             got += (size_t)r;
+            XcpTl_TimeoutReset();
         } else {
-            if (millis() - start > timeout_ms)
+            XcpTl_TimeoutCheck();
+            if (millis() - start > timeout_ms) {
+                s_timeout_triggered = true;
                 return false;
+            }
             delay(1);
         }
     }
@@ -472,6 +497,8 @@ static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
 }
 
 static int ar_read_header(uint16_t* len, uint16_t* counter) {
+    s_timeout_triggered = false;
+    XcpTl_TimeoutStart();
     uint8_t hdr[4];
     if (!ar_read_n(hdr, 4, READ_TIMEOUT_MS)) {
         return 0;
@@ -489,6 +516,8 @@ static int ar_read_data(uint8_t* data, uint16_t len) {
 extern "C" {
 
     void XcpTl_Init(void) {
+        XcpTl_TimeoutInit((uint16_t)READ_TIMEOUT_MS, XcpTl_OnTimeout);
+        s_timeout_triggered = false;
         /* Initialize backend network adapter and start listening. */
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
         s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
@@ -524,11 +553,14 @@ extern "C" {
     }
 
     static void XcpTl_Accept(void) {
-        if (!s_connected && s_net) {
-            s_net->process();
-            ClientWrapper* c = s_net->accept_client();
-            if (c) {
-                s_client    = c;
+        if (!s_net) {
+            return;
+        }
+        s_net->process();
+        ClientWrapper* c = s_net->accept_client();
+        if (c) {
+            s_client = c;
+            if (!s_connected) {
                 s_connected = true;
                 XcpTl_SaveConnection();
             }
@@ -537,6 +569,7 @@ extern "C" {
 
     void XcpTl_MainFunction(void) {
         XcpTl_Accept();
+        XcpTl_TimeoutCheck();
         XcpTl_RxHandler();
     }
 
@@ -558,16 +591,33 @@ extern "C" {
 
         int hres = ar_read_header(&dlc, &counter);
         if (hres <= 0) {
-            /* Connection lost or no data */
+            if (s_timeout_triggered) {
+                s_timeout_triggered = false;
+                XcpTl_TimeoutStop();
+                Serial.println("Reception timeout (header) — aborting current frame");
+                return;
+            }
+            /* Connection lost or other error */
+            if (s_client && s_client->is_datagram()) {
+                /* For UDP, keep last endpoint; just stop TL timeout and abort this frame */
+                XcpTl_TimeoutStop();
+                return;
+            }
             XcpTl_ReleaseConnection();
             s_client->stop();
             s_client    = nullptr;
             s_connected = false;
+            XcpTl_TimeoutStop();
             return;
         }
 
-        if (dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE || dlc > (uint16_t)XCP_COMM_BUFLEN) {
+        if ((dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) || (dlc > (uint16_t)XCP_COMM_BUFLEN)) {
             // XcpHw_ErrorMsg((char*)"XcpTl_RxHandler: DLC too large", EINVAL);
+            if (s_client && s_client->is_datagram()) {
+                /* For UDP, keep endpoint but drop this malformed frame */
+                XcpTl_TimeoutStop();
+                return;
+            }
             XcpTl_ReleaseConnection();
             s_client->stop();
             s_client    = nullptr;
@@ -578,28 +628,37 @@ extern "C" {
         Xcp_CtoIn.len = dlc;
         int dres      = ar_read_data(Xcp_CtoIn.data, dlc);
         if (dres <= 0) {
+            if (s_timeout_triggered) {
+                s_timeout_triggered = false;
+                XcpTl_TimeoutStop();
+                Serial.println("Reception timeout (data) — aborting current frame");
+                return;
+            }
+            if (s_client && s_client->is_datagram()) {
+                /* For UDP, keep last endpoint on short read or error; abort this frame only */
+                XcpTl_TimeoutStop();
+                return;
+            }
             XcpTl_ReleaseConnection();
             s_client->stop();
             s_client    = nullptr;
             s_connected = false;
+            XcpTl_TimeoutStop();
             return;
         }
-
         /* Dispatch the freshly received CTO command. */
         Xcp_DispatchCommand(&Xcp_CtoIn);
-
-        /* For UDP wrappers, the packet is fully consumed now; mark connection free. */
-        if (!s_client->connected()) {
-            XcpTl_ReleaseConnection();
-            s_client->stop();
-            s_client    = nullptr;
-            s_connected = false;
-        }
+        XcpTl_TimeoutStop();
     }
 
     void XcpTl_Send(uint8_t const * buf, uint16_t len) {
         XCP_TL_ENTER_CRITICAL();
         if (s_connected && s_client) {
+        #ifdef XCP_UDP_DEBUG
+            Serial.print("XCP_TL_SEND len="); Serial.print(len);
+            Serial.print(" conn="); Serial.print(s_connected ? 1 : 0);
+            Serial.print(" datagram="); Serial.println(s_client->is_datagram() ? 1 : 0);
+        #endif
             /* Data already contains ETH header (LEN/CTR) + payload. */
             (void)s_client->write_bytes(buf, len);
         }

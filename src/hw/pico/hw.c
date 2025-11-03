@@ -71,7 +71,7 @@ static void XcpHw_DeinitLocks(void) {
 
 void XcpHw_Init(void) {
     board_init();
-    pico_led_init();
+    //pico_led_init();
     XcpHw_InitLocks();
     HwState.StartingTime = XcpHw_GetMs32();
 }
