@@ -1,6 +1,5 @@
 ---
-Checks:
-'*,-abseil*,-android*,-boost*,-fuchsia*,-google*,-llvm*,-*objc*,-openmp*,-misc-unused-parameters,-clang-diagnostic-shadow-field-in-constructor,-modernize-use-auto,-clang-diagnostic-c++98-*,-clang-diagnostic-padded,-cppcoreguidelines-pro-type-reinterpret-cast,-cert-err58-cpp,-hicpp-special-member-functions,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-modernize-use-using,-readability-else-after-return,-clang-analyzer-osx*,-clang-diagnostic-shadow,-clang-diagnostic-missing-braces,-clang-diagnostic-missing-prototypes,-misc-non-private-member-variables-in-classes,-cppcoreguidelines-non-private-member-variables-in-classes,-hicpp-uppercase-literal-suffix,-readability-uppercase-literal-suffix,-modernize-use-transparent-functors,-readability-implicit-bool-conversion,-cppcoreguidelines-pro-bounds-constant-array-index,-readability-magic-numbers,-cppcoreguidelines-avoid-magic-numbers,-readability-redundant-member-init,-cppcoreguidelines-pro-type-union-access,-hicpp-no-array-decay,-readability-named-parameter,-misc-unconventional-assign-operator,-modernize-use-default-member-init,-cppcoreguidelines-owning-memory,-readability-inconsistent-declaration-parameter-name,-readability-avoid-const-params-in-decls'
+Checks: 'clang-diagnostic-*,clang-analyzer-*,performance-*,bugprone-*,readability-*,portability-*,modernize-*,cppcoreguidelines-*'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
 FormatStyle:     none
@@ -171,6 +170,22 @@ CheckOptions:
     value:           '800'
   - key:             readability-identifier-naming.IgnoreFailedSplit
     value:           '0'
+  - key:             readability-identifier-naming.GlobalFunctionCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.GlobalVariableCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.FunctionCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.ParameterCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.PrivateMemberCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.PublicMemberCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.MemberCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.VariableCase
+    value:           'camelBack'
   - key:             readability-implicit-bool-cast.AllowConditionalIntegerCasts
     value:           '0'
   - key:             readability-implicit-bool-cast.AllowConditionalPointerCasts
@@ -179,4 +194,6 @@ CheckOptions:
     value:           '0'
   - key:             readability-simplify-boolean-expr.ChainedConditionalReturn
     value:           '0'
+ExtraArgs:
+  - '-Isrc/hw/sim'
 ...

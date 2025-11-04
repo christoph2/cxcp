@@ -88,9 +88,7 @@ void *XcpTerm_Thread(void *param) {
     XCP_FOREVER {
         WaitForSingleObject(hStdin, 1000);
 
-        if (!GetNumberOfConsoleInputEvents(hStdin, &cNumRead)) {
-            XcpHw_ErrorMsg("PeekConsoleInput", GetLastError());
-        } else {
+        if (GetNumberOfConsoleInputEvents(hStdin, &cNumRead)) {
             if (cNumRead) {
                 if (!ReadConsoleInput(hStdin, irInBuf, 128, &cNumRead)) {
                     XcpHw_ErrorMsg("ReadConsoleInput", GetLastError());
@@ -141,15 +139,16 @@ void *XcpTerm_Thread(void *param) {
         #include <unistd.h>
 
 static void init_termios(void) {
-    static int initialized = 0;
+    static int            initialized = 0;
     static struct termios oldt, newt;
 
-    if (initialized) return;
+    if (initialized)
+        return;
 
-    tcgetattr(STDIN_FILENO, &oldt);           // get current terminal attributes
+    tcgetattr(STDIN_FILENO, &oldt); // get current terminal attributes
     newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);         // disable canonical mode and echo
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);  // apply changes immediately
+    newt.c_lflag &= ~(ICANON | ECHO);        // disable canonical mode and echo
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt); // apply changes immediately
 
     initialized = 1;
 }
@@ -163,9 +162,9 @@ static void reset_termios(void) {
 
 static int kbhit(void) {
     struct timeval tv = { 0L, 0L };
-    fd_set fds;
+    fd_set         fds;
 
-    init_termios();  // ensure terminal is in raw mode
+    init_termios(); // ensure terminal is in raw mode
 
     FD_ZERO(&fds);
     FD_SET(STDIN_FILENO, &fds);

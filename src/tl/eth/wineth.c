@@ -37,27 +37,27 @@
 
 /* Protocol/Address-Family selection: allow runtime when available, otherwise use compile-time defaults */
 #ifndef XCP_ETH_USE_TCP
-#  if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
-#    define XCP_ETH_USE_TCP   (Xcp_Options.tcp)
-#  else
-#    define XCP_ETH_USE_TCP   1
-#  endif
+    #if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
+        #define XCP_ETH_USE_TCP (Xcp_Options.tcp)
+    #else
+        #define XCP_ETH_USE_TCP 1
+    #endif
 #endif
 #ifndef XCP_ETH_USE_IPV6
-#  if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
-#    define XCP_ETH_USE_IPV6  (Xcp_Options.ipv6)
-#  else
-#    define XCP_ETH_USE_IPV6  0
-#  endif
+    #if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
+        #define XCP_ETH_USE_IPV6 (Xcp_Options.ipv6)
+    #else
+        #define XCP_ETH_USE_IPV6 0
+    #endif
 #endif
 
 /* Port selection: prefer runtime option when available, otherwise default */
 #ifndef XCP_ETH_PORT
-#  if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
-#    define XCP_ETH_PORT (Xcp_Options.port)
-#  else
-#    define XCP_ETH_PORT (XCP_ETH_DEFAULT_PORT)
-#  endif
+    #if defined(XCP_TRANSPORT_LAYER) && (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
+        #define XCP_ETH_PORT (Xcp_Options.port)
+    #else
+        #define XCP_ETH_PORT (XCP_ETH_DEFAULT_PORT)
+    #endif
 #endif
 
 #define DEFAULT_FAMILY   PF_UNSPEC    // Accept either IPv4 or IPv6
@@ -94,20 +94,22 @@ static boolean Xcp_EnableSocketOption(SOCKET sock, int option) {
 }
 
 #if 0
-static boolean Xcp_DisableSocketOption(SOCKET sock, int option)
-{
-    #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-    const char enable = 0;
+static boolean Xcp_DisableSocketOption(SOCKET sock, int option) {
 
-    if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int)) < 0) {
+    #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
+const char enable = 0;
+
+    if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int))< 0) {
         return XCP_FALSE;
     }
     #else
-    if (setsockopt(sock, SOL_SOCKET, option, &(const char){0}, sizeof(int)) < 0) {
+if (setsockopt(sock, SOL_SOCKET, option, &(const char) {
+    0
+}, sizeof(int)) < 0) {
         return XCP_FALSE;
     }
     #endif
-    return XCP_TRUE;
+return XCP_TRUE;
 }
 #endif
 
@@ -128,6 +130,7 @@ void XcpTl_Init(void) {
     /* unsigned long ul = 1; */
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
+    XcpTl_Connection.connectedSocket = INVALID_SOCKET;
     memset(&Hints, 0, sizeof(Hints));
     GetSystemTimeAdjustment(&dwTimeAdjustment, &dwTimeIncrement, &fAdjustmentDisabled);
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -142,7 +145,7 @@ void XcpTl_Init(void) {
     /* Build port string from runtime option */
     memset(PortStr, 0, sizeof(PortStr));
     _snprintf(PortStr, sizeof(PortStr) - 1, "%u", (unsigned)XCP_ETH_PORT);
-    ret                         = getaddrinfo(Address, PortStr, &Hints, &AddrInfo);
+    ret = getaddrinfo(Address, PortStr, &Hints, &AddrInfo);
     if (ret != 0) {
         XcpHw_ErrorMsg("XcpTl_Init::getaddrinfo()", WSAGetLastError());
         WSACleanup();
@@ -210,6 +213,49 @@ void XcpTl_DeInit(void) {
     WSACleanup();
 }
 
+#if 0
+void XcpTl_MainFunction(void) {
+    int n;
+    int addr_len = ADDR_LEN;
+
+    if (XcpTl_Connection.socketType == SOCK_STREAM) {
+        if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
+            XcpTl_Connection.connectedSocket = accept(
+                XcpTl_Connection.boundSocket, (SOCKADDR *)&XcpTl_Connection.connectionAddress, &addr_len
+            );
+            if (XcpTl_Connection.connectedSocket != INVALID_SOCKET) {
+                printf("XCPonEth -- Client connected.\n");
+            }
+            return; /* Defer recv to next cycle */
+        }
+    }
+
+    if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+        n = recvfrom(
+            XcpTl_Connection.boundSocket, (char *)Xcp_CtoIn.data, XCP_MAX_CTO, 0,
+            (SOCKADDR *)&XcpTl_Connection.connectionAddress, &addr_len
+        );
+    } else {
+        /* SOCK_STREAM */
+        if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
+            return;
+        }
+        n = recv(XcpTl_Connection.connectedSocket, (char *)Xcp_CtoIn.data, XCP_MAX_CTO, 0);
+    }
+
+    if (n > 0) {
+        Xcp_CtoIn.len = (uint8_t)n;
+        Xcp_DispatchCommand(&Xcp_CtoIn);
+    } else if (n == 0 || (n < 0 && WSAGetLastError() != WSAEWOULDBLOCK)) {
+        if (XcpTl_Connection.socketType == SOCK_STREAM && XcpTl_Connection.connectedSocket != INVALID_SOCKET) {
+            printf("XCPonEth -- Client disconnected.\n");
+            closesocket(XcpTl_Connection.connectedSocket);
+            XcpTl_Connection.connectedSocket = INVALID_SOCKET;
+        }
+    }
+}
+#endif
+
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
@@ -220,19 +266,13 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
             XcpHw_ErrorMsg("XcpTl_Send:sendto()", WSAGetLastError());
         }
     } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
-        if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
-            XcpHw_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
-            closesocket(XcpTl_Connection.connectedSocket);
+        if (XcpTl_Connection.connectedSocket != INVALID_SOCKET) {
+            if (send(XcpTl_Connection.connectedSocket, (char const *)buf, len, 0) == SOCKET_ERROR) {
+                XcpHw_ErrorMsg("XcpTl_Send:send()", WSAGetLastError());
+                closesocket(XcpTl_Connection.connectedSocket);
+                XcpTl_Connection.connectedSocket = INVALID_SOCKET;
+            }
         }
     }
     XCP_TL_LEAVE_CRITICAL();
-}
-
-void XcpTl_PrintConnectionInformation(void) {
-    printf(
-        "\nXCPonEth -- Listening on port %u / %s [%s]\n",
-        (unsigned)XCP_ETH_PORT,
-        (XCP_ETH_USE_TCP ? "TCP" : "UDP"),
-        (XCP_ETH_USE_IPV6 ? "IPv6" : "IPv4")
-    );
 }

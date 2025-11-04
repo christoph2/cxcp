@@ -1,3 +1,4 @@
+
 /*
  * BlueParrot XCP
  *
@@ -28,6 +29,7 @@
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
+#include "xcp_config.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_WIN32)
@@ -45,12 +47,13 @@ static const char OPTION_STR[] = "hi:f";
 #endif
 
 #if defined(_WIN32)
-void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
+void parse_options(int argc, char **argv, Xcp_OptionsType *options) {
     int   idx;
-    char* arg;
+    char *arg;
     #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
     options->ipv6 = XCP_FALSE;
     options->tcp  = XCP_TRUE;
+    options->port = XCP_ETH_DEFAULT_PORT;
 
     if (argc >= 2) {
         for (idx = 1; idx < argc; ++idx) {
@@ -71,6 +74,11 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
                 case 't':
                     options->tcp = XCP_TRUE;
                     break;
+                case 'p':
+                    if (idx + 1 < argc) {
+                        options->port = atoi(argv[++idx]);
+                    }
+                    break;
                 case 'h':
                     break;
                 default:
@@ -78,9 +86,9 @@ void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
             }
         }
     }
-    #elif defined(TP_BLUETOOTH)
+    #elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
-    #else /* defined(KVASER_CAN)*/
+    #else
 
     #endif
 }
@@ -103,7 +111,7 @@ void usage(void) {
     exit(0);
 }
 
-void parse_options(int argc, char** argv, Xcp_OptionsType* options) {
+void parse_options(int argc, char **argv, Xcp_OptionsType *options) {
     int opt;
     int res;
 

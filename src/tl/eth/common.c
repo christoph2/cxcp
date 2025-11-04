@@ -47,6 +47,7 @@ void XcpTl_PrintBtDetails(void);
 static void XcpTl_Accept(void);
 static int  XcpTl_ReadHeader(uint16_t *len, uint16_t *counter);
 static int  XcpTl_ReadData(uint8_t *data, uint16_t len);
+static int  XcpTl_ReceiveFrom(void);
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
 static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size);
@@ -86,13 +87,9 @@ static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
-            nbytes = recvfrom(
-                XcpTl_Connection.boundSocket, (char *)header_buffer + offset, bytes_remaining, 0,
-                (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
-            );
-            if (XcpThrd_IsShuttingDown()) {
-                return 0;
-            }
+            /* For UDP, the header is already in the buffer. */
+            XcpUtl_MemCopy(header_buffer, XcpTl_RxBuffer, XCP_ETH_HEADER_SIZE);
+            nbytes = XCP_ETH_HEADER_SIZE;
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
             nbytes = recv(XcpTl_Connection.connectedSocket, (char *)header_buffer + offset, bytes_remaining, 0);
             if (XcpThrd_IsShuttingDown()) {
@@ -122,10 +119,9 @@ static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
-            nbytes = recvfrom(
-                XcpTl_Connection.boundSocket, (char *)data + offset, bytes_remaining, 0,
-                (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
-            );
+            /* For UDP, the data is already in the buffer. */
+            XcpUtl_MemCopy(data, XcpTl_RxBuffer + XCP_ETH_HEADER_SIZE, len);
+            nbytes = len;
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
             nbytes = recv(XcpTl_Connection.connectedSocket, (char *)data + offset, bytes_remaining, 0);
         }
@@ -141,6 +137,18 @@ static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
     return 1;
 }
 
+static int XcpTl_ReceiveFrom(void) {
+    socklen_t from_len = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
+    int       nbytes   = recvfrom(
+        XcpTl_Connection.boundSocket, (char *)XcpTl_RxBuffer, (int)XCP_COMM_BUFLEN, 0,
+        (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
+    );
+    if (XcpThrd_IsShuttingDown()) {
+        return 0;
+    }
+    return nbytes;
+}
+
 void XcpTl_RxHandler(void) {
     int      res;
     uint16_t dlc     = 0U;
@@ -149,6 +157,14 @@ void XcpTl_RxHandler(void) {
     /* Avoid unnecessary buffer clearing; we read directly into destination. */
 
     XCP_FOREVER {
+        if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+            res = XcpTl_ReceiveFrom();
+            if (res <= 0) {
+                XcpTl_ReleaseConnection();
+                return;
+            }
+        }
+
         res = XcpTl_ReadHeader(&dlc, &counter);
         if (res == -1) {
 #if defined(_WIN32)
@@ -193,7 +209,7 @@ void XcpTl_RxHandler(void) {
                 return;
             }
             XCP_ASSERT_LE(dlc, XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE);
-            XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
+            // XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
             Xcp_DispatchCommand(&Xcp_CtoIn);
         } else {
             /* Shutting down */
