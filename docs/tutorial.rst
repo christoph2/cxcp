@@ -2,10 +2,10 @@ Tutorial
 ========
 
 This tutorial gives you a practical, step-by-step path to get a BlueParrot XCP slave running on
-- Arduino boards (Ethernet/WiFi or CAN shields, and optional serial SXI)
+- Arduino boards (serial SXI, Ethernet/WiFi or CAN shields)
 - Raspberry Pi Pico (RP2040)
 
-It focuses on minimal configuration in your `xcp_config.h`, building/flashing, and connecting from an XCP master.
+It focuses on minimal configuration in your `xcp_config.h`, building/flashing, and connecting from an XCP client.
 For a full description of all configuration options, see :doc:`options`.
 
 Quick overview
@@ -25,8 +25,9 @@ Prerequisites
 ^^^^^^^^^^^^^
 - Arduino IDE or Arduino CLI installed
 - For Ethernet: an Ethernet-capable board/shield (e.g., W5100/W5500) or WiFi board (ESP32)
-- For CAN: a CAN shield (e.g., Seeed Studio CAN v2 or CAN FD shield)
-- Optional serial SXI over the board’s UART
+- For CAN: a CAN shield (MKR Zero CAN Shield, Seeed Studio CAN Shield, and SparkFun CAN Shield are currently supported).
+- Serial SXI over the board’s UART (recommended starting point).
+
 
 1) Choose a transport
 ^^^^^^^^^^^^^^^^^^^^^

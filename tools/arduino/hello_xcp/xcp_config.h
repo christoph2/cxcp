@@ -35,8 +35,8 @@
 **  General Options.
 */
     // #define TP_CAN
-    #define TP_ETHER
-    // #define TP_SXI
+    // #define TP_ETHER
+    #define TP_SXI
 
     /*
     **  Transport-Layer specific Options.
@@ -78,9 +78,9 @@
         #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
         #define XCP_ON_ETHERNET_PORT      (5555)
 
-        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_WIFI)
-        #define XCP_ON_ETHERNET_WIFI_SSID      ("A1_CE8A")
-        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("6H54726A66")
+        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
+        #define XCP_ON_ETHERNET_WIFI_SSID      ("")
+        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
         #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
 
         #define XCP_MAX_CTO (32)  // (16)
