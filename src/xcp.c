@@ -870,7 +870,7 @@ XCP_STATIC void Xcp_SlaveBlockTransferSetActive(bool onOff) {
 void Xcp_UploadSingleBlock(void) {
     uint8_t    *dataOut = XCP_NULL;
     uint8_t     length  = UINT8(0x00);
-    Xcp_MtaType dst     = { 0,0 };
+    Xcp_MtaType dst     = { 0, 0 };
 
     if (!Xcp_SlaveBlockTransferIsActive()) {
         return;

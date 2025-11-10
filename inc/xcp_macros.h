@@ -134,23 +134,23 @@ extern "C" {
             #define DBG_TRACE4(A, B, C, D)       DBG_PRINT4(A, B, C, D)
             #define DBG_TRACE5(A, B, C, D, E)    DBG_PRINT5(A, B, C, D, E)
             #define DBG_TRACE6(A, B, C, D, E, F) DBG_PRINT6(A, B, C, D, E, F)
-        #elif defined(PICO_BOARD) // defined(RASPBERRYPI_PICO)
+        #elif defined(PICO_BOARD)  // defined(RASPBERRYPI_PICO)
 
-        //#if defined(XCP_ENABLE_DEBUG_OUTPUT)  __RP2040__
-                #define DBG_PRINT1(A)                tu_printf(A)
-                #define DBG_PRINT2(A, B)             tu_printf(A, B)
-                #define DBG_PRINT3(A, B, C)          tu_printf(A, B, C)
-                #define DBG_PRINT4(A, B, C, D)       tu_printf(A, B, C, D)
-                #define DBG_PRINT5(A, B, C, D, E)    tu_printf(A, B, C, D, E)
-                #define DBG_PRINT6(A, B, C, D, E, F) tu_printf(A, B, C, D, E, F)
+        // #if defined(XCP_ENABLE_DEBUG_OUTPUT)  __RP2040__
+            #define DBG_PRINT1(A)                tu_printf(A)
+            #define DBG_PRINT2(A, B)             tu_printf(A, B)
+            #define DBG_PRINT3(A, B, C)          tu_printf(A, B, C)
+            #define DBG_PRINT4(A, B, C, D)       tu_printf(A, B, C, D)
+            #define DBG_PRINT5(A, B, C, D, E)    tu_printf(A, B, C, D, E)
+            #define DBG_PRINT6(A, B, C, D, E, F) tu_printf(A, B, C, D, E, F)
 
-                #define DBG_TRACE1(A)                DBG_PRINT1(A)
-                #define DBG_TRACE2(A, B)             DBG_PRINT2(A, B)
-                #define DBG_TRACE3(A, B, C)          DBG_PRINT3(A, B, C)
-                #define DBG_TRACE4(A, B, C, D)       DBG_PRINT4(A, B, C, D)
-                #define DBG_TRACE5(A, B, C, D, E)    DBG_PRINT5(A, B, C, D, E)
-                #define DBG_TRACE6(A, B, C, D, E, F) DBG_PRINT6(A, B, C, D, E, F)
-            //#endif
+            #define DBG_TRACE1(A)                DBG_PRINT1(A)
+            #define DBG_TRACE2(A, B)             DBG_PRINT2(A, B)
+            #define DBG_TRACE3(A, B, C)          DBG_PRINT3(A, B, C)
+            #define DBG_TRACE4(A, B, C, D)       DBG_PRINT4(A, B, C, D)
+            #define DBG_TRACE5(A, B, C, D, E)    DBG_PRINT5(A, B, C, D, E)
+            #define DBG_TRACE6(A, B, C, D, E, F) DBG_PRINT6(A, B, C, D, E, F)
+        // #endif
         #else
             #define INLINE
             #define DBG_PRINT1(A)

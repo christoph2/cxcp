@@ -206,7 +206,7 @@
         #define XCP_MAX_DTO (64)
 
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
-        /* Allow command-line or parent CMake to override these via -D defines */
+    /* Allow command-line or parent CMake to override these via -D defines */
 
         #define XCP_TRANSPORT_LAYER       XCP_ON_SXI
         #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_BYTE)
