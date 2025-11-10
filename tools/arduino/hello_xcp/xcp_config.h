@@ -78,9 +78,9 @@
         #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
         #define XCP_ON_ETHERNET_PORT      (5555)
 
-        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
-        #define XCP_ON_ETHERNET_WIFI_SSID      ("")
-        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
+        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_WIFI)
+        #define XCP_ON_ETHERNET_WIFI_SSID      "A1_CE8A"
+        #define XCP_ON_ETHERNET_WIFI_PASSWORD  "6H54726A66"
         #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
 
         #define XCP_MAX_CTO (32)  // (16)
@@ -88,19 +88,23 @@
 
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
         /* Allow command-line or parent CMake to override these via -D defines */
-        #define XCP_TRANSPORT_LAYER       XCP_ON_SXI
-        #define XCP_ON_SXI_HEADER_FORMAT  (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
-        #define XCP_ON_SXI_BITRATE        (38400)
-        #define XCP_ON_SXI_CONFIG         (SERIAL_8N1)
-        #define XCP_MAX_CTO               (64)
-        #define XCP_MAX_DTO               (64)
-        #define XCP_ON_SXI_TAIL_CHECKSUM  (XCP_ON_SXI_NO_CHECKSUM)
+        #define XCP_TRANSPORT_LAYER      XCP_ON_SXI
+        #define XCP_ON_SXI_HEADER_FORMAT (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
+        #define XCP_ON_SXI_BITRATE       (38400)
+        #define XCP_ON_SXI_CONFIG        (SERIAL_8N1)
+        #define XCP_MAX_CTO              (16)
+        #define XCP_MAX_DTO              (16)
+        #define XCP_ON_SXI_TAIL_CHECKSUM (XCP_ON_SXI_NO_CHECKSUM)
+
+        #define XCP_ON_SXI_PORT_NAME        Serial
+        #define XCP_ON_SXI_CUSTOM_INTERFACE (XCP_OFF)
+
         /* Framing and escaping (as used by xcp_tl.c) */
-        #define XCP_ON_SXI_ENABLE_FRAMING (XCP_OFF)
-        #define XCP_ON_SXI_SYNC_CHAR      (0xAA)
-        #define XCP_ON_SXI_ESC_CHAR       (0xAB)
-        #define XCP_ON_SXI_ESC_SYNC_CHAR  (0x01)
-        #define XCP_ON_SXI_ESC_ESC_CHAR   (0x00)
+        #define XCP_ON_SXI_ENABLE_FRAMING   (XCP_OFF)
+        #define XCP_ON_SXI_SYNC_CHAR        (0xAA)
+        #define XCP_ON_SXI_ESC_CHAR         (0xAB)
+        #define XCP_ON_SXI_ESC_SYNC_CHAR    (0x01)
+        #define XCP_ON_SXI_ESC_ESC_CHAR     (0x00)
     #else
         #error "No transport-layer. please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
     #endif  // KVASER_CAN

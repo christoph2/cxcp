@@ -23,17 +23,17 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
-#include "xcp_config.h"
+// #include "xcp_config.h"
 
 #include <stdio.h>
 
-#if XCP_TRANSPORT_LAYER == XCP_ON_SXI
-
-    /*!!! START-INCLUDE-SECTION !!!*/
-    #include "xcp.h"
-    #include "xcp_tl_timeout.h"
-    #include "xcp_util.h"
+/*!!! START-INCLUDE-SECTION !!!*/
+#include "xcp.h"
+#include "xcp_tl_timeout.h"
+#include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
+
+#if XCP_TRANSPORT_LAYER == XCP_ON_SXI
 
     #define XCP_SXI_MAKEWORD(buf, offs) ((uint16_t)(*(((buf)) + (offs))) | ((uint16_t)(*(((buf)) + (offs) + 1)) << 8))
 
@@ -95,7 +95,7 @@ void XcpTl_DeInit(void) {
 
 void XcpTl_MainFunction(void) {
     uint32_t byte_count = 0UL;
-    uint8_t octet = 0;
+    uint8_t  octet      = 0;
 
     Serial_MainFunction();
     byte_count = Serial_Available();
@@ -227,7 +227,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
-            /* Handle minimal-length frames immediately (e.g., LEN=1, no checksum) */
+        /* Handle minimal-length frames immediately (e.g., LEN=1, no checksum) */
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             if (XcpTl_Receiver.Remaining == 0u) {
                 Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
@@ -307,7 +307,8 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE) ||                                                          \
         (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_BYTE)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
-        if (XcpTl_Receiver.Index == 0x01) { /* DLC and CTR/FILL received */
+        if (XcpTl_Receiver.Index == 0x01) {
+            /* DLC and CTR/FILL received */
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
             XcpTl_Receiver.State     = XCP_RCV_REMAINING;
             XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc;
@@ -323,7 +324,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
-            /* Handle minimal-length frames immediately (e.g., LEN=0, no checksum) */
+        /* Handle minimal-length frames immediately (e.g., LEN=0, no checksum) */
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             if (XcpTl_Receiver.Remaining == 0u) {
                 Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
@@ -340,6 +341,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         XcpTl_TimeoutReset();
         XcpTl_Receiver.Remaining--;
         if (XcpTl_Receiver.Remaining == 0u) {
+
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
             Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2; /* Data starts after LEN and CTR/FILL */
@@ -422,7 +424,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
-            /* Handle minimal-length frames immediately (e.g., LEN=0, no checksum) */
+        /* Handle minimal-length frames immediately (e.g., LEN=0, no checksum) */
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             if (XcpTl_Receiver.Remaining == 0u) {
                 Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
@@ -439,6 +441,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         XcpTl_TimeoutReset();
         XcpTl_Receiver.Remaining--;
         if (XcpTl_Receiver.Remaining == 0u) {
+
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
             Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 2;
@@ -501,7 +504,8 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     #elif (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_WORD) ||                                                          \
         (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_FILL_WORD)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
-        if (XcpTl_Receiver.Index == 0x03) { /* Wait for 4 header bytes (LEN+CTR/FILL) */
+        if (XcpTl_Receiver.Index == 0x03) {
+            /* Wait for 4 header bytes (LEN+CTR/FILL) */
             XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
             /* Validate DLC against buffer capacity (account for 4-byte header) */
             if (XcpTl_Receiver.Dlc > ((uint16_t)sizeof(XcpTl_Receiver.Buffer) - 4u)) {
@@ -522,7 +526,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
             }
         #endif
         #if (XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM)
-           XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
+            XcpTl_Receiver.Remaining += sizeof(XcpSxiChecksumType);
         #endif
             XcpTl_TimeoutReset();
         }
@@ -530,6 +534,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         XcpTl_TimeoutReset();
         XcpTl_Receiver.Remaining--;
         if (XcpTl_Receiver.Remaining == 0u) {
+
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
             Xcp_CtoIn.len  = XcpTl_Receiver.Dlc;
             Xcp_CtoIn.data = XcpTl_Receiver.Buffer + 4; /* Data starts after LEN and CTR/FILL */
@@ -647,11 +652,11 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         #endif
 
         /* Send header + payload */
-            #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+        #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
         XcpTl_TransformAndSend(buf, len);
-            #else
+        #else
         Serial_WriteBuffer(buf, len);
-            #endif
+        #endif
 
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
         {
@@ -661,11 +666,11 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
             /* Add fill byte to stream if payload length is odd for word checksum */
             if ((payload_len & 1u) != 0u) {
                 uint8_t fill_byte = 0x00;
-                #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+            #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
                 XcpTl_TransformAndSend(&fill_byte, 1);
-                #else
+            #else
                 Serial_WriteBuffer(&fill_byte, 1);
-                #endif
+            #endif
             }
         }
         #endif
@@ -676,29 +681,29 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
             uint8_t checksum_bytes[2];
             checksum_bytes[0] = (uint8_t)(checksum);      /* Little Endian: LSB */
             checksum_bytes[1] = (uint8_t)(checksum >> 8); /* Little Endian: MSB */
-                #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+            #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
             XcpTl_TransformAndSend(checksum_bytes, 2);
-                #else
+            #else
             Serial_WriteBuffer(checksum_bytes, 2);
-                #endif
+            #endif
         }
         #else /* XCP_ON_SXI_CHECKSUM_BYTE */
         {
             uint8_t checksum_byte = (uint8_t)checksum;
-                #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+            #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
             XcpTl_TransformAndSend(&checksum_byte, 1);
-                #else
+            #else
             Serial_WriteBuffer(&checksum_byte, 1);
-                #endif
+            #endif
         }
         #endif
     }
     #else
-            #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
+        #if (XCP_ON_SXI_ENABLE_FRAMING == XCP_ON)
     XcpTl_TransformAndSend(buf, len);
-            #else
+        #else
     Serial_WriteBuffer(buf, len);
-            #endif
+        #endif
     #endif /* XCP_ON_SXI_TAIL_CHECKSUM != XCP_ON_SXI_NO_CHECKSUM */
 
     XCP_TL_LEAVE_CRITICAL();
@@ -712,11 +717,11 @@ void XcpTl_ReleaseConnection(void) {
 
 void XcpTl_PrintConnectionInformation(void) {
     #if 0
-    #if defined(ARDUINO)
-    Serial.println("XCPonSxi");
-    #else
-    printf("\nXCPonSxi\n");
-    #endif
+        #if defined(ARDUINO)
+Serial.println("XCPonSxi");
+        #else
+printf("\nXCPonSxi\n");
+        #endif
     #endif
 }
 

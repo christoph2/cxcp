@@ -33,8 +33,11 @@ Prerequisites
 ^^^^^^^^^^^^^^^^^^^^^
 Open the sketch folder (e.g., ``tools/arduino/hello_xcp``) and edit its ``xcp_config.h``,
 un-comment the transport you want to use:
+
 - `#define TP_SXI` for Serial SXI.
+
 - `#define TP_CAN` for CAN bus.
+
 - `#define TP_ETHER` for Ethernet.
 
 Now fill the minimal settings:

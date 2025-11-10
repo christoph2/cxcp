@@ -267,6 +267,14 @@ extern "C" {
         #else
             #error "Unknown XCP_ON_SXI_TAIL_CHECKSUM value."
         #endif
+
+        #if !defined(XCP_ON_SXI_CUSTOM_INTERFACE)
+            #define XCP_ON_SXI_CUSTOM_INTERFACE (XCP_OFF)
+        #endif
+
+        #if !defined(XCP_ON_SXI_PORT_NAME)
+            #define XCP_ON_SXI_PORT_NAME Serial
+        #endif
     #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #else
@@ -1430,13 +1438,13 @@ extern "C" {
     /*
     ** Serial Port Function Prototypes.
     */
-    void Serial_Init(void);
-    void Serial_DeInit(void);
+    void     Serial_Init(void);
+    void     Serial_DeInit(void);
     uint32_t Serial_Available(void);
-    bool Serial_Read(uint8_t *in_byte);
-    void Serial_WriteByte(uint8_t out_byte);
-    void Serial_WriteBuffer(uint8_t const *out_bytes, uint32_t size);
-    void Serial_MainFunction(void);
+    bool     Serial_Read(uint8_t *in_byte);
+    void     Serial_WriteByte(uint8_t out_byte);
+    void     Serial_WriteBuffer(uint8_t const *out_bytes, uint32_t size);
+    void     Serial_MainFunction(void);
 
     #endif
 

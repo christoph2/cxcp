@@ -24,90 +24,90 @@
  */
 
 #if !defined(__XCP_TYPES_H)
-#define __XCP_TYPES_H
+    #define __XCP_TYPES_H
 
-#include <limits.h>
+    #include <limits.h>
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 extern "C" {
-#endif /* __cplusplus */
-#endif     /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
-/* check for C99-Compiler */
-#if defined(__STDC_VERSION__)
-#if __STDC_VERSION__ >= 199901L
-#define C99_COMPILER
-#endif
-#endif
+    /* check for C99-Compiler */
+    #if defined(__STDC_VERSION__)
+        #if __STDC_VERSION__ >= 199901L
+            #define C99_COMPILER
+        #endif
+    #endif
 
-/* check for C1x-Compiler */
-#if defined(__STDC_VERSION__)
-#if __STDC_VERSION__ >= 201112L
-#define C11_COMPILER
-#endif
-#endif
+    /* check for C1x-Compiler */
+    #if defined(__STDC_VERSION__)
+        #if __STDC_VERSION__ >= 201112L
+            #define C11_COMPILER
+        #endif
+    #endif
 
-#if (defined(__CSMC__) || (!defined(C99_COMPILER) && !defined(C11_COMPILER))) && !defined(__cplusplus)
+    #if (defined(__CSMC__) || (!defined(C99_COMPILER) && !defined(C11_COMPILER))) && !defined(__cplusplus)
 
-#if defined(_MSC_VER)
+        #if defined(_MSC_VER)
 
-#include <stdbool.h>
-#include <stdint.h>
-#else
+            #include <stdbool.h>
+            #include <stdint.h>
+        #else
 typedef unsigned char bool;
-#if !defined(__int8_t_defined)
-typedef signed char int8_t;
+            #if !defined(__int8_t_defined)
+typedef signed char   int8_t;
 typedef unsigned char uint8_t;
-#endif
-#if !defined(__int16_t_defined)
-typedef signed short int16_t;
+            #endif
+            #if !defined(__int16_t_defined)
+typedef signed short   int16_t;
 typedef unsigned short uint16_t;
-#endif
-#if !defined(__int32_t_defined)
-typedef signed long int32_t;
+            #endif
+            #if !defined(__int32_t_defined)
+typedef signed long   int32_t;
 typedef unsigned long uint32_t;
-#endif
-#if !defined(__int64_t_defined)
-typedef signed long long int64_t;
+            #endif
+            #if !defined(__int64_t_defined)
+typedef signed long long   int64_t;
 typedef unsigned long long uint64_t;
-#endif
-#endif
+            #endif
+        #endif
 
-#else
+    #else
 
-#include <stdbool.h>
-#include <stdint.h>
-#endif
+        #include <stdbool.h>
+        #include <stdint.h>
+    #endif
 
-/* 64-bit */
-#if UINTPTR_MAX == 0xffffffffffffffff
-#define ENV64BIT
-typedef uint64_t Xcp_PointerSizeType;
-#elif UINTPTR_MAX == 0xffffffff
+    /* 64-bit */
+    #if UINTPTR_MAX == 0xffffffffffffffff
+        #define ENV64BIT
+    typedef uint64_t Xcp_PointerSizeType;
+    #elif UINTPTR_MAX == 0xffffffff
 typedef uint32_t Xcp_PointerSizeType;
-#define ENV32BIT
-#else
-#define ENV16BIT
+        #define ENV32BIT
+    #else
+        #define ENV16BIT
 typedef uint32_t Xcp_PointerSizeType;
-#endif
+    #endif
 
-#define UINT8(x) ((uint8_t)(x))
-#define INT8(x)  ((int8_t)(x))
+    #define UINT8(x) ((uint8_t)(x))
+    #define INT8(x)  ((int8_t)(x))
 
-#define UINT16(x) ((uint16_t)(x))
-#define INT16(x)  ((int16_t)(x))
+    #define UINT16(x) ((uint16_t)(x))
+    #define INT16(x)  ((int16_t)(x))
 
-#define UINT32(x) ((uint32_t)(x))
-#define INT32(x)  ((int32_t)(x))
+    #define UINT32(x) ((uint32_t)(x))
+    #define INT32(x)  ((int32_t)(x))
 
-#define UINT64(x) ((uint64_t)(x))
-#define INT64(x)  ((int64_t)(x))
+    #define UINT64(x) ((uint64_t)(x))
+    #define INT64(x)  ((int64_t)(x))
 
-#if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
-#if defined(__cplusplus)
+    #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
+        #if defined(__cplusplus)
 }
-#endif /* __cplusplus */
-#endif     /* XCP_EXTERN_C_GUARDS */
+        #endif /* __cplusplus */
+    #endif     /* XCP_EXTERN_C_GUARDS */
 
 #endif /* __XCP_TYPES_H */
