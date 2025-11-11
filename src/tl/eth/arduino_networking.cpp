@@ -654,11 +654,14 @@ extern "C" {
     void XcpTl_Send(uint8_t const * buf, uint16_t len) {
         XCP_TL_ENTER_CRITICAL();
         if (s_connected && s_client) {
-        #ifdef XCP_UDP_DEBUG
-            Serial.print("XCP_TL_SEND len="); Serial.print(len);
-            Serial.print(" conn="); Serial.print(s_connected ? 1 : 0);
-            Serial.print(" datagram="); Serial.println(s_client->is_datagram() ? 1 : 0);
-        #endif
+    #ifdef XCP_UDP_DEBUG
+            Serial.print("XCP_TL_SEND len=");
+            Serial.print(len);
+            Serial.print(" conn=");
+            Serial.print(s_connected ? 1 : 0);
+            Serial.print(" datagram=");
+            Serial.println(s_client->is_datagram() ? 1 : 0);
+    #endif
             /* Data already contains ETH header (LEN/CTR) + payload. */
             (void)s_client->write_bytes(buf, len);
         }

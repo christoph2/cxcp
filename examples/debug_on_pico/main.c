@@ -67,10 +67,10 @@ XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(dummy), XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(
 #endif
 
 int main() {
-    unsigned long start = 0;
-    unsigned long stop  = 0;
-    unsigned long time_point=0;
-    unsigned long elapsed_time=0;
+    unsigned long start        = 0;
+    unsigned long stop         = 0;
+    unsigned long time_point   = 0;
+    unsigned long elapsed_time = 0;
 
     voltage1 = 10.0f;
     voltage2 = 20.0f;

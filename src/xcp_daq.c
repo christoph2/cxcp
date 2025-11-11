@@ -807,7 +807,7 @@ void XcpDaq_StartStopSynch(uint8_t mode) {
 }
 
 void XcpDaq_TransmitDtos(void) {
-    uint16_t len=0UL;
+    uint16_t len     = 0UL;
     uint8_t *dataOut = Xcp_GetDtoOutPtr();
 
     while (!XcpDaq_QueueEmpty()) {
