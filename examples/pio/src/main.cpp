@@ -5,9 +5,11 @@
 #define BUILD_DATE __DATE__
 #define BUILD_TIME __TIME__
 
+extern "C" {
 #define XCP_MAKE_EPK(name) const char Xcp_EEPROM_Kennung[] = name " " BUILD_DATE " " BUILD_TIME
 
-XCP_MAKE_EPK("ArduinoXCP V1.1.0");
+    XCP_MAKE_EPK("ArduinoXCP V1.1.0");
+}
 
 // Measurements.
 volatile uint8_t dummy;
@@ -58,9 +60,110 @@ XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(dummy), XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(
 
     __attribute__((section(".measurements"))) volatile float values[8];
 
+unsigned long time_point;
+unsigned long elapsed_time;
+
+enum WaveformType {
+    SINE,
+    TRIANGLE,
+    SQUARE,
+    SAWTOOTH
+};
+
+inline float amplitiude_value(float base = 1.0F, float amplification = 0.0F) {
+    return base * (pow(10.0F, amplification / 20.0F));
+}
+
+class WaveformGenerator {
+   private:
+
+    float        phase           = 0.0F;
+    float        phase_increment = 0.0F;
+    float        amplitude       = 1.0F;
+    WaveformType type            = SINE;
+
+   public:
+
+    WaveformGenerator(WaveformType t, float freq, float sample_rate, float amp = 1.0F, float p = 0.0F) :
+        type(t), phase_increment(freq / sample_rate), amplitude(amp), phase(p) {
+    }
+
+    void setFrequency(float freq, float sample_rate) {
+        phase_increment = freq / sample_rate;
+    }
+
+    void setAmplitude(float amp) {
+        amplitude = amp;
+    }
+
+    void setWaveform(WaveformType t) {
+        type = t;
+    }
+
+    float nextSample() {
+        phase += phase_increment;
+        if (phase >= 1.0F)
+            phase -= 1.0F;
+
+        float value = 0.0F;
+        switch (type) {
+            case SINE:
+                value = ::sin(2.0F * PI * phase);
+                break;
+            case TRIANGLE:
+                value = 2.0F * abs(2.0F * (phase - floor(phase + 0.5F))) - 1.0F;
+                break;
+            case SQUARE:
+                value = (phase < 0.5F) ? 1.0F : -1.0F;
+                break;
+            case SAWTOOTH:
+                value = 2.0F * (phase - 0.5F);
+                break;
+        }
+
+        return amplitude * value;
+    }
+};
+
+const uint32_t AMPLITUDE_SCALE = 32.0F;
+
+auto wg1 = WaveformGenerator(SINE, 1.0f, 100.0f, amplitiude_value(AMPLITUDE_SCALE));
+auto wg2 = WaveformGenerator(SINE, 1.0f, 100.0f, amplitiude_value(AMPLITUDE_SCALE, -3.0F), 90.0);
+auto wg3 = WaveformGenerator(TRIANGLE, 0.5f, 100.0f, amplitiude_value(AMPLITUDE_SCALE, -6.0F));
+auto wg4 = WaveformGenerator(SAWTOOTH, 0.5f, 100.0f, amplitiude_value(AMPLITUDE_SCALE, -6.0F), -90.0);
+
 void setup() {
+    dummy    = 0x55;
+    voltage1 = 90.0f;
+    voltage2 = 180.0f;
+    voltage3 = 270.0f;
+    voltage4 = 360.0f;
+
+    time_point = micros();
     Xcp_Init();
 }
 
 void loop() {
+    unsigned long start = 0;
+    unsigned long stop  = 0;
+
+    XcpTl_MainFunction();
+    Xcp_MainFunction();
+
+    if ((micros() - time_point) >= 10 * 1000) {
+        time_point = micros();
+        start      = micros();
+
+        voltage1 = wg1.nextSample();
+        voltage2 = wg2.nextSample();
+        voltage3 = wg3.nextSample();
+        voltage4 = wg4.nextSample();
+
+        XcpDaq_TriggerEvent(0);
+        dummy++;
+
+        stop         = micros();
+        elapsed_time = stop - start;
+        time_point -= elapsed_time;
+    }
 }
