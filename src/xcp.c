@@ -955,7 +955,11 @@ void Xcp_DispatchCommand(Xcp_PduType const * const pdu) {
 #if XCP_ENABLE_STATISTICS == XCP_ON
             Xcp_State.statistics.ctosReceived++;
 #endif /* XCP_ENABLE_STATISTICS */
-            Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);
+            if (cmd < 0xc8) {
+                Xcp_CommandNotImplemented_Res(pdu);
+            } else {
+                Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);
+            }
         }
     } else { /* not connected. */
 #if XCP_ENABLE_STATISTICS == XCP_ON
