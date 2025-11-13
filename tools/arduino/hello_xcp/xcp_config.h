@@ -35,8 +35,8 @@
     **  General Options.
     */
     // #define TP_CAN
-    #define TP_ETHER
-    // #define TP_SXI
+    // #define TP_ETHER
+    #define TP_SXI
 
     /*
     **  Transport-Layer specific Options.
@@ -73,16 +73,17 @@
         #define XCP_MAX_DTO (64)
 
     #elif defined(TP_ETHER)
-        #define XCP_TRANSPORT_LAYER  XCP_ON_ETHERNET
+        #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
-        // #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
-        #define XCP_ON_ETHERNET_PORT (5555)
+        #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
+        #define XCP_ON_ETHERNET_PORT      (5555)
 
-        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_WIFI)
-        #define XCP_ON_ETHERNET_WIFI_SSID      ("A1_CE8A")
-        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("6H54726A66")
+        #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
+        #define XCP_ON_ETHERNET_WIFI_SSID      ("")
+        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
+        #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
 
-        #define XCP_MAX_CTO (32)  // (16)
+        #define XCP_MAX_CTO (32)
         #define XCP_MAX_DTO (32)
 
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
@@ -111,8 +112,8 @@
     #define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
     #define XCP_GET_ID_1 "BlueParrot_XCP_on_Arduino"
 
-    // #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
-    #define XCP_BUILD_TYPE             XCP_DEBUG_BUILD
+    #define XCP_BUILD_TYPE XCP_RELEASE_BUILD
+    // #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
     #define XCP_ENABLE_LOGGING         (XCP_ON)
     #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_ON)
 
