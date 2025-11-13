@@ -24,6 +24,12 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+/*!!! START-INCLUDE-SECTION !!!*/
+#include "xcp.h"
+#include "xcp_hw.h"
+#include "xcp_tl_timeout.h"
+/*!!! END-INCLUDE-SECTION !!!*/
+
 #if (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) && (defined(ARDUINO))
 
     #include <Arduino.h>
@@ -37,11 +43,6 @@
         #include <SPI.h>
     #endif
 
-    /*!!! START-INCLUDE-SECTION !!!*/
-    #include "xcp.h"
-    #include "xcp_hw.h"
-    #include "xcp_tl_timeout.h"
-/*!!! END-INCLUDE-SECTION !!!*/
 
 const unsigned long READ_TIMEOUT_MS = 2000;  // Timeout when reading a frame
 
@@ -354,20 +355,74 @@ class WiFiAdapter : public ArduinoNetworkIf {
     }
 
     bool begin() override {
+        // Put ESP32 in station mode and try to keep things deterministic during connect
+        WiFi.persistent(false);   // avoid writing credentials repeatedly to NVS
         WiFi.mode(WIFI_STA);
-        WiFi.begin(m_ssid, m_pass);
+        WiFi.setSleep(false);     // keep radio awake during provisioning/UDP XCP
 
-        unsigned long start = millis();
-        while ((WiFi.status() != WL_CONNECTED) && (millis() - start < 10000)) {
+        // Optional static IP configuration (do this BEFORE begin())
+        {
+#if defined(XCP_ON_ETHERNET_IP_OCTETS)
+            IPAddress ip(XCP_ON_ETHERNET_IP_OCTETS);
+            if (!WiFi.config(ip)) {
+                Serial.println("[WiFi] Failed to apply static IP config");
+            }
+#elif defined(XCP_ON_ETHERNET_IP)
+            IPAddress ip;
+            ip.fromString(XCP_ON_ETHERNET_IP);
+            if (!WiFi.config(ip)) {
+                Serial.println("[WiFi] Failed to apply static IP config");
+            }
+#endif
+        }
+
+        Serial.print("[WiFi] Connecting to SSID: ");
+        Serial.println(m_ssid ? m_ssid : "<null>");
+        wl_status_t startStatus = WiFi.begin(m_ssid, m_pass);
+        (void)startStatus; // not all cores return a meaningful value here
+
+        const unsigned long timeoutMs = 15000; // allow a bit more time on congested APs
+        unsigned long       start      = millis();
+        wl_status_t         st;
+        while ((st = WiFi.status()) != WL_CONNECTED && (millis() - start < timeoutMs)) {
+            switch (st) {
+                case WL_CONNECT_FAILED:
+                    Serial.println("[WiFi] Connect failed (bad SSID/Password?)");
+                    break;
+                case WL_NO_SSID_AVAIL:
+                    Serial.println("[WiFi] SSID not available");
+                    break;
+                case WL_DISCONNECTED:
+                case WL_IDLE_STATUS:
+                default:
+                    break;
+            }
             delay(200);
         }
-        Serial.print("\nBlueparrot XCP (UDP) on WiFi -- IP: ");
-        Serial.println(WiFi.localIP());
-        m_udp.begin(m_port);
-        return WiFi.status() == WL_CONNECTED;
+
+        bool connected = (WiFi.status() == WL_CONNECTED);
+        if (connected) {
+            IPAddress ip = WiFi.localIP();
+            Serial.print("\nBlueparrot XCP (UDP) on WiFi -- IP: ");
+            Serial.println(ip);
+            if (!m_udp_active) {
+                if (m_udp.begin(m_port)) {
+                    m_udp_active = true;
+                } else {
+                    Serial.println("[WiFi] Failed to start UDP listener");
+                }
+            }
+        } else {
+            Serial.println("[WiFi] Not connected after timeout");
+        }
+        return connected;
     }
 
     ClientWrapper* accept_client() override {
+        // Avoid UDP operations while STA is connecting; ESP-IDF logs: "wifi:sta is connecting, return error"
+        if (WiFi.status() != WL_CONNECTED || !m_udp_active) {
+            return nullptr;
+        }
         int packetSize = m_udp.parsePacket();
         if (packetSize > 0) {
             if (packetSize > (int)XCP_COMM_BUFLEN)
@@ -384,19 +439,44 @@ class WiFiAdapter : public ArduinoNetworkIf {
     }
 
     void process() override {
-        // reconnect handling
-        if (WiFi.status() != WL_CONNECTED) {
-            static unsigned long lastAttempt = 0;
-            if (millis() - lastAttempt > 5000) {
-                lastAttempt = millis();
+        // Keep UDP aligned with link state and perform gentle reconnects.
+        static unsigned long lastAttempt = 0;
+        wl_status_t          st          = WiFi.status();
+
+        if (st == WL_CONNECTED) {
+            if (!m_udp_active) {
+                if (m_udp.begin(m_port)) {
+                    m_udp_active = true;
+                    Serial.println("[WiFi] UDP listener started after reconnect");
+                }
+            }
+            m_reconnect_backoff_ms = 2000; // reset backoff on success
+        } else {
+            // Ensure UDP is not used while disconnected/connecting
+            if (m_udp_active) {
+                m_udp.stop();
+                m_udp_active = false;
+            }
+            // Throttled reconnect attempts
+            unsigned long now = millis();
+            if (now - lastAttempt >= m_reconnect_backoff_ms) {
+                lastAttempt = now;
+                Serial.println("[WiFi] Attempting reconnect...");
                 WiFi.reconnect();
+                // Exponential backoff up to 30s
+                if (m_reconnect_backoff_ms < 30000) {
+                    m_reconnect_backoff_ms = m_reconnect_backoff_ms * 2;
+                }
             }
         }
     }
 
     String getInfo() override {
-        IPAddress ip = WiFi.localIP();
-        return String("WiFi-UDP ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+        if (WiFi.status() == WL_CONNECTED) {
+            IPAddress ip = WiFi.localIP();
+            return String("WiFi-UDP ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+        }
+        return String("WiFi-UDP <disconnected>");
     }
 
    private:
@@ -406,6 +486,8 @@ class WiFiAdapter : public ArduinoNetworkIf {
     const char*          m_ssid;
     const char*          m_pass;
     WiFiUdpClientWrapper m_udpClientWrapper;
+    bool                 m_udp_active = false;
+    unsigned long        m_reconnect_backoff_ms = 2000; // start with 2s backoff
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 
