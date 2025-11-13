@@ -40,13 +40,13 @@
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
-    #define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
-    #define XCP_GET_ID_1 "BlueParrot_XCP_on_Arduino"
+    #define XCP_GET_ID_0 "BlueParrot XCP running on ESP32"
+    #define XCP_GET_ID_1 "BlueParrot_XCP_on_ESP32"
 
     #define XCP_ENABLE_GET_ID_EPK (XCP_OFF)
 
-    // #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
-    #define XCP_BUILD_TYPE XCP_RELEASE_BUILD
+    #define XCP_BUILD_TYPE     XCP_RELEASE_BUILD
+    #define XCP_ENABLE_LOGGING (XCP_ON)
 
     #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_ON)
 
@@ -211,7 +211,7 @@
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_WIFI)
         #define XCP_ON_ETHERNET_WIFI_SSID      ""
         #define XCP_ON_ETHERNET_WIFI_PASSWORD  ""
-        #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
+    // #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
 
         #define XCP_MAX_CTO (64)  // (16)
         #define XCP_MAX_DTO (64)

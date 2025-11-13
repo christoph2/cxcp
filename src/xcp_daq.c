@@ -473,7 +473,7 @@ void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xc
 
     Xcp_State = Xcp_GetState();
 
-    DBG_TRACE5(
+    DBG_TRACE(
         "\nXcpDaq_WriteEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", address, adddrExt, elemSize, bitOffset
     );
 
@@ -536,7 +536,7 @@ void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, 
     *adddrExt = 0;
 #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
-    DBG_TRACE5(
+    DBG_TRACE(
         "\nXcpDaq_ReadEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", *address, *adddrExt, *elemSize, *bitOffset
     );
 

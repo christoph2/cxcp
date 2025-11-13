@@ -10,16 +10,16 @@ if (CMAKE_HOST_UNIX AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     SET(MACOS_BUILD true)
 else ()
     SET(MACOS_BUILD false)
-endif()
+endif ()
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Build type not specified: defaulting to release.")
-endif()
+endif ()
 
 IF (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     SET(CMAKE_C_STANDARD 11)
-ELSEIF(CMAKE_C_COMPILER_ID MATCHES "Clang")
+ELSEIF (CMAKE_C_COMPILER_ID MATCHES "Clang")
     SET(CMAKE_C_STANDARD 11)
 ELSE ()
     #message(WARNING "C standard could not be set because compiler is not GNU or Clang.")
@@ -46,7 +46,7 @@ set(INCLUDES
         .
         ../../inc
         ../../flsemu
-        )
+)
 
 if (CMAKE_HOST_WIN32)
     set(ADD_LIBS ws2_32)
@@ -103,7 +103,6 @@ endif (MSVC)
 
 if (CMAKE_HOST_WIN32)
     add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/wineth.c" "../../src/tl/eth/common.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h)
-    target_compile_definitions(xcp_sim_eth PUBLIC TP_ETHER)
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
@@ -111,7 +110,6 @@ elseif (CMAKE_HOST_UNIX)
     add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/linuxeth.c" "../../src/tl/eth/common.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h)
     if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     endif ()
-    target_compile_definitions(xcp_sim_eth PUBLIC TP_ETHER)
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim_eth ${ADD_LIBS} target_link_libraries)
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
@@ -119,12 +117,12 @@ elseif (CMAKE_HOST_UNIX)
     if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
         add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h
                 ../../src/hw/linux/hw.c
-                ../../src/hw/posix/hw.c)
-        target_compile_definitions(xcp_sim_can PUBLIC TP_CAN)
+                ../../src/hw/posix/hw.c
+                ../../inc/xcp_log.h)
         target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})
         target_link_libraries(xcp_sim_can ${ADD_LIBS})
         target_compile_features(xcp_sim_can PRIVATE c_std_11)
-    elseif(MACOS_BUILD)
+    elseif (MACOS_BUILD)
 
     endif ()
 endif ()

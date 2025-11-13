@@ -400,7 +400,7 @@ void XcpDaq_PrintDAQDetails(void) {
             printf("    ODT #%d\n\r", odtIdx);
             for (odtEntriyIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntriyIdx < odt->numOdtEntries; ++odtEntriyIdx) {
                 entry = XcpDaq_GetOdtEntry(listIdx, odtIdx, odtEntriyIdx);
-                printf("        Entry #%d [0x%08x] %d Byte(s)\n\r", odtEntriyIdx, entry->mta.address, entry->length);
+                printf("        Entry #%d [0x%08llx] %d Byte(s)\n\r", odtEntriyIdx, entry->mta.address, entry->length);
                 total += entry->length;
             }
         }

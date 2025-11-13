@@ -42,7 +42,8 @@
     #include <assert.h>
 
     #include "xcp_config.h"
-/*!!! START-INCLUDE-SECTION !!!*/
+    /*!!! START-INCLUDE-SECTION !!!*/
+    #include "xcp_log.h"
     #include "xcp_macros.h"
     #include "xcp_types.h"
     #include "xcp_util.h"
@@ -98,6 +99,7 @@
     #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
         #if defined(__cplusplus)
 extern "C" {
+
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
@@ -217,6 +219,10 @@ extern "C" {
             #undef XCP_TRANSPORT_LAYER_COUNTER_SIZE
         #endif
 
+        #if !defined(XCP_ENABLE_LOGGING)
+            #define XCP_ENABLE_LOGGING (XCP_OFF)
+        #endif /* XCP_ENABLE_LOGGING */
+
         #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_BYTE)
             #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (1)
             #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
@@ -241,7 +247,7 @@ extern "C" {
     #endif /* XCP_TRANSPORT_LAYER == XCP_ON_SXI */
 
     #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
-        /* Already derived per header format above. */
+    /* Already derived per header format above. */
     #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
         #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
@@ -847,7 +853,6 @@ extern "C" {
         XCP_PROGRAM_NEXT           = UINT8(0xCA),
         XCP_PROGRAM_MAX            = UINT8(0xC9),
         XCP_PROGRAM_VERIFY         = UINT8(0xC8)
-
     } Xcp_CommandType;
 
     typedef enum tagXcp_ReturnType {
@@ -860,7 +865,7 @@ extern "C" {
         ERR_CMD_UNKNOWN  = UINT8(0x20),      /* Unknown command or not implemented optional command. S2 */
         ERR_CMD_SYNTAX   = UINT8(0x21),      /* Command syntax invalid   S2 */
         ERR_OUT_OF_RANGE = UINT8(0x22),      /* Command syntax valid but command
-                                              parameter(s) out of range.   S2 */
+                                                  parameter(s) out of range.   S2 */
         ERR_WRITE_PROTECTED   = UINT8(0x23), /* The memory location is write protected. S2 */
         ERR_ACCESS_DENIED     = UINT8(0x24), /* The memory location is not accessible. S2 */
         ERR_ACCESS_LOCKED     = UINT8(0x25), /* Access denied, Seed & Key is required S2 */
@@ -873,11 +878,11 @@ extern "C" {
         ERR_MEMORY_OVERFLOW = UINT8(0x30), /* Memory overflow error S2 */
         ERR_GENERIC         = UINT8(0x31), /* Generic error.         S2 */
         ERR_VERIFY          = UINT8(0x32), /* The slave internal program verify routine detects
-                                            an error.   S3 */
+                                                an error.   S3 */
 
         /* NEW IN 1.1 */
         ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33), /* Access to the requested resource is temporary not
-                                                                  possible.   S3 */
+                                                                      possible.   S3 */
 
         /* Internal Success Code - not related to XCP spec. */
         ERR_SUCCESS = UINT8(0xff)
@@ -1064,7 +1069,9 @@ extern "C" {
     } XcpDaq_EntityKindType;
 
     typedef struct tagXcpDaq_EntityType {
-        /*Xcp_DaqEntityKindType*/ uint8_t kind;
+        /*Xcp_DaqEntityKindType*/
+        uint8_t kind;
+
         union {
             XcpDaq_ODTEntryType    odtEntry;
             XcpDaq_ODTType         odt;

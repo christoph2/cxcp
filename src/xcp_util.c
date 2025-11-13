@@ -107,9 +107,9 @@ void XcpUtl_Hexdump(/*@in@*/ uint8_t const *buf, uint16_t sz) {
     uint16_t idx;
 
     for (idx = UINT16(0); idx < sz; ++idx) {
-        DBG_PRINT2("%02X ", buf[idx]);
+        DBG_PRINT("%02X ", buf[idx]);
     }
-    DBG_PRINT1("\n\r");
+    DBG_PRINT("\n\r");
 }
 
 void XcpUtl_Itoa(uint32_t value, uint8_t base, uint8_t *buf) {

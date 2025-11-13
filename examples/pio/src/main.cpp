@@ -1,5 +1,6 @@
 #include <Arduino.h>
 
+#include "esp_log.h"
 #include "xcp.h"
 
 #define BUILD_DATE __DATE__
@@ -132,7 +133,21 @@ auto wg2 = WaveformGenerator(SINE, 1.0f, 100.0f, amplitiude_value(AMPLITUDE_SCAL
 auto wg3 = WaveformGenerator(TRIANGLE, 0.5f, 100.0f, amplitiude_value(AMPLITUDE_SCALE, -6.0F));
 auto wg4 = WaveformGenerator(SAWTOOTH, 0.5f, 100.0f, amplitiude_value(AMPLITUDE_SCALE, -6.0F), -90.0);
 
+static int serial_vprintf(const char* fmt, va_list args) {
+    // Serial must already be initialized
+    return vprintf(fmt, args);  // vprintf verwendet das systemweite printf-Backend
+}
+
 void setup() {
+    Serial.begin(115200);
+    // esp_log_set_vprintf(serial_vprintf);
+    esp_log_level_set("*", ESP_LOG_INFO);  // global auf INFO
+    DBG_PRINT("DBG_PRINT: Starting...\n");
+    Serial.println("Serial.println: Starting...\n");
+    ESP_LOGI("TAG", "Log via Serial redirected");
+
+    DBG_TRACE("Initializing XCP-Library\n");
+    Serial.println("XCP Library initialized successfully");
     dummy    = 0x55;
     voltage1 = 90.0f;
     voltage2 = 180.0f;
