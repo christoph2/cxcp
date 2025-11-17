@@ -75,12 +75,17 @@
     #elif defined(TP_ETHER)
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
+        #define XCP_ON_ETHERNET_PROTOCOL    XCP_ON_ETHERNET_USE_UDP
         #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
         #define XCP_ON_ETHERNET_PORT      (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
         #define XCP_ON_ETHERNET_WIFI_SSID      ("")
         #define XCP_ON_ETHERNET_WIFI_PASSWORD  ("")
+
+        // Adjust WiFi power, see
+        // https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFiGeneric.h
+        // #define XCP_ON_WIFI_TX_POWER           WIFI_POWER_13dBm
         #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
 
         #define XCP_MAX_CTO (32)

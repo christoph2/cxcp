@@ -44,7 +44,7 @@
     #endif
 
 
-const unsigned long READ_TIMEOUT_MS = 2000;  // Timeout when reading a frame
+const unsigned long READ_TIMEOUT_MS = 2000;
 
 class ClientWrapper {
    public:
@@ -270,6 +270,7 @@ class EthernetAdapter : public ArduinoNetworkIf {
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_ETHERNET
 
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
+
 class WiFiUdpClientWrapper : public ClientWrapper {
    public:
 
@@ -359,6 +360,10 @@ class WiFiAdapter : public ArduinoNetworkIf {
         WiFi.persistent(false);   // avoid writing credentials repeatedly to NVS
         WiFi.mode(WIFI_STA);
         WiFi.setSleep(false);     // keep radio awake during provisioning/UDP XCP
+        // Optional set TX power (requires Arduino-ESP32 supporting WiFi.setTxPower)
+#ifdef XCP_ON_WIFI_TX_POWER
+        WiFi.setTxPower(XCP_ON_WIFI_TX_POWER);
+#endif
 
         // Optional static IP configuration (do this BEFORE begin())
         {
@@ -546,6 +551,120 @@ class FrameParser {
     }
 };
 
+/* TCP client wrapper and adapter for WiFi (ESP32) */
+class WiFiClientWrapper : public ClientWrapper {
+   public:
+    explicit WiFiClientWrapper(WiFiClient c = WiFiClient()) : m_client(c) {}
+
+    void set(WiFiClient c) { m_client = c; }
+
+    int available() override { return m_client ? m_client.available() : 0; }
+
+    int read_bytes(uint8_t* buf, size_t len) override { return m_client.read(buf, len); }
+
+    size_t write_bytes(const uint8_t* buf, size_t len) override { return m_client.write(buf, len); }
+
+    bool connected() override { return m_client && m_client.connected(); }
+
+    void stop() override {
+        if (m_client) {
+            m_client.stop();
+        }
+    }
+
+    bool is_datagram() const override { return false; }
+
+   private:
+    WiFiClient m_client;
+};
+
+class WiFiTcpAdapter : public ArduinoNetworkIf {
+   public:
+    WiFiTcpAdapter(const char* s, const char* p, uint16_t port) : m_port(port), m_ssid(s), m_pass(p), m_server(port) {}
+
+    bool begin() override {
+        // Station mode tweaks
+        WiFi.persistent(false);
+        WiFi.mode(WIFI_STA);
+        WiFi.setSleep(false);
+#ifdef XCP_ON_WIFI_TX_POWER
+        WiFi.setTxPower(XCP_ON_WIFI_TX_POWER);
+#endif
+        Serial.begin(115200);
+        while (!Serial) {
+            ;
+        }
+        Serial.println("\nBlueparrot XCP (TCP) on WiFi");
+
+        // Optional static IP configuration
+#if defined(XCP_ON_ETHERNET_IP_OCTETS)
+        IPAddress ip(XCP_ON_ETHERNET_IP_OCTETS);
+        if (!WiFi.config(ip)) {
+            Serial.println("[WiFi] Failed to apply static IP config");
+        }
+#elif defined(XCP_ON_ETHERNET_IP)
+        {
+            IPAddress ip;
+            ip.fromString(XCP_ON_ETHERNET_IP);
+            if (!WiFi.config(ip)) {
+                Serial.println("[WiFi] Failed to apply static IP config (string)");
+            }
+        }
+#endif
+        WiFi.begin(m_ssid, m_pass);
+        unsigned long start = millis();
+        while (WiFi.status() != WL_CONNECTED && (millis() - start) < 15000UL) {
+            delay(100);
+            Serial.print('.');
+        }
+        Serial.println();
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("[WiFi] Connect failed");
+            return false;
+        }
+        Serial.print("IP: ");
+        Serial.println(WiFi.localIP());
+        m_server.begin();
+        m_server.setNoDelay(true);
+        return true;
+    }
+
+    ClientWrapper* accept_client() override {
+        // Accept new clients if none or the existing is disconnected
+        if (!m_client.connected()) {
+            WiFiClient incoming = m_server.available();
+            if (incoming) {
+                // If an old client existed, drop it
+                if (m_client) {
+                    m_client.stop();
+                }
+                m_client = incoming;
+                m_client.setNoDelay(true);
+                m_wrapper.set(m_client);
+                return &m_wrapper;  // Return immediately; Rx handler will poll available()
+            }
+            return nullptr;
+        }
+
+        // Existing client remains current; ensure wrapper wraps it
+        m_wrapper.set(m_client);
+        return &m_wrapper;
+    }
+
+    String getInfo() override {
+        IPAddress ip = WiFi.localIP();
+        return String("WiFi-TCP ") + String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+    }
+
+   private:
+    uint16_t   m_port;
+    const char* m_ssid;
+    const char* m_pass;
+    WiFiServer  m_server;
+    WiFiClient  m_client;
+    WiFiClientWrapper m_wrapper;
+};
+
 static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
     if (!s_client)
         return false;
@@ -602,7 +721,11 @@ extern "C" {
         s_timeout_triggered = false;
         /* Initialize backend network adapter and start listening. */
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
-        s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
+        #if (XCP_ON_ETHERNET_PROTOCOL == XCP_ON_ETHERNET_USE_TCP)
+            s_net = new WiFiTcpAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
+        #else
+            s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
+        #endif
     #else
         #if defined(XCP_ON_ETHERNET_IP_OCTETS)
         s_net = new EthernetAdapter(IPAddress(XCP_ON_ETHERNET_IP_OCTETS), XCP_ON_ETHERNET_PORT);

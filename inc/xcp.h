@@ -96,6 +96,13 @@
     #define XCP_ON_ETHERNET_DRIVER_ETHERNET (1)
     #define XCP_ON_ETHERNET_DRIVER_WIFI     (2)
 
+    #define XCP_ON_ETHERNET_USE_UDP (0)
+    #define XCP_ON_ETHERNET_USE_TCP (1)
+
+    #if !defined(XCP_ON_ETHERNET_PROTOCOL)
+    #define XCP_ON_ETHERNET_PROTOCOL    XCP_ON_ETHERNET_USE_UDP
+    #endif /* * XCP_ON_ETHERNET_PROTOCOL */
+
     #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
         #if defined(__cplusplus)
 extern "C" {
