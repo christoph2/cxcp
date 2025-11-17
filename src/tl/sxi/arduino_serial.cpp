@@ -38,21 +38,26 @@ extern "C" {
     #if XCP_ON_SXI_CUSTOM_INTERFACE == XCP_OFF
 
     void Serial_Init(void) {
-        Serial.begin(XCP_ON_SXI_BITRATE, XCP_ON_SXI_CONFIG);
+        #if ((defined(CONFIG_IDF_TARGET_ESP32C3)) || (defined(CONFIG_IDF_TARGET_ESP32S3)))
+        // CDC only.
+        (XCP_ON_SXI_PORT_NAME).begin(XCP_ON_SXI_BITRATE);
+        #else
+        (XCP_ON_SXI_PORT_NAME).begin(XCP_ON_SXI_BITRATE, XCP_ON_SXI_CONFIG);
+        #endif
     }
 
     void Serial_DeInit(void) {
     }
 
     uint32_t Serial_Available(void) {
-        return Serial.available();
+        return (XCP_ON_SXI_PORT_NAME).available();
     }
 
     bool Serial_Read(uint8_t *in_byte) {
         uint8_t octet;
 
-        if (Serial.available() > 0) {
-            octet    = Serial.read();
+        if ((XCP_ON_SXI_PORT_NAME).available() > 0) {
+            octet    = (XCP_ON_SXI_PORT_NAME).read();
             *in_byte = octet;
             return true;
         }
@@ -60,11 +65,11 @@ extern "C" {
     }
 
     void Serial_WriteByte(uint8_t out_byte) {
-        Serial.write(out_byte);
+        (XCP_ON_SXI_PORT_NAME).write(out_byte);
     }
 
     void Serial_WriteBuffer(uint8_t const *out_bytes, uint32_t size) {
-        Serial.write(out_bytes, size);
+        (XCP_ON_SXI_PORT_NAME).write(out_bytes, size);
     }
 
     #endif /* XCP_ON_SXI_CUSTOM_INTERFACE == XCP_OFF */

@@ -35,8 +35,8 @@
      **  General Options.
      */
     // #define TP_CAN
-    // #define TP_SXI
-    #define TP_ETHER
+    #define TP_SXI
+// #define TP_ETHER
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -209,8 +209,9 @@
         #define XCP_ON_ETHERNET_PORT (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_WIFI)
-        #define XCP_ON_ETHERNET_WIFI_SSID      ""
-        #define XCP_ON_ETHERNET_WIFI_PASSWORD  ""
+        #define XCP_ON_ETHERNET_WIFI_SSID      "A1_CE8A"
+        #define XCP_ON_ETHERNET_WIFI_PASSWORD  "6H54726A66"
+
     // #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
 
         #define XCP_MAX_CTO (64)  // (16)
@@ -221,7 +222,7 @@
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #elif defined(TP_SXI) || (XCP_TRANSPORT_LAYER == XCP_ON_SXI)
         #define XCP_TRANSPORT_LAYER      XCP_ON_SXI
-        #define XCP_ON_SXI_HEADER_FORMAT (XCP_ON_SXI_HEADER_LEN_CTR_WORD)
+        #define XCP_ON_SXI_HEADER_FORMAT (XCP_ON_SXI_HEADER_LEN_CTR_BYTE)
         #define XCP_ON_SXI_BITRATE       (38400)
         #define XCP_ON_SXI_CONFIG        (SERIAL_8N1)
         #define XCP_MAX_CTO              (12)
