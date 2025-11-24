@@ -67,7 +67,7 @@ tusb_desc_device_t const desc_device = {
 
 // Invoked when received GET DEVICE DESCRIPTOR
 // Application return pointer to descriptor
-uint8_t const * tud_descriptor_device_cb(void) {
+uint8_t const *tud_descriptor_device_cb(void) {
     return (uint8_t const *)&desc_device;
 }
 
@@ -161,14 +161,14 @@ tusb_desc_device_qualifier_t const desc_device_qualifier = { .bLength         = 
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete.
 // device_qualifier descriptor describes information about a high-speed capable device that would
 // change if the device were operating at the other speed. If not highspeed capable stall this request.
-uint8_t const * tud_descriptor_device_qualifier_cb(void) {
+uint8_t const *tud_descriptor_device_qualifier_cb(void) {
     return (uint8_t const *)&desc_device_qualifier;
 }
 
 // Invoked when received GET OTHER SEED CONFIGURATION DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 // Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
-uint8_t const * tud_descriptor_other_speed_configuration_cb(uint8_t index) {
+uint8_t const *tud_descriptor_other_speed_configuration_cb(uint8_t index) {
     (void)index;  // for multiple configurations
 
     // if link speed is high return fullspeed config, and vice versa
@@ -188,7 +188,7 @@ uint8_t const * tud_descriptor_other_speed_configuration_cb(uint8_t index) {
 // Invoked when received GET CONFIGURATION DESCRIPTOR
 // Application return pointer to descriptor
 // Descriptor contents must exist long enough for transfer to complete
-uint8_t const * tud_descriptor_configuration_cb(uint8_t index) {
+uint8_t const *tud_descriptor_configuration_cb(uint8_t index) {
     (void)index;  // for multiple configurations
 
 #if TUD_OPT_HIGH_SPEED
@@ -212,7 +212,7 @@ enum {
 };
 
 // array of pointer to string descriptors
-char const * string_desc_arr[] = {
+char const *string_desc_arr[] = {
     (const char[]){ 0x09, 0x04 }, // 0: is supported language is English (0x0409)
     "TinyUSB", // 1: Manufacturer
     "TinyUSB Device", // 2: Product
@@ -224,7 +224,7 @@ static uint16_t _desc_str[32 + 1];
 
 // Invoked when received GET STRING DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
-uint16_t const * tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
+uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     (void)langid;
     size_t chr_count;
 
@@ -245,7 +245,7 @@ uint16_t const * tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
             if (!(index < sizeof(string_desc_arr) / sizeof(string_desc_arr[0])))
                 return NULL;
 
-            const char* str = string_desc_arr[index];
+            const char *str = string_desc_arr[index];
 
             // Cap at max char
             chr_count              = strlen(str);
