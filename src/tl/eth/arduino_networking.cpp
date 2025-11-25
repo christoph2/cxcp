@@ -43,7 +43,6 @@
         #include <SPI.h>
     #endif
 
-
 const unsigned long READ_TIMEOUT_MS = 2000;
 
 class ClientWrapper {
@@ -357,37 +356,37 @@ class WiFiAdapter : public ArduinoNetworkIf {
 
     bool begin() override {
         // Put ESP32 in station mode and try to keep things deterministic during connect
-        WiFi.persistent(false);   // avoid writing credentials repeatedly to NVS
+        WiFi.persistent(false);  // avoid writing credentials repeatedly to NVS
         WiFi.mode(WIFI_STA);
-        WiFi.setSleep(false);     // keep radio awake during provisioning/UDP XCP
-        // Optional set TX power (requires Arduino-ESP32 supporting WiFi.setTxPower)
-#ifdef XCP_ON_WIFI_TX_POWER
+        WiFi.setSleep(false);  // keep radio awake during provisioning/UDP XCP
+                               // Optional set TX power (requires Arduino-ESP32 supporting WiFi.setTxPower)
+        #ifdef XCP_ON_WIFI_TX_POWER
         WiFi.setTxPower(XCP_ON_WIFI_TX_POWER);
-#endif
+        #endif
 
         // Optional static IP configuration (do this BEFORE begin())
         {
-#if defined(XCP_ON_ETHERNET_IP_OCTETS)
+        #if defined(XCP_ON_ETHERNET_IP_OCTETS)
             IPAddress ip(XCP_ON_ETHERNET_IP_OCTETS);
             if (!WiFi.config(ip)) {
                 Serial.println("[WiFi] Failed to apply static IP config");
             }
-#elif defined(XCP_ON_ETHERNET_IP)
+        #elif defined(XCP_ON_ETHERNET_IP)
             IPAddress ip;
             ip.fromString(XCP_ON_ETHERNET_IP);
             if (!WiFi.config(ip)) {
                 Serial.println("[WiFi] Failed to apply static IP config");
             }
-#endif
+        #endif
         }
 
         Serial.print("[WiFi] Connecting to SSID: ");
         Serial.println(m_ssid ? m_ssid : "<null>");
         wl_status_t startStatus = WiFi.begin(m_ssid, m_pass);
-        (void)startStatus; // not all cores return a meaningful value here
+        (void)startStatus;  // not all cores return a meaningful value here
 
-        const unsigned long timeoutMs = 15000; // allow a bit more time on congested APs
-        unsigned long       start      = millis();
+        const unsigned long timeoutMs = 15000;  // allow a bit more time on congested APs
+        unsigned long       start     = millis();
         wl_status_t         st;
         while ((st = WiFi.status()) != WL_CONNECTED && (millis() - start < timeoutMs)) {
             switch (st) {
@@ -455,7 +454,7 @@ class WiFiAdapter : public ArduinoNetworkIf {
                     Serial.println("[WiFi] UDP listener started after reconnect");
                 }
             }
-            m_reconnect_backoff_ms = 2000; // reset backoff on success
+            m_reconnect_backoff_ms = 2000;  // reset backoff on success
         } else {
             // Ensure UDP is not used while disconnected/connecting
             if (m_udp_active) {
@@ -491,8 +490,8 @@ class WiFiAdapter : public ArduinoNetworkIf {
     const char*          m_ssid;
     const char*          m_pass;
     WiFiUdpClientWrapper m_udpClientWrapper;
-    bool                 m_udp_active = false;
-    unsigned long        m_reconnect_backoff_ms = 2000; // start with 2s backoff
+    bool                 m_udp_active           = false;
+    unsigned long        m_reconnect_backoff_ms = 2000;  // start with 2s backoff
 };
     #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 
@@ -554,17 +553,29 @@ class FrameParser {
 /* TCP client wrapper and adapter for WiFi (ESP32) */
 class WiFiClientWrapper : public ClientWrapper {
    public:
-    explicit WiFiClientWrapper(WiFiClient c = WiFiClient()) : m_client(c) {}
 
-    void set(WiFiClient c) { m_client = c; }
+    explicit WiFiClientWrapper(WiFiClient c = WiFiClient()) : m_client(c) {
+    }
 
-    int available() override { return m_client ? m_client.available() : 0; }
+    void set(WiFiClient c) {
+        m_client = c;
+    }
 
-    int read_bytes(uint8_t* buf, size_t len) override { return m_client.read(buf, len); }
+    int available() override {
+        return m_client ? m_client.available() : 0;
+    }
 
-    size_t write_bytes(const uint8_t* buf, size_t len) override { return m_client.write(buf, len); }
+    int read_bytes(uint8_t* buf, size_t len) override {
+        return m_client.read(buf, len);
+    }
 
-    bool connected() override { return m_client && m_client.connected(); }
+    size_t write_bytes(const uint8_t* buf, size_t len) override {
+        return m_client.write(buf, len);
+    }
+
+    bool connected() override {
+        return m_client && m_client.connected();
+    }
 
     void stop() override {
         if (m_client) {
@@ -572,24 +583,29 @@ class WiFiClientWrapper : public ClientWrapper {
         }
     }
 
-    bool is_datagram() const override { return false; }
+    bool is_datagram() const override {
+        return false;
+    }
 
    private:
+
     WiFiClient m_client;
 };
 
 class WiFiTcpAdapter : public ArduinoNetworkIf {
    public:
-    WiFiTcpAdapter(const char* s, const char* p, uint16_t port) : m_port(port), m_ssid(s), m_pass(p), m_server(port) {}
+
+    WiFiTcpAdapter(const char* s, const char* p, uint16_t port) : m_port(port), m_ssid(s), m_pass(p), m_server(port) {
+    }
 
     bool begin() override {
         // Station mode tweaks
         WiFi.persistent(false);
         WiFi.mode(WIFI_STA);
         WiFi.setSleep(false);
-#ifdef XCP_ON_WIFI_TX_POWER
+    #ifdef XCP_ON_WIFI_TX_POWER
         WiFi.setTxPower(XCP_ON_WIFI_TX_POWER);
-#endif
+    #endif
         Serial.begin(115200);
         while (!Serial) {
             ;
@@ -597,12 +613,12 @@ class WiFiTcpAdapter : public ArduinoNetworkIf {
         Serial.println("\nBlueparrot XCP (TCP) on WiFi");
 
         // Optional static IP configuration
-#if defined(XCP_ON_ETHERNET_IP_OCTETS)
+    #if defined(XCP_ON_ETHERNET_IP_OCTETS)
         IPAddress ip(XCP_ON_ETHERNET_IP_OCTETS);
         if (!WiFi.config(ip)) {
             Serial.println("[WiFi] Failed to apply static IP config");
         }
-#elif defined(XCP_ON_ETHERNET_IP)
+    #elif defined(XCP_ON_ETHERNET_IP)
         {
             IPAddress ip;
             ip.fromString(XCP_ON_ETHERNET_IP);
@@ -610,7 +626,7 @@ class WiFiTcpAdapter : public ArduinoNetworkIf {
                 Serial.println("[WiFi] Failed to apply static IP config (string)");
             }
         }
-#endif
+    #endif
         WiFi.begin(m_ssid, m_pass);
         unsigned long start = millis();
         while (WiFi.status() != WL_CONNECTED && (millis() - start) < 15000UL) {
@@ -657,11 +673,12 @@ class WiFiTcpAdapter : public ArduinoNetworkIf {
     }
 
    private:
-    uint16_t   m_port;
-    const char* m_ssid;
-    const char* m_pass;
-    WiFiServer  m_server;
-    WiFiClient  m_client;
+
+    uint16_t          m_port;
+    const char*       m_ssid;
+    const char*       m_pass;
+    WiFiServer        m_server;
+    WiFiClient        m_client;
     WiFiClientWrapper m_wrapper;
 };
 
@@ -722,9 +739,9 @@ extern "C" {
         /* Initialize backend network adapter and start listening. */
     #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
         #if (XCP_ON_ETHERNET_PROTOCOL == XCP_ON_ETHERNET_USE_TCP)
-            s_net = new WiFiTcpAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
+        s_net = new WiFiTcpAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
         #else
-            s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
+        s_net = new WiFiAdapter(XCP_ON_ETHERNET_WIFI_SSID, XCP_ON_ETHERNET_WIFI_PASSWORD, XCP_ON_ETHERNET_PORT);
         #endif
     #else
         #if defined(XCP_ON_ETHERNET_IP_OCTETS)
