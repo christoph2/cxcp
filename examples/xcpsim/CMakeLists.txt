@@ -111,7 +111,7 @@ elseif (CMAKE_HOST_UNIX)
     if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     endif ()
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
-    target_link_libraries(xcp_sim_eth ${ADD_LIBS} target_link_libraries)
+    target_link_libraries(xcp_sim_eth ${ADD_LIBS} ${target_link_libraries})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
 
     if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
