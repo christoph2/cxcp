@@ -550,6 +550,7 @@ class FrameParser {
     }
 };
 
+#if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 /* TCP client wrapper and adapter for WiFi (ESP32) */
 class WiFiClientWrapper : public ClientWrapper {
    public:
@@ -681,6 +682,7 @@ class WiFiTcpAdapter : public ArduinoNetworkIf {
     WiFiClient        m_client;
     WiFiClientWrapper m_wrapper;
 };
+#endif // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 
 static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
     if (!s_client)
