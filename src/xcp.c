@@ -136,7 +136,7 @@ void Xcp_ReadMemory(void *dest, void *src, uint16_t count);
 */
 XCP_STATIC Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const *src, Xcp_MtaType *dst);
 
-XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len);
+XCP_STATIC void Xcp_Download_Copy(Xcp_PointerSizeType address, uint8_t ext, uint32_t len);
 
 XCP_STATIC void Xcp_PositiveResponse(void);
 
@@ -1394,7 +1394,7 @@ XCP_STATIC void Xcp_Download_Res(Xcp_PduType const * const pdu) {
         /* OK, regular first-frame transfer. */
         Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_TRUE;
         Xcp_State.masterBlockModeState.remaining           = len - XCP_DOWNLOAD_PAYLOAD_LENGTH;
-        Xcp_Download_Copy((uint32_t)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH));
+        Xcp_Download_Copy((Xcp_PointerSizeType)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH));
         return;
     }
     #endif /* XCP_ENABLE_MASTER_BLOCKMODE */
@@ -1405,7 +1405,7 @@ XCP_STATIC void Xcp_Download_Res(Xcp_PduType const * const pdu) {
         return;
     }
     #endif
-    Xcp_Download_Copy((uint32_t)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(len));
+    Xcp_Download_Copy((Xcp_PointerSizeType)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(len));
     Xcp_PositiveResponse();
 }
 
@@ -1425,7 +1425,7 @@ XCP_STATIC void Xcp_DownloadNext_Res(Xcp_PduType const * const pdu) {
         return;
     }
     len = XCP_MIN(remaining, XCP_DOWNLOAD_PAYLOAD_LENGTH);
-    Xcp_Download_Copy((uint32_t)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(len));
+    Xcp_Download_Copy((Xcp_PointerSizeType)(uintptr_t)(pdu->data + 2), UINT8(0), UINT32(len));
     Xcp_State.masterBlockModeState.remaining -= len;
     if (Xcp_State.masterBlockModeState.remaining == UINT8(0)) {
         Xcp_State.masterBlockModeState.blockTransferActive = (bool)XCP_FALSE;
@@ -1443,7 +1443,7 @@ XCP_STATIC void Xcp_DownloadMax_Res(Xcp_PduType const * const pdu) {
     DBG_TRACE("DOWNLOAD_MAX\n\r");
 
     XCP_ASSERT_PGM_IDLE();
-    Xcp_Download_Copy(UINT32(pdu->data + 1), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH + 1));
+    Xcp_Download_Copy((Xcp_PointerSizeType)(uintptr_t)(pdu->data + 1), UINT8(0), UINT32(XCP_DOWNLOAD_PAYLOAD_LENGTH + 1));
     Xcp_PositiveResponse();
 }
 
@@ -2342,7 +2342,7 @@ XCP_STATIC Xcp_MemoryMappingResultType Xcp_MapMemory(Xcp_MtaType const *src, Xcp
 }
 #endif
 
-XCP_STATIC void Xcp_Download_Copy(uint32_t address, uint8_t ext, uint32_t len) {
+XCP_STATIC void Xcp_Download_Copy(Xcp_PointerSizeType address, uint8_t ext, uint32_t len) {
     Xcp_MtaType src = { 0 };
 
     src.address = address;

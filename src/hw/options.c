@@ -174,16 +174,18 @@ void parse_options(int argc, char **argv, Xcp_OptionsType *options) {
                 break;
             case 'i':
                 if_assigned = 1;
-                strcpy(options->can_interf, optarg);
+                strncpy(options->can_interf, optarg, sizeof(options->can_interf) - 1);
+                options->can_interf[sizeof(options->can_interf) - 1] = '\0';
                 break;
-    #endif
+#endif
         }
     }
 
-    #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
+#if XCP_TRANSPORT_LAYER == XCP_ON_CAN
     if (!if_assigned) {
-        strcpy(options->can_interf, XCP_SOCKET_CAN_DEFAULT_IF);
+        strncpy(options->can_interf, XCP_SOCKET_CAN_DEFAULT_IF, sizeof(options->can_interf) - 1);
+        options->can_interf[sizeof(options->can_interf) - 1] = '\0';
     }
-    #endif
+#endif
 }
 #endif

@@ -1,8 +1,13 @@
 
-import pytest
 import ctypes
+from pathlib import Path
+
+import pytest
 
 DLL_NAME = "./test_cs.so"
+
+if not Path(DLL_NAME).is_file():
+    pytest.skip(f"Missing shared library {DLL_NAME}", allow_module_level=True)
 
 dll = ctypes.CDLL(DLL_NAME)
 calc = dll.Xcp_CalculateChecksum

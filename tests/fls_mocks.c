@@ -32,6 +32,16 @@ void FlsEmu_Close(uint8_t segmentIdx) {
 FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(
     char const * fileName, uint32_t size, FlsEmu_PersistentArrayType* persistentArray
 ) {
+    XCP_UNREFERENCED_PARAMETER(fileName);
+    XCP_UNREFERENCED_PARAMETER(size);
+
+    if (persistentArray != XCP_NULL) {
+        persistentArray->fileHandle     = XCP_NULL;
+        persistentArray->mappingHandle  = XCP_NULL;
+        persistentArray->mappingAddress = XCP_NULL;
+        persistentArray->currentPage    = 0;
+    }
+    return OPEN_EXSISTING;
 }
 
 void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page) {

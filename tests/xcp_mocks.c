@@ -1,6 +1,8 @@
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <time.h>
+#include <string.h>
 
 #include "xcp.h"
 
@@ -15,6 +17,9 @@ uint8_t  sq0_wave;
 uint8_t  sq1_wave;
 float    sine_wave;
 uint32_t end_marker;
+
+static uint8_t  last_send[256];
+static uint16_t last_send_len;
 
 #if 0
 typedef struct {
@@ -70,7 +75,7 @@ void XcpHw_Init(void) {
     voltage2 = 0xbbbbbbbb;
     voltage3 = 0xccccccc;
     voltage4 = 0xddddddd;
-    printf("voltage1: %p %f\n", &voltage1, voltage1);
+    printf("voltage1: %p 0x%08" PRIx32 "\n", (void *)&voltage1, voltage1);
     triangle_wave = 0xee;
     sq0_wave      = 0xff;
     sq1_wave      = 0x99;
@@ -108,8 +113,27 @@ void Hexdump(uint8_t const *buf, uint16_t sz) {
     printf("\n\r");
 }
 
+void XcpTl_ResetLastSend(void) {
+    XCP_TL_ENTER_CRITICAL();
+    last_send_len = 0;
+    XCP_TL_LEAVE_CRITICAL();
+}
+
+uint16_t XcpTl_GetLastSend(uint8_t *buf, uint16_t max_len) {
+    uint16_t copy_len;
+    XCP_TL_ENTER_CRITICAL();
+    copy_len = (last_send_len < max_len) ? last_send_len : max_len;
+    if ((buf != NULL) && (copy_len > 0U)) {
+        memcpy(buf, last_send, copy_len);
+    }
+    XCP_TL_LEAVE_CRITICAL();
+    return last_send_len;
+}
+
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_ENTER_CRITICAL();
+    last_send_len = (len < (uint16_t)sizeof(last_send)) ? len : (uint16_t)sizeof(last_send);
+    memcpy(last_send, buf, last_send_len);
     printf("Send: %d bytes [%p]\n", len, buf);
     Hexdump(buf, len);
     XCP_TL_LEAVE_CRITICAL();

@@ -73,7 +73,7 @@ void Kv_Check(char *id, canStatus stat) {
     if (stat != canOK) {
         err_buf[0] = '\0';
         canGetErrorText(stat, err_buf, sizeof(err_buf));
-        sprintf(msg_buf, "%s: failed, stat=%d (%s)\n", id, (int)stat, err_buf);
+        snprintf(msg_buf, sizeof(msg_buf), "%s: failed, stat=%d (%s)\n", id, (int)stat, err_buf);
         Kv_Error(msg_buf);
     }
 }
@@ -296,13 +296,13 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     int  flag;
     char msg_buf[256];
 
-    XCP_TL_ENTER_CRITICAL();
     if (len > KV_MAX_DLC) {
-        sprintf(msg_buf, "XcpTl_Send -- at most %d bytes supported, got %d.\n", KV_MAX_DLC, len);
+        snprintf(msg_buf, sizeof(msg_buf), "XcpTl_Send -- at most %d bytes supported, got %d.\n", KV_MAX_DLC, len);
         Kv_Error((const char *)msg_buf);
         return;
     }
 
+    XCP_TL_ENTER_CRITICAL();
     id   = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
     ext  = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
     flag = ext ? canMSG_EXT : canMSG_STD;

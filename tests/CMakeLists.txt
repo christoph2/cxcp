@@ -76,14 +76,18 @@ message("Compiling Cpp with: " ${CMAKE_CXX_COMPILER_ID})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(EXTENSION_INCS ${CMAKE_CURRENT_SOURCE_DIR}/../inc ${CMAKE_CURRENT_SOURCE_DIR}/. ${CMAKE_CURRENT_SOURCE_DIR}/../flsemu)
+set(EXTENSION_INCS ${CMAKE_CURRENT_SOURCE_DIR}/../inc ${CMAKE_CURRENT_SOURCE_DIR}/. ${CMAKE_CURRENT_SOURCE_DIR}/../flsemu ${CMAKE_CURRENT_SOURCE_DIR}/../tools)
 
 pybind11_add_module(cxcp wrapper.cpp checksum_mocks.c ../src/xcp.c ../src/xcp_checksum.c
-        ../src/xcp_daq.c ../src/xcp_util.c
+        ../src/xcp_daq.c ../src/xcp_util.c bindings/daq_stubs.c
         ../flsemu/common.c fls_mocks.c xcp_mocks.c
 )
 # xcp_init.c
 
 target_include_directories(cxcp PRIVATE ${EXTENSION_INCS})
+target_compile_definitions(cxcp PRIVATE XCP_BUILD_TYPE=XCP_DEBUG_BUILD)
+
+pybind11_add_module(cxcp_core bindings/core_checksum.cpp bindings/checksum_shim.c ../src/xcp_checksum.c ../src/xcp_util.c)
+target_include_directories(cxcp_core PRIVATE ${EXTENSION_INCS})
 
 # install(TARGETS cxcp LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/.)

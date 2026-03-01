@@ -2,7 +2,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <algorithm>
+#include <array>
 #include <sstream>
+#include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
@@ -12,7 +15,11 @@ extern "C" {
 
     char* data_start();
     char* data_end();
+    uint16_t XcpTl_GetLastSend(uint8_t* buf, uint16_t max_len);
+    void XcpTl_ResetLastSend(void);
 }
+
+namespace py = pybind11;
 
 struct Mta {
     Xcp_PointerSizeType address;
@@ -98,7 +105,7 @@ auto get_dynamic_daq_entity(std::uint16_t idx) -> DaqEntity {
 auto get_dynamic_daq_entities() -> std::vector<DaqEntity> {
     std::vector<DaqEntity> entities;
 
-    for (auto idx = 0; idx < XcpDaq_GetDynamicDaqEntityCount(); ++idx) {
+    for (auto idx = 0; idx < XcpDaq_TotalDynamicEntityCount(); ++idx) {
         entities.push_back(get_dynamic_daq_entity(idx));
     }
     return entities;
@@ -119,6 +126,55 @@ auto daq_dequeue() -> std::tuple<bool, std::string> {
         return std::make_tuple(return_code, std::string());
     }
     return std::make_tuple(return_code, std::move(std::string(reinterpret_cast<const char*>(data), length)));
+}
+
+void xcp_set_mta_ptr(std::size_t address, std::uint8_t ext) {
+    Xcp_MtaType mta = { 0 };
+    mta.ext         = ext;
+    mta.address     = static_cast<Xcp_PointerSizeType>(address);
+    Xcp_SetMta(mta);
+}
+
+auto dispatch_command(py::bytes request) -> std::tuple<std::uint16_t, std::uint16_t, py::bytes> {
+    const std::string request_bytes = request;
+    std::vector<std::uint8_t> request_vec(request_bytes.begin(), request_bytes.end());
+    Xcp_PduType pdu{ static_cast<uint16_t>(request_vec.size()), request_vec.data() };
+    std::array<uint8_t, 256> buffer{};
+
+    XcpTl_ResetLastSend();
+    Xcp_DispatchCommand(&pdu);
+
+    const auto captured_len = XcpTl_GetLastSend(buffer.data(), static_cast<uint16_t>(buffer.size()));
+    constexpr std::size_t payload_offset = XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+
+    if (captured_len < payload_offset) {
+        return std::make_tuple(0, 0, py::bytes());
+    }
+
+    uint16_t payload_len = 0;
+#if XCP_TRANSPORT_LAYER_LENGTH_SIZE == 1
+    payload_len = buffer[0];
+#elif XCP_TRANSPORT_LAYER_LENGTH_SIZE == 2
+    payload_len = static_cast<uint16_t>(buffer[0] | static_cast<uint16_t>(buffer[1] << 8U));
+#else
+    payload_len = static_cast<uint16_t>(captured_len - payload_offset);
+#endif
+
+    uint16_t counter = 0;
+#if XCP_TRANSPORT_LAYER_COUNTER_SIZE == 1
+    counter = buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE];
+#elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
+    counter = static_cast<uint16_t>(
+        buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE] |
+        static_cast<uint16_t>(buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] << 8U)
+    );
+#endif
+
+    const std::size_t available = (captured_len > payload_offset) ? (captured_len - payload_offset) : 0U;
+    const std::size_t copy_len  = std::min<std::size_t>(payload_len, available);
+    return std::make_tuple(
+        payload_len, counter, py::bytes(reinterpret_cast<const char*>(buffer.data() + payload_offset), copy_len)
+    );
 }
 
 struct QueueInfo {
@@ -167,8 +223,6 @@ struct MemoryInfo {
     std::uint32_t size;
 };
 
-namespace py = pybind11;
-
 PYBIND11_MODULE(cxcp, m) {
     m.def("xcp_init", &Xcp_Init);
     m.def("xcpdaq_init", &XcpDaq_Init);
@@ -186,6 +240,8 @@ PYBIND11_MODULE(cxcp, m) {
     m.def("xcpdaq_trigger_event", &XcpDaq_TriggerEvent);
     m.def("daq_enqueue", &daq_enqueue);
     m.def("daq_dequeue", &daq_dequeue);
+    m.def("dispatch_command", &dispatch_command);
+    m.def("xcp_set_mta", &xcp_set_mta_ptr, py::arg("address"), py::arg("ext") = 0);
 
     m.def("Xcp_GetConnectionState", &Xcp_GetConnectionState);
     m.def("Xcp_CalculateChecksum", &Xcp_CalculateChecksum);  // , py::return_value_policy::move

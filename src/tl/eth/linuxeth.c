@@ -78,7 +78,7 @@ void XcpTl_Init(void) {
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
-    sprintf(port, "%d", Xcp_Options.port);
+    (void)snprintf(port, sizeof(port), "%d", Xcp_Options.port);
     hints.ai_family   = Xcp_Options.ipv6 ? PF_INET6 : PF_INET;
     hints.ai_socktype = XcpTl_Connection.socketType;
     hints.ai_flags    = AI_NUMERICHOST | AI_PASSIVE;

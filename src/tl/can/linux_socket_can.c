@@ -68,7 +68,17 @@ static XcpTl_ConnectionType XcpTl_Connection;
 int locate_interface(int socket, char const *name) {
     struct ifreq ifr;
 
-    strcpy(ifr.ifr_name, name);
+    memset(&ifr, 0, sizeof(ifr));
+    if (name == NULL) {
+        errno = EINVAL;
+        errno_abort("locate_interface::name");
+    }
+    if (strnlen(name, IFNAMSIZ) >= IFNAMSIZ) {
+        errno = ENAMETOOLONG;
+        errno_abort("locate_interface::ifr_name too long");
+    }
+    strncpy(ifr.ifr_name, name, IFNAMSIZ - 1);
+    ifr.ifr_name[IFNAMSIZ - 1] = '\0';
     if (ioctl(socket, SIOCGIFINDEX, &ifr) == -1) {
         errno_abort("locate_interface::ioctl()");
     }
@@ -252,7 +262,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     if (buf == NULL || len == 0) {
         return;
     }
-    if (len > 8U) {
+    if (len > 8U || len > (uint16_t)sizeof(frame.data)) {
         XcpHw_ErrorMsg("XcpTl_Send: DLC > 8 not supported (classical CAN)", EINVAL);
         return;
     }

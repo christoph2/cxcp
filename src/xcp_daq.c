@@ -32,6 +32,7 @@
 #if defined(_WIN32)
     #include <stdio.h>
 #endif /* _WIN32 */
+#include <inttypes.h>
 
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
@@ -474,7 +475,8 @@ void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xc
     Xcp_State = Xcp_GetState();
 
     DBG_TRACE(
-        "\nXcpDaq_WriteEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", address, adddrExt, elemSize, bitOffset
+        "\nXcpDaq_WriteEntry: [address: 0x%" PRIxPTR " ext: 0x%02x size: %u bitOffset: %u]\n\r",
+        (uintptr_t)address, adddrExt, elemSize, bitOffset
     );
 
     entry = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
@@ -537,7 +539,8 @@ void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, 
 #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
     DBG_TRACE(
-        "\nXcpDaq_ReadEntry: [address: 0x%08x ext: 0x%02x size: %u bitOffset: %u]\n\r", *address, *adddrExt, *elemSize, *bitOffset
+        "\nXcpDaq_ReadEntry: [address: 0x%" PRIxPTR " ext: 0x%02x size: %u bitOffset: %u]\n\r",
+        (uintptr_t)*address, *adddrExt, *elemSize, *bitOffset
     );
 
     Xcp_State->daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;  // s. `XcpDaq_WriteEntry` comment.
