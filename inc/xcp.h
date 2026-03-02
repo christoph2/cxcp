@@ -172,8 +172,10 @@ extern "C" {
             #define XCP_ON_SXI_CONFIG (SERIAL_8N1)
         #endif /* XCP_ON_SXI_CONFIG */
 
-        #if ((XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                   \
-             (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON))
+        #if (                                                                                                                      \
+            (XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON) || (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON) ||                                    \
+            (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)                                                                                  \
+        )
             #define XCP_ENABLE_TRANSPORT_LAYER_CMD (XCP_ON)
         #endif
 
