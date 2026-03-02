@@ -550,7 +550,7 @@ class FrameParser {
     }
 };
 
-#if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
+    #if XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 /* TCP client wrapper and adapter for WiFi (ESP32) */
 class WiFiClientWrapper : public ClientWrapper {
    public:
@@ -604,22 +604,22 @@ class WiFiTcpAdapter : public ArduinoNetworkIf {
         WiFi.persistent(false);
         WiFi.mode(WIFI_STA);
         WiFi.setSleep(false);
-    #ifdef XCP_ON_WIFI_TX_POWER
+        #ifdef XCP_ON_WIFI_TX_POWER
         WiFi.setTxPower(XCP_ON_WIFI_TX_POWER);
-    #endif
+        #endif
         Serial.begin(115200);
         while (!Serial) {
             ;
         }
         Serial.println("\nBlueparrot XCP (TCP) on WiFi");
 
-        // Optional static IP configuration
-    #if defined(XCP_ON_ETHERNET_IP_OCTETS)
+            // Optional static IP configuration
+        #if defined(XCP_ON_ETHERNET_IP_OCTETS)
         IPAddress ip(XCP_ON_ETHERNET_IP_OCTETS);
         if (!WiFi.config(ip)) {
             Serial.println("[WiFi] Failed to apply static IP config");
         }
-    #elif defined(XCP_ON_ETHERNET_IP)
+        #elif defined(XCP_ON_ETHERNET_IP)
         {
             IPAddress ip;
             ip.fromString(XCP_ON_ETHERNET_IP);
@@ -627,7 +627,7 @@ class WiFiTcpAdapter : public ArduinoNetworkIf {
                 Serial.println("[WiFi] Failed to apply static IP config (string)");
             }
         }
-    #endif
+        #endif
         WiFi.begin(m_ssid, m_pass);
         unsigned long start = millis();
         while (WiFi.status() != WL_CONNECTED && (millis() - start) < 15000UL) {
@@ -682,7 +682,7 @@ class WiFiTcpAdapter : public ArduinoNetworkIf {
     WiFiClient        m_client;
     WiFiClientWrapper m_wrapper;
 };
-#endif // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
+    #endif  // XCP_ON_ETHERNET_ARDUINO_DRIVER == XCP_ON_ETHERNET_DRIVER_WIFI
 
 static bool ar_read_n(uint8_t* out, size_t n, unsigned long timeout_ms) {
     if (!s_client)

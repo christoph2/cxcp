@@ -13,10 +13,10 @@
 extern "C" {
 #include "xcp.h"
 
-    char* data_start();
-    char* data_end();
+    char*    data_start();
+    char*    data_end();
     uint16_t XcpTl_GetLastSend(uint8_t* buf, uint16_t max_len);
-    void XcpTl_ResetLastSend(void);
+    void     XcpTl_ResetLastSend(void);
 }
 
 namespace py = pybind11;
@@ -136,15 +136,15 @@ void xcp_set_mta_ptr(std::size_t address, std::uint8_t ext) {
 }
 
 auto dispatch_command(py::bytes request) -> std::tuple<std::uint16_t, std::uint16_t, py::bytes> {
-    const std::string request_bytes = request;
+    const std::string         request_bytes = request;
     std::vector<std::uint8_t> request_vec(request_bytes.begin(), request_bytes.end());
-    Xcp_PduType pdu{ static_cast<uint16_t>(request_vec.size()), request_vec.data() };
-    std::array<uint8_t, 256> buffer{};
+    Xcp_PduType               pdu{ static_cast<uint16_t>(request_vec.size()), request_vec.data() };
+    std::array<uint8_t, 256>  buffer{};
 
     XcpTl_ResetLastSend();
     Xcp_DispatchCommand(&pdu);
 
-    const auto captured_len = XcpTl_GetLastSend(buffer.data(), static_cast<uint16_t>(buffer.size()));
+    const auto            captured_len   = XcpTl_GetLastSend(buffer.data(), static_cast<uint16_t>(buffer.size()));
     constexpr std::size_t payload_offset = XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
 
     if (captured_len < payload_offset) {
@@ -165,8 +165,7 @@ auto dispatch_command(py::bytes request) -> std::tuple<std::uint16_t, std::uint1
     counter = buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE];
 #elif XCP_TRANSPORT_LAYER_COUNTER_SIZE == 2
     counter = static_cast<uint16_t>(
-        buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE] |
-        static_cast<uint16_t>(buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] << 8U)
+        buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE] | static_cast<uint16_t>(buffer[XCP_TRANSPORT_LAYER_LENGTH_SIZE + 1] << 8U)
     );
 #endif
 
