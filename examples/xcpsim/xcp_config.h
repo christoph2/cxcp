@@ -164,6 +164,16 @@
 #define XCP_ENABLE_SERVICE_REQUEST_API XCP_OFF
 
 /*
+**  Time Correlation (Advanced, XCP 1.1)
+*/
+#define XCP_ENABLE_TIME_CORRELATION     XCP_ON
+#define XCP_TIMECORR_DEFAULT_CLUSTER_ID (0x0001u) /* Multicast group 239.255.0.1 */
+#define XCP_TIMECORR_XCP_SLV_CLK        (0)       /* Free-running, readable */
+#define XCP_TIMECORR_GRANDM_CLK         (0)       /* No dedicated grandmaster clock by default */
+#define XCP_TIMECORR_ECU_CLK            (0)       /* No ECU clock by default */
+#define XCP_TIMECORR_SLV_NATIVE_TS_SIZE (4u)      /* 32-bit slave clock */
+
+/*
 **  Transport-Layer specific Options (may not apply to every Transport).
 */
 #ifdef TP_CAN

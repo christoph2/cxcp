@@ -29,6 +29,10 @@
 #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    #include "xcp_timecorr.h"
+#endif
+
 #include <inttypes.h> /* for PRIxPTR */
 
 // #include "common/tusb_debug.h"
@@ -288,6 +292,11 @@ XCP_STATIC void Xcp_StartStopSynch_Res(Xcp_PduType const * const pdu);
 XCP_STATIC void Xcp_GetDaqClock_Res(Xcp_PduType const * const pdu);
 
     #endif /* XCP_ENABLE_GET_DAQ_CLOCK */
+
+    #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+XCP_STATIC void Xcp_TimeCorrelationProperties_Res(Xcp_PduType const * const pdu);
+    #endif /* XCP_ENABLE_TIME_CORRELATION */
+
     #if XCP_ENABLE_READ_DAQ == XCP_ON
 XCP_STATIC void Xcp_ReadDaq_Res(Xcp_PduType const * const pdu);
     #endif /* XCP_ENABLE_READ_DAQ */
@@ -630,6 +639,11 @@ XCP_STATIC const Xcp_ServerCommandType Xcp_ServerCommands[] = {
 #else
     Xcp_CommandNotImplemented_Res,
 #endif
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    Xcp_TimeCorrelationProperties_Res,
+#else
+    Xcp_CommandNotImplemented_Res,
+#endif
     /* lint -restore */
 };
 
@@ -669,6 +683,10 @@ void Xcp_Init(void) {
     Xcp_State.statistics.ctosReceived = UINT32(0);
 #endif /* XCP_ENABLE_STATISTICS */
     XcpTl_Init();
+
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    XcpTimecorr_Init();
+#endif /* XCP_ENABLE_TIME_CORRELATION */
 
 #if (XCP_ENABLE_BUILD_CHECKSUM == XCP_ON) && (XCP_CHECKSUM_CHUNKED_CALCULATION == XCP_ON)
     Xcp_ChecksumInit();
@@ -955,7 +973,7 @@ void Xcp_DispatchCommand(Xcp_PduType const * const pdu) {
 #if XCP_ENABLE_STATISTICS == XCP_ON
             Xcp_State.statistics.ctosReceived++;
 #endif /* XCP_ENABLE_STATISTICS */
-            if (cmd < 0xc8) {
+            if (cmd < 0xc6) {
                 Xcp_CommandNotImplemented_Res(pdu);
             } else {
                 Xcp_ServerCommands[UINT8(0xff) - cmd](pdu);
@@ -1901,6 +1919,16 @@ XCP_STATIC void Xcp_GetDaqClock_Res(Xcp_PduType const * const pdu) {
 
     timestamp = XcpHw_GetTimerCounter();
     DBG_TRACE("GET_DAQ_CLOCK [timestamp: %u]\n\r", timestamp);
+
+        #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    if (XcpTimecorr_GetResponseFmt() >= XCP_TIMECORR_FMT_EXT_1) {
+        /* Extended mode: send EV_TIME_SYNC event packet instead of legacy response */
+        XcpTimecorr_SendTimeSyncEvent(XCP_TIMECORR_TRIG_HW);
+        return;
+    }
+        #endif /* XCP_ENABLE_TIME_CORRELATION */
+
+    /* Legacy mode response */
     Xcp_Send8(
         UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0), XCP_LOBYTE(XCP_LOWORD(timestamp)),
         XCP_HIBYTE(XCP_LOWORD(timestamp)), XCP_LOBYTE(XCP_HIWORD(timestamp)), XCP_HIBYTE(XCP_HIWORD(timestamp))
@@ -1908,6 +1936,12 @@ XCP_STATIC void Xcp_GetDaqClock_Res(Xcp_PduType const * const pdu) {
 }
 
     #endif /* XCP_ENABLE_GET_DAQ_CLOCK */
+
+    #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+XCP_STATIC void Xcp_TimeCorrelationProperties_Res(Xcp_PduType const * const pdu) {
+    XcpTimecorr_HandleTimeCorrelationProperties(pdu);
+}
+    #endif /* XCP_ENABLE_TIME_CORRELATION */
 
     #if XCP_ENABLE_GET_DAQ_RESOLUTION_INFO == XCP_ON
 

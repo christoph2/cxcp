@@ -861,7 +861,9 @@ extern "C" {
         XCP_PROGRAM_FORMAT         = UINT8(0xCB),
         XCP_PROGRAM_NEXT           = UINT8(0xCA),
         XCP_PROGRAM_MAX            = UINT8(0xC9),
-        XCP_PROGRAM_VERIFY         = UINT8(0xC8)
+        XCP_PROGRAM_VERIFY         = UINT8(0xC8),
+        /* NEW IN 1.1 */
+        XCP_TIME_CORRELATION_PROPERTIES = UINT8(0xC6)
     } Xcp_CommandType;
 
     typedef enum tagXcp_ReturnType {
@@ -892,7 +894,7 @@ extern "C" {
         /* NEW IN 1.1 */
         ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33), /* Access to the requested resource is temporary not
                                                                       possible.   S3 */
-
+        ERR_TIMECORR_STATE_CHANGE = UINT8(0x34),             /* State change occurred during time correlation. S3 */
         /* Internal Success Code - not related to XCP spec. */
         ERR_SUCCESS = UINT8(0xff)
     } Xcp_ReturnType;
@@ -1494,5 +1496,10 @@ typedef uint32_t Xcp_ChecksumType;
 }
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
+
+    /* Include time correlation module after all XCP types are defined */
+    #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+        #include "xcp_timecorr.h"
+    #endif
 
 #endif /* __CXCP_H */

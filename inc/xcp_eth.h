@@ -51,6 +51,7 @@ typedef struct tagXcpTl_ConnectionType {
     SOCKADDR_STORAGE localAddress;
     SOCKET           boundSocket;
     SOCKET           connectedSocket;
+    SOCKET           multicastSocket;
     bool             connected;
     int              socketType;
 } XcpTl_ConnectionType;
@@ -61,6 +62,7 @@ typedef struct tagXcpTl_ConnectionType {
     struct sockaddr_storage localAddress;
     int                     boundSocket;
     int                     connectedSocket;
+    int                     multicastSocket;
     bool                    connected;
     int                     socketType;
 } XcpTl_ConnectionType;

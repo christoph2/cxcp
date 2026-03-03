@@ -24,6 +24,7 @@
  */
 
 #include <memory.h>
+#include <process.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -34,6 +35,12 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #include "xcp_config.h"
+
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    #include "xcp_timecorr.h"
+/* Forward declaration for multicast thread */
+static unsigned __stdcall XcpTl_MulticastThread(void *param);
+#endif /* XCP_ENABLE_TIME_CORRELATION */
 
 /* Protocol/Address-Family selection: allow runtime when available, otherwise use compile-time defaults */
 #ifndef XCP_ETH_USE_TCP
@@ -204,11 +211,62 @@ void XcpTl_Init(void) {
     mode = 1;
     ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &ul);
 #endif
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    /* Create multicast socket for GET_DAQ_CLOCK_MULTICAST */
+    XcpTl_Connection.multicastSocket = INVALID_SOCKET;
+    {
+        SOCKET             msock;
+        struct sockaddr_in maddr;
+        struct ip_mreq     mreq;
+        uint16_t           cluster_id  = XcpTimecorr_GetClusterAffiliation();
+        unsigned char      mcast_upper = (unsigned char)((cluster_id >> 8u) & 0xFFu);
+        unsigned char      mcast_lower = (unsigned char)(cluster_id & 0xFFu);
+        char               mcast_ip[32];
+
+        _snprintf(mcast_ip, sizeof(mcast_ip), "239.255.%u.%u", (unsigned)mcast_upper, (unsigned)mcast_lower);
+
+        msock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (msock != INVALID_SOCKET) {
+            int reuse = 1;
+            setsockopt(msock, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse));
+
+            ZeroMemory(&maddr, sizeof(maddr));
+            maddr.sin_family      = AF_INET;
+            maddr.sin_port        = htons(XCP_TIMECORR_MULTICAST_PORT);
+            maddr.sin_addr.s_addr = INADDR_ANY;
+
+            if (bind(msock, (struct sockaddr *)&maddr, sizeof(maddr)) == 0) {
+                mreq.imr_multiaddr.s_addr = inet_addr(mcast_ip);
+                mreq.imr_interface.s_addr = INADDR_ANY;
+                if (setsockopt(msock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&mreq, sizeof(mreq)) == 0) {
+                    XcpTl_Connection.multicastSocket = msock;
+                    /* Start multicast receive thread */
+                    _beginthreadex(NULL, 0, XcpTl_MulticastThread, NULL, 0, NULL);
+                    printf("XCPonEth -- Multicast listener: %s:%u\n", mcast_ip, XCP_TIMECORR_MULTICAST_PORT);
+                } else {
+                    XcpHw_ErrorMsg("XcpTl_Init:IP_ADD_MEMBERSHIP", WSAGetLastError());
+                    closesocket(msock);
+                }
+            } else {
+                XcpHw_ErrorMsg("XcpTl_Init:multicast bind()", WSAGetLastError());
+                closesocket(msock);
+            }
+        } else {
+            XcpHw_ErrorMsg("XcpTl_Init:multicast socket()", WSAGetLastError());
+        }
+    }
+#endif /* XCP_ENABLE_TIME_CORRELATION */
 }
 
 void XcpTl_PrintConnectionInformation(void);
 
 void XcpTl_DeInit(void) {
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    if (XcpTl_Connection.multicastSocket != INVALID_SOCKET) {
+        closesocket(XcpTl_Connection.multicastSocket);
+        XcpTl_Connection.multicastSocket = INVALID_SOCKET;
+    }
+#endif /* XCP_ENABLE_TIME_CORRELATION */
     closesocket(XcpTl_Connection.boundSocket);
     WSACleanup();
 }
@@ -276,3 +334,84 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     }
     XCP_TL_LEAVE_CRITICAL();
 }
+
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+
+/*
+ * Thread that receives GET_DAQ_CLOCK_MULTICAST packets on the multicast UDP socket.
+ * XCP ETH multicast packet layout:
+ *   [0..1]  len (WORD, Intel)
+ *   [2..3]  counter (WORD, Intel) - transport layer counter
+ *   [4]     0xF2  (TRANSPORT_LAYER_CMD)
+ *   [5]     0xFA  (GET_DAQ_CLOCK_MULTICAST sub-command)
+ *   [6..7]  cluster_id (WORD, Intel)
+ *   [8]     counter byte (XCP application counter)
+ */
+unsigned __stdcall XcpTl_MulticastThread(void *param) {
+    uint8_t  buf[32];
+    int      n;
+    uint16_t cluster_id;
+    uint8_t  counter;
+
+    (void)param;
+
+    while (XcpTl_Connection.multicastSocket != INVALID_SOCKET) {
+        n = recv(XcpTl_Connection.multicastSocket, (char *)buf, (int)sizeof(buf), 0);
+        if (n < 9) {
+            /* Too short for a valid multicast XCP packet */
+            continue;
+        }
+        /* Check transport layer command byte and sub-command */
+        if (buf[4] != UINT8(0xF2) || buf[5] != UINT8(0xFA)) {
+            continue;
+        }
+        cluster_id = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
+        counter    = buf[8];
+        XcpTimecorr_HandleMulticast(cluster_id, counter);
+    }
+    return 0;
+}
+
+/*
+ * Handle GET_DAQ_CLOCK_MULTICAST arriving via the unicast channel
+ * (transport layer command 0xF2, sub-command 0xFA).
+ */
+void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
+    uint8_t sub_cmd = Xcp_GetByte(pdu, UINT8(1));
+
+    if (sub_cmd == UINT8(0xFA)) { /* GET_DAQ_CLOCK_MULTICAST */
+        uint16_t cluster_id = Xcp_GetWord(pdu, UINT8(2));
+        uint8_t  counter    = Xcp_GetByte(pdu, UINT8(4));
+        XcpTimecorr_HandleMulticast(cluster_id, counter);
+    }
+}
+
+/*
+ * Rejoin a new multicast group when cluster affiliation changes.
+ */
+void XcpTl_UpdateMulticastGroup(uint16_t cluster_id) {
+    struct ip_mreq mreq;
+    char           mcast_ip[32];
+    unsigned char  mcast_upper = (unsigned char)((cluster_id >> 8u) & 0xFFu);
+    unsigned char  mcast_lower = (unsigned char)(cluster_id & 0xFFu);
+
+    if (XcpTl_Connection.multicastSocket == INVALID_SOCKET) {
+        return;
+    }
+    _snprintf(mcast_ip, sizeof(mcast_ip), "239.255.%u.%u", (unsigned)mcast_upper, (unsigned)mcast_lower);
+    mreq.imr_multiaddr.s_addr = inet_addr(mcast_ip);
+    mreq.imr_interface.s_addr = INADDR_ANY;
+    setsockopt(XcpTl_Connection.multicastSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&mreq, sizeof(mreq));
+}
+
+#else /* !XCP_ENABLE_TIME_CORRELATION */
+
+void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
+    (void)pdu;
+}
+
+void XcpTl_UpdateMulticastGroup(uint16_t cluster_id) {
+    (void)cluster_id;
+}
+
+#endif /* XCP_ENABLE_TIME_CORRELATION */
