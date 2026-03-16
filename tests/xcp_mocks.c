@@ -1,8 +1,8 @@
 
 #include <inttypes.h>
 #include <stdint.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
 
 #include "xcp.h"
 
