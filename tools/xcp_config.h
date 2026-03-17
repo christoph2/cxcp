@@ -119,7 +119,7 @@
 
     #if !defined(XCP_BUILD_TYPE)
         #define XCP_BUILD_TYPE XCP_RELEASE_BUILD
-        // #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
+    // #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
     #endif
     #define XCP_ENABLE_LOGGING         (XCP_ON)
     #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_ON)
