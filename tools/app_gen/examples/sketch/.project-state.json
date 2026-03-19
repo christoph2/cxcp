@@ -1,0 +1,28 @@
+{
+    "hashes": {
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\volt.json": "e4ed24f203f3d520d628571d827403d7e0f665d5350caccc8cf19f1e04df4a17",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\sketch\\arduino-build\\sketch.ino.elf": "c7e31ca695fe0ac66e7f0b1c336a1ed96f4d766c988b778d8ddc861ab446a01a",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\sketch\\hello_xcp.a2l": "10dea7911fded29ea9d00d49ab99606d4b19e33ff4cfe58acda7105ae78b204a",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\sketch\\xcp_rec_config.json": "2c2d5eddf5dee1546eb20076454a4c2932034d29c35a381c1175731a01e9f3ab",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\sketch\\user_code.ino": "952b0c88fb5883bf2fac86d552abe6a711284635fbb9953fdd177f90f5fc4933",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\volt.json": "e4ed24f203f3d520d628571d827403d7e0f665d5350caccc8cf19f1e04df4a17",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\sketch\\arduino-build\\sketch.ino.elf": "725cc6899101cfdc12bf0fa9fa766e39ee3aabd7b5e92bf58c79051f48589d4d",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\sketch\\sketch.ino": "78e2d21a3e7dd3b1a75b7a69d56c63ee4c4166aee5beee6be7cfcc82caae324d",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\sketch\\user_code.ino": "952b0c88fb5883bf2fac86d552abe6a711284635fbb9953fdd177f90f5fc4933",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\sketch\\hello_xcp.a2l": "10dea7911fded29ea9d00d49ab99606d4b19e33ff4cfe58acda7105ae78b204a",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\sketch\\xcp_rec_config.json": "4425776a0b232bbceeab5eb344613381c7a62a1618b2e8e857e6237462c11fd2",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\sketch\\xcp.h": "da8dff7a0bf093fb333f6b0c3740515ff20ff877faa354413a8ac289b8e896e1",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\examples\\sketch\\xcp_config.h": "2b76a8192db7899497f001989827d6a4bb53871e8efa86b241a625f978ff208a",
+        "C:\\csProjects\\cxcp\\tools\\app_gen\\src\\pyxcp_appgen\\data\\xcp_config_defaults.json": "9a1c51337d76f637c4e7c9c7c2679883b87b8d4fefeb3a1e02dd932ff5e01109"
+    },
+    "boards": {
+        "selected": {
+            "COM10": "arduino:avr:uno"
+        },
+        "available": {
+            "COM10": "arduino:avr:uno",
+            "COM4": "arduino:avr:uno",
+            "COM8": "esp32:esp32:esp32_family"
+        }
+    }
+}

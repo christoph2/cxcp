@@ -1,0 +1,53 @@
+
+[
+    {
+        "name": "mainloop",
+        "event_num": 0,
+        "stim": false,
+        "enable_timestamps": false,
+        "measurements": [
+            [
+                "voltage1",
+                8389193,
+                0,
+                "F32"
+            ],
+            [
+                "voltage2",
+                8389189,
+                0,
+                "F32"
+            ],
+            [
+                "loop_counter",
+                null,
+                0,
+                "none"
+            ]
+        ],
+        "priority": 0,
+        "prescaler": 1
+    },
+    {
+        "name": "calc_speed",
+        "event_num": 0,
+        "stim": false,
+        "enable_timestamps": false,
+        "measurements": [
+            [
+                "current_speed",
+                null,
+                0,
+                "none"
+            ],
+            [
+                "new_speed",
+                null,
+                0,
+                "none"
+            ]
+        ],
+        "priority": 0,
+        "prescaler": 1
+    }
+]

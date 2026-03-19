@@ -1,0 +1,108 @@
+
+ASAP2_VERSION 1 71
+/begin PROJECT hello_xcp ""
+/begin HEADER "" VERSION "1.0" PROJECT_NO VECTOR /end HEADER
+
+    
+/begin MODULE hello_xcp ""
+/include "XCP_104.aml"
+/begin MOD_COMMON ""
+BYTE_ORDER MSB_LAST
+ALIGNMENT BYTE 1
+ALIGNMENT WORD 1
+ALIGNMENT LONG 1
+ALIGNMENT FLOAT16 IEEE 1
+ALIGNMENT FLOAT32 IEEE 1
+ALIGNMENT FLOAT64 IEEE 1
+ALIGNMENT INT64 1
+/end MOD_COMMON
+
+/begin CHARACTERISTIC params.counter_max "Maximum counter value" VALUE 0x80010000 U16 0 NO_COMPU_METHOD 0 2000  /end CHARACTERISTIC
+/begin CHARACTERISTIC params.delay_us "Mainloop delay time in us" VALUE 0x80010004 U32 0 NO_COMPU_METHOD 0 999999 PHYS_UNIT  + c['phys_unit'] +  /end CHARACTERISTIC
+/begin CHARACTERISTIC params.acceleration "Acceleration" VALUE 0x80010008 F32 0 NO_COMPU_METHOD -10 10 PHYS_UNIT  + c['phys_unit'] +  /end CHARACTERISTIC
+
+
+/begin MEASUREMENT temperature "Motor temperature in °C" UBYTE conv.temperature 0 0 -55 200 ECU_ADDRESS 0x27002 ECU_ADDRESS_EXTENSION 1  READ_WRITE
+/begin IF_DATA XCP
+/begin DAQ_EVENT VARIABLE
+/begin DEFAULT_EVENT_LIST EVENT 0 /end DEFAULT_EVENT_LIST
+/end DAQ_EVENT
+/end IF_DATA
+/end MEASUREMENT
+
+
+/begin MEASUREMENT speed "Speed in km/h" FLOAT32_IEEE NO_COMPU_METHOD 0 0 0 250 ECU_ADDRESS 0x318A0 ECU_ADDRESS_EXTENSION 1 PHYS_UNIT  + m['phys_unit'] +  READ_WRITE
+/begin IF_DATA XCP
+/begin DAQ_EVENT VARIABLE
+/begin DEFAULT_EVENT_LIST EVENT 0 /end DEFAULT_EVENT_LIST
+/end DAQ_EVENT
+/end IF_DATA
+/end MEASUREMENT
+
+
+/begin MEASUREMENT loop_counter "Loop counter, local measurement variable on stack" UWORD NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0xFFFFFFAC ECU_ADDRESS_EXTENSION 3  
+/begin IF_DATA XCP
+/begin DAQ_EVENT FIXED_EVENT_LIST
+/begin FIXED_EVENT_LIST EVENT 0 /end FIXED_EVENT_LIST
+/end DAQ_EVENT
+/end IF_DATA
+/end MEASUREMENT
+
+
+/begin MEASUREMENT calc_speed.current_speed "Parameter current_speed in function calculate_speed" FLOAT32_IEEE NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0x8 ECU_ADDRESS_EXTENSION 3 PHYS_UNIT  + m['phys_unit'] +  
+/begin IF_DATA XCP
+/begin DAQ_EVENT FIXED_EVENT_LIST
+/begin FIXED_EVENT_LIST EVENT 1 /end FIXED_EVENT_LIST
+/end DAQ_EVENT
+/end IF_DATA
+/end MEASUREMENT
+
+
+/begin MEASUREMENT calc_speed.new_speed "Loop counter, local measurement variable on stack" FLOAT32_IEEE NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0xFFFFFFBC ECU_ADDRESS_EXTENSION 3 PHYS_UNIT  + m['phys_unit'] +  
+/begin IF_DATA XCP
+/begin DAQ_EVENT FIXED_EVENT_LIST
+/begin FIXED_EVENT_LIST EVENT 1 /end FIXED_EVENT_LIST
+/end DAQ_EVENT
+/end IF_DATA
+/end MEASUREMENT
+
+
+/begin GROUP Parameters "Calibration Segment" 
+/begin REF_CHARACTERISTIC params.counter_max params.delay_us params.acceleration /end REF_CHARACTERISTIC
+/end GROUP
+/begin GROUP mainloop "Measurement event group" 
+/begin REF_MEASUREMENT temperature speed loop_counter /end REF_MEASUREMENT
+/end GROUP
+/begin GROUP calc_speed "Measurement event group" 
+/begin REF_MEASUREMENT calc_speed.current_speed calc_speed.new_speed /end REF_MEASUREMENT
+/end GROUP
+/begin GROUP Events "Events" ROOT
+/begin SUB_GROUP mainloop calc_speed /end SUB_GROUP
+/end GROUP
+
+/begin MOD_PAR ""
+EPK "_Aug_10_202516_40_06" ADDR_EPK 0x80000000
+/begin MEMORY_SEGMENT epk "" DATA FLASH INTERN 0x80000000 20 -1 -1 -1 -1 -1
+/begin IF_DATA XCP
+/begin SEGMENT 0 2 0 0 0
+/begin CHECKSUM XCP_CRC_16_CITT MAX_BLOCK_SIZE 0xFFFF EXTERNAL_FUNCTION "" /end CHECKSUM
+/begin PAGE 0 ECU_ACCESS_DONT_CARE XCP_READ_ACCESS_DONT_CARE DONT_CARE /end PAGE
+/begin PAGE 1 ECU_ACCESS_DONT_CARE XCP_READ_ACCESS_DONT_CARE NOT_ALLOWED /end PAGE
+/end SEGMENT
+/end IF_DATA
+/end MEMORY_SEGMENT
+/begin MEMORY_SEGMENT Parameters "" DATA FLASH INTERN 0x80010000 12 -1 -1 -1 -1 -1
+/begin IF_DATA XCP
+/begin SEGMENT 1 2 0 0 0
+/begin CHECKSUM XCP_CRC_16_CITT MAX_BLOCK_SIZE 0xFFFF EXTERNAL_FUNCTION "" /end CHECKSUM
+/begin PAGE 0 ECU_ACCESS_DONT_CARE XCP_READ_ACCESS_DONT_CARE XCP_WRITE_ACCESS_DONT_CARE /end PAGE
+/begin PAGE 1 ECU_ACCESS_DONT_CARE XCP_READ_ACCESS_DONT_CARE NOT_ALLOWED /end PAGE
+/end SEGMENT
+/end IF_DATA
+/end MEMORY_SEGMENT
+/end MOD_PAR
+
+/end MODULE
+
+
+/end PROJECT

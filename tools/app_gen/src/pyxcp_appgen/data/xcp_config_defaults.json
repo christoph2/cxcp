@@ -1,0 +1,845 @@
+[
+  {
+    "type": "define",
+    "default": true,
+    "name": "TP_SXI"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_ADDRESS_GRANULARITY_BYTE",
+    "enum": [
+      "XCP_ADDRESS_GRANULARITY_BYTE",
+      "XCP_ADDRESS_GRANULARITY_WORD",
+      "XCP_ADDRESS_GRANULARITY_DWORD"
+    ],
+    "name": "XCP_ADDRESS_GRANULARITY"
+  },
+  {
+    "type": "int",
+    "default": "10",
+    "name": "XCP_APP_TIMEBASE"
+  },
+  {
+    "type": "symbol",
+    "default": "XCP_RELEASE_BUILD",
+    "name": "XCP_BUILD_TYPE"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_BYTE_ORDER_INTEL",
+    "enum": [
+      "XCP_BYTE_ORDER_INTEL",
+      "XCP_BYTE_ORDER_MOTOROLA"
+    ],
+    "name": "XCP_BYTE_ORDER"
+  },
+  {
+    "type": "int",
+    "default": "9",
+    "name": "XCP_CAN_IF_MCP25XX_PIN_CS",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "2",
+    "name": "XCP_CAN_IF_MCP25XX_PIN_INT",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD",
+    "enum": [
+      "XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD",
+      "XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD",
+      "XCP_CAN_IF_MKR_ZERO_CAN_SHIELD",
+      "XCP_CAN_IF_SPARKFUN_CAN_SHIELD"
+    ],
+    "name": "XCP_CAN_INTERFACE",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_CHECKSUM_CHUNKED_CALCULATION"
+  },
+  {
+    "type": "int",
+    "default": "64",
+    "name": "XCP_CHECKSUM_CHUNK_SIZE"
+  },
+  {
+    "type": "int",
+    "default": "0",
+    "name": "XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT",
+    "enum": [
+      "XCP_CHECKSUM_METHOD_XCP_ADD_11",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_12",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_14",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_22",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_24",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_44",
+      "XCP_CHECKSUM_METHOD_XCP_CRC_16",
+      "XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT",
+      "XCP_CHECKSUM_METHOD_XCP_CRC_32",
+      "XCP_CHECKSUM_METHOD_XCP_USER_DEFINED"
+    ],
+    "name": "XCP_CHECKSUM_METHOD"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_DAQ_CONFIG_TYPE_DYNAMIC",
+    "enum": [
+      "XCP_DAQ_CONFIG_TYPE_STATIC",
+      "XCP_DAQ_CONFIG_TYPE_DYNAMIC",
+      "XCP_DAQ_CONFIG_TYPE_NONE"
+    ],
+    "name": "XCP_DAQ_CONFIG_TYPE",
+    "group": "daq_settings"
+  },
+  {
+    "type": "int",
+    "default": "40",
+    "name": "XCP_DAQ_DTO_BUFFER_SIZE",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_ADDR_EXT",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_ALTERNATING",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_BIT_OFFSET",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_PREDEFINED_LISTS",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_PRESCALER",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_PRIORITIZATION",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_DAQ_ENABLE_TIMESTAMPING",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_DAQ_ENABLE_WRITE_THROUGH",
+    "group": "daq_settings"
+  },
+  {
+    "type": "int",
+    "default": "16",
+    "name": "XCP_DAQ_MAX_DYNAMIC_ENTITIES",
+    "group": "daq_settings"
+  },
+  {
+    "type": "int",
+    "default": "3",
+    "name": "XCP_DAQ_MAX_EVENT_CHANNEL",
+    "group": "daq_settings"
+  },
+  {
+    "type": "int",
+    "default": "16",
+    "name": "XCP_DAQ_QUEUE_SIZE",
+    "group": "daq_settings"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_DAQ_TIMESTAMP_SIZE_4",
+    "enum": [
+      "XCP_DAQ_TIMESTAMP_SIZE_1",
+      "XCP_DAQ_TIMESTAMP_SIZE_2",
+      "XCP_DAQ_TIMESTAMP_SIZE_4"
+    ],
+    "name": "XCP_DAQ_TIMESTAMP_SIZE",
+    "group": "daq_settings"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_DAQ_TIMESTAMP_UNIT_1US",
+    "enum": [
+      "XCP_DAQ_TIMESTAMP_UNIT_100MS",
+      "XCP_DAQ_TIMESTAMP_UNIT_100NS",
+      "XCP_DAQ_TIMESTAMP_UNIT_100PS",
+      "XCP_DAQ_TIMESTAMP_UNIT_100US",
+      "XCP_DAQ_TIMESTAMP_UNIT_10MS",
+      "XCP_DAQ_TIMESTAMP_UNIT_10NS",
+      "XCP_DAQ_TIMESTAMP_UNIT_10PS",
+      "XCP_DAQ_TIMESTAMP_UNIT_10US",
+      "XCP_DAQ_TIMESTAMP_UNIT_1MS",
+      "XCP_DAQ_TIMESTAMP_UNIT_1NS",
+      "XCP_DAQ_TIMESTAMP_UNIT_1PS",
+      "XCP_DAQ_TIMESTAMP_UNIT_1S",
+      "XCP_DAQ_TIMESTAMP_UNIT_1US"
+    ],
+    "name": "XCP_DAQ_TIMESTAMP_UNIT",
+    "group": "daq_settings"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_ADDRESS_MAPPER"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_ALLOC_DAQ",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_ALLOC_ODT",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_ALLOC_ODT_ENTRY",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_BUILD_CHECKSUM",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_CAL_COMMANDS",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_CAN_GET_DAQ_ID",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_CAN_GET_SLAVE_ID",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_CAN_SET_DAQ_ID",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_CHECK_MEMORY_ACCESS"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_COPY_CAL_PAGE",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_DAQ_COMMANDS",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_DOWNLOAD_MAX",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_DOWNLOAD_NEXT",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_EVENT_PACKET_API"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_EXTERN_C_GUARDS"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_FREE_DAQ",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_COMM_MODE_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_DAQ_CLOCK",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_DAQ_EVENT_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_DAQ_LIST_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_DAQ_PROCESSOR_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_DAQ_RESOLUTION_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_ID",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_GET_ID_HOOK"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_GET_PAGE_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_GET_PAG_PROCESSOR_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_PGM_PROCESSOR_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_GET_SECTOR_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_GET_SEED",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_GET_SEGMENT_INFO",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_GET_SEGMENT_MODE",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_LOGGING"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_MASTER_BLOCKMODE"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_MODIFY_BITS",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_PAG_COMMANDS",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_PGM_COMMANDS",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_PROGRAM_FORMAT",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_PROGRAM_MAX",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_PROGRAM_NEXT",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_PROGRAM_PREPARE",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_PROGRAM_VERIFY",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_READ_DAQ",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_SERVICE_REQUEST_API"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_SET_MTA",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_SET_REQUEST",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_SET_SEGMENT_MODE",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_SHORT_DOWNLOAD",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_SHORT_UPLOAD",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_SLAVE_BLOCKMODE"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_STATISTICS"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_STIM"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_UNLOCK",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_ENABLE_UPLOAD",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_USER_CMD",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ENABLE_WRITE_DAQ_MULTIPLE",
+    "group": "OPT_CMD"
+  },
+  {
+    "type": "string",
+    "default": "\"BlueParrot XCP running on Arduino\"",
+    "name": "XCP_GET_ID_0"
+  },
+  {
+    "type": "string",
+    "default": "\"BlueParrot_XCP_on_Arduino\"",
+    "name": "XCP_GET_ID_1"
+  },
+  {
+    "type": "int",
+    "default": "2000",
+    "name": "XCP_MAIN_FUNCTION_PERIOD"
+  },
+  {
+    "type": "int",
+    "default": "255",
+    "name": "XCP_MAX_BS"
+  },
+  {
+    "type": "int",
+    "default": "0",
+    "name": "XCP_MAX_BS_PGM"
+  },
+  {
+    "type": "int",
+    "default": "16",
+    "name": "XCP_MAX_CTO"
+  },
+  {
+    "type": "int",
+    "default": "16",
+    "name": "XCP_MAX_DTO"
+  },
+  {
+    "type": "raw",
+    "default": "UINT8(32)",
+    "name": "XCP_MAX_SECTOR_PGM"
+  },
+  {
+    "type": "int",
+    "default": "0",
+    "name": "XCP_MIN_ST"
+  },
+  {
+    "type": "int",
+    "default": "0",
+    "name": "XCP_MIN_ST_PGM"
+  },
+  {
+    "type": "int",
+    "default": "0x222",
+    "name": "XCP_ON_CAN_BROADCAST_IDENTIFIER",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "16",
+    "name": "XCP_ON_CAN_BTQ",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "symbol",
+    "default": "CAN_500KBPS",
+    "name": "XCP_ON_CAN_FREQ",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "0x300",
+    "name": "XCP_ON_CAN_INBOUND_IDENTIFIER",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ON_CAN_MAX_DLC_REQUIRED",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "1",
+    "name": "XCP_ON_CAN_NOSAMP",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "0x301",
+    "name": "XCP_ON_CAN_OUTBOUND_IDENTIFIER",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "2",
+    "name": "XCP_ON_CAN_SJW",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "14",
+    "name": "XCP_ON_CAN_TSEG1",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "int",
+    "default": "2",
+    "name": "XCP_ON_CAN_TSEG2",
+    "group": "TL_CAN"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_ON_ETHERNET_DRIVER_ETHERNET",
+    "enum": [
+      "XCP_ON_ETHERNET_DRIVER_ETHERNET",
+      "XCP_ON_ETHERNET_DRIVER_WIFI"
+    ],
+    "name": "XCP_ON_ETHERNET_ARDUINO_DRIVER",
+    "group": "TL_ETH"
+  },
+  {
+    "type": "int",
+    "default": "192, 168, 137, 100",
+    "name": "XCP_ON_ETHERNET_IP_OCTETS",
+    "group": "TL_ETH"
+  },
+  {
+    "type": "array",
+    "default": "{ 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }",
+    "name": "XCP_ON_ETHERNET_MAC_ADDRESS",
+    "group": "TL_ETH"
+  },
+  {
+    "type": "int",
+    "default": "5555",
+    "name": "XCP_ON_ETHERNET_PORT",
+    "group": "TL_ETH"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_ON_ETHERNET_USE_UDP",
+    "enum": [
+      "XCP_ON_ETHERNET_USE_UDP",
+      "XCP_ON_ETHERNET_USE_TCP"
+    ],
+    "name": "XCP_ON_ETHERNET_PROTOCOL",
+    "group": "TL_ETH"
+  },
+  {
+    "type": "string",
+    "default": "\"\"",
+    "name": "XCP_ON_ETHERNET_WIFI_PASSWORD",
+    "group": "TL_ETH"
+  },
+  {
+    "type": "string",
+    "default": "\"\"",
+    "name": "XCP_ON_ETHERNET_WIFI_SSID",
+    "group": "TL_ETH"
+  },
+  {
+    "type": "int",
+    "default": "38400",
+    "name": "XCP_ON_SXI_BITRATE",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "symbol",
+    "default": "SERIAL_8N1",
+    "name": "XCP_ON_SXI_CONFIG",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ON_SXI_CUSTOM_INTERFACE",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_ON_SXI_ENABLE_FRAMING",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "int",
+    "default": "0xAB",
+    "name": "XCP_ON_SXI_ESC_CHAR",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "int",
+    "default": "0x00",
+    "name": "XCP_ON_SXI_ESC_ESC_CHAR",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "int",
+    "default": "0x01",
+    "name": "XCP_ON_SXI_ESC_SYNC_CHAR",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_ON_SXI_HEADER_LEN_CTR_BYTE",
+    "enum": [
+      "XCP_ON_SXI_HEADER_LEN_BYTE",
+      "XCP_ON_SXI_HEADER_LEN_WORD",
+      "XCP_ON_SXI_HEADER_LEN_CTR_BYTE",
+      "XCP_ON_SXI_HEADER_LEN_CTR_WORD",
+      "XCP_ON_SXI_HEADER_LEN_FILL_BYTE",
+      "XCP_ON_SXI_HEADER_LEN_FILL_WORD"
+    ],
+    "name": "XCP_ON_SXI_HEADER_FORMAT",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "raw",
+    "default": "Serial",
+    "name": "XCP_ON_SXI_PORT_NAME",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "int",
+    "default": "0xAA",
+    "name": "XCP_ON_SXI_SYNC_CHAR",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_ON_SXI_NO_CHECKSUM",
+    "enum": [
+      "XCP_ON_SXI_NO_CHECKSUM",
+      "XCP_ON_SXI_CHECKSUM_BYTE",
+      "XCP_ON_SXI_CHECKSUM_WORD"
+    ],
+    "name": "XCP_ON_SXI_TAIL_CHECKSUM",
+    "group": "TL_SXI"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_PGM_ABSOLUTE_MODE",
+    "enum": [
+      "XCP_PGM_ABSOLUTE_MODE"
+    ],
+    "name": "XCP_PGM_PROPERIES"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_PROTECT_CAL"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_PROTECT_DAQ"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_PROTECT_PAG"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_PROTECT_PGM"
+  },
+  {
+    "type": "bool",
+    "default": true,
+    "name": "XCP_PROTECT_STIM"
+  },
+  {
+    "type": "int",
+    "default": "0",
+    "name": "XCP_QUEUE_SIZE"
+  },
+  {
+    "type": "bool",
+    "default": false,
+    "name": "XCP_REPLACE_STD_COPY_MEMORY"
+  },
+  {
+    "type": "enum",
+    "default": "XCP_ON_SXI",
+    "enum": [
+      "XCP_ON_CAN",
+      "XCP_ON_CANFD",
+      "XCP_ON_FLEXRAY",
+      "XCP_ON_USB",
+      "XCP_ON_ETHERNET",
+      "XCP_ON_SXI",
+      "XCP_ON_BTH"
+    ],
+    "name": "XCP_TRANSPORT_LAYER"
+  }
+]

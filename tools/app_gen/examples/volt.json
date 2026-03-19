@@ -1,0 +1,279 @@
+{
+  "arduino": {
+    "sketch": "C:/csProjects/ cxcp/tools/arduino/hello_xcp/hello_xcp.ino"
+  },
+  "project": {
+    "name": "hello_xcp",
+    "header": {
+      "version": "1.0",
+      "project_no": "VECTOR"
+    },
+    "module": {
+      "name": "hello_xcp",
+      "characteristics": [
+        {
+          "name": "params.counter_max",
+          "comment": "Maximum counter value",
+          "value": "0x80010000",
+          "type": "uint16",
+          "min": 0,
+          "max": 2000
+        },
+        {
+          "name": "params.delay_us",
+          "comment": "Mainloop delay time in us",
+          "value": "0x80010004",
+          "type": "uint32",
+          "min": 0,
+          "max": 999999,
+          "phys_unit": "us"
+        },
+        {
+          "name": "params.acceleration",
+          "comment": "Acceleration",
+          "value": "0x80010008",
+          "type": "float",
+          "min": -10,
+          "max": 10,
+          "phys_unit": "m/(s*s)"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "voltage1",
+          "comment": "Motor temperature in °C",
+          "type": "float",
+          "compu_method": "conv.temperature",
+          "read_write": "READ_WRITE",
+          "if_data": {
+            "XCP": {
+              "daq_event": {
+                "type": "VARIABLE",
+                "default_event_list": [
+                  0
+                ]
+              }
+            }
+          },
+          "min": -55,
+          "max": 200
+        },
+        {
+          "name": "voltage2",
+          "comment": "Speed in km/h",
+          "type": "float",
+          "phys_unit": "km/h",
+          "read_write": "READ_WRITE",
+          "min": 0,
+          "max": 250,
+          "if_data": {
+            "XCP": {
+              "daq_event": {
+                "type": "VARIABLE",
+                "default_event_list": [
+                  0
+                ]
+              }
+            }
+          }
+        },
+        {
+          "name": "voltage3",
+          "comment": "Loop counter, local measurement variable on stack",
+          "type": "float",
+          "if_data": {
+            "XCP": {
+              "daq_event": {
+                "type": "FIXED_EVENT_LIST",
+                "event": 0
+              }
+            }
+          }
+        },
+        {
+          "name": "voltage4",
+          "comment": "Parameter current_speed in function calculate_speed",
+          "type": "float",
+          "phys_unit": "km/h",
+          "if_data": {
+            "XCP": {
+              "daq_event": {
+                "type": "FIXED_EVENT_LIST",
+                "event": 1
+              }
+            }
+          }
+        }
+      ],
+      "typedefs": {
+        "record_layouts": [
+          {
+            "name": "U8",
+            "type": "uint8",
+            "role": "FNC_VALUES",
+            "dim": 1
+          }
+        ],
+        "type_defs_measurement": [
+          {
+            "name": "M_U8",
+            "base": "uint8",
+            "min": 0,
+            "max": 255
+          }
+        ],
+        "type_defs_characteristic": [
+          {
+            "name": "C_U8",
+            "base": "uint8",
+            "value": "0",
+            "min": 0,
+            "max": 255
+          }
+        ]
+      },
+      "groups": [
+        {
+          "name": "mainloop",
+          "comment": "Measurement event group",
+          "event": 0,
+          "measurements": [
+            "voltage1",
+            "voltage2",
+            "loop_counter"
+          ]
+        },
+        {
+          "name": "calc_speed",
+          "comment": "Measurement event group",
+          "event": 0,
+          "measurements": [
+            "current_speed",
+            "new_speed"
+          ]
+        }
+      ],
+      "compu_methods": [
+        {
+          "name": "conv.bool",
+          "type": "TAB_VERB",
+          "format": "%.0",
+          "table_ref": "conv.bool.table"
+        },
+        {
+          "name": "conv.bool.table",
+          "type": "VTAB",
+          "entries": [
+            {
+              "val": 0,
+              "text": "false"
+            },
+            {
+              "val": 1,
+              "text": "true"
+            }
+          ]
+        },
+        {
+          "name": "conv.temperature",
+          "type": "LINEAR",
+          "format": "%6.3",
+          "phys_unit": "°C",
+          "coeffs_linear": [
+            1,
+            -55
+          ]
+        },
+        {
+          "name": "conv.events.table",
+          "type": "VTAB",
+          "entries": [
+            {
+              "val": 0,
+              "text": "mainloop"
+            },
+            {
+              "val": 1,
+              "text": "calc_speed"
+            }
+          ]
+        }
+      ],
+      "memory_segments": [
+        {
+          "name": "epk",
+          "addr": "0x80000000",
+          "type": "FLASH",
+          "intern": true,
+          "size": 20,
+          "if_data": {
+            "XCP": {
+              "segments": [
+                {
+                  "index": 0,
+                  "pages": [
+                    {
+                      "page": 0,
+                      "ecu_access": "ECU_ACCESS_DONT_CARE",
+                      "xcp_read_access": "DONT_CARE",
+                      "xcp_write_access": "DONT_CARE"
+                    },
+                    {
+                      "page": 1,
+                      "page_num": 1,
+                      "xcp_write_access": "NOT_ALLOWED"
+                    }
+                  ],
+                  "checksum": {
+                    "type": "XCP_CRC_16_CITT",
+                    "max_block_size": "0xFFFF"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Parameters",
+          "addr": "0x80010000",
+          "type": "FLASH",
+          "intern": true,
+          "size": 12,
+          "if_data": {
+            "XCP": {
+              "segments": [
+                {
+                  "index": 1,
+                  "pages": [
+                    {
+                      "page": 0
+                    },
+                    {
+                      "page": 1,
+                      "xcp_write_access": "NOT_ALLOWED"
+                    }
+                  ],
+                  "checksum": {
+                    "type": "XCP_CRC_16_CITT",
+                    "max_block_size": "0xFFFF"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "mod_par": {
+        "epk": "_Aug_10_202516_40_06",
+        "addr_epk": "0x80000000"
+      },
+      "events": [
+        {
+          "name": "mainloop",
+          "number": 0,
+          "interval": 15
+        }
+      ]
+    }
+  }
+}
