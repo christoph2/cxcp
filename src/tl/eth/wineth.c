@@ -36,11 +36,13 @@
 
 #include "xcp_config.h"
 
+extern XcpTl_ConnectionType XcpTl_Connection;
+
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     #include "xcp_timecorr.h"
+#endif
 /* Forward declaration for multicast thread */
 static unsigned __stdcall XcpTl_MulticastThread(void *param);
-#endif /* XCP_ENABLE_TIME_CORRELATION */
 
 /* Protocol/Address-Family selection: allow runtime when available, otherwise use compile-time defaults */
 #ifndef XCP_ETH_USE_TCP
@@ -85,6 +87,10 @@ static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
 #endif
 
+static bool XcpTl_ParseIpv4String(const char *ip, struct in_addr *out) {
+    return InetPtonA(AF_INET, ip, out) == 1;
+}
+
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option) {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
     const char enable = 1;
@@ -99,26 +105,6 @@ static boolean Xcp_EnableSocketOption(SOCKET sock, int option) {
 #endif
     return XCP_TRUE;
 }
-
-#if 0
-static boolean Xcp_DisableSocketOption(SOCKET sock, int option) {
-
-    #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-const char enable = 0;
-
-    if (setsockopt(sock, SOL_SOCKET, option, &enable, sizeof(int))< 0) {
-        return XCP_FALSE;
-    }
-    #else
-if (setsockopt(sock, SOL_SOCKET, option, &(const char) {
-    0
-}, sizeof(int)) < 0) {
-        return XCP_FALSE;
-    }
-    #endif
-return XCP_TRUE;
-}
-#endif
 
 void XcpTl_Init(void) {
     WSADATA   wsa;
@@ -211,9 +197,58 @@ void XcpTl_Init(void) {
     mode = 1;
     ioctlsocket(XcpTl_Connection.boundSocket, FIONBIO, &ul);
 #endif
-#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+    /* Create discovery multicast socket (GET_SLAVE_ID/EXT/SET_IP) */
+    XcpTl_Connection.discoverySocket = INVALID_SOCKET;
+#if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON)
+    {
+        SOCKET             dsock;
+        struct sockaddr_in daddr;
+        struct ip_mreq     dmreq;
+        char               d_ip[32];
+
+        _snprintf(
+            d_ip, sizeof(d_ip), "%u.%u.%u.%u", (unsigned)XCP_ETH_DISCOVERY_MCAST_IP0, (unsigned)XCP_ETH_DISCOVERY_MCAST_IP1,
+            (unsigned)XCP_ETH_DISCOVERY_MCAST_IP2, (unsigned)XCP_ETH_DISCOVERY_MCAST_IP3
+        );
+
+        dsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (dsock != INVALID_SOCKET) {
+            int reuse = 1;
+            setsockopt(dsock, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse));
+
+            ZeroMemory(&daddr, sizeof(daddr));
+            daddr.sin_family      = AF_INET;
+            daddr.sin_port        = htons((uint16_t)XCP_ETH_DISCOVERY_MCAST_PORT);
+            daddr.sin_addr.s_addr = INADDR_ANY;
+
+            if (bind(dsock, (struct sockaddr *)&daddr, sizeof(daddr)) == 0) {
+                if (!XcpTl_ParseIpv4String(d_ip, &dmreq.imr_multiaddr)) {
+                    XcpHw_ErrorMsg("XcpTl_Init:invalid discovery mcast IP", WSAEINVAL);
+                    closesocket(dsock);
+                    dsock = INVALID_SOCKET;
+                }
+                dmreq.imr_interface.s_addr = INADDR_ANY;
+                if ((dsock != INVALID_SOCKET) &&
+                    setsockopt(dsock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&dmreq, sizeof(dmreq)) == 0) {
+                    XcpTl_Connection.discoverySocket = dsock;
+                    printf("XCPonEth -- Discovery multicast listener: %s:%u\n", d_ip, (unsigned)XCP_ETH_DISCOVERY_MCAST_PORT);
+                } else {
+                    XcpHw_ErrorMsg("XcpTl_Init:IP_ADD_MEMBERSHIP(discovery)", WSAGetLastError());
+                    closesocket(dsock);
+                }
+            } else {
+                XcpHw_ErrorMsg("XcpTl_Init:discovery bind()", WSAGetLastError());
+                closesocket(dsock);
+            }
+        } else {
+            XcpHw_ErrorMsg("XcpTl_Init:discovery socket()", WSAGetLastError());
+        }
+    }
+#endif /* XCP_ENABLE_ETH_DISCOVERY */
+
     /* Create multicast socket for GET_DAQ_CLOCK_MULTICAST */
     XcpTl_Connection.multicastSocket = INVALID_SOCKET;
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     {
         SOCKET             msock;
         struct sockaddr_in maddr;
@@ -236,15 +271,18 @@ void XcpTl_Init(void) {
             maddr.sin_addr.s_addr = INADDR_ANY;
 
             if (bind(msock, (struct sockaddr *)&maddr, sizeof(maddr)) == 0) {
-                mreq.imr_multiaddr.s_addr = inet_addr(mcast_ip);
+                if (!XcpTl_ParseIpv4String(mcast_ip, &mreq.imr_multiaddr)) {
+                    XcpHw_ErrorMsg("XcpTl_Init:invalid timecorr mcast IP", WSAEINVAL);
+                    closesocket(msock);
+                    msock = INVALID_SOCKET;
+                }
                 mreq.imr_interface.s_addr = INADDR_ANY;
-                if (setsockopt(msock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&mreq, sizeof(mreq)) == 0) {
+                if ((msock != INVALID_SOCKET) &&
+                    setsockopt(msock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&mreq, sizeof(mreq)) == 0) {
                     XcpTl_Connection.multicastSocket = msock;
-                    /* Start multicast receive thread */
-                    _beginthreadex(NULL, 0, XcpTl_MulticastThread, NULL, 0, NULL);
-                    printf("XCPonEth -- Multicast listener: %s:%u\n", mcast_ip, XCP_TIMECORR_MULTICAST_PORT);
+                    printf("XCPonEth -- Timecorr multicast listener: %s:%u\n", mcast_ip, XCP_TIMECORR_MULTICAST_PORT);
                 } else {
-                    XcpHw_ErrorMsg("XcpTl_Init:IP_ADD_MEMBERSHIP", WSAGetLastError());
+                    XcpHw_ErrorMsg("XcpTl_Init:IP_ADD_MEMBERSHIP(timecorr)", WSAGetLastError());
                     closesocket(msock);
                 }
             } else {
@@ -256,17 +294,23 @@ void XcpTl_Init(void) {
         }
     }
 #endif /* XCP_ENABLE_TIME_CORRELATION */
+
+    if ((XcpTl_Connection.discoverySocket != INVALID_SOCKET) || (XcpTl_Connection.multicastSocket != INVALID_SOCKET)) {
+        _beginthreadex(NULL, 0, XcpTl_MulticastThread, NULL, 0, NULL);
+    }
 }
 
 void XcpTl_PrintConnectionInformation(void);
 
 void XcpTl_DeInit(void) {
-#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     if (XcpTl_Connection.multicastSocket != INVALID_SOCKET) {
         closesocket(XcpTl_Connection.multicastSocket);
         XcpTl_Connection.multicastSocket = INVALID_SOCKET;
     }
-#endif /* XCP_ENABLE_TIME_CORRELATION */
+    if (XcpTl_Connection.discoverySocket != INVALID_SOCKET) {
+        closesocket(XcpTl_Connection.discoverySocket);
+        XcpTl_Connection.discoverySocket = INVALID_SOCKET;
+    }
     closesocket(XcpTl_Connection.boundSocket);
     WSACleanup();
 }
@@ -335,43 +379,59 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     XCP_TL_LEAVE_CRITICAL();
 }
 
-#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
+#if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
 
-/*
- * Thread that receives GET_DAQ_CLOCK_MULTICAST packets on the multicast UDP socket.
- * XCP ETH multicast packet layout:
- *   [0..1]  len (WORD, Intel)
- *   [2..3]  counter (WORD, Intel) - transport layer counter
- *   [4]     0xF2  (TRANSPORT_LAYER_CMD)
- *   [5]     0xFA  (GET_DAQ_CLOCK_MULTICAST sub-command)
- *   [6..7]  cluster_id (WORD, Intel)
- *   [8]     counter byte (XCP application counter)
- */
 unsigned __stdcall XcpTl_MulticastThread(void *param) {
-    uint8_t  buf[32];
-    int      n;
-    uint16_t cluster_id;
-    uint8_t  counter;
+    uint8_t buf[128];
 
     (void)param;
 
-    while (XcpTl_Connection.multicastSocket != INVALID_SOCKET) {
-        n = recv(XcpTl_Connection.multicastSocket, (char *)buf, (int)sizeof(buf), 0);
-        if (n < 9) {
-            /* Too short for a valid multicast XCP packet */
+    for (;;) {
+        fd_set rfds;
+        SOCKET max_sock = 0;
+        int    ready;
+
+        FD_ZERO(&rfds);
+        if (XcpTl_Connection.discoverySocket != INVALID_SOCKET) {
+            FD_SET(XcpTl_Connection.discoverySocket, &rfds);
+            if (XcpTl_Connection.discoverySocket > max_sock) {
+                max_sock = XcpTl_Connection.discoverySocket;
+            }
+        }
+        if (XcpTl_Connection.multicastSocket != INVALID_SOCKET) {
+            FD_SET(XcpTl_Connection.multicastSocket, &rfds);
+            if (XcpTl_Connection.multicastSocket > max_sock) {
+                max_sock = XcpTl_Connection.multicastSocket;
+            }
+        }
+        if ((XcpTl_Connection.discoverySocket == INVALID_SOCKET) && (XcpTl_Connection.multicastSocket == INVALID_SOCKET)) {
+            break;
+        }
+
+        ready = select((int)max_sock + 1, &rfds, NULL, NULL, NULL);
+        if (ready <= 0) {
             continue;
         }
-        /* Check transport layer command byte and sub-command */
-        if (buf[4] != UINT8(0xF2) || buf[5] != UINT8(0xFA)) {
-            continue;
+
+        if ((XcpTl_Connection.discoverySocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.discoverySocket, &rfds)) {
+            int n = recv(XcpTl_Connection.discoverySocket, (char *)buf, (int)sizeof(buf), 0);
+            if (n > 0) {
+                XcpTl_HandleTransportMulticastPacket(buf, n);
+            }
         }
-        cluster_id = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
-        counter    = buf[8];
-        XcpTimecorr_HandleMulticast(cluster_id, counter);
+        if ((XcpTl_Connection.multicastSocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
+            int n = recv(XcpTl_Connection.multicastSocket, (char *)buf, (int)sizeof(buf), 0);
+            if (n > 0) {
+                XcpTl_HandleTransportMulticastPacket(buf, n);
+            }
+        }
     }
     return 0;
 }
 
+#endif /* discovery/timecorr multicast listener */
+
+#if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
 /*
  * Handle GET_DAQ_CLOCK_MULTICAST arriving via the unicast channel
  * (transport layer command 0xF2, sub-command 0xFA).
@@ -399,7 +459,10 @@ void XcpTl_UpdateMulticastGroup(uint16_t cluster_id) {
         return;
     }
     _snprintf(mcast_ip, sizeof(mcast_ip), "239.255.%u.%u", (unsigned)mcast_upper, (unsigned)mcast_lower);
-    mreq.imr_multiaddr.s_addr = inet_addr(mcast_ip);
+    if (!XcpTl_ParseIpv4String(mcast_ip, &mreq.imr_multiaddr)) {
+        XcpHw_ErrorMsg("XcpTl_UpdateMulticastGroup:invalid IP", WSAEINVAL);
+        return;
+    }
     mreq.imr_interface.s_addr = INADDR_ANY;
     setsockopt(XcpTl_Connection.multicastSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&mreq, sizeof(mreq));
 }

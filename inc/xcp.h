@@ -1149,15 +1149,22 @@ extern "C" {
     void Xcp_MainFunction(void);
 
     /*
+    ** Global Variables.
+    */
+    extern Xcp_OptionsType     Xcp_Options;
+    extern const Xcp_GetIdType Xcp_GetId0;
+    extern const Xcp_GetIdType Xcp_GetId1;
+
+    /*
     ** Global Helper Functions.
     */
-    extern Xcp_OptionsType Xcp_Options;
-
     void Xcp_DispatchCommand(Xcp_PduType const * const pdu);
 
     void Xcp_Disconnect(void);
 
     Xcp_ConnectionStateType Xcp_GetConnectionState(void);
+
+    uint8_t Xcp_GetResourceMask(void);
 
     void Xcp_SetSendCallout(Xcp_SendCalloutType callout);
 

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2022 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2026 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -47,8 +47,8 @@
 /*
  *  Local Constants.
  */
-XCP_STATIC const Xcp_GetIdType Xcp_GetId0 = XCP_SET_ID(XCP_GET_ID_0);
-XCP_STATIC const Xcp_GetIdType Xcp_GetId1 = XCP_SET_ID(XCP_GET_ID_1);
+const Xcp_GetIdType Xcp_GetId0 = XCP_SET_ID(XCP_GET_ID_0);
+const Xcp_GetIdType Xcp_GetId1 = XCP_SET_ID(XCP_GET_ID_1);
 
 /*
 ** Local Variables.
@@ -1009,6 +1009,25 @@ Xcp_ConnectionStateType Xcp_GetConnectionState(void) {
     return Xcp_ConnectionState;
 }
 
+uint8_t Xcp_GetResourceMask(void) {
+    uint8_t resource = UINT8(0x00);
+
+#if XCP_ENABLE_PGM_COMMANDS == XCP_ON
+    resource |= XCP_RESOURCE_PGM;
+#endif /* XCP_ENABLE_PGM_COMMANDS */
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+    resource |= XCP_RESOURCE_DAQ;
+#endif /* XCP_ENABLE_DAQ_COMMANDS */
+#if (XCP_ENABLE_CAL_COMMANDS == XCP_ON) || (XCP_ENABLE_PAG_COMMANDS == XCP_ON)
+    resource |= XCP_RESOURCE_CAL_PAG;
+#endif
+#if XCP_ENABLE_STIM == XCP_ON
+    resource |= XCP_RESOURCE_STIM;
+#endif /* XCP_ENABLE_STIM */
+
+    return resource;
+}
+
 /*
 **
 ** Local Functions.
@@ -1030,18 +1049,7 @@ XCP_STATIC void Xcp_Connect_Res(Xcp_PduType const * const pdu) {
         /* TODO: Init stuff */
     }
 
-#if XCP_ENABLE_PGM_COMMANDS == XCP_ON
-    resource |= XCP_RESOURCE_PGM;
-#endif /* XCP_ENABLE_PGM_COMMANDS */
-#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
-    resource |= XCP_RESOURCE_DAQ;
-#endif /* XCP_ENABLE_DAQ_COMMANDS */
-#if (XCP_ENABLE_CAL_COMMANDS == XCP_ON) || (XCP_ENABLE_PAG_COMMANDS == XCP_ON)
-    resource |= XCP_RESOURCE_CAL_PAG;
-#endif
-#if XCP_ENABLE_STIM == XCP_ON
-    resource |= XCP_RESOURCE_STIM;
-#endif /* XCP_ENABLE_STIM */
+    resource = Xcp_GetResourceMask();
 
     commModeBasic |= XCP_BYTE_ORDER;
     commModeBasic |= XCP_ADDRESS_GRANULARITY;

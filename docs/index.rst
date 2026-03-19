@@ -10,13 +10,13 @@ Welcome to BlueParrot XCP's documentation!
    :maxdepth: 4
    :caption: Contents:
 
-   user_manual
-   install
-   tutorial
-   api
-   options
-   hook_functions
-   flash_emulator
+- [Benutzerhandbuch](user_manual.rst)
+- [Installation](install.rst)
+- [Tutorial](tutorial.rst)
+- [API Referenz](api.rst)
+- [Optionen](options.rst)
+- [Hook-Funktionen](hook_functions.rst)
+- [Flash-Emulator](flash_emulator.rst)
 
 
 Indices and tables

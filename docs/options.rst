@@ -470,9 +470,27 @@ XCP on Ethernet (XCP_ON_ETHERNET)
 
       WiFi credentials (ESP32 and compatible cores) when using the WiFi backend.
 
-   .. c:macro:: XCP_ON_ETHERNET_MAC_ADDRESS
+    .. c:macro:: XCP_ON_ETHERNET_MAC_ADDRESS
 
-      MAC address used for Arduino Ethernet (array of 6 bytes).
+       MAC address used for Arduino Ethernet (array of 6 bytes).
+
+   Discovery and multicast (Ethernet)
+   """""""""""""""""""""""""""""""""""
+
+    .. c:macro:: XCP_ENABLE_ETH_DISCOVERY
+
+       Enable transport-layer discovery commands on Ethernet (GET_SLAVE_ID, GET_SLAVE_ID_EXTENDED, SET_SLAVE_IP_ADDRESS).
+       Defaults to **XCP_ON** for XCP on Ethernet.
+
+    .. c:macro:: XCP_ETH_DISCOVERY_MAC0 .. XCP_ETH_DISCOVERY_MAC5
+
+       Octets of the slave MAC address placed into GET_SLAVE_ID_EXTENDED and SET_SLAVE_IP_ADDRESS responses.
+       Defaults to 00-00-00-00-00-00; set to the interface MAC of your target.
+
+   .. c:macro:: XCP_ETH_DISCOVERY_SET_IP_STATUS
+
+      Status byte used in responses to SET_SLAVE_IP_ADDRESS:
+      ``0`` = address already valid, ``1`` = taken and will activate later, ``2`` = manual action required (default).
 
    .. note::
       XCP on Ethernet prepends a 4-byte header (LEN, CTR). The implementation handles this automatically; ensure

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -29,11 +29,13 @@
     #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
         #if defined(__cplusplus)
 extern "C" {
+
         #endif /* __cplusplus */
     #endif     /* XCP_EXTERN_C_GUARDS */
 
     /*!!! START-INCLUDE-SECTION !!!*/
     #include "xcp.h"
+    #include "xcp_task.h"
     /*!!! END-INCLUDE-SECTION !!!*/
 
     /*

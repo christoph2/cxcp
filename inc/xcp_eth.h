@@ -37,6 +37,7 @@
         #include <netdb.h>
         #include <netinet/in.h>
         #include <signal.h>
+        #include <stdbool.h>
         #include <string.h>
         #include <sys/socket.h>
         #include <sys/types.h>
@@ -52,6 +53,7 @@ typedef struct tagXcpTl_ConnectionType {
     SOCKET           boundSocket;
     SOCKET           connectedSocket;
     SOCKET           multicastSocket;
+    SOCKET           discoverySocket;
     bool             connected;
     int              socketType;
 } XcpTl_ConnectionType;
@@ -63,6 +65,7 @@ typedef struct tagXcpTl_ConnectionType {
     int                     boundSocket;
     int                     connectedSocket;
     int                     multicastSocket;
+    int                     discoverySocket;
     bool                    connected;
     int                     socketType;
 } XcpTl_ConnectionType;
@@ -73,5 +76,35 @@ typedef struct tagXcpTl_ConnectionType {
         #define INVALID_SOCKET   (-1)
         #define ZeroMemory(b, l) memset((b), 0, (l))
     #endif
+
+    #ifndef XCP_ENABLE_ETH_DISCOVERY
+        #define XCP_ENABLE_ETH_DISCOVERY XCP_ON
+    #endif
+    #ifndef XCP_ETH_DISCOVERY_MCAST_IP0
+        #define XCP_ETH_DISCOVERY_MCAST_IP0 (239u)
+        #define XCP_ETH_DISCOVERY_MCAST_IP1 (255u)
+        #define XCP_ETH_DISCOVERY_MCAST_IP2 (0u)
+        #define XCP_ETH_DISCOVERY_MCAST_IP3 (0u)
+    #endif
+    #ifndef XCP_ETH_DISCOVERY_MCAST_PORT
+        #define XCP_ETH_DISCOVERY_MCAST_PORT (5556u)
+    #endif
+    #ifndef XCP_ETH_DISCOVERY_MAC0
+        #define XCP_ETH_DISCOVERY_MAC0 (0x00u)
+        #define XCP_ETH_DISCOVERY_MAC1 (0x00u)
+        #define XCP_ETH_DISCOVERY_MAC2 (0x00u)
+        #define XCP_ETH_DISCOVERY_MAC3 (0x00u)
+        #define XCP_ETH_DISCOVERY_MAC4 (0x00u)
+        #define XCP_ETH_DISCOVERY_MAC5 (0x00u)
+    #endif
+    #ifndef XCP_ETH_DISCOVERY_SET_IP_STATUS
+        #define XCP_ETH_DISCOVERY_SET_IP_STATUS (2u) /* 0=valid, 1=will activate, 2=manual action required */
+    #endif
+
+uint16_t XcpTl_GetLocalPort(void);
+void     XcpTl_GetLocalIpv4(uint8_t out_ip[4]);
+uint8_t  XcpTl_BuildStatus(bool extended);
+void     XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *payload, size_t len);
+bool     XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t len);
 
 #endif /* __XCP_ETH_H */

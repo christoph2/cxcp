@@ -34,8 +34,8 @@
     /*
     **  General Options.
     */
-    // #define TP_CAN
-    #define TP_ETHER
+    #define TP_CAN
+    // #define TP_ETHER
     // #define TP_SXI
 
     /*
@@ -117,8 +117,10 @@
     #define XCP_GET_ID_0 "BlueParrot XCP running on Arduino"
     #define XCP_GET_ID_1 "BlueParrot_XCP_on_Arduino"
 
-    #define XCP_BUILD_TYPE XCP_RELEASE_BUILD
+    #if !defined(XCP_BUILD_TYPE)
+        #define XCP_BUILD_TYPE XCP_RELEASE_BUILD
     // #define XCP_BUILD_TYPE XCP_DEBUG_BUILD
+    #endif
     #define XCP_ENABLE_LOGGING         (XCP_ON)
     #define XCP_ENABLE_EXTERN_C_GUARDS (XCP_ON)
 

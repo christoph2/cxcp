@@ -36,6 +36,7 @@ set(SOURCES
         ../../src/hw/terminal.c
         ../../src/hw/options.c
         ../../src/hw/threads.c
+        ../../src/xcp_timecorr.c
         ../../flsemu/common.c
         app_config.c
         appl1.c

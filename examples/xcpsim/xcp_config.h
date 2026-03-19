@@ -43,8 +43,8 @@
 #define XCP_GET_ID_1 "Example_Project"
 
 // #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
-#define XCP_BUILD_TYPE XCP_DEBUG_BUILD
-
+#define XCP_BUILD_TYPE             XCP_DEBUG_BUILD
+#define XCP_ENABLE_LOGGING         XCP_ON
 #define XCP_ENABLE_EXTERN_C_GUARDS XCP_OFF
 
 #define XCP_ENABLE_SLAVE_BLOCKMODE  XCP_OFF
@@ -164,7 +164,7 @@
 #define XCP_ENABLE_SERVICE_REQUEST_API XCP_OFF
 
 /*
-**  Time Correlation (Advanced, XCP 1.1)
+**  Time Correlation (Advanced, XCP 1.3)
 */
 #define XCP_ENABLE_TIME_CORRELATION     XCP_ON
 #define XCP_TIMECORR_DEFAULT_CLUSTER_ID (0x0001u) /* Multicast group 239.255.0.1 */
@@ -172,6 +172,18 @@
 #define XCP_TIMECORR_GRANDM_CLK         (0)       /* No dedicated grandmaster clock by default */
 #define XCP_TIMECORR_ECU_CLK            (0)       /* No ECU clock by default */
 #define XCP_TIMECORR_SLV_NATIVE_TS_SIZE (4u)      /* 32-bit slave clock */
+
+/*
+**  Ethernet discovery (GET_SLAVE_ID / GET_SLAVE_ID_EXTENDED / SET_SLAVE_IP_ADDRESS)
+*/
+#define XCP_ENABLE_ETH_DISCOVERY        XCP_ON
+#define XCP_ETH_DISCOVERY_MAC0          (0x00u)
+#define XCP_ETH_DISCOVERY_MAC1          (0x11u)
+#define XCP_ETH_DISCOVERY_MAC2          (0x22u)
+#define XCP_ETH_DISCOVERY_MAC3          (0x33u)
+#define XCP_ETH_DISCOVERY_MAC4          (0x44u)
+#define XCP_ETH_DISCOVERY_MAC5          (0x55u)
+#define XCP_ETH_DISCOVERY_SET_IP_STATUS (2u) /* 0=valid, 1=activating, 2=manual action required */
 
 /*
 **  Transport-Layer specific Options (may not apply to every Transport).

@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2025 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2026 by Christoph Schueler <github.com/Christoph2,
  *                                  cpu12.gems@googlemail.com>
  *
  * All Rights Reserved

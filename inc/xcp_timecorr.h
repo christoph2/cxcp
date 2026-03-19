@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2025 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2026 by Christoph Schueler <github.com/Christoph2,
  *                                  cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -36,7 +36,9 @@
 #if !defined(__XCP_TIMECORR_H)
     #define __XCP_TIMECORR_H
 
+    /*!!! START-INCLUDE-SECTION !!!*/
     #include "xcp.h"
+/*!!! END-INCLUDE-SECTION !!!*/
 
     #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
 
