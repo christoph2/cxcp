@@ -34,9 +34,9 @@
     /*
     **  General Options.
     */
-    #define TP_CAN
+    // #define TP_CAN
     // #define TP_ETHER
-    // #define TP_SXI
+    #define TP_SXI
 
     /*
     **  Transport-Layer specific Options.

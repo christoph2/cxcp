@@ -776,6 +776,10 @@ void Xcp_SendCto(void) {
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+uint32_t Xcp_DtoCanId = 0;
+#endif
+
 void Xcp_SendDto(void) {
     #if XCP_TRANSPORT_LAYER_LENGTH_SIZE != 0
     const uint16_t len = Xcp_DtoOut.len;

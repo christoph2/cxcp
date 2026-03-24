@@ -50,6 +50,9 @@
 typedef struct {
     uint16_t len;
     uint8_t  data[XCP_MAX_DTO];
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    uint32_t can_id;
+#endif /* (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN) */
 } XcpDaq_OdtType;
 
 typedef enum tagXcpDaq_AllocResultType {
@@ -707,8 +710,13 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
         offset = UINT16(0);
         odt    = XcpDaq_GetOdt(daqListNumber, odtIdx);
 
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+        /* PID_OFF: Identification field (PID) is omitted. */
+#else
         data[0] = pid; /* Absolute ODT number. */
         offset += UINT16(1);
+#endif
+
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
         if ((odtIdx == (XcpDaq_ODTIntegerType)0) && (insert_timestamp == XCP_TRUE)) {  // TODO: check for sufficient space.
             XcpDaq_CopyMemory(&data[offset], (void *)&timestamp, XCP_DAQ_TIMESTAMP_SIZE);
@@ -725,8 +733,12 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
             XcpDaq_CopyMemory(&data[offset], (void *)entry.mta.address, entry.length);
             offset += entry.length;
         }
-        pid++;
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+        XcpDaq_QueueEnqueue(offset, data, (uint32_t)XCP_DAQ_CAN_ID_BASE + (uint32_t)pid);
+#else
         XcpDaq_QueueEnqueue(offset, data);
+#endif
+        pid++;
         //        XcpUtl_Hexdump(data, offset);
     }
     XcpDaq_TransmitDtos();
@@ -751,6 +763,10 @@ void XcpDaq_GetProperties(uint8_t *properties) {
 #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
     *properties |= XCP_DAQ_PROP_TIMESTAMP_SUPPORTED;
 #endif /*XCP_DAQ_ENABLE_TIMESTAMPING */
+
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    *properties |= XCP_DAQ_PROP_PID_OFF_SUPPORTED;
+#endif /* (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN) */
 
 #if (XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE) || (XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_STATIC)
     *properties |= UINT8(XCP_DAQ_CONFIG_TYPE_STATIC);
@@ -812,9 +828,17 @@ void XcpDaq_StartStopSynch(uint8_t mode) {
 void XcpDaq_TransmitDtos(void) {
     uint16_t len     = 0UL;
     uint8_t *dataOut = Xcp_GetDtoOutPtr();
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    uint32_t can_id = 0;
+#endif
 
     while (!XcpDaq_QueueEmpty()) {
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+        if (XcpDaq_QueueDequeue(&len, dataOut, &can_id)) {
+            Xcp_DtoCanId = can_id;
+#else
         if (XcpDaq_QueueDequeue(&len, dataOut)) {
+#endif
             Xcp_SetDtoOutLen(len);
             Xcp_SendDto();
         }
@@ -950,13 +974,20 @@ bool XcpDaq_QueueEmpty(void) {
     return XcpDaq_Queue.head == XcpDaq_Queue.tail;
 }
 
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data, uint32_t can_id) {
+#else
 bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
+#endif
     if (XcpDaq_QueueFull()) {
         XcpDaq_Queue.overload = (bool)XCP_TRUE;
         return (bool)XCP_FALSE;
     }
 
     XcpDaq_QueueDTOs[XcpDaq_Queue.head].len = len;
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    XcpDaq_QueueDTOs[XcpDaq_Queue.head].can_id = can_id;
+#endif
 
     // XCP_ASSERT_LE(len, XCP_MAX_DTO);
     if (len > XCP_MAX_DTO) {
@@ -968,7 +999,11 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
     return (bool)XCP_TRUE;
 }
 
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data, uint32_t *can_id) {
+#else
 bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
+#endif
     uint16_t dto_len;
 
     if (XcpDaq_QueueEmpty()) {
@@ -980,6 +1015,9 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
         return (bool)XCP_FALSE;
     }
     *len = dto_len;
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    *can_id = XcpDaq_QueueDTOs[XcpDaq_Queue.tail].can_id;
+#endif
     XcpUtl_MemCopy(data, XcpDaq_QueueDTOs[XcpDaq_Queue.tail].data, dto_len);
     XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE);
     return (bool)XCP_TRUE;

@@ -272,7 +272,16 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     memset(&frame, 0, sizeof(frame));
     /* Erwartet: erste 4/8 Bytes im PDU-Puffer sind die Nutzlast für CAN.
        An dieser Stelle wird nur sicher kopiert und gesendet. */
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON)
+    if (Xcp_DtoCanId != 0) {
+        frame.can_id = Xcp_DtoCanId;
+        Xcp_DtoCanId = 0; /* Reset after use. */
+    } else {
+        frame.can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
+    }
+#else
     frame.can_id  = XCP_ON_CAN_INBOUND_IDENTIFIER;
+#endif
     frame.can_dlc = (uint8_t)len;
     memcpy(frame.data, buf, len);
 

@@ -1285,8 +1285,13 @@ extern "C" {
     void            XcpDaq_QueueInit(void);
     XCP_STATIC bool XcpDaq_QueueFull(void);
     bool            XcpDaq_QueueEmpty(void);
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    bool            XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data, uint32_t *can_id);
+    bool            XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data, uint32_t can_id);
+#else
     bool            XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data);
     bool            XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data);
+#endif
 
         #endif /* XCP_DAQ_ENABLE_QUEUING */
 
@@ -1358,6 +1363,10 @@ extern "C" {
     uint8_t *Xcp_GetCtoOutPtr(void);
 
     #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    extern uint32_t Xcp_DtoCanId;
+#endif
 
     void Xcp_SendDto(void);
 

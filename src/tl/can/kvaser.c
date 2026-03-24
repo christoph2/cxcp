@@ -303,8 +303,19 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     }
 
     XCP_TL_ENTER_CRITICAL();
-    id   = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
-    ext  = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON)
+    if (Xcp_DtoCanId != 0) {
+        id           = (int)Xcp_DtoCanId;
+        ext          = 0;
+        Xcp_DtoCanId = 0;
+    } else {
+        id  = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+        ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+    }
+#else
+    id  = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+    ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+#endif
     flag = ext ? canMSG_EXT : canMSG_STD;
     stat = canWrite(XcpTl_Connection.handle, id, (void *)buf, len, flag);
     Kv_Check("canWrite", stat);

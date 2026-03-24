@@ -179,7 +179,6 @@ void XcpTl_Init(void) {
     freeaddrinfo(AddrInfo);
 
     /* Print effective connection information */
-    XcpTl_PrintConnectionInformation();
     if (boundSocketNum == -1) {
         fprintf(
             stderr,

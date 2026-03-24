@@ -203,12 +203,25 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     uint32_t can_id;
+    bool     extended;
 
-    can_id = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON)
+    if (Xcp_DtoCanId != 0) {
+        can_id       = Xcp_DtoCanId;
+        extended     = (bool)XCP_FALSE; /* Assuming standard IDs for PID_OFF features unless defined otherwise. */
+        Xcp_DtoCanId = 0;
+    } else {
+        can_id   = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+        extended = (bool)XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+    }
+#else
+    can_id   = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+    extended = (bool)XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
+#endif
 
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
 
-    CAN.sendMsgBuf(can_id, XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER), len, buf);
+    CAN.sendMsgBuf(can_id, extended, len, buf);
 
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_SPARKFUN_CAN_SHIELD
     message.id            = can_id;
@@ -221,7 +234,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     mcp2515_send_message(&message);
     #elif XCP_CAN_INTERFACE == XCP_CAN_IF_MKR_ZERO_CAN_SHIELD
 
-    if (XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER)) {
+    if (extended) {
         CAN.beginExtendedPacket(can_id, len);
     } else {
         CAN.beginPacket(can_id);
