@@ -45,6 +45,42 @@ extern "C" {
     void XcpHw_ErrorMsg(char * const function, int errorCode);
     void XcpHw_Sleep(uint64_t usec);
 
+    /*
+    **  Calibration/Paging Services (PAG).
+    */
+    #if (XCP_ENABLE_CAL_COMMANDS == XCP_ON) || (XCP_ENABLE_PAG_COMMANDS == XCP_ON)
+
+    typedef struct tagXcpHw_PagProcessorInfoType {
+        uint8_t maxSegment;
+        uint8_t properties;
+    } XcpHw_PagProcessorInfoType;
+
+    typedef struct tagXcpHw_SegmentInfoType {
+        uint32_t address;
+        uint32_t length;
+        uint8_t  numPages;
+        uint8_t  addressExtension;
+        uint8_t  maxPage;
+        uint8_t  compressionMethod;
+        uint8_t  encryptionMethod;
+    } XcpHw_SegmentInfoType;
+
+    typedef struct tagXcpHw_PageInfoType {
+        uint8_t properties;
+        uint8_t initSegment;
+    } XcpHw_PageInfoType;
+
+    bool XcpHw_SetCalPage(uint8_t segment, uint8_t page, uint8_t mode);
+    bool XcpHw_GetCalPage(uint8_t segment, uint8_t mode, uint8_t *page);
+    bool XcpHw_GetPagProcessorInfo(XcpHw_PagProcessorInfoType *info);
+    bool XcpHw_GetSegmentInfo(uint8_t segment, uint8_t mode, XcpHw_SegmentInfoType *info);
+    bool XcpHw_GetPageInfo(uint8_t segment, uint8_t page, XcpHw_PageInfoType *info);
+    bool XcpHw_SetSegmentMode(uint8_t segment, uint8_t mode);
+    bool XcpHw_GetSegmentMode(uint8_t segment, uint8_t *mode);
+    bool XcpHw_CopyCalPage(uint8_t srcSegment, uint8_t srcPage, uint8_t dstSegment, uint8_t dstPage);
+
+    #endif /* XCP_ENABLE_CAL_COMMANDS || XCP_ENABLE_PAG_COMMANDS */
+
     #if XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON
         #if defined(__cplusplus)
 }

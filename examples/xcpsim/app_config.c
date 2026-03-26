@@ -36,20 +36,24 @@ float triangle;
 float randomValue;
 
 static FlsEmu_SegmentType S12D512_PagedFlash = {
-    "XCPSIM_Flash", FLSEMU_KB(512), 2, FLS_SECTOR_SIZE, FLS_PAGE_SIZE, 4, 0x8000, XCP_NULL, 0, 0,
+    "XCPSIM_Flash", FLSEMU_KB(512), 2, FLS_SECTOR_SIZE, FLS_PAGE_SIZE, 4, 0x8000, XCP_NULL, 0, 0, FLSEMU_FLASH, 0
 };
 
-static FlsEmu_SegmentType S12D512_EEPROM = {
-    "XCPSIM_EEPROM", FLSEMU_KB(4), 2, 4, FLSEMU_KB(4), 1, 0x4000, XCP_NULL, 0, 0,
+static FlsEmu_SegmentType S12D512_EEPROM = { "XCPSIM_EEPROM", FLSEMU_KB(4), 2, 4, FLSEMU_KB(4),  1,
+                                             0x4000,          XCP_NULL,     0, 0, FLSEMU_EEPROM, 0 };
+
+static FlsEmu_SegmentType S12D512_RAM = {
+    "XCPSIM_RAM", CALRAM_SIZE, 1, 1, CALRAM_SIZE, 1, (Xcp_PointerSizeType)calram, XCP_NULL, 0, 0, FLSEMU_RAM, 0
 };
 
 static FlsEmu_SegmentType const *segments[] = {
     &S12D512_PagedFlash,
     &S12D512_EEPROM,
+    &S12D512_RAM,
 };
 
 const FlsEmu_ConfigType FlsEmu_Config = {
-    2,
+    3,
     (FlsEmu_SegmentType **)segments,
 };
 
@@ -147,7 +151,7 @@ bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t **result, uint32_t *result_
         assert(fp != XCP_NULL);
         fgets(get_id_result, sizeof(get_id_result), fp);
         *result        = (uint8_t *)&get_id_result[0];
-        *result_length = strlen(get_id_result) - 1; /* Get rid of trailing '\n'. */
+        *result_length = (uint32_t)(strlen(get_id_result) - 1); /* Get rid of trailing '\n'. */
         return XCP_TRUE;
     } else {
         return XCP_FALSE;

@@ -62,17 +62,20 @@ uint32_t FlsEmu_GetAllocationGranularity(void) {
 }
 
 void FlsEmu_Close(uint8_t segmentIdx) {
-    FlsEmu_SegmentType const * segment = XCP_NULL;
+    FlsEmu_SegmentType* segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
         return;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
-    FlsEmu_Flush(segmentIdx);
-    FlsEmu_ClosePersitentArray(segment->persistentArray, segment->memSize);
-    if (segment->persistentArray) {
-        free(segment->persistentArray);
+    if (segment->type != FLSEMU_RAM) {
+        FlsEmu_Flush(segmentIdx);
+        FlsEmu_ClosePersitentArray(segment->persistentArray, segment->memSize);
+        if (segment->persistentArray) {
+            free(segment->persistentArray);
+            segment->persistentArray = XCP_NULL;
+        }
     }
 }
 
@@ -85,6 +88,10 @@ static bool FlsEmu_Flush(uint8_t segmentIdx) {
         return XCP_FALSE;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
+
+    if (segment->type == FLSEMU_RAM) {
+        return XCP_TRUE;
+    }
 
     if (msync(segment->persistentArray->mappingAddress, segment->memSize, MS_SYNC) == -1) {
         handle_error("msync");
@@ -192,6 +199,9 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page) {
         return;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
+    if (segment->type == FLSEMU_RAM) {
+        return;
+    }
     /* On POSIX we keep the entire file mapped; selecting a page only updates metadata. */
     segment->currentPage = page;
 }

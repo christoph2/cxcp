@@ -49,11 +49,11 @@
     #include "xcp_util.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-    #define XCP_PROTOCOL_VERSION_MAJOR   (1)
-    #define XCP_PROTOCOL_VERSION_RELEASE (0)
+    #define XCP_PROTOCOL_VERSION_MAJOR (1)
+    #define XCP_PROTOCOL_VERSION_MINOR (4)
 
-    #define XCP_TRANSPORT_LAYER_VERSION_MAJOR   (1)
-    #define XCP_TRANSPORT_LAYER_VERSION_RELEASE (1)
+    #define XCP_TRANSPORT_LAYER_VERSION_MAJOR (1)
+    #define XCP_TRANSPORT_LAYER_VERSION_MINOR (4)
 
     #define XCP_ON_CAN      (1)
     #define XCP_ON_CANFD    (2)
@@ -863,8 +863,18 @@ extern "C" {
         XCP_PROGRAM_MAX            = UINT8(0xC9),
         XCP_PROGRAM_VERIFY         = UINT8(0xC8),
         /* NEW IN 1.1 */
-        XCP_TIME_CORRELATION_PROPERTIES = UINT8(0xC6)
+        XCP_TIME_CORRELATION_PROPERTIES = UINT8(0xC6),
+        /* NEW IN 1.2 / EXTENDED COMMANDS PAGE 1 */
+        XCP_LEVEL1_COMMAND = UINT8(0xC0)
     } Xcp_CommandType;
+
+    #if (XCP_ENABLE_GET_VERSION == XCP_ON)
+        #define XCP_ENABLE_LEVEL1_COMMANDS (XCP_ON)
+    #else
+        #define XCP_ENABLE_LEVEL1_COMMANDS (XCP_OFF)
+    #endif /* XCP_ENABLE_GET_VERSION */
+
+    #define XCP_GET_VERSION (0x00)
 
     typedef enum tagXcp_ReturnType {
         ERR_CMD_SYNCH = UINT8(0x00), /* Command processor synchronization. S0 */
@@ -876,7 +886,7 @@ extern "C" {
         ERR_CMD_UNKNOWN  = UINT8(0x20),      /* Unknown command or not implemented optional command. S2 */
         ERR_CMD_SYNTAX   = UINT8(0x21),      /* Command syntax invalid   S2 */
         ERR_OUT_OF_RANGE = UINT8(0x22),      /* Command syntax valid but command
-                                                  parameter(s) out of range.   S2 */
+                                                           parameter(s) out of range.   S2 */
         ERR_WRITE_PROTECTED   = UINT8(0x23), /* The memory location is write protected. S2 */
         ERR_ACCESS_DENIED     = UINT8(0x24), /* The memory location is not accessible. S2 */
         ERR_ACCESS_LOCKED     = UINT8(0x25), /* Access denied, Seed & Key is required S2 */
@@ -889,11 +899,11 @@ extern "C" {
         ERR_MEMORY_OVERFLOW = UINT8(0x30), /* Memory overflow error S2 */
         ERR_GENERIC         = UINT8(0x31), /* Generic error.         S2 */
         ERR_VERIFY          = UINT8(0x32), /* The slave internal program verify routine detects
-                                                an error.   S3 */
+                                                             an error.   S3 */
 
         /* NEW IN 1.1 */
         ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33), /* Access to the requested resource is temporary not
-                                                                      possible.   S3 */
+                                                                          possible.   S3 */
         ERR_TIMECORR_STATE_CHANGE = UINT8(0x34),             /* State change occurred during time correlation. S3 */
         /* Internal Success Code - not related to XCP spec. */
         ERR_SUCCESS = UINT8(0xff)
@@ -1452,7 +1462,9 @@ extern "C" {
     **  Hardware dependent stuff.
     */
     void XcpHw_Init(void);
+
     void XcpHw_PosixInit(void);
+
     void XcpHw_Deinit(void);
 
     uint32_t XcpHw_GetTimerCounter(void);

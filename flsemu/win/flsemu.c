@@ -75,16 +75,19 @@ static bool       CreateFileView(MEM_HANDLE handle, DWORD length, FlsEmu_HwFileV
  *
  */
 void FlsEmu_Close(uint8_t segmentIdx) {
-    FlsEmu_SegmentType const *segment;
+    FlsEmu_SegmentType *segment;
 
     FLSEMU_ASSERT_INITIALIZED();
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
         return;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
-    FlsEmu_Flush(segmentIdx);
-    FlsEmu_ClosePersitentArray(segment->persistentArray);
-    free(segment->persistentArray);
+    if (segment->type != FLSEMU_RAM) {
+        FlsEmu_Flush(segmentIdx);
+        FlsEmu_ClosePersitentArray(segment->persistentArray);
+        free(segment->persistentArray);
+        segment->persistentArray = XCP_NULL;
+    }
 }
 
 /** @brief Flushes, i.e. writes data to disk.
@@ -103,6 +106,10 @@ static bool FlsEmu_Flush(uint8_t segmentIdx) {
         return FALSE;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
+
+    if (segment->type == FLSEMU_RAM) {
+        return TRUE;
+    }
 
     if (VirtualQuery(segment->persistentArray->mappingAddress, &info, sizeof(MEMORY_BASIC_INFORMATION)) == 0) {
         XcpHw_ErrorMsg("FlsEmu_Flush::VirtualQuery()", GetLastError());
@@ -131,6 +138,9 @@ void FlsEmu_SelectPage(uint8_t segmentIdx, uint8_t page) {
         return;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
+    if (segment->type == FLSEMU_RAM) {
+        return;
+    }
     if (segment->persistentArray->currentPage == page) {
         return; /* Nothing to do. */
     }

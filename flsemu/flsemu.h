@@ -70,6 +70,12 @@ typedef enum tagFlsEmu_ModuleStateType {
     FLSEMU_INIT
 } FlsEmu_ModuleStateType;
 
+typedef enum tagFlsEmu_MemoryTypeType {
+    FLSEMU_FLASH,
+    FLSEMU_EEPROM,
+    FLSEMU_RAM
+} FlsEmu_MemoryTypeType;
+
 typedef struct tagFlsEmu_PersistentArrayType {
     MEM_HANDLE fileHandle;
     MEM_HANDLE mappingHandle;
@@ -88,6 +94,8 @@ typedef struct tagFlsEmu_SegmentType {
     FlsEmu_PersistentArrayType *persistentArray;
     uint8_t                     currentPage;
     uint32_t                    alloctedPageSize;
+    FlsEmu_MemoryTypeType       type;
+    uint8_t                     addressExtension;
 } FlsEmu_SegmentType;
 
 typedef struct tagFlsEmu_ConfigType {

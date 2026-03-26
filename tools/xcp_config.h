@@ -187,6 +187,7 @@
     /*
     **  Optional Services.
     */
+    #define XCP_ENABLE_GET_VERSION        (XCP_ON)
     #define XCP_ENABLE_GET_COMM_MODE_INFO (XCP_ON)
     #define XCP_ENABLE_GET_ID             (XCP_ON)
     #define XCP_ENABLE_SET_REQUEST        (XCP_OFF)

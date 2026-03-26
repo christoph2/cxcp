@@ -40,12 +40,6 @@
 **  Local Types.
 */
 
-typedef enum tagFlsEmu_MemoryTypeType {
-    FLSEMU_FLASH,
-    FLSEMU_EEPROM,
-    FLSEMU_RAM
-} FlsEmu_MemoryTypeType;
-
 /** @brief Information about your system memory.
  *
  *
@@ -108,6 +102,13 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
 
     /* Initialize segment and compute sizes before creating/opening backing file. */
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
+
+    if (segment->type == FLSEMU_RAM) {
+        segment->currentPage      = 0x00;
+        segment->alloctedPageSize = segment->pageSize;
+        return;
+    }
+
     if (segment->persistentArray == NULL) {
         segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
         memset(segment->persistentArray, 0, sizeof(FlsEmu_PersistentArrayType));
@@ -151,7 +152,6 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
 }
 
 void *FlsEmu_BasePointer(uint8_t segmentIdx) {
-    /// TODO: getSegment()
     FlsEmu_SegmentType const *segment = XCP_NULL;
     FLSEMU_ASSERT_INITIALIZED();
 
@@ -159,6 +159,9 @@ void *FlsEmu_BasePointer(uint8_t segmentIdx) {
         return XCP_NULL;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
+    if (segment->type == FLSEMU_RAM) {
+        return (void *)segment->baseAddress;
+    }
     return segment->persistentArray->mappingAddress;
 }
 
@@ -244,8 +247,16 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst, Xcp_MtaType co
     /* printf("addr: %x ext: %d\n", src->address, src->ext); */
 
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
-        ptr     = FlsEmu_BasePointer(idx);
         segment = FlsEmu_GetConfig()->segments[idx];
+        if (segment->type == FLSEMU_RAM) {
+            if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->memSize))) {
+                dst->address = src->address;
+                dst->ext     = src->ext;
+                return XCP_MEMORY_MAPPED;
+            }
+            continue;
+        }
+        ptr = FlsEmu_BasePointer(idx);
         if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
             if (src->ext >= FlsEmu_NumPages(idx)) {
                 return XCP_MEMORY_ADDRESS_INVALID;
