@@ -38,6 +38,7 @@ set(SOURCES
         ../../src/hw/threads.c
         ../../src/xcp_timecorr.c
         ../../flsemu/common.c
+        ../../flsemu/flsemu_xcp.c
         app_config.c
         appl1.c
         main.c

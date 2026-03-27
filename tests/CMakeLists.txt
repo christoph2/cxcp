@@ -80,7 +80,7 @@ set(EXTENSION_INCS ${CMAKE_CURRENT_SOURCE_DIR}/../inc ${CMAKE_CURRENT_SOURCE_DIR
 
 pybind11_add_module(cxcp wrapper.cpp checksum_mocks.c ../src/xcp.c ../src/xcp_checksum.c
         ../src/xcp_daq.c ../src/xcp_util.c bindings/daq_stubs.c
-        ../flsemu/common.c fls_mocks.c xcp_mocks.c
+        ../flsemu/common.c ../flsemu/flsemu_xcp.c fls_mocks.c xcp_mocks.c
 )
 # xcp_init.c
 
