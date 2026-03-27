@@ -1836,13 +1836,7 @@ XCP_STATIC void Xcp_GetSegmentInfo_Res(Xcp_PduType const * const pdu) {
 
     if (XcpHw_GetSegmentInfo(segment, mode, &info)) {
         switch (mode) {
-            case 0: /* GET_BASIC_INFO */
-                Xcp_Send8(
-                    UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0), info.numPages, info.addressExtension,
-                    info.maxPage, info.compressionMethod
-                );
-                break;
-            case 1: /* GET_ADDRESS_INFO */
+            case 0: /* Bsic Address Info */
                 switch (infoType) {
                     case 0: /* Address */
                         Xcp_Send8(
@@ -1863,7 +1857,13 @@ XCP_STATIC void Xcp_GetSegmentInfo_Res(Xcp_PduType const * const pdu) {
                         break;
                 }
                 break;
-            case 2: /* GET_MAPPING_INFO */
+            case 1: /* Standard Info */
+                Xcp_Send8(
+                    UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), info.numPages, info.addressExtension,
+                    info.maxPage, info.compressionMethod, info.encryptionMethod, UINT8(0), UINT8(0)
+                );
+                break;
+            case 2: /* Mapping Info */
                 /* For now, we return 0 mapping (1:1). In XCP, 0 mapping means no mapping. */
                 Xcp_Send8(
                     UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0)
