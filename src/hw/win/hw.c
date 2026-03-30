@@ -245,4 +245,3 @@ void XcpHw_Sleep(uint64_t usec) {
     WaitForSingleObject(timer, INFINITE);
     CloseHandle(timer);
 }
-

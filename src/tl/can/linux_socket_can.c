@@ -280,7 +280,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         frame.can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
     }
 #else
-    frame.can_id  = XCP_ON_CAN_INBOUND_IDENTIFIER;
+    frame.can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
 #endif
     frame.can_dlc = (uint8_t)len;
     memcpy(frame.data, buf, len);
