@@ -974,20 +974,20 @@ bool XcpDaq_QueueEmpty(void) {
     return XcpDaq_Queue.head == XcpDaq_Queue.tail;
 }
 
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    #if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
 bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data, uint32_t can_id) {
-#else
+    #else
 bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
-#endif
+    #endif
     if (XcpDaq_QueueFull()) {
         XcpDaq_Queue.overload = (bool)XCP_TRUE;
         return (bool)XCP_FALSE;
     }
 
     XcpDaq_QueueDTOs[XcpDaq_Queue.head].len = len;
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    #if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
     XcpDaq_QueueDTOs[XcpDaq_Queue.head].can_id = can_id;
-#endif
+    #endif
 
     // XCP_ASSERT_LE(len, XCP_MAX_DTO);
     if (len > XCP_MAX_DTO) {
@@ -999,11 +999,11 @@ bool XcpDaq_QueueEnqueue(uint16_t len, uint8_t const *data) {
     return (bool)XCP_TRUE;
 }
 
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    #if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
 bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data, uint32_t *can_id) {
-#else
+    #else
 bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
-#endif
+    #endif
     uint16_t dto_len;
 
     if (XcpDaq_QueueEmpty()) {
@@ -1015,9 +1015,9 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
         return (bool)XCP_FALSE;
     }
     *len = dto_len;
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    #if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
     *can_id = XcpDaq_QueueDTOs[XcpDaq_Queue.tail].can_id;
-#endif
+    #endif
     XcpUtl_MemCopy(data, XcpDaq_QueueDTOs[XcpDaq_Queue.tail].data, dto_len);
     XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE);
     return (bool)XCP_TRUE;

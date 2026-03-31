@@ -58,7 +58,7 @@ typedef struct tagXcpTimecorr_StateType {
     */
 
     /* Individual block sizes (per XCP spec) */
-    #define CLOCK_INFO_BLOCK_SIZE      (24u) /* UUID(8) + ticks(2) + unit(1) + stratum(1) + native(1) + epoch(1) + rsv(2) + maxts(8) */
+    #define CLOCK_INFO_BLOCK_SIZE (24u) /* UUID(8) + ticks(2) + unit(1) + stratum(1) + native(1) + epoch(1) + rsv(2) + maxts(8) */
     #define CLOCK_RELATION_BLOCK_SIZE  (16u) /* origin DLONG(8) + slv_ts DLONG(8) */
     #define ECU_GRANDM_UUID_BLOCK_SIZE (8u)  /* UUID(8) only */
 
