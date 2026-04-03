@@ -638,7 +638,11 @@ extern "C" {
             (uint8_t const * const)(name), sizeof((name)) - 1, (props), (timebase), (cycle),                                       \
         }
 
-    #define XCP_DAQ_BEGIN_ID_LIST const uint32_t Xcp_DaqIDs[] = {
+    #if (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)
+        #define XCP_DAQ_BEGIN_ID_LIST uint32_t Xcp_DaqIDs[] = {
+    #else
+        #define XCP_DAQ_BEGIN_ID_LIST const uint32_t Xcp_DaqIDs[] = {
+    #endif
     #define XCP_DAQ_END_ID_LIST                                                                                                    \
         }                                                                                                                          \
         ;                                                                                                                          \

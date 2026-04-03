@@ -344,8 +344,21 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n) {
         return true;
     } else if (sub == (uint8_t)0xFC) {
         /* SET_SLAVE_IP_ADDRESS – acknowledge without applying */
-        uint16_t resp_port = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
+        uint16_t resp_port;
         char     resp_ip[32];
+
+        if (n < 31u) {
+            return false;
+        }
+
+        resp_port = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
+
+        /* Verify that the command targets this slave by matching MAC address (buf[25..30]) */
+        if (buf[25] != (uint8_t)XCP_ETH_DISCOVERY_MAC0 || buf[26] != (uint8_t)XCP_ETH_DISCOVERY_MAC1 ||
+            buf[27] != (uint8_t)XCP_ETH_DISCOVERY_MAC2 || buf[28] != (uint8_t)XCP_ETH_DISCOVERY_MAC3 ||
+            buf[29] != (uint8_t)XCP_ETH_DISCOVERY_MAC4 || buf[30] != (uint8_t)XCP_ETH_DISCOVERY_MAC5) {
+            return false;
+        }
 
         (void)snprintf(
             resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]

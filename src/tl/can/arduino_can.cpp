@@ -50,14 +50,22 @@
 
     #include <stdint.h>
 
-uint32_t              filter_mask(uint32_t identifier);
+uint32_t filter_mask(uint32_t identifier);
+    #if (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)
+extern uint32_t Xcp_DaqIDs[];
+    #else
 extern const uint32_t Xcp_DaqIDs[];
+    #endif
 extern const uint16_t Xcp_DaqIDCount;
 
 static const char XCP_MAGIC[] = "XCP";
 
 static bool          connected = false;
 static volatile bool XcpTl_FrameReceived{ false };
+
+    #if (XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON)
+static bool XcpTl_SlaveIdEchoReceived = false;
+    #endif /* XCP_ENABLE_CAN_GET_SLAVE_ID */
 
 static unsigned char XcpTl_Buffer[64];
 static unsigned char XcpTl_Dlc = 0;
@@ -273,31 +281,37 @@ void XcpTl_PrintConnectionInformation(void) {
     #if XCP_ENABLE_TRANSPORT_LAYER_CMD == XCP_ON
         #if (XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON)
 void XcpTl_GetSlaveId_Res(Xcp_PduType const * const pdu) {
-    uint8_t mask = 0x00;
-
-    if (pdu->data[2]) {
+    /* Validate "XCP" identification pattern at positions 2-4 */
+    if (pdu->data[2] != UINT8(0x58) || pdu->data[3] != UINT8(0x43) || pdu->data[4] != UINT8(0x50)) {
+        return;
     }
 
-    if (pdu->data[5] == 1) {
-        /*
-         Mode
-            0 = identify by echo
-            1 = confirm by inverse echo
-        */
-        mask = 0xff;
+    if (pdu->data[5] == 0) {
+        /* Mode 0: identify by echo */
+        XcpTl_SlaveIdEchoReceived = true;
+        Xcp_Send8(
+            UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0x58), UINT8(0x43), UINT8(0x50),
+            XCP_LOBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)),
+            XCP_LOBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER))
+        );
+    } else if (pdu->data[5] == 1) {
+        /* Mode 1: confirm by inverse echo — only if a prior identify-by-echo was received */
+        if (!XcpTl_SlaveIdEchoReceived) {
+            return;
+        }
+        XcpTl_SlaveIdEchoReceived = false;
+        Xcp_Send8(
+            UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0xA7), UINT8(0xBC), UINT8(0xAF),
+            XCP_LOBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)),
+            XCP_LOBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER))
+        );
     }
-
-    Xcp_Send8(
-        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0x58 ^ mask), UINT8(0x43 ^ mask), UINT8(0x50 ^ mask),
-        XCP_LOBYTE(XCP_LOWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_LOWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER)),
-        XCP_LOBYTE(XCP_HIWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_HIWORD(XCP_ON_CAN_OUTBOUND_IDENTIFIER))
-    );
 }
         #endif /* XCP_ENABLE_CAN_GET_SLAVE_ID */
 
         #if (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON)
 void XcpTl_GetDaqId_Res(Xcp_PduType const * const pdu) {
-    uint8_t daq_id = pdu->data[2];
+    uint16_t daq_id = (uint16_t)((uint16_t)pdu->data[2] | ((uint16_t)pdu->data[3] << 8u));
 
     if (daq_id > (Xcp_DaqIDCount - 1)) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
@@ -313,6 +327,16 @@ void XcpTl_GetDaqId_Res(Xcp_PduType const * const pdu) {
 
         #if (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)
 void XcpTl_SetDaqId_Res(Xcp_PduType const * const pdu) {
+    uint16_t daq_id = (uint16_t)((uint16_t)pdu->data[2] | ((uint16_t)pdu->data[3] << 8u));
+    uint32_t can_id = (uint32_t)((uint32_t)pdu->data[4] | ((uint32_t)pdu->data[5] << 8u) | ((uint32_t)pdu->data[6] << 16u) |
+                                 ((uint32_t)pdu->data[7] << 24u));
+
+    if (daq_id > (Xcp_DaqIDCount - 1)) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+    Xcp_DaqIDs[daq_id] = can_id;
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
 }
         #endif /* XCP_ENABLE_CAN_SET_DAQ_ID */
 

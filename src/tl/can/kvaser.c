@@ -38,10 +38,78 @@
 
 #define KV_MAX_DLC ((uint16_t)8) /* TODO: depends on classic or FD. */
 
-#if 0
-static const uint8_t GET_SLAVE_ID_ECHO[] = {UINT8(0x58), UINT8(0x43), UINT8(0x50)};
-static const uint8_t GET_SLAVE_ID_INVERSE_ECHO[] = {UINT8(0xA7), UINT8(0xBC), UINT8(0xAF)};
-#endif
+#if XCP_ENABLE_TRANSPORT_LAYER_CMD == XCP_ON
+
+    #if (XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON)
+static bool XcpTl_SlaveIdEchoReceived = false;
+
+static void XcpTl_GetSlaveId_Res(Xcp_PduType const * const pdu) {
+    /* Validate "XCP" identification pattern at positions 2-4 */
+    if (pdu->data[2] != UINT8(0x58) || pdu->data[3] != UINT8(0x43) || pdu->data[4] != UINT8(0x50)) {
+        return;
+    }
+
+    if (pdu->data[5] == 0) {
+        /* Mode 0: identify by echo */
+        XcpTl_SlaveIdEchoReceived = true;
+        Xcp_Send8(
+            UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0x58), UINT8(0x43), UINT8(0x50),
+            XCP_LOBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)),
+            XCP_LOBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER))
+        );
+    } else if (pdu->data[5] == 1) {
+        /* Mode 1: confirm by inverse echo — only if a prior identify-by-echo was received */
+        if (!XcpTl_SlaveIdEchoReceived) {
+            return;
+        }
+        XcpTl_SlaveIdEchoReceived = false;
+        Xcp_Send8(
+            UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0xA7), UINT8(0xBC), UINT8(0xAF),
+            XCP_LOBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_LOWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)),
+            XCP_LOBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER)), XCP_HIBYTE(XCP_HIWORD(XCP_ON_CAN_INBOUND_IDENTIFIER))
+        );
+    }
+}
+    #endif /* XCP_ENABLE_CAN_GET_SLAVE_ID */
+
+    #if (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON)
+extern const uint32_t Xcp_DaqIDs[];
+extern const uint16_t Xcp_DaqIDCount;
+
+static void XcpTl_GetDaqId_Res(Xcp_PduType const * const pdu) {
+    uint16_t daq_id = (uint16_t)((uint16_t)pdu->data[2] | ((uint16_t)pdu->data[3] << 8u));
+
+    if (daq_id > (Xcp_DaqIDCount - 1)) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+    Xcp_Send8(
+        UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(1), UINT8(0), UINT8(0), XCP_LOBYTE(XCP_LOWORD(Xcp_DaqIDs[daq_id])),
+        XCP_HIBYTE(XCP_LOWORD(Xcp_DaqIDs[daq_id])), XCP_LOBYTE(XCP_HIWORD(Xcp_DaqIDs[daq_id])),
+        XCP_HIBYTE(XCP_HIWORD(Xcp_DaqIDs[daq_id]))
+    );
+}
+    #endif /* XCP_ENABLE_CAN_GET_DAQ_ID */
+
+    #if (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)
+extern uint32_t       Xcp_DaqIDs[];
+extern const uint16_t Xcp_DaqIDCount;
+
+static void XcpTl_SetDaqId_Res(Xcp_PduType const * const pdu) {
+    uint16_t daq_id = (uint16_t)((uint16_t)pdu->data[2] | ((uint16_t)pdu->data[3] << 8u));
+    uint32_t can_id = (uint32_t)((uint32_t)pdu->data[4] | ((uint32_t)pdu->data[5] << 8u) | ((uint32_t)pdu->data[6] << 16u) |
+                                 ((uint32_t)pdu->data[7] << 24u));
+
+    if (daq_id > (Xcp_DaqIDCount - 1)) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+    Xcp_DaqIDs[daq_id] = can_id;
+    Xcp_Send8(UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0), UINT8(0));
+}
+    #endif /* XCP_ENABLE_CAN_SET_DAQ_ID */
+
+#endif /* XCP_ENABLE_TRANSPORT_LAYER_CMD */
 
 typedef struct tagXcpTl_ConnectionType {
     int virtualChannel;
@@ -387,6 +455,32 @@ void XcpTl_FeedReceiver(uint8_t octet) {
 }
 
 void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
+#if XCP_ENABLE_TRANSPORT_LAYER_CMD == XCP_ON
+    #if (XCP_ENABLE_CAN_GET_SLAVE_ID == XCP_ON)
+    if (pdu->data[1] == UINT8(XCP_GET_SLAVE_ID)) {
+        XcpTl_GetSlaveId_Res(pdu);
+        return;
+    }
+    #endif /* XCP_ENABLE_CAN_GET_SLAVE_ID */
+
+    #if (XCP_ENABLE_CAN_GET_DAQ_ID == XCP_ON)
+    if (pdu->data[1] == UINT8(XCP_GET_DAQ_ID)) {
+        XcpTl_GetDaqId_Res(pdu);
+        return;
+    }
+    #endif /* XCP_ENABLE_CAN_GET_DAQ_ID */
+
+    #if (XCP_ENABLE_CAN_SET_DAQ_ID == XCP_ON)
+    if (pdu->data[1] == UINT8(XCP_SET_DAQ_ID)) {
+        XcpTl_SetDaqId_Res(pdu);
+        return;
+    }
+    #endif /* XCP_ENABLE_CAN_SET_DAQ_ID */
+
+    Xcp_ErrorResponse(UINT8(ERR_CMD_UNKNOWN));
+#else
+    XCP_UNREFERENCED_PARAMETER(pdu);
+#endif /* XCP_ENABLE_TRANSPORT_LAYER_CMD */
 }
 
 void XcpTl_SetOptions(Xcp_OptionsType const *options) {
