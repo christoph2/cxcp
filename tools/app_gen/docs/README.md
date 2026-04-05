@@ -40,7 +40,7 @@ Set the environment variable `CXCP_SRC_PATH` to the root of the cXCP repository 
 
 ### cXCP configuration defaults
 
-`pyxcp_appgen` keeps a single source of truth for cXCP options in `src/pyxcp_appgen/data/xcp_config_defaults.json` (names, types, default values, enums). On generation, this JSON is rendered into `sketch/xcp_config.h`; edit the JSON instead of the header and re-run the generator.
+`pyxcp_appgen` keeps a single source of truth for cXCP options in `xcp_config_defaults.json` at the repository root (names, types, default values, enums, group). On generation, this JSON is rendered into `sketch/xcp_config.h`; edit the JSON instead of the header and re-run the generator.
 
 ## Project structure
 

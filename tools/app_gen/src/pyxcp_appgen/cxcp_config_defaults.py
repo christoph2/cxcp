@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-DEFAULT_SPEC_PATH = Path(__file__).parent / "data" / "xcp_config_defaults.json"
+DEFAULT_SPEC_PATH = Path(__file__).parents[4] / "xcp_config_defaults.json"
 
 
 def load_spec(spec_path: Path = DEFAULT_SPEC_PATH) -> List[Dict[str, Any]]:
