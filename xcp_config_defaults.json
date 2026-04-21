@@ -1,0 +1,1032 @@
+[
+  {
+    "type": "enum",
+    "name": "XCP_BYTE_ORDER",
+    "default": "XCP_BYTE_ORDER_INTEL",
+    "group": "general",
+    "enum": [
+      "XCP_BYTE_ORDER_INTEL",
+      "XCP_BYTE_ORDER_MOTOROLA"
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "XCP_ADDRESS_GRANULARITY",
+    "default": "XCP_ADDRESS_GRANULARITY_BYTE",
+    "group": "general",
+    "enum": [
+      "XCP_ADDRESS_GRANULARITY_BYTE",
+      "XCP_ADDRESS_GRANULARITY_WORD",
+      "XCP_ADDRESS_GRANULARITY_DWORD"
+    ]
+  },
+  {
+    "type": "symbol",
+    "name": "XCP_BUILD_TYPE",
+    "default": "XCP_RELEASE_BUILD",
+    "group": "general"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_LOGGING",
+    "default": true,
+    "group": "general"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_DEBUG_OUTPUT",
+    "default": false,
+    "group": "general"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_EXTERN_C_GUARDS",
+    "default": true,
+    "group": "general"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_STATISTICS",
+    "default": true,
+    "group": "general"
+  },
+  {
+    "type": "int",
+    "name": "XCP_MAX_CTO",
+    "default": "16",
+    "group": "general"
+  },
+  {
+    "type": "int",
+    "name": "XCP_MAX_DTO",
+    "default": "16",
+    "group": "general"
+  },
+  {
+    "type": "int",
+    "name": "XCP_MAX_BS",
+    "default": "255",
+    "group": "general"
+  },
+  {
+    "type": "int",
+    "name": "XCP_MIN_ST",
+    "default": "0",
+    "group": "general"
+  },
+  {
+    "type": "int",
+    "name": "XCP_QUEUE_SIZE",
+    "default": "0",
+    "group": "general"
+  },
+  {
+    "type": "int",
+    "name": "XCP_MAIN_FUNCTION_PERIOD",
+    "default": "2000",
+    "group": "general"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_SLAVE_BLOCKMODE",
+    "default": false,
+    "group": "general"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_MASTER_BLOCKMODE",
+    "default": false,
+    "group": "general"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_STIM",
+    "default": false,
+    "group": "general"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_CHECKSUM_METHOD",
+    "default": "XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT",
+    "group": "checksum",
+    "enum": [
+      "XCP_CHECKSUM_METHOD_XCP_ADD_11",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_12",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_14",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_22",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_24",
+      "XCP_CHECKSUM_METHOD_XCP_ADD_44",
+      "XCP_CHECKSUM_METHOD_XCP_CRC_16",
+      "XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT",
+      "XCP_CHECKSUM_METHOD_XCP_CRC_32",
+      "XCP_CHECKSUM_METHOD_XCP_USER_DEFINED"
+    ]
+  },
+  {
+    "type": "bool",
+    "name": "XCP_CHECKSUM_CHUNKED_CALCULATION",
+    "default": true,
+    "group": "checksum"
+  },
+  {
+    "type": "int",
+    "name": "XCP_CHECKSUM_CHUNK_SIZE",
+    "default": "64",
+    "group": "checksum"
+  },
+  {
+    "type": "int",
+    "name": "XCP_CHECKSUM_MAXIMUM_BLOCK_SIZE",
+    "default": "0",
+    "group": "checksum"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_PROTECT_CAL",
+    "default": false,
+    "group": "protection"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_PROTECT_PAG",
+    "default": true,
+    "group": "protection"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_PROTECT_DAQ",
+    "default": false,
+    "group": "protection"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_PROTECT_STIM",
+    "default": true,
+    "group": "protection"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_PROTECT_PGM",
+    "default": false,
+    "group": "protection"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_DAQ_CONFIG_TYPE",
+    "default": "XCP_DAQ_CONFIG_TYPE_DYNAMIC",
+    "group": "daq",
+    "enum": [
+      "XCP_DAQ_CONFIG_TYPE_STATIC",
+      "XCP_DAQ_CONFIG_TYPE_DYNAMIC",
+      "XCP_DAQ_CONFIG_TYPE_NONE"
+    ]
+  },
+  {
+    "type": "int",
+    "name": "XCP_DAQ_DTO_BUFFER_SIZE",
+    "default": "40",
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_PREDEFINED_LISTS",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_TIMESTAMPING",
+    "default": true,
+    "group": "daq"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_DAQ_TIMESTAMP_UNIT",
+    "default": "XCP_DAQ_TIMESTAMP_UNIT_1US",
+    "group": "daq",
+    "enum": [
+      "XCP_DAQ_TIMESTAMP_UNIT_1NS",
+      "XCP_DAQ_TIMESTAMP_UNIT_10NS",
+      "XCP_DAQ_TIMESTAMP_UNIT_100NS",
+      "XCP_DAQ_TIMESTAMP_UNIT_1US",
+      "XCP_DAQ_TIMESTAMP_UNIT_10US",
+      "XCP_DAQ_TIMESTAMP_UNIT_100US",
+      "XCP_DAQ_TIMESTAMP_UNIT_1MS",
+      "XCP_DAQ_TIMESTAMP_UNIT_10MS",
+      "XCP_DAQ_TIMESTAMP_UNIT_100MS",
+      "XCP_DAQ_TIMESTAMP_UNIT_1S",
+      "XCP_DAQ_TIMESTAMP_UNIT_1PS",
+      "XCP_DAQ_TIMESTAMP_UNIT_10PS",
+      "XCP_DAQ_TIMESTAMP_UNIT_100PS"
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "XCP_DAQ_TIMESTAMP_SIZE",
+    "default": "XCP_DAQ_TIMESTAMP_SIZE_4",
+    "group": "daq",
+    "enum": [
+      "XCP_DAQ_TIMESTAMP_SIZE_1",
+      "XCP_DAQ_TIMESTAMP_SIZE_2",
+      "XCP_DAQ_TIMESTAMP_SIZE_4"
+    ]
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_PRESCALER",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_ADDR_EXT",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_BIT_OFFSET",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_PRIORITIZATION",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_ALTERNATING",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS",
+    "default": true,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_WRITE_THROUGH",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_RESET_DYN_DAQ_CONFIG_ON_SEQUENCE_ERROR",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_DAQ_ENABLE_PID_OFF",
+    "default": false,
+    "group": "daq"
+  },
+  {
+    "type": "int",
+    "name": "XCP_DAQ_CAN_ID_BASE",
+    "default": "0x120",
+    "group": "daq"
+  },
+  {
+    "type": "int",
+    "name": "XCP_DAQ_QUEUE_SIZE",
+    "default": "16",
+    "group": "daq"
+  },
+  {
+    "type": "int",
+    "name": "XCP_DAQ_MAX_DYNAMIC_ENTITIES",
+    "default": "16",
+    "group": "daq"
+  },
+  {
+    "type": "int",
+    "name": "XCP_DAQ_MAX_EVENT_CHANNEL",
+    "default": "3",
+    "group": "daq"
+  },
+  {
+    "type": "int",
+    "name": "XCP_MAX_BS_PGM",
+    "default": "0",
+    "group": "pgm"
+  },
+  {
+    "type": "int",
+    "name": "XCP_MIN_ST_PGM",
+    "default": "0",
+    "group": "pgm"
+  },
+  {
+    "type": "raw",
+    "name": "XCP_MAX_SECTOR_PGM",
+    "default": "UINT8(32)",
+    "group": "pgm"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_PGM_PROPERIES",
+    "default": "XCP_PGM_ABSOLUTE_MODE",
+    "group": "pgm",
+    "enum": [
+      "XCP_PGM_ABSOLUTE_MODE"
+    ]
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_VERSION",
+    "default": true,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_COMM_MODE_INFO",
+    "default": true,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_ID",
+    "default": true,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_ID_EPK",
+    "default": false,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_SET_REQUEST",
+    "default": false,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_SEED",
+    "default": false,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_UNLOCK",
+    "default": false,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_SET_MTA",
+    "default": true,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_UPLOAD",
+    "default": true,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_SHORT_UPLOAD",
+    "default": true,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_BUILD_CHECKSUM",
+    "default": true,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_USER_CMD",
+    "default": false,
+    "group": "cmd_std"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_CAL_COMMANDS",
+    "default": true,
+    "group": "cmd_cal"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_DOWNLOAD_NEXT",
+    "default": false,
+    "group": "cmd_cal"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_DOWNLOAD_MAX",
+    "default": true,
+    "group": "cmd_cal"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_SHORT_DOWNLOAD",
+    "default": true,
+    "group": "cmd_cal"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_MODIFY_BITS",
+    "default": true,
+    "group": "cmd_cal"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_PAG_COMMANDS",
+    "default": false,
+    "group": "cmd_pag"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_PAG_PROCESSOR_INFO",
+    "default": false,
+    "group": "cmd_pag"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_SEGMENT_INFO",
+    "default": false,
+    "group": "cmd_pag"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_PAGE_INFO",
+    "default": false,
+    "group": "cmd_pag"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_SET_SEGMENT_MODE",
+    "default": false,
+    "group": "cmd_pag"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_SEGMENT_MODE",
+    "default": false,
+    "group": "cmd_pag"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_COPY_CAL_PAGE",
+    "default": false,
+    "group": "cmd_pag"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_DAQ_COMMANDS",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_DAQ_CLOCK",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_READ_DAQ",
+    "default": false,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_DAQ_PROCESSOR_INFO",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_DAQ_RESOLUTION_INFO",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_DAQ_LIST_INFO",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_DAQ_EVENT_INFO",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_FREE_DAQ",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_ALLOC_DAQ",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_ALLOC_ODT",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_ALLOC_ODT_ENTRY",
+    "default": true,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_WRITE_DAQ_MULTIPLE",
+    "default": false,
+    "group": "cmd_daq"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_PGM_COMMANDS",
+    "default": true,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_PGM_PROCESSOR_INFO",
+    "default": true,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_SECTOR_INFO",
+    "default": true,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_PROGRAM_PREPARE",
+    "default": true,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_PROGRAM_FORMAT",
+    "default": false,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_PROGRAM_NEXT",
+    "default": false,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_PROGRAM_MAX",
+    "default": false,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_PROGRAM_VERIFY",
+    "default": false,
+    "group": "cmd_pgm"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_EVENT_PACKET_API",
+    "default": true,
+    "group": "api"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_SERVICE_REQUEST_API",
+    "default": false,
+    "group": "api"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_CAN_INTERFACE",
+    "default": "XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD",
+    "group": "tl_can",
+    "enum": [
+      "XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD",
+      "XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD",
+      "XCP_CAN_IF_MKR_ZERO_CAN_SHIELD",
+      "XCP_CAN_IF_SPARKFUN_CAN_SHIELD"
+    ]
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_CAN_FD",
+    "default": false,
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_INBOUND_IDENTIFIER",
+    "default": "0x300",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_OUTBOUND_IDENTIFIER",
+    "default": "0x301",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_BROADCAST_IDENTIFIER",
+    "default": "0x222",
+    "group": "tl_can"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ON_CAN_MAX_DLC_REQUIRED",
+    "default": false,
+    "group": "tl_can"
+  },
+  {
+    "type": "symbol",
+    "name": "XCP_ON_CAN_FREQ",
+    "default": "CAN_500KBPS",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_BTQ",
+    "default": "16",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_TSEG1",
+    "default": "14",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_TSEG2",
+    "default": "2",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_SJW",
+    "default": "2",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_CAN_NOSAMP",
+    "default": "1",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_CAN_IF_MCP25XX_PIN_CS",
+    "default": "9",
+    "group": "tl_can"
+  },
+  {
+    "type": "int",
+    "name": "XCP_CAN_IF_MCP25XX_PIN_INT",
+    "default": "2",
+    "group": "tl_can"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_CAN_GET_SLAVE_ID",
+    "default": true,
+    "group": "tl_can"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_CAN_GET_DAQ_ID",
+    "default": true,
+    "group": "tl_can"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_CAN_SET_DAQ_ID",
+    "default": false,
+    "group": "tl_can"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_ON_ETHERNET_PROTOCOL",
+    "default": "XCP_ON_ETHERNET_USE_UDP",
+    "group": "tl_eth",
+    "enum": [
+      "XCP_ON_ETHERNET_USE_UDP",
+      "XCP_ON_ETHERNET_USE_TCP"
+    ]
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_ETHERNET_PORT",
+    "default": "5555",
+    "group": "tl_eth"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_ETHERNET_IP_OCTETS",
+    "default": "192, 168, 137, 100",
+    "group": "tl_eth"
+  },
+  {
+    "type": "array",
+    "name": "XCP_ON_ETHERNET_MAC_ADDRESS",
+    "default": "{ 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }",
+    "group": "tl_eth"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_ON_ETHERNET_ARDUINO_DRIVER",
+    "default": "XCP_ON_ETHERNET_DRIVER_ETHERNET",
+    "group": "tl_eth",
+    "enum": [
+      "XCP_ON_ETHERNET_DRIVER_ETHERNET",
+      "XCP_ON_ETHERNET_DRIVER_WIFI"
+    ]
+  },
+  {
+    "type": "string",
+    "name": "XCP_ON_ETHERNET_WIFI_SSID",
+    "default": "\"\"",
+    "group": "tl_eth"
+  },
+  {
+    "type": "string",
+    "name": "XCP_ON_ETHERNET_WIFI_PASSWORD",
+    "default": "\"\"",
+    "group": "tl_eth"
+  },
+  {
+    "type": "symbol",
+    "name": "XCP_ON_WIFI_TX_POWER",
+    "default": "WIFI_POWER_13dBm",
+    "group": "tl_eth"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_ON_SXI_HEADER_FORMAT",
+    "default": "XCP_ON_SXI_HEADER_LEN_CTR_BYTE",
+    "group": "tl_sxi",
+    "enum": [
+      "XCP_ON_SXI_HEADER_LEN_BYTE",
+      "XCP_ON_SXI_HEADER_LEN_WORD",
+      "XCP_ON_SXI_HEADER_LEN_CTR_BYTE",
+      "XCP_ON_SXI_HEADER_LEN_CTR_WORD",
+      "XCP_ON_SXI_HEADER_LEN_FILL_BYTE",
+      "XCP_ON_SXI_HEADER_LEN_FILL_WORD"
+    ]
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_SXI_BITRATE",
+    "default": "38400",
+    "group": "tl_sxi"
+  },
+  {
+    "type": "symbol",
+    "name": "XCP_ON_SXI_CONFIG",
+    "default": "SERIAL_8N1",
+    "group": "tl_sxi"
+  },
+  {
+    "type": "enum",
+    "name": "XCP_ON_SXI_TAIL_CHECKSUM",
+    "default": "XCP_ON_SXI_NO_CHECKSUM",
+    "group": "tl_sxi",
+    "enum": [
+      "XCP_ON_SXI_NO_CHECKSUM",
+      "XCP_ON_SXI_CHECKSUM_BYTE",
+      "XCP_ON_SXI_CHECKSUM_WORD"
+    ]
+  },
+  {
+    "type": "raw",
+    "name": "XCP_ON_SXI_PORT_NAME",
+    "default": "Serial",
+    "group": "tl_sxi"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ON_SXI_CUSTOM_INTERFACE",
+    "default": false,
+    "group": "tl_sxi"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ON_SXI_ENABLE_FRAMING",
+    "default": false,
+    "group": "tl_sxi"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_SXI_SYNC_CHAR",
+    "default": "0xAA",
+    "group": "tl_sxi"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_SXI_ESC_CHAR",
+    "default": "0xAB",
+    "group": "tl_sxi"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_SXI_ESC_SYNC_CHAR",
+    "default": "0x01",
+    "group": "tl_sxi"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ON_SXI_ESC_ESC_CHAR",
+    "default": "0x00",
+    "group": "tl_sxi"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_ETH_DISCOVERY",
+    "default": true,
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MAC0",
+    "default": "0x00",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MAC1",
+    "default": "0x00",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MAC2",
+    "default": "0x00",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MAC3",
+    "default": "0x00",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MAC4",
+    "default": "0x00",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MAC5",
+    "default": "0x00",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MCAST_IP0",
+    "default": "239",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MCAST_IP1",
+    "default": "255",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MCAST_IP2",
+    "default": "0",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MCAST_IP3",
+    "default": "0",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_MCAST_PORT",
+    "default": "5556",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "int",
+    "name": "XCP_ETH_DISCOVERY_SET_IP_STATUS",
+    "default": "2",
+    "group": "eth_discovery"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_TIME_CORRELATION",
+    "default": false,
+    "group": "time_correlation"
+  },
+  {
+    "type": "int",
+    "name": "XCP_TIMECORR_DEFAULT_CLUSTER_ID",
+    "default": "0x0001u",
+    "group": "time_correlation"
+  },
+  {
+    "type": "int",
+    "name": "XCP_TIMECORR_XCP_SLV_CLK",
+    "default": "0",
+    "group": "time_correlation"
+  },
+  {
+    "type": "int",
+    "name": "XCP_TIMECORR_GRANDM_CLK",
+    "default": "0",
+    "group": "time_correlation"
+  },
+  {
+    "type": "int",
+    "name": "XCP_TIMECORR_ECU_CLK",
+    "default": "0",
+    "group": "time_correlation"
+  },
+  {
+    "type": "int",
+    "name": "XCP_TIMECORR_SLV_NATIVE_TS_SIZE",
+    "default": "4u",
+    "group": "time_correlation"
+  },
+  {
+    "type": "array",
+    "name": "XCP_TIMECORR_SLV_UUID",
+    "default": "{ 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x01u }",
+    "group": "time_correlation"
+  },
+  {
+    "type": "int",
+    "name": "XCP_TIMECORR_SLV_STRATUM",
+    "default": "255u",
+    "group": "time_correlation"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_ADDRESS_MAPPER",
+    "default": false,
+    "group": "customization"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_CHECK_MEMORY_ACCESS",
+    "default": false,
+    "group": "customization"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_REPLACE_STD_COPY_MEMORY",
+    "default": false,
+    "group": "customization"
+  },
+  {
+    "type": "bool",
+    "name": "XCP_ENABLE_GET_ID_HOOK",
+    "default": false,
+    "group": "customization"
+  },
+  {
+    "type": "string",
+    "name": "XCP_GET_ID_0",
+    "default": "\"BlueParrot XCP running on Arduino\"",
+    "group": "identification"
+  },
+  {
+    "type": "string",
+    "name": "XCP_GET_ID_1",
+    "default": "\"BlueParrot_XCP_on_Arduino\"",
+    "group": "identification"
+  },
+  {
+    "type": "int",
+    "name": "XCP_APP_TIMEBASE",
+    "default": "10",
+    "group": "application"
+  }
+]
