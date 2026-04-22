@@ -139,15 +139,12 @@ static int serial_vprintf(const char* fmt, va_list args) {
 }
 
 void setup() {
-    Serial.begin(115200);
     // esp_log_set_vprintf(serial_vprintf);
     esp_log_level_set("*", ESP_LOG_INFO);  // global auf INFO
     DBG_PRINT("DBG_PRINT: Starting...\n");
-    Serial.println("Serial.println: Starting...\n");
     ESP_LOGI("TAG", "Log via Serial redirected");
 
     DBG_TRACE("Initializing XCP-Library\n");
-    Serial.println("XCP Library initialized successfully");
     dummy    = 0x55;
     voltage1 = 90.0f;
     voltage2 = 180.0f;

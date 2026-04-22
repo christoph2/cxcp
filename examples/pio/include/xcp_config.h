@@ -35,8 +35,11 @@
      **  General Options.
      */
     // #define TP_CAN
-    #define TP_SXI
-// #define TP_ETHER
+    // #define TP_BLUETOOTH
+    // #define TP_ETHER
+    #if !defined(TP_CAN) && !defined(TP_ETHER) && !defined(TP_BLUETOOTH) && !defined(TP_SXI)
+        #define TP_SXI
+    #endif
 
     #define XCP_CAN_INTERFACE (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
@@ -197,8 +200,10 @@
     #elif defined(TP_BLUETOOTH)
         #define XCP_TRANSPORT_LAYER XCP_ON_BTH
 
-        #define XCP_MAX_CTO (64)
-        #define XCP_MAX_DTO (64)
+        #define XCP_MAX_CTO            (64)
+        #define XCP_MAX_DTO            (64)
+        #define XCP_ON_BTH_DEVICE_NAME ("BlueParrot XCP")
+        #define XCP_ON_BTH_PIN         ("")
 
         #define XCP_TRANSPORT_LAYER_LENGTH_SIZE   (2)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE  (2)

@@ -59,11 +59,19 @@ uint32_t XcpHw_GetTimerCounterMS(void) {
 }
 
 bool XcpHw_SxIAvailable(void) {
-    return Serial.available();
+#if XCP_TRANSPORT_LAYER == XCP_ON_SXI
+    return (XCP_ON_SXI_PORT_NAME).available();
+#else
+    return false;
+#endif
 }
 
 uint8_t XcpHw_SxIRead(void) {
-    return (uint8_t)Serial.read();
+#if XCP_TRANSPORT_LAYER == XCP_ON_SXI
+    return (uint8_t)(XCP_ON_SXI_PORT_NAME).read();
+#else
+    return 0U;
+#endif
 }
 
 void XcpHw_AcquireLock(uint8_t lockIdx) {

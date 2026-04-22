@@ -713,8 +713,17 @@ extern "C" {
      */
     #define XCP_ETH_DEFAULT_PORT      (5555)
     #define XCP_SOCKET_CAN_DEFAULT_IF ("vcan0")
+    #define XCP_BTH_DEFAULT_NAME      ("BlueParrot XCP")
 
     #define XCP_ETH_HEADER_SIZE (4)
+
+    #if !defined(XCP_ON_BTH_DEVICE_NAME)
+        #define XCP_ON_BTH_DEVICE_NAME XCP_BTH_DEFAULT_NAME
+    #endif
+
+    #if !defined(XCP_ON_BTH_PIN)
+        #define XCP_ON_BTH_PIN ("")
+    #endif
 
     /*
      * CAN Interfaces.

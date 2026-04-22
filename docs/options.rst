@@ -496,6 +496,23 @@ XCP on Ethernet (XCP_ON_ETHERNET)
       XCP on Ethernet prepends a 4-byte header (LEN, CTR). The implementation handles this automatically; ensure
       :c:macro:`XCP_MAX_CTO`/:c:macro:`XCP_MAX_DTO` are sized to accommodate your application throughput.
 
+XCP on Bluetooth (XCP_ON_BTH)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   .. c:macro:: XCP_ON_BTH_DEVICE_NAME
+
+      Bluetooth device name advertised by the Arduino target.
+      On ESP32 this is passed to ``BluetoothSerial.begin(...)`` and defaults to ``"BlueParrot XCP"``.
+
+   .. c:macro:: XCP_ON_BTH_PIN
+
+      Optional fixed legacy pairing PIN for ESP32 Classic Bluetooth SPP.
+      Leave it empty (default) to use the stack defaults.
+
+   .. note::
+      Arduino ``XCP_ON_BTH`` currently targets ESP32 Classic Bluetooth (RFCOMM/SPP) so it remains compatible with
+      the existing desktop Bluetooth transport. It does **not** use BLE/NUS framing.
+
 Customization options
 ---------------------
 

@@ -47,12 +47,14 @@ GROUPS = [
 
 TR_REL = {
     "CAN": ['tl_can'],
+    "BTH": ['tl_bth'],
     "ETH": ['tl_eth', 'eth_discovery'],
     "SXI": ['tl_sxi']
 }
 
 TR_SEL = {
     "CAN": "    #define TP_CAN\n    #define XCP_TRANSPORT_LAYER XCP_ON_CAN\n",
+    "BTH": "    #define TP_BLUETOOTH\n    #define XCP_TRANSPORT_LAYER XCP_ON_BTH\n",
     "ETH": "    #define TP_ETHER\n    #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET\n",
     "SXI": "    #define TP_SXI\n    #define XCP_TRANSPORT_LAYER XCP_ON_SXI\n"
 }
@@ -70,12 +72,13 @@ def render_xcp_config(
         "#if !defined(__XCP_CONFIG_H)",
         "    #define __XCP_CONFIG_H\n\n",
     ]
+    selected_groups = list(GROUPS)
     tr_specific = TR_REL.get(transport)
     if tr_specific:
-        GROUPS.extend(tr_specific)
+        selected_groups.extend(tr_specific)
     lines.append(TR_SEL.get(transport, "\n"))
     PARAMETER_GROUPS = {group_name: sorted(group, key=lambda x: x["name"]) for group_name, group in grouped_spec(spec)}
-    for group_name in GROUPS:
+    for group_name in selected_groups:
         group = PARAMETER_GROUPS.get(group_name)
         if not group:
             print("Empty group for:", group_name)
