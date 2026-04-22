@@ -23,6 +23,8 @@ from pyxcp_appgen import utils
 
 VALID_TRANSPORTS = ("SXI", "CAN", "ETH")
 
+VALID_TRANSPORTS = ("SXI", "CAN", "ETH")
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(SCRIPT_DIR, "templates")
 
