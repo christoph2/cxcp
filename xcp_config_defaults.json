@@ -785,13 +785,13 @@
   {
     "type": "string",
     "name": "XCP_ON_BTH_DEVICE_NAME",
-    "default": "\"BlueParrot XCP\"",
+    "default": "BlueParrot XCP",
     "group": "tl_bth"
   },
   {
     "type": "string",
     "name": "XCP_ON_BTH_PIN",
-    "default": "\"\"",
+    "default": "",
     "group": "tl_bth"
   },
   {

@@ -75,9 +75,15 @@ class AppGenerator:
         selected_port_fqbn = self.state.boards.get("selected")
         if selected_port_fqbn:
             port, fqbn = next(iter(selected_port_fqbn.items()))
-            if port in available_boards and available_boards[port] == fqbn:
-                self.logger.info(f"Using previously selected board: {fqbn} on {port}")
-                return  # Board is still valid
+            if port in available_boards:
+                if available_boards[port] == fqbn:
+                    self.logger.info(f"Using previously selected board: {fqbn} on {port}")
+                    return  # Board is still valid
+                else:
+                    av_fqbn = available_boards.get(port)
+                    if av_fqbn.startswith("esp32") and fqbn.startswith("esp32"):
+                        # Special case ESP32: Override genereic "esp32:esp32:esp32_family"
+                        return
 
         selected_board = self.discover_board(available_boards)
         if selected_board:
