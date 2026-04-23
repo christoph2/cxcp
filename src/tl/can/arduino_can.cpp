@@ -205,7 +205,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     uint32_t can_id;
     bool     extended;
 
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON)
+    #if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON)
     if (Xcp_DtoCanId != 0) {
         can_id       = Xcp_DtoCanId;
         extended     = (bool)XCP_FALSE; /* Assuming standard IDs for PID_OFF features unless defined otherwise. */
@@ -214,10 +214,10 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         can_id   = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
         extended = (bool)XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
     }
-#else
+    #else
     can_id   = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
     extended = (bool)XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
-#endif
+    #endif
 
     #if (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD) || (XCP_CAN_INTERFACE == XCP_CAN_IF_SEED_STUDIO_CAN_FD_SHIELD)
 

@@ -23,10 +23,11 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <string.h>
+
+#include "flsemu.h"
 #include "xcp.h"
 #include "xcp_hw.h"
-#include "flsemu.h"
-#include <string.h>
 
 #if (XCP_ENABLE_CAL_COMMANDS == XCP_ON) || (XCP_ENABLE_PAG_COMMANDS == XCP_ON)
 
@@ -76,7 +77,7 @@ bool XcpHw_GetSegmentInfo(uint8_t segment, uint8_t mode, XcpHw_SegmentInfoType *
     }
     seg           = FlsEmu_GetConfig()->segments[segment];
     info->address = (uint32_t)seg->baseAddress;
-    info->length  = (uint32_t)seg->pageSize;    // NOTE: memSize is the total size of the segment.
+    info->length  = (uint32_t)seg->pageSize;  // NOTE: memSize is the total size of the segment.
     if (seg->type == FLSEMU_RAM) {
         info->numPages = 1;
     } else {

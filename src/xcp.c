@@ -931,9 +931,9 @@ void Xcp_SendCto(void) {
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    #if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
 uint32_t Xcp_DtoCanId = 0;
-#endif
+    #endif
 
 void Xcp_SendDto(void) {
     #if XCP_TRANSPORT_LAYER_LENGTH_SIZE != 0
@@ -1859,8 +1859,8 @@ XCP_STATIC void Xcp_GetSegmentInfo_Res(Xcp_PduType const * const pdu) {
                 break;
             case 1: /* Standard Info */
                 Xcp_Send8(
-                    UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), info.numPages, info.addressExtension,
-                    info.maxPage, info.compressionMethod, info.encryptionMethod, UINT8(0), UINT8(0)
+                    UINT8(8), UINT8(XCP_PACKET_IDENTIFIER_RES), info.numPages, info.addressExtension, info.maxPage,
+                    info.compressionMethod, info.encryptionMethod, UINT8(0), UINT8(0)
                 );
                 break;
             case 2: /* Mapping Info */
