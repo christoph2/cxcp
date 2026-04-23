@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyxcp-appgen"
+version = "0.1.0"
+description = "Arduino-based cXCP/pyXCP code generator and build/upload frontend"
+requires-python = ">=3.9"
+dependencies = [
+    "mako",
+    "rich",
+    "arduino-disco",
+]
+
+[project.scripts]
+pyxcp-appgen = "pyxcp_appgen.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pyxcp_appgen = ["templates/**/*", "data/**/*"]
