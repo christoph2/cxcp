@@ -783,6 +783,17 @@
     "group": "tl_eth"
   },
   {
+    "type": "enum",
+    "name": "XCP_ON_BTH_ARDUINO_DRIVER",
+    "default": "XCP_ON_BTH_DRIVER_AUTO",
+    "group": "tl_bth",
+    "enum": [
+      "XCP_ON_BTH_DRIVER_AUTO",
+      "XCP_ON_BTH_DRIVER_ESP32_SPP",
+      "XCP_ON_BTH_DRIVER_ARDUINO_BLE"
+    ]
+  },
+  {
     "type": "string",
     "name": "XCP_ON_BTH_DEVICE_NAME",
     "default": "BlueParrot XCP",
@@ -792,6 +803,24 @@
     "type": "string",
     "name": "XCP_ON_BTH_PIN",
     "default": "",
+    "group": "tl_bth"
+  },
+  {
+    "type": "string",
+    "name": "XCP_ON_BTH_BLE_SERVICE_UUID",
+    "default": "6E400001-B5A3-F393-E0A9-E50E24DCCA9E",
+    "group": "tl_bth"
+  },
+  {
+    "type": "string",
+    "name": "XCP_ON_BTH_BLE_RX_UUID",
+    "default": "6E400002-B5A3-F393-E0A9-E50E24DCCA9E",
+    "group": "tl_bth"
+  },
+  {
+    "type": "string",
+    "name": "XCP_ON_BTH_BLE_TX_UUID",
+    "default": "6E400003-B5A3-F393-E0A9-E50E24DCCA9E",
     "group": "tl_bth"
   },
   {

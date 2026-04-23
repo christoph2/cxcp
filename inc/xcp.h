@@ -714,8 +714,19 @@ extern "C" {
     #define XCP_ETH_DEFAULT_PORT      (5555)
     #define XCP_SOCKET_CAN_DEFAULT_IF ("vcan0")
     #define XCP_BTH_DEFAULT_NAME      ("BlueParrot XCP")
+    #define XCP_BTH_BLE_SERVICE_UUID  ("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
+    #define XCP_BTH_BLE_RX_UUID       ("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
+    #define XCP_BTH_BLE_TX_UUID       ("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
+
+    #define XCP_ON_BTH_DRIVER_AUTO        (0)
+    #define XCP_ON_BTH_DRIVER_ESP32_SPP   (1)
+    #define XCP_ON_BTH_DRIVER_ARDUINO_BLE (2)
 
     #define XCP_ETH_HEADER_SIZE (4)
+
+    #if !defined(XCP_ON_BTH_ARDUINO_DRIVER)
+        #define XCP_ON_BTH_ARDUINO_DRIVER XCP_ON_BTH_DRIVER_AUTO
+    #endif
 
     #if !defined(XCP_ON_BTH_DEVICE_NAME)
         #define XCP_ON_BTH_DEVICE_NAME XCP_BTH_DEFAULT_NAME
@@ -723,6 +734,18 @@ extern "C" {
 
     #if !defined(XCP_ON_BTH_PIN)
         #define XCP_ON_BTH_PIN ("")
+    #endif
+
+    #if !defined(XCP_ON_BTH_BLE_SERVICE_UUID)
+        #define XCP_ON_BTH_BLE_SERVICE_UUID XCP_BTH_BLE_SERVICE_UUID
+    #endif
+
+    #if !defined(XCP_ON_BTH_BLE_RX_UUID)
+        #define XCP_ON_BTH_BLE_RX_UUID XCP_BTH_BLE_RX_UUID
+    #endif
+
+    #if !defined(XCP_ON_BTH_BLE_TX_UUID)
+        #define XCP_ON_BTH_BLE_TX_UUID XCP_BTH_BLE_TX_UUID
     #endif
 
     /*

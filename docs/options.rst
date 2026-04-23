@@ -499,19 +499,35 @@ XCP on Ethernet (XCP_ON_ETHERNET)
 XCP on Bluetooth (XCP_ON_BTH)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+   .. c:macro:: XCP_ON_BTH_ARDUINO_DRIVER
+
+      Select the Arduino Bluetooth backend:
+      ``XCP_ON_BTH_DRIVER_AUTO`` (default), ``XCP_ON_BTH_DRIVER_ESP32_SPP``, or ``XCP_ON_BTH_DRIVER_ARDUINO_BLE``.
+      ``AUTO`` selects ESP32 Classic Bluetooth SPP on ESP32 targets and ArduinoBLE on Nicla / Mbed targets.
+
    .. c:macro:: XCP_ON_BTH_DEVICE_NAME
 
       Bluetooth device name advertised by the Arduino target.
-      On ESP32 this is passed to ``BluetoothSerial.begin(...)`` and defaults to ``"BlueParrot XCP"``.
+      On ESP32 this is passed to ``BluetoothSerial.begin(...)``; on Nicla/ArduinoBLE it is used for the BLE device name
+      and advertising name. Defaults to ``"BlueParrot XCP"``.
 
    .. c:macro:: XCP_ON_BTH_PIN
 
       Optional fixed legacy pairing PIN for ESP32 Classic Bluetooth SPP.
       Leave it empty (default) to use the stack defaults.
 
+   .. c:macro:: XCP_ON_BTH_BLE_SERVICE_UUID
+   .. c:macro:: XCP_ON_BTH_BLE_RX_UUID
+   .. c:macro:: XCP_ON_BTH_BLE_TX_UUID
+
+      BLE service and characteristic UUIDs used by the ArduinoBLE backend (for example on Nicla Sense ME).
+      Defaults follow a Nordic UART Service-style layout.
+
    .. note::
-      Arduino ``XCP_ON_BTH`` currently targets ESP32 Classic Bluetooth (RFCOMM/SPP) so it remains compatible with
-      the existing desktop Bluetooth transport. It does **not** use BLE/NUS framing.
+      Arduino ``XCP_ON_BTH`` now supports two Arduino backends:
+      ESP32 Classic Bluetooth RFCOMM/SPP and ArduinoBLE-based BLE peripherals such as Nicla Sense ME.
+      Both backends use the same 4-byte XCP LEN/CTR framing on the wire; the BLE backend transports that frame through
+      GATT RX/TX characteristics.
 
 Customization options
 ---------------------

@@ -127,8 +127,9 @@ Using Arduino CLI (example):
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 - Ethernet/WiFi: the slave listens on UDP port 5555 by default.
   - Use your preferred XCP master to connect (e.g., commercial tools or open-source clients). Ensure the IP is reachable.
-- Bluetooth (ESP32 Arduino / ``TP_BLUETOOTH``): pair with the ESP32 Classic Bluetooth SPP device and connect with an
-  XCP master that speaks the same 4-byte LEN/CTR framed stream transport.
+- Bluetooth (Arduino / ``TP_BLUETOOTH``):
+  - ESP32: pair with the Classic Bluetooth SPP device and connect with an XCP master that speaks the 4-byte LEN/CTR framed stream transport.
+  - Nicla Sense ME (``arduino:mbed_nicla:nicla_sense``): use the ArduinoBLE peripheral backend with the configured BLE service and RX/TX characteristics.
 - CAN: configure your PC CAN interface with matching bit timing/IDs.
 - SXI: open the corresponding serial port at the configured baud and use an XCP master that supports XCPonSXI.
 
