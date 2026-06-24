@@ -663,7 +663,7 @@
   {
     "type": "symbol",
     "name": "XCP_ON_CAN_FREQ",
-    "default": "CAN_500KBPS",
+    "default": "500E3",
     "group": "tl_can"
   },
   {
@@ -911,37 +911,37 @@
   {
     "type": "int",
     "name": "XCP_ETH_DISCOVERY_MAC0",
-    "default": "0x00",
+    "default": "0xBE",
     "group": "eth_discovery"
   },
   {
     "type": "int",
     "name": "XCP_ETH_DISCOVERY_MAC1",
-    "default": "0x00",
+    "default": "0xEF",
     "group": "eth_discovery"
   },
   {
     "type": "int",
     "name": "XCP_ETH_DISCOVERY_MAC2",
-    "default": "0x00",
+    "default": "0xCA",
     "group": "eth_discovery"
   },
   {
     "type": "int",
     "name": "XCP_ETH_DISCOVERY_MAC3",
-    "default": "0x00",
+    "default": "0xAA",
     "group": "eth_discovery"
   },
   {
     "type": "int",
     "name": "XCP_ETH_DISCOVERY_MAC4",
-    "default": "0x00",
+    "default": "0xFF",
     "group": "eth_discovery"
   },
   {
     "type": "int",
     "name": "XCP_ETH_DISCOVERY_MAC5",
-    "default": "0x00",
+    "default": "0xFE",
     "group": "eth_discovery"
   },
   {
