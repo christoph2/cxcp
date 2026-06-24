@@ -31,7 +31,10 @@
 #include "xcp_hw.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
+#include <net/if.h>
 #include <pthread.h>
+#include <stdint.h>
+#include <sys/ioctl.h>
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     #include "xcp_timecorr.h"
@@ -44,6 +47,7 @@ socklen_t addrSize = sizeof(struct sockaddr_storage);
 extern XcpTl_ConnectionType XcpTl_Connection;
 
 static bool Xcp_EnableSocketOption(int sock, int option);
+
 static bool Xcp_DisableSocketOption(int sock, int option);
 
 static bool XcpTl_ParseIpv4String(const char *ip, struct in_addr *out) {
@@ -138,7 +142,8 @@ void XcpTl_Init(void) {
         struct sockaddr_in daddr;
         struct ip_mreq     dmreq;
         char               d_ip[32];
-        int                reuse = 1;
+        int                reuse  = 1;
+        int                optval = 1;
 
         snprintf(
             d_ip, sizeof(d_ip), "%u.%u.%u.%u", (unsigned)XCP_ETH_DISCOVERY_MCAST_IP0, (unsigned)XCP_ETH_DISCOVERY_MCAST_IP1,
@@ -148,7 +153,7 @@ void XcpTl_Init(void) {
         dsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (dsock >= 0) {
             setsockopt(dsock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-
+            setsockopt(dsock, IPPROTO_IP, IP_PKTINFO, (const char *)&optval, sizeof(optval));
             memset(&daddr, 0, sizeof(daddr));
             daddr.sin_family      = AF_INET;
             daddr.sin_port        = htons((uint16_t)XCP_ETH_DISCOVERY_MCAST_PORT);
@@ -162,6 +167,7 @@ void XcpTl_Init(void) {
                 }
                 dmreq.imr_interface.s_addr = INADDR_ANY;
                 if ((dsock != -1) && setsockopt(dsock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &dmreq, sizeof(dmreq)) == 0) {
+                    setsockopt(dsock, IPPROTO_IP, IP_PKTINFO, &(const int){ 1 }, sizeof(int));
                     XcpTl_Connection.discoverySocket = dsock;
                     printf("XCPonEth -- Discovery multicast listener: %s:%u\n", d_ip, (unsigned)XCP_ETH_DISCOVERY_MCAST_PORT);
                 } else {
@@ -210,6 +216,7 @@ void XcpTl_Init(void) {
                 }
                 mreq.imr_interface.s_addr = INADDR_ANY;
                 if ((msock != -1) && setsockopt(msock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == 0) {
+                    setsockopt(msock, IPPROTO_IP, IP_PKTINFO, &(const int){ 1 }, sizeof(int));
                     XcpTl_Connection.multicastSocket = msock;
                     printf("XCPonEth -- Multicast listener: %s:%u\n", mcast_ip, XCP_TIMECORR_MULTICAST_PORT);
                 } else {
@@ -271,6 +278,67 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
 #if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
 
+static void get_interface_mac_address(int if_index, XcpTl_MacAddress *mac_address) {
+    int          sock;
+    struct ifreq ifr;
+    char         ifname[IF_NAMESIZE];
+
+    memset(mac_address, 0, sizeof(XcpTl_MacAddress));
+
+    if (if_indextoname(if_index, ifname) == NULL) {
+        return;
+    }
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1) {
+        return;
+    }
+
+    strncpy(ifr.ifr_name, ifname, IF_NAMESIZE - 1);
+    if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
+        memcpy(mac_address->mac, ifr.ifr_hwaddr.sa_data, 6);
+    }
+
+    close(sock);
+}
+
+bool receive_message(int socket, char *buffer, size_t buffer_size, uint32_t *bytes_received, XcpTl_MacAddress *mac_address) {
+    struct msghdr      msg;
+    struct iovec       iov[1];
+    struct sockaddr_in peer_addr;
+    bool               result = false;
+    char               cmbuf[0x100];
+    ssize_t            n;
+
+    *bytes_received = 0UL;
+
+    memset(&msg, 0, sizeof(msg));
+    iov[0].iov_base = buffer;
+    iov[0].iov_len  = buffer_size;
+    msg.msg_iov     = iov;
+    msg.msg_iovlen  = 1;
+
+    msg.msg_name    = &peer_addr;
+    msg.msg_namelen = sizeof(peer_addr);
+
+    msg.msg_control    = cmbuf;
+    msg.msg_controllen = sizeof(cmbuf);
+
+    n = recvmsg(socket, &msg, 0);
+    if (n > 0) {
+        *bytes_received = (uint32_t)n;
+        result          = true;
+        for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+            if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_PKTINFO) {
+                struct in_pktinfo *pi = (struct in_pktinfo *)CMSG_DATA(cmsg);
+                get_interface_mac_address(pi->ipi_ifindex, mac_address);
+                break;
+            }
+        }
+    }
+    return result;
+}
+
 /*
  * Thread that receives transport-layer multicast commands.
  * Packet layout (Intel byte order):
@@ -281,8 +349,9 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
  *   [6..]   payload per sub-command
  */
 static void *XcpTl_MulticastThread(void *param) {
-    uint8_t buf[128];
-    (void)param;
+    char             buffer[1024];
+    XcpTl_MacAddress mac_address;
+    uint32_t         bytes_received = 0UL;
 
     for (;;) {
         fd_set rfds;
@@ -311,16 +380,14 @@ static void *XcpTl_MulticastThread(void *param) {
             continue;
         }
 
-        if ((XcpTl_Connection.discoverySocket >= 0) && FD_ISSET(XcpTl_Connection.discoverySocket, &rfds)) {
-            ssize_t n = recv(XcpTl_Connection.discoverySocket, buf, sizeof(buf), 0);
-            if (n > 0) {
-                XcpTl_HandleTransportMulticastPacket(buf, n);
+        if ((XcpTl_Connection.discoverySocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.discoverySocket, &rfds)) {
+            if (receive_message(XcpTl_Connection.discoverySocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
             }
         }
-        if ((XcpTl_Connection.multicastSocket >= 0) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
-            ssize_t n = recv(XcpTl_Connection.multicastSocket, buf, sizeof(buf), 0);
-            if (n > 0) {
-                XcpTl_HandleTransportMulticastPacket(buf, n);
+        if ((XcpTl_Connection.multicastSocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
+            if (receive_message(XcpTl_Connection.multicastSocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
             }
         }
     }
@@ -334,7 +401,8 @@ static void *XcpTl_MulticastThread(void *param) {
 void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
     uint8_t sub_cmd = Xcp_GetByte(pdu, (uint8_t)1);
 
-    if (sub_cmd == (uint8_t)0xFA) { /* GET_DAQ_CLOCK_MULTICAST */
+    if (sub_cmd == (uint8_t)0xFA) {
+        /* GET_DAQ_CLOCK_MULTICAST */
         uint16_t cluster_id = Xcp_GetWord(pdu, (uint8_t)2);
         uint8_t  counter    = Xcp_GetByte(pdu, (uint8_t)4);
         XcpTimecorr_HandleMulticast(cluster_id, counter);

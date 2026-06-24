@@ -101,12 +101,17 @@ typedef struct tagHwStateType {
 /*
 **  Local Function Prototypes.
 */
-static void            XcpHw_InitLocks(void);
-static uint64_t        XcpHw_GetElapsedTime(uint32_t prescaler);
-static void            XcpHw_DeinitLocks();
+static void XcpHw_InitLocks(void);
+
+static uint64_t XcpHw_GetElapsedTime(uint32_t prescaler);
+
+static void XcpHw_DeinitLocks();
+
 static struct timespec Timespec_Diff(struct timespec start, struct timespec end);
-static void            InitTUI(void);
-static void            DeinitTUI(void);
+
+static void InitTUI(void);
+
+static void DeinitTUI(void);
 
 void exitFunc(void);
 
@@ -122,7 +127,9 @@ static volatile sig_atomic_t XcpHw_TimerSignalSeen    = 0;
 static void termination_handler(int sig) {
     const char *msg = "Terminating due to signal.\n";
     /* Use async-signal-safe functions only */
-    (void)write(STDERR_FILENO, msg, (unsigned)strlen(msg));
+    if (write(STDERR_FILENO, msg, (unsigned)strlen(msg)) < 0) {
+        /* Ignore error as we are already in termination handler */
+    }
     _exit(128 + sig);
 }
 
@@ -166,8 +173,8 @@ void XcpHw_Init(void) {
 
     fflush(stdout);
 #if 0
-    _setmode(_fileno(stdout), _O_WTEXT);    /* Permit Unicode output on console */
-    _setmode(_fileno(stdout), _O_U8TEXT);    /* Permit Unicode output on console */
+    _setmode(_fileno(stdout), _O_WTEXT); /* Permit Unicode output on console */
+    _setmode(_fileno(stdout), _O_U8TEXT); /* Permit Unicode output on console */
 #endif
 
     /* Establish handler for timer signal */

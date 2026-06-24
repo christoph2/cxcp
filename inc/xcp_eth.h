@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2026 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -101,10 +101,18 @@ typedef struct tagXcpTl_ConnectionType {
         #define XCP_ETH_DISCOVERY_SET_IP_STATUS (2u) /* 0=valid, 1=will activate, 2=manual action required */
     #endif
 
+typedef struct tagXcpTl_MacAddress {
+    uint8_t mac[6];
+} XcpTl_MacAddress;
+
 uint16_t XcpTl_GetLocalPort(void);
-void     XcpTl_GetLocalIpv4(uint8_t out_ip[4]);
-uint8_t  XcpTl_BuildStatus(bool extended);
-void     XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *payload, size_t len);
-bool     XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t len);
+
+void XcpTl_GetLocalIpv4(uint8_t out_ip[4]);
+
+uint8_t XcpTl_BuildStatus(bool extended);
+
+void XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *payload, size_t len);
+
+bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t len, const XcpTl_MacAddress *mac_address);
 
 #endif /* __XCP_ETH_H */

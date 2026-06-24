@@ -47,14 +47,18 @@
 void XcpHw_ErrorMsg(char * const function, int errorCode);
 
 void XcpThrd_EnableAsyncCancellation(void);
+
 bool XcpThrd_IsShuttingDown(void);
 
 void XcpTl_PrintBtDetails(void);
 
 static void XcpTl_Accept(void);
-static int  XcpTl_ReadHeader(uint16_t *len, uint16_t *counter);
-static int  XcpTl_ReadData(uint8_t *data, uint16_t len);
-static int  XcpTl_ReceiveFrom(void);
+
+static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter);
+
+static int XcpTl_ReadData(uint8_t *data, uint16_t len);
+
+static int XcpTl_ReceiveFrom(void);
 
 #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
 static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size);
@@ -246,9 +250,10 @@ void XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *p
     free(frame);
 }
 
-bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n) {
+bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const XcpTl_MacAddress *mac_address) {
     uint8_t sub;
     uint8_t payload[256] = { 0 };
+    uint8_t idx          = 0;
 
     if (n < 9) {
         return false;
@@ -295,7 +300,7 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n) {
         payload[20] = offset;
         payload[21] = payload[22] = payload[23] = (uint8_t)0;
 
-        for (uint8_t idx = 0; idx < offset; ++idx) {
+        for (idx = 0; idx < offset; ++idx) {
             payload[24 + idx] = Xcp_GetId0.name[idx];
         }
 
@@ -313,7 +318,6 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n) {
             resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]
         );
 
-        DBG_TRACE("GET_SLAVE_ID_EXTENDED [response-address: %s:%d]\n", resp_ip, resp_port);
         XcpTl_GetLocalIpv4(ip);
         payload[0]  = (uint8_t)0xFF;
         payload[1]  = (uint8_t)0xFD;
@@ -329,17 +333,23 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n) {
         payload[22] = offset;
         payload[23] = payload[24] = payload[25] = (uint8_t)0;
 
-        for (uint8_t idx = 0; idx < offset; ++idx) {
+        for (idx = 0; idx < offset; ++idx) {
             payload[26 + idx] = Xcp_GetId0.name[idx];
         }
 
+    #if defined(__APPLE__) || defined(_WIN32) || defined(__unix__) || defined(__linux) || defined(__linux__) || defined(linux) ||  \
+        defined(__CYGWIN__) || defined(__MINGW32__)
+        for (idx = 0; idx < 6; ++idx) {
+            payload[26 + offset + idx] = mac_address->mac[idx];
+        }
+    #else
         payload[26 + offset] = (uint8_t)XCP_ETH_DISCOVERY_MAC0;
         payload[27 + offset] = (uint8_t)XCP_ETH_DISCOVERY_MAC1;
         payload[28 + offset] = (uint8_t)XCP_ETH_DISCOVERY_MAC2;
         payload[29 + offset] = (uint8_t)XCP_ETH_DISCOVERY_MAC3;
         payload[30 + offset] = (uint8_t)XCP_ETH_DISCOVERY_MAC4;
         payload[31 + offset] = (uint8_t)XCP_ETH_DISCOVERY_MAC5;
-
+    #endif
         XcpTl_SendUdpResponse(resp_ip, resp_port, payload, 32u + offset);
         return true;
     } else if (sub == (uint8_t)0xFC) {
@@ -354,12 +364,19 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n) {
         resp_port = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
 
         /* Verify that the command targets this slave by matching MAC address (buf[25..30]) */
+    #if defined(__APPLE__) || defined(_WIN32) || defined(__unix__) || defined(__linux) || defined(__linux__) || defined(linux) ||  \
+        defined(__CYGWIN__) || defined(__MINGW32__)
+        if (buf[25] != mac_address->mac[0] || buf[26] != mac_address->mac[1] || buf[27] != mac_address->mac[2] ||
+            buf[28] != mac_address->mac[3] || buf[29] != mac_address->mac[4] || buf[30] != mac_address->mac[5]) {
+            return false;
+        }
+    #else
         if (buf[25] != (uint8_t)XCP_ETH_DISCOVERY_MAC0 || buf[26] != (uint8_t)XCP_ETH_DISCOVERY_MAC1 ||
             buf[27] != (uint8_t)XCP_ETH_DISCOVERY_MAC2 || buf[28] != (uint8_t)XCP_ETH_DISCOVERY_MAC3 ||
             buf[29] != (uint8_t)XCP_ETH_DISCOVERY_MAC4 || buf[30] != (uint8_t)XCP_ETH_DISCOVERY_MAC5) {
             return false;
         }
-
+    #endif
         (void)snprintf(
             resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]
         );
@@ -368,13 +385,22 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n) {
         payload[0] = (uint8_t)0xFF;
         payload[1] = (uint8_t)0xFC;
         payload[2] = (uint8_t)XCP_ETH_DISCOVERY_SET_IP_STATUS;
+    #if defined(__APPLE__) || defined(_WIN32) || defined(__unix__) || defined(__linux) || defined(__linux__) || defined(linux) ||  \
+        defined(__CYGWIN__) || defined(__MINGW32__)
+        payload[3] = mac_address->mac[0];
+        payload[4] = mac_address->mac[1];
+        payload[5] = mac_address->mac[2];
+        payload[6] = mac_address->mac[3];
+        payload[7] = mac_address->mac[4];
+        payload[8] = mac_address->mac[5];
+    #else
         payload[3] = (uint8_t)XCP_ETH_DISCOVERY_MAC0;
         payload[4] = (uint8_t)XCP_ETH_DISCOVERY_MAC1;
         payload[5] = (uint8_t)XCP_ETH_DISCOVERY_MAC2;
         payload[6] = (uint8_t)XCP_ETH_DISCOVERY_MAC3;
         payload[7] = (uint8_t)XCP_ETH_DISCOVERY_MAC4;
         payload[8] = (uint8_t)XCP_ETH_DISCOVERY_MAC5;
-
+    #endif
         XcpTl_SendUdpResponse(resp_ip, resp_port, payload, 9u);
         return true;
     }

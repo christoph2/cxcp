@@ -262,12 +262,12 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     if (buf == NULL || len == 0) {
         return;
     }
+    struct can_frame frame;
     if (len > 8U || len > (uint16_t)sizeof(frame.data)) {
         XcpHw_ErrorMsg("XcpTl_Send: DLC > 8 not supported (classical CAN)", EINVAL);
         return;
     }
 
-    struct can_frame frame;
     XCP_TL_ENTER_CRITICAL();
     memset(&frame, 0, sizeof(frame));
     /* Erwartet: erste 4/8 Bytes im PDU-Puffer sind die Nutzlast für CAN.
@@ -310,9 +310,9 @@ void XcpTl_PrintConnectionInformation(void) {
     printf("\n\rXCPonCan\n\r");
 #if 0
     printf("\nXCPonCan -- Listening on port %s / %s [%s]\n\r",
-        DEFAULT_PORT,
-        Xcp_Options.tcp ? "TCP" : "UDP",
-        Xcp_Options.ipv6 ? "IPv6" : "IPv4"
+           DEFAULT_PORT,
+           Xcp_Options.tcp ? "TCP" : "UDP",
+           Xcp_Options.ipv6 ? "IPv6" : "IPv4"
     );
 #endif
 }

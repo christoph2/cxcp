@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2026 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -23,6 +23,17 @@
  * s. FLOSS-EXCEPTION.txt
  */
 
+#include <stdint.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <iphlpapi.h>
+    #include <mstcpip.h>
+    #include <mswsock.h>
+    #include <ntddndis.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#endif
+
 #if defined(_MSC_VER)
     #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -31,6 +42,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#pragma comment(lib, "iphlpapi.lib")
+
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_eth.h"
@@ -38,6 +51,10 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #include "xcp_config.h"
+
+#if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON)
+static LPFN_WSARECVMSG lpfnWSARecvMsg = NULL;
+#endif
 
 extern XcpTl_ConnectionType XcpTl_Connection;
 
@@ -123,7 +140,6 @@ void XcpTl_Init(void) {
     DWORD     dwTimeAdjustment    = 0UL;
     DWORD     dwTimeIncrement     = 0UL;
     BOOL      fAdjustmentDisabled = XCP_TRUE;
-    /* unsigned long ul = 1; */
 
     ZeroMemory(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
     XcpTl_Connection.connectedSocket = INVALID_SOCKET;
@@ -206,6 +222,7 @@ void XcpTl_Init(void) {
         SOCKET             dsock;
         struct sockaddr_in daddr;
         struct ip_mreq     dmreq;
+        int                optval = 1;
         char               d_ip[32];
 
         _snprintf(
@@ -232,6 +249,7 @@ void XcpTl_Init(void) {
                 dmreq.imr_interface.s_addr = INADDR_ANY;
                 if ((dsock != INVALID_SOCKET) &&
                     setsockopt(dsock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&dmreq, sizeof(dmreq)) == 0) {
+                    setsockopt(dsock, IPPROTO_IP, IP_PKTINFO, (const char *)&optval, sizeof(optval));
                     XcpTl_Connection.discoverySocket = dsock;
                     printf("XCPonEth -- Discovery multicast listener: %s:%u\n", d_ip, (unsigned)XCP_ETH_DISCOVERY_MCAST_PORT);
                 } else {
@@ -298,6 +316,15 @@ void XcpTl_Init(void) {
 #endif /* XCP_ENABLE_TIME_CORRELATION */
 
     if ((XcpTl_Connection.discoverySocket != INVALID_SOCKET) || (XcpTl_Connection.multicastSocket != INVALID_SOCKET)) {
+        if (lpfnWSARecvMsg == NULL) {
+            GUID  guidWSARecvMsg = WSAID_WSARECVMSG;
+            DWORD bytesReturned  = 0;
+            WSAIoctl(
+                XcpTl_Connection.discoverySocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidWSARecvMsg, sizeof(guidWSARecvMsg),
+                &lpfnWSARecvMsg, sizeof(lpfnWSARecvMsg), &bytesReturned, NULL, NULL
+            );
+        }
+
         _beginthreadex(NULL, 0, XcpTl_MulticastThread, NULL, 0, NULL);
     }
 }
@@ -325,7 +352,7 @@ void XcpTl_MainFunction(void) {
     if (XcpTl_Connection.socketType == SOCK_STREAM) {
         if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
             XcpTl_Connection.connectedSocket = accept(
-                XcpTl_Connection.boundSocket, (SOCKADDR *)&XcpTl_Connection.connectionAddress, &addr_len
+                XcpTl_Connection.boundSocket, (SOCKADDR *) &XcpTl_Connection.connectionAddress, &addr_len
             );
             if (XcpTl_Connection.connectedSocket != INVALID_SOCKET) {
                 printf("XCPonEth -- Client connected.\n");
@@ -336,19 +363,19 @@ void XcpTl_MainFunction(void) {
 
     if (XcpTl_Connection.socketType == SOCK_DGRAM) {
         n = recvfrom(
-            XcpTl_Connection.boundSocket, (char *)Xcp_CtoIn.data, XCP_MAX_CTO, 0,
-            (SOCKADDR *)&XcpTl_Connection.connectionAddress, &addr_len
+            XcpTl_Connection.boundSocket, (char *) Xcp_CtoIn.data, XCP_MAX_CTO, 0,
+            (SOCKADDR *) &XcpTl_Connection.connectionAddress, &addr_len
         );
     } else {
         /* SOCK_STREAM */
         if (XcpTl_Connection.connectedSocket == INVALID_SOCKET) {
             return;
         }
-        n = recv(XcpTl_Connection.connectedSocket, (char *)Xcp_CtoIn.data, XCP_MAX_CTO, 0);
+        n = recv(XcpTl_Connection.connectedSocket, (char *) Xcp_CtoIn.data, XCP_MAX_CTO, 0);
     }
 
     if (n > 0) {
-        Xcp_CtoIn.len = (uint8_t)n;
+        Xcp_CtoIn.len = (uint8_t) n;
         Xcp_DispatchCommand(&Xcp_CtoIn);
     } else if (n == 0 || (n < 0 && WSAGetLastError() != WSAEWOULDBLOCK)) {
         if (XcpTl_Connection.socketType == SOCK_STREAM && XcpTl_Connection.connectedSocket != INVALID_SOCKET) {
@@ -383,10 +410,134 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
 #if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
 
-unsigned __stdcall XcpTl_MulticastThread(void *param) {
-    uint8_t buf[128];
+void print_mac_address(BYTE *mac, DWORD length) {
+    for (DWORD i = 0; i < length; i++) {
+        if (i == length - 1) {
+            printf("%.2X\n", mac[i]);
+        } else {
+            printf("%.2X-", mac[i]);
+        }
+    }
+}
 
-    (void)param;
+void get_interface_mac_address(DWORD if_index, XcpTl_MacAddress *mac_address) {
+    ULONG                 flags          = GAA_FLAG_INCLUDE_PREFIX;
+    ULONG                 family         = AF_INET;
+    PIP_ADAPTER_ADDRESSES pAddresses     = NULL;
+    PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
+    ULONG                 outBufLen      = 16384;
+    ULONG                 iterations     = 0UL;
+    DWORD                 dwRes          = 0UL;
+    int                   adapter_found  = 0;
+
+    do {
+        pAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
+        if (pAddresses == NULL) {
+            WSACleanup();
+        }
+
+        dwRes = GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen);
+        if (dwRes == ERROR_BUFFER_OVERFLOW) {
+            free(pAddresses);
+            pAddresses = NULL;
+        } else {
+            break;
+        }
+        iterations++;
+    } while ((dwRes == ERROR_BUFFER_OVERFLOW) && (iterations < 3));
+
+    if (dwRes != NO_ERROR) {
+        printf("GetAdaptersAddresses fehlgeschlagen mit Fehler: %lu\n", dwRes);
+        if (pAddresses)
+            free(pAddresses);
+        WSACleanup();
+    }
+
+    pCurrAddresses = pAddresses;
+    adapter_found  = 0;
+
+    while (pCurrAddresses) {
+        if (pCurrAddresses->IfIndex == if_index) {
+            wprintf(L"Adapter-Name: %ls\n", pCurrAddresses->FriendlyName);
+            printf("MAC-Adresse: ");
+
+            if (pCurrAddresses->PhysicalAddressLength > 0) {
+                print_mac_address(pCurrAddresses->PhysicalAddress, pCurrAddresses->PhysicalAddressLength);
+                for (DWORD i = 0; i < pCurrAddresses->PhysicalAddressLength; i++) {
+                    mac_address->mac[i] = pCurrAddresses->PhysicalAddress[i];
+                }
+            } else {
+                printf("Keine physische Adresse vorhanden.\n");
+            }
+            adapter_found = 1;
+            break;
+        }
+        pCurrAddresses = pCurrAddresses->Next;
+    }
+
+    if (!adapter_found) {
+        printf("Kein Adapter mit dem Index %lu gefunden.\n", if_index);
+    }
+
+    if (pAddresses) {
+        free(pAddresses);
+    }
+}
+
+bool receive_message(SOCKET socket, char *buffer, size_t buffer_size, DWORD *bytes_received, XcpTl_MacAddress *mac_address) {
+    WSAMSG   msg;
+    WSABUF   wsabuf;
+    WSABUF   control_wsabuf;
+    SOCKADDR peer_addr;
+    bool     result = false;
+    char     control_buffer[1024];
+
+    *bytes_received = 0UL;
+
+    control_wsabuf.len = sizeof(control_buffer);
+    control_wsabuf.buf = control_buffer;
+
+    wsabuf.len = buffer_size;
+    wsabuf.buf = buffer;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.name          = &peer_addr;
+    msg.namelen       = ADDR_LEN;
+    msg.lpBuffers     = &wsabuf;
+    msg.dwBufferCount = 1;
+    msg.Control.len   = control_wsabuf.len;
+    msg.Control.buf   = control_wsabuf.buf;
+
+    if (lpfnWSARecvMsg && lpfnWSARecvMsg(socket, &msg, bytes_received, NULL, NULL) != SOCKET_ERROR) {
+        for (WSACMSGHDR *cmsg = WSA_CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = WSA_CMSG_NXTHDR(&msg, cmsg)) {
+            if ((cmsg->cmsg_level == IPPROTO_IP) && (cmsg->cmsg_type == IP_PKTINFO)) {
+                printf(
+                    "Received discovery packet from %u.%u.%u.%u\n",
+                    (unsigned)((struct in_pktinfo *)WSA_CMSG_DATA(cmsg))->ipi_addr.S_un.S_un_b.s_b1,
+                    (unsigned)((struct in_pktinfo *)WSA_CMSG_DATA(cmsg))->ipi_addr.S_un.S_un_b.s_b2,
+                    (unsigned)((struct in_pktinfo *)WSA_CMSG_DATA(cmsg))->ipi_addr.S_un.S_un_b.s_b3,
+                    (unsigned)((struct in_pktinfo *)WSA_CMSG_DATA(cmsg))->ipi_addr.S_un.S_un_b.s_b4
+                );
+            }
+            break;
+        }
+        DWORD dwInterface;
+        if (GetBestInterfaceEx((struct sockaddr *)&peer_addr, &dwInterface) == NO_ERROR) {
+            printf("Best interface index for peer: %u\n", (unsigned)dwInterface);
+            ZeroMemory(mac_address, sizeof(XcpTl_MacAddress));
+            get_interface_mac_address(dwInterface, mac_address);
+        }
+        if (*bytes_received > 0) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+unsigned __stdcall XcpTl_MulticastThread(void *param) {
+    char             buffer[1024];
+    XcpTl_MacAddress mac_address;
+    DWORD            bytes_received = 0UL;
 
     for (;;) {
         fd_set rfds;
@@ -416,21 +567,18 @@ unsigned __stdcall XcpTl_MulticastThread(void *param) {
         }
 
         if ((XcpTl_Connection.discoverySocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.discoverySocket, &rfds)) {
-            int n = recv(XcpTl_Connection.discoverySocket, (char *)buf, (int)sizeof(buf), 0);
-            if (n > 0) {
-                XcpTl_HandleTransportMulticastPacket(buf, n);
+            if (receive_message(XcpTl_Connection.discoverySocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
             }
         }
         if ((XcpTl_Connection.multicastSocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
-            int n = recv(XcpTl_Connection.multicastSocket, (char *)buf, (int)sizeof(buf), 0);
-            if (n > 0) {
-                XcpTl_HandleTransportMulticastPacket(buf, n);
+            if (receive_message(XcpTl_Connection.multicastSocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
             }
         }
     }
     return 0;
 }
-
 #endif /* discovery/timecorr multicast listener */
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
@@ -441,7 +589,8 @@ unsigned __stdcall XcpTl_MulticastThread(void *param) {
 void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
     uint8_t sub_cmd = Xcp_GetByte(pdu, UINT8(1));
 
-    if (sub_cmd == UINT8(0xFA)) { /* GET_DAQ_CLOCK_MULTICAST */
+    if (sub_cmd == UINT8(0xFA)) {
+        /* GET_DAQ_CLOCK_MULTICAST */
         uint16_t cluster_id = Xcp_GetWord(pdu, UINT8(2));
         uint8_t  counter    = Xcp_GetByte(pdu, UINT8(4));
         XcpTimecorr_HandleMulticast(cluster_id, counter);
