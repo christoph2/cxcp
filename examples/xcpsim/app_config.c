@@ -22,14 +22,20 @@ uint8_t calram[CALRAM_SIZE];
 #define EPK_CONST_NAME   "EcuName V1.2.0 01.03.2012"
 
 #if defined(_MSC_VER)
-    #pragma section(EPK_SECTION_NAME, read)
+#pragma section(EPK_SECTION_NAME, read)
 __declspec(allocate(EPK_SECTION_NAME)) const char epk[sizeof(EPK_CONST_NAME)] = EPK_CONST_NAME;
 #else
-    #if defined(__APPLE__)
+#if defined(__APPLE__)
 const char epk[sizeof(EPK_CONST_NAME)] = EPK_CONST_NAME;
-    #else
-__attribute__((section(EPK_SECTION_NAME))) const char epk[sizeof(EPK_CONST_NAME)] = EPK_CONST_NAME;
-    #endif
+#else
+__attribute__ ((section
+(EPK_SECTION_NAME
+
+)
+)
+)
+const char epk[sizeof(EPK_CONST_NAME)] = EPK_CONST_NAME;
+#endif
 #endif
 
 float triangle;
@@ -39,11 +45,13 @@ static FlsEmu_SegmentType S12D512_PagedFlash = {
     "XCPSIM_Flash", FLSEMU_KB(512), 2, FLS_SECTOR_SIZE, FLS_PAGE_SIZE, 4, 0x8000, XCP_NULL, 0, 0, FLSEMU_FLASH, 0
 };
 
-static FlsEmu_SegmentType S12D512_EEPROM = { "XCPSIM_EEPROM", FLSEMU_KB(4), 2, 4, FLSEMU_KB(4),  1,
-                                             0x4000,          XCP_NULL,     0, 0, FLSEMU_EEPROM, 0 };
+static FlsEmu_SegmentType S12D512_EEPROM = {
+    "XCPSIM_EEPROM", FLSEMU_KB(4), 2, 4, FLSEMU_KB(4), 1,
+    0x4000, XCP_NULL, 0, 0, FLSEMU_EEPROM, 0
+};
 
 static FlsEmu_SegmentType S12D512_RAM = {
-    "XCPSIM_RAM", CALRAM_SIZE, 1, 1, CALRAM_SIZE, 1, (Xcp_PointerSizeType)calram, XCP_NULL, 0, 0, FLSEMU_RAM, 0
+    "XCPSIM_RAM", CALRAM_SIZE, 1, 1, CALRAM_SIZE, 1, (Xcp_PointerSizeType) calram, XCP_NULL, 0, 0, FLSEMU_RAM, 0
 };
 
 static FlsEmu_SegmentType const *segments[] = {
@@ -54,7 +62,7 @@ static FlsEmu_SegmentType const *segments[] = {
 
 const FlsEmu_ConfigType FlsEmu_Config = {
     3,
-    (FlsEmu_SegmentType **)segments,
+    (FlsEmu_SegmentType **) segments,
 };
 
 #if 0
@@ -67,46 +75,49 @@ const XcpDaq_ODTType XcpDaq_PredefinedOdts[] = {{2, 0}};
 
 const XcpDaq_ListConfigurationType XcpDaq_PredefinedLists[] = {{1, 0}};
 
-    #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
+#if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
 XcpDaq_ListStateType
-    XcpDaq_PredefinedListsState[XCP_DAQ_PREDEFINDED_LIST_COUNT];
+XcpDaq_PredefinedListsState[XCP_DAQ_PREDEFINDED_LIST_COUNT];
 const XcpDaq_ListIntegerType XcpDaq_PredefinedListCount =
-    XCP_DAQ_PREDEFINDED_LIST_COUNT;
-    #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
+        XCP_DAQ_PREDEFINDED_LIST_COUNT;
+#endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
 #endif
 
 XCP_DAQ_BEGIN_EVENTS
-XCP_DAQ_DEFINE_EVENT(
-    "EVT 100ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 100
-),
-    XCP_DAQ_DEFINE_EVENT(
-        "EVT sporadic", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 0
-    ),
-    XCP_DAQ_DEFINE_EVENT(
-        "EVT 10ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 10
-    ),
-    XCP_DAQ_END_EVENTS
+        XCP_DAQ_DEFINE_EVENT(
+            "EVT 100ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+            XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 100
+        ),
+        XCP_DAQ_DEFINE_EVENT(
+            "EVT sporadic", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+            XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 0
+        ),
+        XCP_DAQ_DEFINE_EVENT(
+            "EVT 10ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
+            XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 10
+        ),
+        XCP_DAQ_END_EVENTS
 
-    /*
+/*
      * Customization Functions.
      *
      */
 
-    static uint8_t unlock_key[4] = { 0 };
+static uint8_t unlock_key[4] = {0};
 #define KEY_INITIAL (0xBC)
 
 bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType *result) {
-    uint32_t       ts;
-    static uint8_t seed[4] = { 0 };
-    result->length         = 4;
-    result->data           = (uint8_t *)&seed;
+    uint32_t ts;
+    static uint8_t seed[4] = {0};
+    result->length = 4;
+    result->data = (uint8_t *) &seed;
 
     XCP_UNREFERENCED_PARAMETER(resource);
-    ts            = XcpHw_GetTimerCounter();
-    seed[0]       = XCP_HIWORD(XCP_HIBYTE(ts));
-    seed[1]       = XCP_HIWORD(XCP_LOBYTE(ts));
-    seed[2]       = XCP_LOWORD(XCP_HIBYTE(ts));
-    seed[3]       = XCP_LOWORD(XCP_LOBYTE(ts));
+    ts = XcpHw_GetTimerCounter();
+    seed[0] = XCP_HIWORD(XCP_HIBYTE(ts));
+    seed[1] = XCP_HIWORD(XCP_LOBYTE(ts));
+    seed[2] = XCP_LOWORD(XCP_HIBYTE(ts));
+    seed[3] = XCP_LOWORD(XCP_LOBYTE(ts));
     unlock_key[0] = (seed[0] + seed[3]) ^ KEY_INITIAL;
     unlock_key[1] = seed[1] ^ unlock_key[0];
     unlock_key[2] = seed[2] ^ unlock_key[1];
@@ -120,7 +131,8 @@ bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const *key) {
     return XcpUtl_MemCmp(&unlock_key, key->data, 4);
 }
 
-bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming) {
+bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access,
+                                        bool programming) {
     XCP_UNREFERENCED_PARAMETER(mta);
     XCP_UNREFERENCED_PARAMETER(length);
     XCP_UNREFERENCED_PARAMETER(access);
@@ -139,18 +151,21 @@ Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp
  *
  */
 bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t **result, uint32_t *result_length) {
-    FILE       *fp;
+    FILE *fp;
     static char get_id_result[256];
 
-    if (id_type == 0x80) { /* First user-defined identification type. */
+    if (id_type == 0x80) {
+        /* First user-defined identification type. */
 #if defined(_WIN32)
         fp = _popen("cmd /c ver", "rt");
 #else
         fp = popen("uname -a ", "r");
 #endif
         assert(fp != XCP_NULL);
-        fgets(get_id_result, sizeof(get_id_result), fp);
-        *result        = (uint8_t *)&get_id_result[0];
+        if (fgets(get_id_result, sizeof(get_id_result), fp) == NULL) {
+            get_id_result[0] = '\0';
+        }
+        *result = (uint8_t *) &get_id_result[0];
         *result_length = (uint32_t)(strlen(get_id_result) - 1); /* Get rid of trailing '\n'. */
         return XCP_TRUE;
     } else {

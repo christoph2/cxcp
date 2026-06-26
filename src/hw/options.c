@@ -27,32 +27,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(__linux__)
+#include <getopt.h>
+#endif
+
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_config.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
-#if defined(_WIN32)
-
-#else
-    #include <string.h>
-    #include <unistd.h>
-
-    #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
+#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_ETHERNET
 static const char OPTION_STR[] = "htu46p:";
-    #elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
+#elif XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
 static const char OPTION_STR[] = "hi:f";
-    #endif
-
 #endif
 
 #if defined(_WIN32)
 void parse_options(int argc, char **argv, Xcp_OptionsType *options) {
-    int   idx;
+    int idx;
     char *arg;
-    #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
+#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_ETHERNET
     options->ipv6 = XCP_FALSE;
-    options->tcp  = XCP_TRUE;
+    options->tcp = XCP_TRUE;
     options->port = XCP_ETH_DEFAULT_PORT;
 
     if (argc >= 2) {
@@ -86,106 +82,107 @@ void parse_options(int argc, char **argv, Xcp_OptionsType *options) {
             }
         }
     }
-    #elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
+#elif XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
 
-    #else
+#else
 
-    #endif
+#endif
 }
 #else
 
 void usage(void) {
     printf("\nparameter summary: \n");
-    #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
-    printf("-h\t  this message.\n");
-    printf("-t\t  TCP\t\t  default: TRUE\n");
-    printf("-u\t  UDP\t\t  default: FALSE\n");
-    printf("-4\t  IPv4\t\t  default: TRUE\n");
-    printf("-6\t  IPv6\t\t  default: FALSE\n");
-    printf("-p <port> port to listen  default: 5555\n");
-    #elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
-    printf("-h\tthis message.\n");
-    printf("-f\t\tuse CAN-FD\t\tdefault: FALSE\n");
-    printf("-i <if-name>\tinterface to use\tdefault: vcan0\n");
-    #endif
-    exit(0);
+#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_ETHERNET
+printf("-h\t  this message.\n");
+printf("-t\t  TCP\t\t  default: TRUE\n");
+printf("-u\t  UDP\t\t  default: FALSE\n");
+printf("-4\t  IPv4\t\t  default: TRUE\n");
+printf("-6\t  IPv6\t\t  default: FALSE\n");
+printf("-p <port> port to listen  default: 5555\n");
+#elif XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
+printf("-h\tthis message.\n");
+printf("-f\t\tuse CAN-FD\t\tdefault: FALSE\n");
+printf("-i <if-name>\tinterface to use\tdefault: vcan0\n");
+#endif
+exit(0);
 }
 
 void parse_options(int argc, char **argv, Xcp_OptionsType *options) {
     int opt;
     int res;
 
-    #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
-    int p_assigned = 0;
-    int v_assigned = 0;
+#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_ETHERNET
+int p_assigned = 0;
+int v_assigned = 0;
 
-    options->tcp  = XCP_TRUE;
-    options->ipv6 = XCP_FALSE;
-    options->port = XCP_ETH_DEFAULT_PORT;
-    #elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
-    int if_assigned = 0;
-    options->fd     = XCP_FALSE;
-    #endif
+options->tcp = XCP_TRUE;
+options->ipv6 = XCP_FALSE;
+options->port = XCP_ETH_DEFAULT_PORT;
+#elif XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
+int if_assigned = 0;
+options->fd = XCP_FALSE;
+#endif
 
-    while ((opt = getopt(argc, argv, OPTION_STR)) != -1) {
+while ((opt = getopt(argc, argv, OPTION_STR)) != -1) {
         switch (opt) {
             case 'h':
             case '?':
                 usage();
                 break; /* never reached. */
-    #if XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET
-            case 't':
+#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_ETHERNET
+case 't':
                 if (p_assigned) {
-                    printf("-t and -u options are mutual exclusive.\n");
-                    exit(1);
-                }
-                p_assigned   = XCP_TRUE;
-                options->tcp = XCP_TRUE;
+    printf("-t and -u options are mutual exclusive.\n");
+    exit(1);
+}
+p_assigned = XCP_TRUE;
+options->tcp = XCP_TRUE;
                 break;
             case 'u':
                 if (p_assigned) {
-                    printf("-t and -u options are mutual exclusive.\n");
-                    exit(1);
-                }
-                p_assigned   = XCP_TRUE;
-                options->tcp = XCP_FALSE;
+    printf("-t and -u options are mutual exclusive.\n");
+    exit(1);
+}
+p_assigned = XCP_TRUE;
+options->tcp = XCP_FALSE;
                 break;
             case '4':
                 if (v_assigned) {
-                    printf("-4 and -6 options are mutual exclusive.\n");
-                    exit(1);
-                }
-                v_assigned    = XCP_TRUE;
-                options->ipv6 = XCP_FALSE;
+    printf("-4 and -6 options are mutual exclusive.\n");
+    exit(1);
+}
+v_assigned = XCP_TRUE;
+options->ipv6 = XCP_FALSE;
                 break;
             case '6':
                 if (v_assigned) {
-                    printf("-4 and -6 options are mutual exclusive.\n");
-                    exit(1);
-                }
-                v_assigned    = XCP_TRUE;
-                options->ipv6 = XCP_TRUE;
+    printf("-4 and -6 options are mutual exclusive.\n");
+    exit(1);
+}
+v_assigned = XCP_TRUE;
+options->ipv6 = XCP_TRUE;
                 break;
             case 'p':
-                options->port = atoi(optarg);
-    #elif XCP_TRANSPORT_LAYER == XCP_ON_CAN
-            case 'f':
-                options->fd = XCP_TRUE;
+options->port = atoi(optarg);
+                break;
+#elif XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
+case 'f':
+options->fd = XCP_TRUE;
                 break;
             case 'i':
-                if_assigned = 1;
-                strncpy(options->can_interf, optarg, sizeof(options->can_interf) - 1);
-                options->can_interf[sizeof(options->can_interf) - 1] = '\0';
+if_assigned = 1;
+strncpy(options->can_interf, optarg, sizeof(options->can_interf)- 1);
+options->can_interf[sizeof(options->can_interf) - 1] = '\0';
                 break;
-    #endif
-        }
+#endif
+}
     }
 
-    #if XCP_TRANSPORT_LAYER == XCP_ON_CAN
-    if (!if_assigned) {
+#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
+if (!if_assigned) {
         strncpy(options->can_interf, XCP_SOCKET_CAN_DEFAULT_IF, sizeof(options->can_interf) - 1);
         options->can_interf[sizeof(options->can_interf) - 1] = '\0';
     }
-    #endif
+#endif
 }
 #endif

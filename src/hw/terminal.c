@@ -26,7 +26,7 @@
 #include <ctype.h>
 
 #if !defined(_WIN32)
-    #include <pthread.h>
+#include <pthread.h>
 #endif
 
 /*!!! START-INCLUDE-SECTION !!!*/
@@ -37,40 +37,49 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(_WIN32)
-    #include <Windows.h>
+#include <Windows.h>
 #else
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <string.h>
-    #include <sys/select.h>
-    #include <termios.h>
-    #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
 #endif
 
 #if !defined(_WIN32)
 struct termios orig_termios;
 
 static void reset_terminal_mode(void);
+
 static void set_options(void);
+
 static void set_raw_terminal_mode(void);
-static int  kbhit(void);
-static int  getch(void);
+
+static int kbhit(void);
+
+static int getch(void);
 #endif
 
 static void SystemInformation(void);
+
 static void DisplayHelp(void);
-void        FlsEmu_Info(void);
-void        Xcp_DisplayInfo(void);
-void        XcpDaq_PrintDAQDetails(void);
-void        XcpDaq_Info(void);
+
+void FlsEmu_Info(void);
+
+void Xcp_DisplayInfo(void);
+
+void XcpDaq_PrintDAQDetails(void);
+
+void XcpDaq_Info(void);
 
 #if defined(_WIN32)
 void *XcpTerm_Thread(void *param) {
-    HANDLE           hStdin;
-    DWORD            cNumRead;
-    DWORD            fdwMode;
-    DWORD            idx;
-    INPUT_RECORD     irInBuf[128];
+    HANDLE hStdin;
+    DWORD cNumRead;
+    DWORD fdwMode;
+    DWORD idx;
+    INPUT_RECORD irInBuf[128];
     KEY_EVENT_RECORD key;
 
     XCP_UNREFERENCED_PARAMETER(param);
@@ -85,44 +94,52 @@ void *XcpTerm_Thread(void *param) {
         XcpHw_ErrorMsg("SetConsoleMode", GetLastError());
     }
 
-    XCP_FOREVER {
+    XCP_FOREVER{
         WaitForSingleObject(hStdin, 1000);
 
         if (GetNumberOfConsoleInputEvents(hStdin, &cNumRead)) {
             if (cNumRead) {
                 if (!ReadConsoleInput(hStdin, irInBuf, 128, &cNumRead)) {
                     XcpHw_ErrorMsg("ReadConsoleInput", GetLastError());
+
+
+
                 }
                 for (idx = 0; idx < cNumRead; ++idx) {
                     switch (irInBuf[idx].EventType) {
                         case KEY_EVENT:
-                            key = irInBuf[idx].Event.KeyEvent;
+                        key = irInBuf[idx].Event.KeyEvent;
                             if (key.bKeyDown) {
                                 if (key.wVirtualKeyCode == VK_ESCAPE) {
-                                    XcpThrd_Exit();
-                                }
+                                XcpThrd_Exit();
+
+
+
+                            }
                                 switch (tolower(key.uChar.AsciiChar)) {
                                     case 'q':
-                                        XcpThrd_Exit();
-    #if !defined(_MSC_VER)
-                                        [[noreturn]];
-    #endif /* _MSC_VER */
+                                XcpThrd_Exit();
+                                        break;
                                     case 'h':
-                                        DisplayHelp();
+                                DisplayHelp();
                                         break;
                                     case 'i':
-                                        SystemInformation();
+                                SystemInformation();
                                         break;
                                     case 'd':
-                                        XcpDaq_PrintDAQDetails();
+                                XcpDaq_PrintDAQDetails();
                                         break;
-                                    default:
+                                default:
                                         break;
-                                }
+
+
                             }
+                        }
                             break;
                         default:
                             break;
+
+
                     }
                 }
             }
@@ -131,15 +148,15 @@ void *XcpTerm_Thread(void *param) {
 }
 #else
 
-    #if 0
-        #include <fcntl.h>
-        #include <stdio.h>
-        #include <sys/select.h>
-        #include <termios.h>
-        #include <unistd.h>
+#if 0
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
 
 static void init_termios(void) {
-    static int            initialized = 0;
+    static int initialized = 0;
     static struct termios oldt, newt;
 
     if (initialized)
@@ -147,7 +164,7 @@ static void init_termios(void) {
 
     tcgetattr(STDIN_FILENO, &oldt); // get current terminal attributes
     newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);        // disable canonical mode and echo
+    newt.c_lflag &= ~(ICANON | ECHO); // disable canonical mode and echo
     tcsetattr(STDIN_FILENO, TCSANOW, &newt); // apply changes immediately
 
     initialized = 1;
@@ -161,8 +178,8 @@ static void reset_termios(void) {
 }
 
 static int kbhit(void) {
-    struct timeval tv = { 0L, 0L };
-    fd_set         fds;
+    struct timeval tv = {0L, 0L};
+    fd_set fds;
 
     init_termios(); // ensure terminal is in raw mode
 
@@ -171,7 +188,7 @@ static int kbhit(void) {
     return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
 }
 
-    #endif
+#endif
 
 static void reset_terminal_mode(void) {
     tcsetattr(0, TCSANOW, &orig_termios);
@@ -201,8 +218,8 @@ static void set_raw_terminal_mode(void) {
 }
 
 static int kbhit(void) {
-    struct timeval tv = { 0L, 0L };
-    fd_set         fds;
+    struct timeval tv = {0L, 0L};
+    fd_set fds;
 
     FD_ZERO(&fds);
     FD_SET(0, &fds);
@@ -210,7 +227,7 @@ static int kbhit(void) {
 }
 
 static int getch(void) {
-    int           len;
+    int len;
     unsigned char buf[256];
 
     if ((len = read(0, &buf, sizeof(buf))) < 0) {
@@ -239,6 +256,7 @@ void *XcpTerm_Thread(void *param) {
                 case '\x1b':
                 case 'q':
                     XcpThrd_Exit();
+                    break;
                 case 'h':
                     DisplayHelp();
                     break;
@@ -318,8 +336,8 @@ static void DisplayHelp(void) {
 }
 
 void FlsEmu_Info(void) {
-    uint8_t             idx;
-    uint8_t            *ptr;
+    uint8_t idx;
+    uint8_t *ptr;
     FlsEmu_SegmentType *segment;
 
     printf("\n\rFlash-Emulator\n\r");
@@ -329,10 +347,11 @@ void FlsEmu_Info(void) {
         "#Pages\n\r"
     );
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
-        ptr     = FlsEmu_BasePointer(idx);
+        ptr = FlsEmu_BasePointer(idx);
         segment = FlsEmu_GetConfig()->segments[idx];
         printf(
-            "%-20.20s %p %p %8d         %4d %6d\n\r", segment->name, (void *)segment->baseAddress, ptr, segment->memSize / 1024,
+            "%-20.20s %p %p %8d         %4d %6d\n\r", segment->name, (void *) segment->baseAddress, ptr,
+            segment->memSize / 1024,
             segment->pageSize / 1024, FlsEmu_NumPages(idx)
         );
     }
@@ -347,32 +366,38 @@ void Xcp_DisplayInfo(void) {
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 void XcpDaq_PrintDAQDetails(void) {
-    XcpDaq_ListIntegerType              listIdx;
-    XcpDaq_ODTIntegerType               odtIdx;
-    XcpDaq_ODTEntryIntegerType          odtEntriyIdx;
+    XcpDaq_ListIntegerType listIdx;
+    XcpDaq_ODTIntegerType odtIdx;
+    XcpDaq_ODTEntryIntegerType odtEntriyIdx;
     XcpDaq_ListConfigurationType const *listConf;
-    XcpDaq_ListStateType               *listState;
-    XcpDaq_ODTType const               *odt;
-    XcpDaq_ODTEntryType const          *entry;
-    uint8_t                             mode;
-    uint32_t                            total;
-    XcpDaq_ODTIntegerType               firstPid;
+    XcpDaq_ListStateType *listState;
+    XcpDaq_ODTType const *odt;
+    XcpDaq_ODTEntryType const *entry;
+    uint8_t mode;
+    uint32_t total;
+    XcpDaq_ODTIntegerType firstPid;
 
     printf("\n\rDAQ configuration\n\r");
     printf("-----------------\n\r");
-    for (listIdx = (XcpDaq_ListIntegerType)0; listIdx < XcpDaq_GetListCount(); ++listIdx) {
+    for (listIdx = (XcpDaq_ListIntegerType) 0; listIdx < XcpDaq_GetListCount(); ++listIdx) {
         listState = XcpDaq_GetListState(listIdx);
-        listConf  = XcpDaq_GetListConfiguration(listIdx);
-        mode      = listState->mode;
-        total     = UINT16(0);
+        listConf = XcpDaq_GetListConfiguration(listIdx);
+        mode = listState->mode;
+        total = UINT16(0);
         XcpDaq_GetFirstPid(listIdx, &firstPid);
-    #if XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_DYNAMIC
-        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "dynamic", firstPid);
-    #elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_STATIC
-        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx, (listIdx < XCP_MIN_DAQ) ? "predefined" : "static", firstPid);
-    #elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE
+#if XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_DYNAMIC
+        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx,
+               (listIdx < (XcpDaq_ListIntegerType) XCP_MIN_DAQ && (XcpDaq_ListIntegerType) XCP_MIN_DAQ > 0)
+                   ? "predefined"
+                   : "dynamic", firstPid);
+#elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_STATIC
+        printf("DAQ-List #%d [%s] firstPid: %d mode: ", listIdx,
+               (listIdx < (XcpDaq_ListIntegerType) XCP_MIN_DAQ && (XcpDaq_ListIntegerType) XCP_MIN_DAQ > 0)
+                   ? "predefined"
+                   : "static", firstPid);
+#elif XCP_DAQ_CONFIG_TYPE == XCP_DAQ_CONFIG_TYPE_NONE
         printf("DAQ-List #%d [predefined] firstPid: %d mode: ", listIdx, firstPid);
-    #endif /* XCP_DAQ_CONFIG_TYPE */
+#endif /* XCP_DAQ_CONFIG_TYPE */
 
         if (mode & XCP_DAQ_LIST_MODE_DIRECTION) {
             printf("STIM ");
@@ -395,12 +420,13 @@ void XcpDaq_PrintDAQDetails(void) {
             printf("TIMESTAMP ");
         }
         printf("\n\r");
-        for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < listConf->numOdts; ++odtIdx) {
+        for (odtIdx = (XcpDaq_ODTIntegerType) 0; odtIdx < listConf->numOdts; ++odtIdx) {
             odt = XcpDaq_GetOdt(listIdx, odtIdx);
             printf("    ODT #%d\n\r", odtIdx);
-            for (odtEntriyIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntriyIdx < odt->numOdtEntries; ++odtEntriyIdx) {
+            for (odtEntriyIdx = (XcpDaq_ODTEntryIntegerType) 0; odtEntriyIdx < odt->numOdtEntries; ++odtEntriyIdx) {
                 entry = XcpDaq_GetOdtEntry(listIdx, odtIdx, odtEntriyIdx);
-                printf("        Entry #%d [0x%08llx] %d Byte(s)\n\r", odtEntriyIdx, entry->mta.address, entry->length);
+                printf("        Entry #%d [0x%08llx] %d Byte(s)\n\r", odtEntriyIdx,
+                       (unsigned long long) entry->mta.address, entry->length);
                 total += entry->length;
             }
         }
@@ -419,7 +445,7 @@ void XcpDaq_Info(void) {
     Xcp_State = Xcp_GetState();
 
     printf("DAQ\n\r---\n\r");
-    #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
+#if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
     printf("Processor state       : ");
     switch (Xcp_State->daqProcessor.state) {
         case XCP_DAQ_STATE_UNINIT:
@@ -439,12 +465,12 @@ void XcpDaq_Info(void) {
             break;
     }
     printf("\n\r");
-        #if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
+#if XCP_DAQ_ENABLE_DYNAMIC_LISTS == XCP_ON
     printf("Allocated DAQ entities: %d of %d\n\r", XcpDaq_GetDynamicDaqEntityCount(), XCP_DAQ_MAX_DYNAMIC_ENTITIES);
-        #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
+#endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
 
-    #else
+#else
     printf("\tfunctionality not supported.\n\r");
-    #endif
+#endif
 }
 #endif /* XCP_ENABLE_DAQ_COMMANDS */

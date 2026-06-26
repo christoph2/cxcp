@@ -105,7 +105,6 @@ class AppGenerator:
         project.setdefault("asap2_version", [1, 71])
         project_name = project.get("name", "project_name")
 
-
         arduino = self.data_model.get("arduino")
         if arduino is None:
             self.data_model.setdefault("arduino", {})
@@ -164,10 +163,10 @@ class AppGenerator:
         spec_path = DEFAULT_SPEC_PATH
         dest = self.xcp_config_file
         needs_regen = (
-            force
-            or not dest.exists()
-            or self.state.file_is_modified(dest)
-            or self.state.file_is_modified(spec_path)
+                force
+                or not dest.exists()
+                # or self.state.file_is_modified(dest)
+                or self.state.file_is_modified(spec_path)
         )
         if needs_regen:
             render_xcp_config(dest, self.transport)
@@ -192,20 +191,22 @@ class AppGenerator:
                                  encoding="utf-8")
             self.logger.info(f"Stub created: {user_code}")
 
+        selected = self.state.boards.get("selected")
+        if not selected:
+            raise RuntimeError("No board selected. Build not possible.")
+        fqbn = list(selected.values())[0]
+
         rebuild_needed = (
                 force
                 or not self.elf_file.exists()
                 or self.state.file_is_modified(self.sketch_ino)
                 or self.state.file_is_modified(user_code)
+                or self.state.board_has_changed(fqbn)
         )
 
         if rebuild_needed:
-            selected = self.state.boards.get("selected")
-            if not selected:
-                raise RuntimeError("No board selected. Build not possible.")
-            fqbn = list(selected.values())[0]
-
             self.arduino_manager.build(fqbn)
+            self.state.update_last_built_fqbn(fqbn)
             self.state.update_hash(self.elf_file)
             self.state.update_hash(self.sketch_ino)
             self.state.update_hash(user_code)
@@ -221,15 +222,20 @@ class AppGenerator:
         self.load_symbol_addresses()
         self.renderer.symbol_addresses = self.symbol_addresses
 
-        if force or self.state.file_is_modified(self.a2l_file):
+        elf_changed = self.state.elf_changed_since_last_a2l(self.elf_file)
+
+        if force or elf_changed or self.state.file_is_modified(self.a2l_file):
             self.renderer.render_a2l(self.a2l_file)
             self.state.update_hash(self.a2l_file)
             self.logger.info(f"A2L file generated: {self.a2l_file}")
 
-        if force or self.state.file_is_modified(self.xcp_rec_config_file):
+        if force or elf_changed or self.state.file_is_modified(self.xcp_rec_config_file):
             self.renderer.render_xcp_rec_config(self.xcp_rec_config_file)
             self.state.update_hash(self.xcp_rec_config_file)
             self.logger.info(f"XCP recorder config generated: {self.xcp_rec_config_file}")
+
+        if elf_changed:
+            self.state.update_last_a2l_elf_hash(self.elf_file)
 
     def upload(self) -> None:
         """Uploads the sketch to the board."""

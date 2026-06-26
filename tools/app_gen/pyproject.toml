@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyxcp-appgen"
 version = "0.1.0"
 description = "Arduino-based cXCP/pyXCP code generator and build/upload frontend"
-requires-python = ">=3.9"
+requires-python = ">=3.10,<4.0"
 dependencies = [
     "mako",
     "rich",

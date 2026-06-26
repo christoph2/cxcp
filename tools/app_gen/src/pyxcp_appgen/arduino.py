@@ -3,6 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import List, Union
+from .utils import delete_directory
 
 
 def run_arduino_cli(commands: List[str], working_directory: Union[str, Path] = ".") -> None:
@@ -53,9 +54,9 @@ class ArduinoManager:
 
     def clean(self) -> None:
         """Cleans the build artifacts."""
-        commands = ["clean", "--build-path", str(self.build_path)]
         try:
-            run_arduino_cli(commands, self.sketch_path)
+            if self.build_path.exists():
+                delete_directory(self.build_path)
             logging.getLogger("rich").info("Clean successful.")
         except subprocess.CalledProcessError as e:
             logging.getLogger("rich").warning(f"Clean command failed but continuing: {e}")

@@ -25,7 +25,7 @@ ELSE ()
     #message(WARNING "C standard could not be set because compiler is not GNU or Clang.")
 ENDIF ()
 
-option(DISABLE_SOCKET "Disable SocketCAN build" OFF)
+option(ENABLE_SOCKETCAN "Enable SocketCAN build" ON)
 option(PROFILE "Enable profiling" OFF)
 
 set(SOURCES
@@ -51,7 +51,7 @@ set(INCLUDES
 )
 
 if (CMAKE_HOST_WIN32)
-    set(ADD_LIBS ws2_32)
+    set(ADD_LIBS ws2_32 Iphlpapi)
     list(APPEND SOURCES "../../src/hw/win/hw.c")
     list(APPEND SOURCES "../../flsemu/win/flsemu.c")
 elseif (CMAKE_HOST_UNIX)
@@ -108,22 +108,26 @@ if (CMAKE_HOST_WIN32)
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
+    target_compile_definitions(xcp_sim_eth PRIVATE XCP_TRANSPORT_LAYER_TYPE=5)
 elseif (CMAKE_HOST_UNIX)
     add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/linuxeth.c" "../../src/tl/eth/common.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h)
     if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     endif ()
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
-    target_link_libraries(xcp_sim_eth ${ADD_LIBS} ${target_link_libraries})
+    target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
+    target_compile_definitions(xcp_sim_eth PRIVATE XCP_TRANSPORT_LAYER_TYPE=5)
 
-    if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    if (ENABLE_SOCKETCAN AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
         add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/linux_socket_can.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h
                 ../../src/hw/linux/hw.c
                 ../../src/hw/posix/hw.c
-                ../../inc/xcp_log.h)
+                ../../inc/xcp_log.h
+        )
         target_include_directories(xcp_sim_can PUBLIC ${INCLUDES})
         target_link_libraries(xcp_sim_can ${ADD_LIBS})
         target_compile_features(xcp_sim_can PRIVATE c_std_11)
+        target_compile_definitions(xcp_sim_can PRIVATE XCP_TRANSPORT_LAYER_TYPE=1)
     elseif (MACOS_BUILD)
 
     endif ()

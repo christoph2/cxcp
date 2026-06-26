@@ -105,7 +105,6 @@ ts = graphlib.TopologicalSorter(convert_to_paths(source_includes))
 static_ordered_files = tuple(ts.static_order())
 with open("xcp.h", "wt") as sf:
     for item in static_ordered_files:
-        print("ITEM", item)
         print_file_name(sf, item)
         if item in source_files:
             sf.write(source_files[item])

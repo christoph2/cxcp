@@ -319,6 +319,11 @@ XCP_STATIC
 void Xcp_GetVersion_Res(Xcp_PduType const * const pdu);
 #endif /* XCP_ENABLE_GET_VERSION */
 
+#if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_ENABLE_PACKED_MODE == XCP_ON)
+XCP_STATIC void Xcp_SetDaqPackedMode_Res(Xcp_PduType const * const pdu);
+XCP_STATIC void Xcp_GetDaqPackedMode_Res(Xcp_PduType const * const pdu);
+#endif /* XCP_DAQ_ENABLE_PACKED_MODE */
+
 #if XCP_ENABLE_LEVEL1_COMMANDS == XCP_ON
 XCP_STATIC
 
@@ -1214,6 +1219,14 @@ void Xcp_Level1Command_Res(Xcp_PduType const * const pdu) {
             Xcp_GetVersion_Res(pdu);
             break;
     #endif /* XCP_ENABLE_GET_VERSION */
+    #if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_ENABLE_PACKED_MODE == XCP_ON)
+        case XCP_SET_DAQ_PACKED_MODE:
+            Xcp_SetDaqPackedMode_Res(pdu);
+            break;
+        case XCP_GET_DAQ_PACKED_MODE:
+            Xcp_GetDaqPackedMode_Res(pdu);
+            break;
+    #endif /* XCP_DAQ_ENABLE_PACKED_MODE */
         default:
             Xcp_CommandNotImplemented_Res(pdu);
             break;
@@ -1233,6 +1246,70 @@ void Xcp_GetVersion_Res(Xcp_PduType const * const pdu) {
     );
 }
 #endif /* XCP_ENABLE_GET_VERSION */
+
+#if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_DAQ_ENABLE_PACKED_MODE == XCP_ON)
+
+XCP_STATIC void Xcp_SetDaqPackedMode_Res(Xcp_PduType const * const pdu) {
+    const XcpDaq_ListIntegerType daqListNumber =
+        (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+    const uint8_t  packedMode  = Xcp_GetByte(pdu, UINT8(4));
+    const uint8_t  tsMode      = Xcp_GetByte(pdu, UINT8(5));
+    const uint16_t sampleCount = Xcp_GetWord(pdu, UINT8(6));
+
+    DBG_TRACE(
+        "SET_DAQ_PACKED_MODE [daq: %u mode: %u ts: 0x%02X samples: %u]\n\r",
+        daqListNumber, packedMode, tsMode, sampleCount
+    );
+
+    XCP_ASSERT_PGM_IDLE();
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+    XCP_ASSERT_DAQ_STOPPED();
+
+    if (daqListNumber >= XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+    if (packedMode > XCP_DAQ_PACKED_MODE_EVENT_GROUPED) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+
+    XcpDaq_SetPackedMode(daqListNumber, packedMode, tsMode, sampleCount);
+    Xcp_PositiveResponse();
+}
+
+XCP_STATIC void Xcp_GetDaqPackedMode_Res(Xcp_PduType const * const pdu) {
+    const XcpDaq_ListIntegerType daqListNumber =
+        (XcpDaq_ListIntegerType)Xcp_GetWord(pdu, UINT8(2));
+    uint8_t  packedMode  = UINT8(0);
+    uint8_t  tsMode      = UINT8(0);
+    uint16_t sampleCount = UINT16(0);
+    uint8_t *dataOut     = XCP_NULL;
+
+    DBG_TRACE("GET_DAQ_PACKED_MODE [daq: %u]\n\r", daqListNumber);
+
+    XCP_ASSERT_PGM_IDLE();
+    XCP_ASSERT_UNLOCKED(XCP_RESOURCE_DAQ);
+
+    if (daqListNumber >= XcpDaq_GetListCount()) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
+
+    XcpDaq_GetPackedMode(daqListNumber, &packedMode, &tsMode, &sampleCount);
+
+    /* Response: [0xFF][packed_mode][ts_mode][sample_count_lo][sample_count_hi] */
+    dataOut = Xcp_GetCtoOutPtr();
+    Xcp_SetCtoOutLen(UINT16(5));
+    dataOut[0] = XCP_PACKET_IDENTIFIER_RES;
+    dataOut[1] = packedMode;
+    dataOut[2] = tsMode;
+    dataOut[3] = XCP_LOBYTE(sampleCount);
+    dataOut[4] = XCP_HIBYTE(sampleCount);
+    Xcp_SendCto();
+}
+
+#endif /* XCP_DAQ_ENABLE_PACKED_MODE */
 
 XCP_STATIC
 
@@ -2293,6 +2370,10 @@ void Xcp_GetDaqListInfo_Res(Xcp_PduType const * const pdu) {
     properties |= DAQ_LIST_PROPERTY_PREDEFINED;  /* Hardcoded for now. */
     properties |= DAQ_LIST_PROPERTY_EVENT_FIXED; /* "                " */
     properties |= DAQ_LIST_PROPERTY_DAQ;         /* "                " */
+
+#if XCP_DAQ_ENABLE_PACKED_MODE == XCP_ON
+    properties |= DAQ_LIST_PROPERTY_PACKED;      /* XCP 1.4: Packed Mode supported */
+#endif /* XCP_DAQ_ENABLE_PACKED_MODE */
 
         #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     Xcp_Send8(

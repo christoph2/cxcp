@@ -35,7 +35,7 @@
     **  General Options.
     */
     // #define TP_CAN
-    // #define TP_ETHER
+    #define TP_ETHER
     // #define TP_BLUETOOTH
     #if !defined(TP_CAN) && !defined(TP_ETHER) && !defined(TP_BLUETOOTH) && !defined(TP_SXI)
         #define TP_SXI
@@ -85,7 +85,7 @@
         #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
 
         #define XCP_ON_ETHERNET_PROTOCOL  XCP_ON_ETHERNET_USE_UDP
-        #define XCP_ON_ETHERNET_IP_OCTETS 192, 168, 137, 100
+        #define XCP_ON_ETHERNET_IP_OCTETS 192, 102, 0, 100
         #define XCP_ON_ETHERNET_PORT      (5555)
 
         #define XCP_ON_ETHERNET_ARDUINO_DRIVER (XCP_ON_ETHERNET_DRIVER_ETHERNET)
@@ -96,6 +96,21 @@
         // https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFiGeneric.h
         // #define XCP_ON_WIFI_TX_POWER           WIFI_POWER_13dBm
         #define XCP_ON_ETHERNET_MAC_ADDRESS    { 0xBE, 0xEF, 0xCA, 0xAA, 0xFF, 0xFE }
+
+    #define XCP_ENABLE_ETH_DISCOVERY    XCP_ON
+    #define XCP_ETH_DISCOVERY_MAC0    0xBE
+    #define XCP_ETH_DISCOVERY_MAC1    0xEF
+    #define XCP_ETH_DISCOVERY_MAC2    0xCA
+    #define XCP_ETH_DISCOVERY_MAC3    0xAA
+    #define XCP_ETH_DISCOVERY_MAC4    0xFF
+    #define XCP_ETH_DISCOVERY_MAC5    0xFE
+    #define XCP_ETH_DISCOVERY_MCAST_IP0    239
+    #define XCP_ETH_DISCOVERY_MCAST_IP1    255
+    #define XCP_ETH_DISCOVERY_MCAST_IP2    0
+    #define XCP_ETH_DISCOVERY_MCAST_IP3    0
+    #define XCP_ETH_DISCOVERY_MCAST_PORT    5556
+    #define XCP_ETH_DISCOVERY_SET_IP_STATUS    2
+
 
         #define XCP_MAX_CTO (32)
         #define XCP_MAX_DTO (32)

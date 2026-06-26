@@ -129,7 +129,7 @@ void XcpTl_Init(void) {
         while (1) {
         }
     } else {
-        Serial.println("CAN init ((MKR Zero) OK!");
+        Serial.println("CAN init (MKR Zero) OK!");
     }
     CAN.setTimeout(1000);
     CAN.onReceive(on_receive_mkr);

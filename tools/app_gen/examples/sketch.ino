@@ -25,6 +25,14 @@ XCP_DAQ_DEFINE_EVENT(
 ),
 XCP_DAQ_END_EVENTS
 
+XCP_DAQ_BEGIN_ID_LIST
+    0x600,
+    0x601,
+    0x602,
+    0x603,
+    0x604,
+XCP_DAQ_END_ID_LIST    
+
 volatile float voltage1; // Motor temperature in °C
 volatile float voltage2; // Speed in km/h
 volatile float voltage3; // Loop counter, local measurement variable on stack
@@ -118,7 +126,7 @@ void update_measurements() {
     voltage4 += 0.05f;
 }
 
-auto daq_task = PeriodicTask(10, 0, update_measurements, micros);
+auto daq_task = PeriodicTask(Duration::microseconds(10), 0, update_measurements, micros);
 
 void loop() {
 

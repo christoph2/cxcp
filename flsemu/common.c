@@ -51,9 +51,9 @@ typedef struct tagFlsEmu_SystemMemoryType {
 /*
 **  Local Variables.
 */
-static FlsEmu_ModuleStateType   FlsEmu_ModuleState = FLSEMU_UNINIT; /**< Module-state variable. */
-static FlsEmu_SystemMemoryType  FlsEmu_SystemMemory;                /**< System memory configuration. */
-static FlsEmu_ConfigType const *FlsEmu_Config = XCP_NULL;           /**< Segment configuration. */
+static FlsEmu_ModuleStateType FlsEmu_ModuleState = FLSEMU_UNINIT; /**< Module-state variable. */
+static FlsEmu_SystemMemoryType FlsEmu_SystemMemory; /**< System memory configuration. */
+static FlsEmu_ConfigType const *FlsEmu_Config = XCP_NULL; /**< Segment configuration. */
 
 /*
 **  Global Functions.
@@ -67,8 +67,8 @@ void FlsEmu_Init(FlsEmu_ConfigType const *config) {
     uint8_t idx = 0;
 
     FlsEmu_SystemMemory.AllocationGranularity = FlsEmu_GetAllocationGranularity();
-    FlsEmu_Config                             = config;
-    FlsEmu_ModuleState                        = FLSEMU_INIT;
+    FlsEmu_Config = config;
+    FlsEmu_ModuleState = FLSEMU_INIT;
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
         FlsEmu_OpenCreate(idx);
     }
@@ -85,15 +85,15 @@ void FlsEmu_DeInit(void) {
 }
 
 void FlsEmu_OpenCreate(uint8_t segmentIdx) {
-    uint32_t                    length = 0;
-    char                        rom[1024];
-    FlsEmu_SegmentType         *segment    = XCP_NULL;
-    FlsEmu_OpenCreateResultType result     = OPEN_ERROR;
-    uint32_t                    fillerSize = 0UL;
-    Xcp_PointerSizeType         offset     = 0UL;
-    uint32_t                    numPages   = 0U;
-    uint32_t                    pageIdx    = 0U;
-    uint32_t                    pageSize   = 0U;
+    uint32_t length = 0;
+    char rom[1024];
+    FlsEmu_SegmentType *segment = XCP_NULL;
+    FlsEmu_OpenCreateResultType result = OPEN_ERROR;
+    uint32_t fillerSize = 0UL;
+    Xcp_PointerSizeType offset = 0UL;
+    uint32_t numPages = 0U;
+    uint32_t pageIdx = 0U;
+    uint32_t pageSize = 0U;
 
     FLSEMU_ASSERT_INITIALIZED();
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
@@ -104,32 +104,35 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
 
     if (segment->type == FLSEMU_RAM) {
-        segment->currentPage      = 0x00;
+        segment->currentPage = 0x00;
         segment->alloctedPageSize = segment->pageSize;
         return;
     }
 
     if (segment->persistentArray == NULL) {
-        segment->persistentArray = (FlsEmu_PersistentArrayType *)malloc(sizeof(FlsEmu_PersistentArrayType));
+        segment->persistentArray = (FlsEmu_PersistentArrayType *) malloc(sizeof(FlsEmu_PersistentArrayType));
         memset(segment->persistentArray, 0, sizeof(FlsEmu_PersistentArrayType));
     }
-    segment->currentPage      = 0x00;
+    segment->currentPage = 0x00;
     segment->alloctedPageSize = FlsEmu_AllocatedSize(segmentIdx);
-    pageSize                  = XCP_MAX(segment->pageSize, segment->alloctedPageSize);
+    pageSize = XCP_MAX(segment->pageSize, segment->alloctedPageSize);
 
-    length = (uint32_t)strlen(segment->name);
+    length = (uint32_t) strlen(segment->name);
 #if defined(_MSC_VER)
-    strncpy_s((char *)rom, 1024, (char *)segment->name, length);
+    strncpy_s((char *) rom, 1024, (char *) segment->name, length);
     rom[length] = '\x00';
-    strcat_s((char *)rom, 1024, ".rom");
+    strcat_s((char *) rom, 1024, ".rom");
 #else
-    strncpy((char *)rom, (char *)segment->name, length);
-    rom[length] = '\x00';
-    strcat((char *)rom, ".rom");
+    if (length > 1000) {
+        length = 1000;
+    }
+    memcpy((char *) rom, (char *) segment->name, length);
+    rom[length] = '\0';
+    strcat((char *) rom, ".rom");
 #endif /* _MSC_VER */
 
     numPages = FlsEmu_NumPages(segmentIdx);
-    result   = FlsEmu_OpenCreatePersitentArray(rom, pageSize * numPages, segment->persistentArray);
+    result = FlsEmu_OpenCreatePersitentArray(rom, pageSize * numPages, segment->persistentArray);
     if (result == OPEN_ERROR) {
         return;
     }
@@ -142,10 +145,10 @@ void FlsEmu_OpenCreate(uint8_t segmentIdx) {
             fillerSize = 0UL;
         }
         for (pageIdx = 0U; pageIdx < numPages; ++pageIdx) {
-            offset = ((Xcp_PointerSizeType)segment->persistentArray->mappingAddress) + (pageIdx * pageSize);
-            XcpUtl_MemSet((void *)offset, FLSEMU_ERASED_VALUE, segment->pageSize);
+            offset = ((Xcp_PointerSizeType) segment->persistentArray->mappingAddress) + (pageIdx * pageSize);
+            XcpUtl_MemSet((void *) offset, FLSEMU_ERASED_VALUE, segment->pageSize);
             if (fillerSize > 0UL) {
-                XcpUtl_MemSet((void *)(offset + segment->pageSize), FLSEMU_FILLER_VALUE, fillerSize);
+                XcpUtl_MemSet((void *) (offset + segment->pageSize), FLSEMU_FILLER_VALUE, fillerSize);
             }
         }
     }
@@ -160,7 +163,7 @@ void *FlsEmu_BasePointer(uint8_t segmentIdx) {
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
     if (segment->type == FLSEMU_RAM) {
-        return (void *)segment->baseAddress;
+        return (void *) segment->baseAddress;
     }
     return segment->persistentArray->mappingAddress;
 }
@@ -178,8 +181,8 @@ uint32_t FlsEmu_NumPages(uint8_t segmentIdx) {
 }
 
 void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address) {
-    uint32_t                  mask    = 0UL;
-    uint8_t                  *base    = XCP_NULL;
+    uint32_t mask = 0UL;
+    uint8_t *base = XCP_NULL;
     FlsEmu_SegmentType const *segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
@@ -187,8 +190,8 @@ void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address) {
         return;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
-    mask    = (uint32_t)segment->sectorSize - 1UL;
-    base    = (uint8_t *)segment->persistentArray->mappingAddress;
+    mask = (uint32_t) segment->sectorSize - 1UL;
+    base = (uint8_t *) segment->persistentArray->mappingAddress;
 
     /* Bounds check */
     if (address >= segment->memSize) {
@@ -206,7 +209,7 @@ void FlsEmu_EraseSector(uint8_t segmentIdx, uint32_t address) {
 }
 
 void FlsEmu_ErasePage(uint8_t segmentIdx, uint8_t page) {
-    uint8_t            *ptr     = (uint8_t *)FlsEmu_BasePointer(segmentIdx);
+    uint8_t *ptr = (uint8_t *) FlsEmu_BasePointer(segmentIdx);
     FlsEmu_SegmentType *segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
@@ -220,10 +223,10 @@ void FlsEmu_ErasePage(uint8_t segmentIdx, uint8_t page) {
 
 void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block) {
     /* TODO: Nur den entsprechenden Block mappen!!! */
-    uint8_t                  *ptr       = XCP_NULL;
-    uint32_t                  offset    = 0UL;
-    uint32_t                  blockSize = 0UL;
-    FlsEmu_SegmentType const *segment   = XCP_NULL;
+    uint8_t *ptr = XCP_NULL;
+    uint32_t offset = 0UL;
+    uint32_t blockSize = 0UL;
+    FlsEmu_SegmentType const *segment = XCP_NULL;
 
     FLSEMU_ASSERT_INITIALIZED();
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
@@ -233,15 +236,15 @@ void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block) {
     assert(block < (segment->blockCount));
 
     blockSize = (segment->memSize / segment->blockCount);
-    offset    = (blockSize * block);
+    offset = (blockSize * block);
 
-    ptr = (uint8_t *)FlsEmu_BasePointer(segmentIdx) + offset;
+    ptr = (uint8_t *) FlsEmu_BasePointer(segmentIdx) + offset;
     XcpUtl_MemSet(ptr, FLSEMU_ERASED_VALUE, blockSize);
 }
 
 Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
-    uint8_t                   idx     = 0;
-    uint8_t                  *ptr     = XCP_NULL;
+    uint8_t idx = 0;
+    uint8_t *ptr = XCP_NULL;
     FlsEmu_SegmentType const *segment = XCP_NULL;
 
     /* printf("addr: %x ext: %d\n", src->address, src->ext); */
@@ -251,7 +254,7 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst, Xcp_MtaType co
         if (segment->type == FLSEMU_RAM) {
             if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->memSize))) {
                 dst->address = src->address;
-                dst->ext     = src->ext;
+                dst->ext = src->ext;
                 return XCP_MEMORY_MAPPED;
             }
             continue;
@@ -263,8 +266,8 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst, Xcp_MtaType co
             } else {
                 FlsEmu_SelectPage(idx, src->ext);
             }
-            dst->address = ((Xcp_PointerSizeType)ptr - segment->baseAddress) + src->address;
-            dst->ext     = src->ext;
+            dst->address = ((Xcp_PointerSizeType) ptr - segment->baseAddress) + src->address;
+            dst->ext = src->ext;
             /* printf("MAPPED: addr: %x ext: %d TO: %x:%d\n", src->address, src->ext,
              * dst->address, dst->ext); */
             return XCP_MEMORY_MAPPED;
@@ -278,12 +281,12 @@ Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst, Xcp_MtaType co
  */
 uint32_t FlsEmu_AllocatedSize(uint8_t segmentIdx) {
     FlsEmu_SegmentType const *segment = XCP_NULL;
-    uint32_t                  gran    = 0U;
-    uint32_t                  size    = 0U;
+    uint32_t gran = 0U;
+    uint32_t size = 0U;
     FLSEMU_ASSERT_INITIALIZED();
 
     if (!FLSEMU_VALIDATE_SEGMENT_IDX(segmentIdx)) {
-        return (uint32_t)0;
+        return (uint32_t) 0;
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
 

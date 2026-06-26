@@ -51,3 +51,23 @@ class ProjectState:
         new_hash = sha256_hash_of_file(file_path)
         if new_hash:
             self.hashes[str(file_path)] = new_hash
+
+    def board_has_changed(self, current_fqbn: str) -> bool:
+        """Returns True if the board used for the last build differs from the current selection."""
+        return self.state.get("last_built_fqbn") != current_fqbn
+
+    def update_last_built_fqbn(self, fqbn: str) -> None:
+        """Records the fqbn used for the most recent successful build."""
+        self.state["last_built_fqbn"] = fqbn
+
+    def elf_changed_since_last_a2l(self, elf_path: Path) -> bool:
+        """Returns True if the ELF file has changed since A2L artifacts were last generated."""
+        current_hash = sha256_hash_of_file(elf_path)
+        stored_hash = self.state.get("last_a2l_elf_hash")
+        return current_hash is None or stored_hash is None or stored_hash != current_hash
+
+    def update_last_a2l_elf_hash(self, elf_path: Path) -> None:
+        """Records the ELF hash at the time A2L artifacts were last generated."""
+        new_hash = sha256_hash_of_file(elf_path)
+        if new_hash:
+            self.state["last_a2l_elf_hash"] = new_hash

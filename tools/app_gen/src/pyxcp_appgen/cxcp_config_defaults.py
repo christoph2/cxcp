@@ -14,6 +14,7 @@ def load_spec(spec_path: Path = DEFAULT_SPEC_PATH) -> List[Dict[str, Any]]:
 def grouped_spec(spec: List[Dict[str, Any]]) -> Iterable[Iterable[Dict[str, Any]]]:
     return it.groupby(sorted(spec, key=lambda x: x["group"]), key=lambda x: x["group"])
 
+
 def _to_c_value(entry: Dict[str, Any], value: Any) -> Optional[str]:
     kind = entry.get("type")
     if kind == "define":
@@ -59,11 +60,12 @@ TR_SEL = {
     "SXI": "    #define TP_SXI\n    #define XCP_TRANSPORT_LAYER XCP_ON_SXI\n"
 }
 
+
 def render_xcp_config(
-    destination: Path,
-    transport: str,
-    spec: Optional[Iterable[Dict[str, Any]]] = None,
-    overrides: Optional[Dict[str, Any]] = None,
+        destination: Path,
+        transport: str,
+        spec: Optional[Iterable[Dict[str, Any]]] = None,
+        overrides: Optional[Dict[str, Any]] = None,
 ) -> None:
     overrides = overrides or {}
     spec = list(spec) if spec is not None else load_spec()
@@ -91,12 +93,13 @@ def render_xcp_config(
             if c_value is None:
                 lines.append(f"    #define {name}")
             else:
-                lines.append(f"    #define {name} ({c_value})")
+                lines.append(f"    #define {name}    {c_value}")
     lines.append("")
     lines.append("#endif /* __XCP_CONFIG_H*/\n")
     lines.append("")
 
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text("\n".join(lines), encoding="utf-8")
+
 
 __all__ = ["DEFAULT_SPEC_PATH", "load_spec", "render_xcp_config"]

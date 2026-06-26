@@ -8,6 +8,8 @@
 #define EPK_SECTION_NAME ".calflash_signature"
 #define EPK_CONST_NAME   "${project['name']} V1.2.0 01.03.2012"
 
+#define CAL_PARAM __attribute__((section("calparams")))
+
 // GNU syntax.
 //__attribute__((section(EPK_SECTION_NAME))) __attribute__((used)) volatile static const char epk[/*sizeof(EPK_CONST_NAME)*/]
 //  __attribute__((section(EPK_SECTION_NAME))) = EPK_CONST_NAME;
@@ -25,9 +27,10 @@ XCP_DAQ_BEGIN_EVENTS
 XCP_DAQ_DEFINE_EVENT(${'"' + event["name"] + '"'}, XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, ${event["interval"]}),
 %endfor
 XCP_DAQ_END_EVENTS
-##    XCP_DAQ_BEGIN_ID_LIST 0x201,
-##    0x202, 0x203, 0x204, 0x205, 0x206,
-##    XCP_DAQ_END_ID_LIST
+
+XCP_DAQ_BEGIN_ID_LIST
+    0x201, 0x202, 0x203, 0x204, 0x205, 0x206,
+XCP_DAQ_END_ID_LIST
 
 ##    __attribute__((section(".measurements"))) volatile float values[8];
 %for meas in project["module"].get("measurements", []):
@@ -96,6 +99,10 @@ class WaveformGenerator {
     }
 };
 
+#define POOL_RAM_SIZE   (1024)
+
+// static volatile uint8_t poolRAM[POOL_RAM_SIZE] = {0};
+
 const uint32_t AMPLITUDE_SCALE = 32.0F;
 
 auto wg1 = WaveformGenerator(SINE, 16, 100, amplitiude_value(AMPLITUDE_SCALE));
@@ -120,8 +127,7 @@ void update_measurements() {
     voltage4 += 0.05f;
 }
 
-
-auto daq_task = PeriodicTask(10, 0, Delegate::create(update_measurements), DelegateU32::create(millis));
+auto daq_task = PeriodicTask(Duration::microseconds(15 * 1000), 0, Delegate::create(update_measurements), DelegateU32::create(micros));
 
 void loop() {
 

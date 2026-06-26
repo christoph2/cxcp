@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2021 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2026 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -41,6 +41,11 @@
 
 #define XCP_GET_ID_0 "BlueParrot XCP running on Windows"
 #define XCP_GET_ID_1 "Example_Project"
+
+
+#define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x101)
+#define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x100)
+#define XCP_ON_CAN_BROADCAST_IDENTIFIER (0x102)
 
 // #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 #define XCP_BUILD_TYPE             XCP_DEBUG_BUILD
@@ -92,12 +97,16 @@
 #define XCP_DAQ_ENABLE_ALTERNATING                  XCP_OFF
 #define XCP_DAQ_ENABLE_CLOCK_ACCESS_ALWAYS          XCP_ON
 #define XCP_DAQ_ENABLE_WRITE_THROUGH                XCP_OFF
-#define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (100)
+#define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (128)
 #define XCP_DAQ_QUEUE_SIZE                          (16)
 #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
 #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT XCP_OFF
-#define XCP_DAQ_ENABLE_PID_OFF                      (XCP_ON)
+#define XCP_DAQ_ENABLE_PID_OFF                      (XCP_OFF)
 #define XCP_DAQ_CAN_ID_BASE                         (0x120)
+
+/* XCP 1.4 Packed DAQ Lists */
+#define XCP_DAQ_ENABLE_PACKED_MODE      XCP_ON
+#define XCP_DAQ_PACKED_MAX_SAMPLE_COUNT (8)
 
 /*
 **  PGM Settings.
@@ -169,7 +178,7 @@
 /*
 **  Time Correlation (Advanced, XCP 1.3)
 */
-#define XCP_ENABLE_TIME_CORRELATION     XCP_ON
+#define XCP_ENABLE_TIME_CORRELATION     XCP_OFF
 #define XCP_TIMECORR_DEFAULT_CLUSTER_ID (0x0001u) /* Multicast group 239.255.0.1 */
 #define XCP_TIMECORR_XCP_SLV_CLK        (0)       /* Free-running, readable */
 #define XCP_TIMECORR_GRANDM_CLK         (0)       /* No dedicated grandmaster clock by default */
@@ -191,39 +200,41 @@
 /*
 **  Transport-Layer specific Options (may not apply to every Transport).
 */
+#if !defined(XCP_TRANSPORT_LAYER_TYPE)
 #ifdef TP_CAN
-    #define XCP_TRANSPORT_LAYER XCP_ON_CAN
+#define XCP_TRANSPORT_LAYER XCP_ON_CAN
+#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_CAN
 
-    #define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x102)
-    #define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x101)
-    #define XCP_ON_CAN_MAX_DLC_REQUIRED     XCP_OFF
-    #define XCP_ON_CAN_BROADCAST_IDENTIFIER (0x103)
-    #define XCP_ON_CAN_FREQ                 (canBITRATE_250K)
-    #define XCP_ON_CAN_BTQ                  (16)
-    #define XCP_ON_CAN_TSEG1                (14)
-    #define XCP_ON_CAN_TSEG2                (2)
-    #define XCP_ON_CAN_SJW                  (2)
-    #define XCP_ON_CAN_NOSAMP               (1)
+#define XCP_ON_CAN_BTQ                  (16)
+#define XCP_ON_CAN_TSEG1                (14)
+#define XCP_ON_CAN_TSEG2                (2)
+#define XCP_ON_CAN_SJW                  (2)
+#define XCP_ON_CAN_NOSAMP               (1)
 #elif defined(TP_BLUETOOTH)
-    #define XCP_TRANSPORT_LAYER XCP_ON_BTH
-
-    #define XCP_MAX_CTO (64)  // (16)
-    #define XCP_MAX_DTO (64)
+#define XCP_TRANSPORT_LAYER XCP_ON_BTH
+#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_BTH
 
 #elif defined(TP_ETHER)
-    #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
-
-    #define XCP_MAX_CTO (64)  // (16)
-    #define XCP_MAX_DTO (64)
+#define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
+#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_ETHERNET
 
 #elif defined(TP_SXI)
-
-    #define XCP_MAX_CTO (64)
-    #define XCP_MAX_DTO (64)
+#define XCP_TRANSPORT_LAYER XCP_ON_SXI
+#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_SXI
 
 #else
-    #error "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
+#error "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
 #endif  // KVASER_CAN
+#else
+#define XCP_TRANSPORT_LAYER XCP_TRANSPORT_LAYER_TYPE
+#endif /* XCP_TRANSPORT_LAYER_TYPE */
+
+#if !defined(XCP_MAX_CTO)
+#define XCP_MAX_CTO (64)
+#endif
+#if !defined(XCP_MAX_DTO)
+#define XCP_MAX_DTO (64)
+#endif
 
 /*
 **  Customization Options.

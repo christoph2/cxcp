@@ -134,3 +134,19 @@ def load_config_json(json_file: Path) -> Dict[str, Any]:
     except json.JSONDecodeError as e:
         logger.error(f"Error parsing JSON: {e}")
         raise
+
+
+def delete_directory(path):
+    path = Path(path)
+    for child in path.iterdir():
+        if child.is_file():
+            try:
+                child.unlink()
+            except Exception as e:
+                print(f"Error deleting file: {child}. Error: {e}")
+        else:
+            delete_directory(child)
+    try:
+        path.rmdir()
+    except Exception as e:
+        print(f"Error deleting directory: {path}. Error: {e}")
