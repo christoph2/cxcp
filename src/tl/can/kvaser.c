@@ -1,7 +1,7 @@
 /*
  * BlueParrot XCP
  *
- * (C) 2007-2025 by Christoph Schueler <github.com/Christoph2,
+ * (C) 2007-2026 by Christoph Schueler <github.com/Christoph2,
  *                                      cpu12.gems@googlemail.com>
  *
  * All Rights Reserved
@@ -112,8 +112,8 @@ static void XcpTl_SetDaqId_Res(Xcp_PduType const * const pdu) {
 #endif /* XCP_ENABLE_TRANSPORT_LAYER_CMD */
 
 typedef struct tagXcpTl_ConnectionType {
-    int virtualChannel;
-    int handle;
+    canHandle handle;
+    bool      connected;
 } XcpTl_ConnectionType;
 
 extern Xcp_PduType Xcp_CtoIn;
@@ -166,7 +166,6 @@ static void Kv_Notification(int hnd, void *context, unsigned int notifyEvent) {
     unsigned int   flag;
     unsigned long  time;
     unsigned long  status;
-    // char msg_buffer[128];
 
     stat = canReadStatus(hnd, &status);
     Kv_Check("canReadStatus", stat);
@@ -193,21 +192,10 @@ static void Kv_Notification(int hnd, void *context, unsigned int notifyEvent) {
                     printf("BROADCAST request!!!\n");
                 }
             }
-#if 0
-    #define canMSG_MASK        0x00ff
-    #define canMSG_RTR         0x0001
-    #define canMSG_STD         0x0002
-    #define canMSG_EXT         0x0004
-    #define canMSG_WAKEUP      0x0008
-    #define canMSG_NERR        0x0010
-    #define canMSG_ERROR_FRAME 0x0020
-    #define canMSG_TXACK       0x0040
-    #define canMSG_TXRQ        0x0080
-#endif
             // printf("ID: %08x DLC: %d Flags: %08x Timer: %d\n", id, dlc, flag, time);
             break;
         case canNOTIFY_STATUS:
-            /* printf("CAN status %u\n", stat); */
+            printf("CAN status %u\n", stat);
             break;
         case canNOTIFY_ERROR:
             Kv_Error("Error frame received");
@@ -220,7 +208,7 @@ static void Kv_Notification(int hnd, void *context, unsigned int notifyEvent) {
             } else if (status & canSTAT_ERROR_WARNING) {
                 Kv_Info("Error-Warning");
             } else if (status & canSTAT_ERROR_ACTIVE) {
-                /** Kv_Info("Error-Active"); */
+                // Kv_Info("Error-Active");
             } else {
                 printf("BusOn/BusOff %lu\n", status);
                 // ???
@@ -233,63 +221,66 @@ static void Kv_Notification(int hnd, void *context, unsigned int notifyEvent) {
 }
 
 void XcpTl_Init(void) {
-    canStatus st;
-    uint32_t  ts;
-    // int code;
-    // int ext;
-    int hnd;
+    canStatus status = canOK;
+    uint32_t  ts     = 0UL;
+    canHandle hnd    = 0;
+    int       chan   = 0;
 
     canInitializeLibrary();
-    hnd = canOpenChannel(0, canOPEN_ACCEPT_VIRTUAL | canOPEN_NO_INIT_ACCESS /* | canOPEN_ACCEPT_LARGE_DLC*/);
+    chan = atoi(Xcp_Options.can_interf);
+
+    hnd = canOpenChannel(
+        0, canOPEN_ACCEPT_VIRTUAL | canOPEN_REQUIRE_INIT_ACCESS
+    );  // /* | canOPEN_NO_INIT_ACCESS | canOPEN_ACCEPT_LARGE_DLC*/
     if (hnd < 0) {
-        Kv_Check("canOpenChannel", hnd);
+        Kv_Check("XcpTl_Init::canOpenChannel", hnd);
         exit(1);
     }
 
-    XcpTl_Connection.handle      = hnd;
-    XcpTl_Connection.boundSocket = -1; /* Not a socket; placeholder for channel handle mapping if used. */
+    XcpTl_Connection.handle = hnd;
 
-    /* Beispielhafte Initialisierung — mit robusten Fehlerpfaden. */
-    int       chan = Xcp_Options.can_channel; /* Annahme: kommt aus Optionen. */
-    canHandle hnd  = canOpenChannel(chan, canOPEN_REQUIRE_INIT_ACCESS);
-    if (hnd < 0) {
-        XcpHw_ErrorMsg("XcpTl_Init::canOpenChannel()", (int)hnd);
-        return;
-    }
+#if 0
     st = canSetBusParams(hnd, Xcp_Options.can_bitrate, 0, 0, 0, 0, 0);
     if (st != canOK) {
         XcpHw_ErrorMsg("XcpTl_Init::canSetBusParams()", (int)st);
         canClose(hnd);
         return;
     }
-    st = canBusOn(hnd);
-    if (st != canOK) {
-        XcpHw_ErrorMsg("XcpTl_Init::canBusOn()", (int)st);
+    ('sjw', 2), ('tseg1', 5), ('tseg2', 2)
+#endif
+
+    status = canSetBusParams(hnd, canBITRATE_500K, 11, 4, 2, 1, 0);
+    Kv_Check("canSetBusParams", status);
+
+#if 0
+    status = canBusOn(hnd);
+    if (status != canOK) {
+        XcpHw_ErrorMsg("XcpTl_Init::canBusOn()", status);
         canClose(hnd);
         return;
     }
-    XcpTl_Connection.connectedSocket = (SOCKET)hnd; /* Speicherung im Feld für spätere Nutzung. */
+#endif
 
-    stat = kvSetNotifyCallback(
+    status = kvSetNotifyCallback(
         hnd, (kvCallback_t)&Kv_Notification, NULL,
         canNOTIFY_RX | canNOTIFY_TX | canNOTIFY_ERROR | canNOTIFY_STATUS | canNOTIFY_BUSONOFF
     );
-    Kv_Check("kvSetNotifyCallback", stat);
+    Kv_Check("kvSetNotifyCallback", status);
 
-    stat = canSetBusParams(hnd, XCP_ON_CAN_FREQ, XCP_ON_CAN_TSEG1, XCP_ON_CAN_TSEG2, XCP_ON_CAN_SJW, XCP_ON_CAN_NOSAMP, 0);
-    Kv_Check("SetBusParams", stat);
+    // status = canSetBusParams(hnd, XCP_ON_CAN_FREQ, XCP_ON_CAN_TSEG1, XCP_ON_CAN_TSEG2, XCP_ON_CAN_SJW, XCP_ON_CAN_NOSAMP, 0);
+    // Kv_Check("SetBusParams", status);
 
-    ts   = 10; /* We are using 10µS timer resolution. */
-    stat = canIoCtl(hnd, canIOCTL_SET_TIMER_SCALE, &ts, 4);
-    Kv_Check("SET_TIME_SCALE", stat);
+    ts     = 10; /* We are using 10µS timer resolution. */
+    status = canIoCtl(hnd, canIOCTL_SET_TIMER_SCALE, &ts, 4);
+    Kv_Check("SET_TIME_SCALE", status);
 
-    XcpTl_SetCANFilter();
+    // XcpTl_SetCANFilter();
 
     canFlushReceiveQueue(hnd);
     canFlushTransmitQueue(hnd);
 
-    stat = canBusOn(hnd);
-    Kv_Check("canBusOn", stat);
+    status = canBusOn(hnd);
+    Kv_Check("canBusOn", status);
 }
 
 void XcpTl_DeInit(void) {
@@ -300,11 +291,11 @@ void XcpTl_DeInit(void) {
     Kv_Check("canBusOff", stat);
     // stat = canClose(hnd);
     // Kv_Check("canClose", stat);
-    canHandle hnd = (canHandle)XcpTl_Connection.connectedSocket;
+    canHandle hnd = XcpTl_Connection.handle;
     if (hnd > 0) {
         (void)canBusOff(hnd);
         (void)canClose(hnd);
-        XcpTl_Connection.connectedSocket = 0;
+        XcpTl_Connection.handle = 0;
     }
 }
 
@@ -332,12 +323,12 @@ static uint16_t XcpTl_SetDLC(uint16_t len) {
 }
 
 static void XcpTl_SetCANFilter(void) {
-    uint32_t i0;
-    uint32_t i1;
-    uint32_t filter;
-    uint32_t mask;
-    int      ext;
-    int      stat;
+    uint32_t  i0;
+    uint32_t  i1;
+    uint32_t  filter;
+    uint32_t  mask;
+    int       ext;
+    canStatus stat;
 
     i0 = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER);
     i1 = XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_BROADCAST_IDENTIFIER);
@@ -358,11 +349,11 @@ static void XcpTl_SetCANFilter(void) {
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
-    int  stat;
-    int  id;
-    int  ext;
-    int  flag;
-    char msg_buf[256];
+    canStatus stat;
+    int       id;
+    int       ext;
+    int       flag;
+    char      msg_buf[256];
 
     if (len > KV_MAX_DLC) {
         snprintf(msg_buf, sizeof(msg_buf), "XcpTl_Send -- at most %d bytes supported, got %d.\n", KV_MAX_DLC, len);
@@ -385,8 +376,13 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
     ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_OUTBOUND_IDENTIFIER);
 #endif
     flag = ext ? canMSG_EXT : canMSG_STD;
-    stat = canWrite(XcpTl_Connection.handle, id, (void *)buf, len, flag);
+    printf("Send to: %08x DLC: %d\n", id, len);
+    stat = canWrite(XcpTl_Connection.handle, id, (void *)&buf[0], len, flag);
     Kv_Check("canWrite", stat);
+
+    stat = canWriteSync(stat, 0xFFFFFFFF); /* 100 ms Timeout */
+    Kv_Check("canWriteSync", stat);
+
     XCP_TL_LEAVE_CRITICAL();
     if (buf == NULL || len == 0) {
         return;
@@ -395,11 +391,8 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         XcpHw_ErrorMsg("XcpTl_Send (Kvaser): DLC > 8 not supported", EINVAL);
         return;
     }
-    canHandle hnd = (canHandle)XcpTl_Connection.connectedSocket;
-    if (hnd <= 0) {
-        XcpHw_ErrorMsg("XcpTl_Send (Kvaser): channel not open", ENOTCONN);
-        return;
-    }
+
+#if 0
     long         id  = Xcp_Options.can_id; /* Annahme: Standard-ID */
     unsigned int dlc = (unsigned int)len;
     canStatus    st  = canWrite(hnd, id, buf, dlc, 0);
@@ -407,10 +400,8 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
         XcpHw_ErrorMsg("XcpTl_Send::canWrite()", (int)st);
         return;
     }
-    st = canWriteSync(hnd, 100); /* 100 ms Timeout */
-    if (st != canOK) {
-        XcpHw_ErrorMsg("XcpTl_Send::canWriteSync()", (int)st);
-    }
+
+#endif
 }
 
 void *XcpTl_Thread(void *param) {
@@ -479,7 +470,7 @@ void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
 
     Xcp_ErrorResponse(UINT8(ERR_CMD_UNKNOWN));
 #else
-    XCP_UNREFERENCED_PARAMETER(pdu);
+
 #endif /* XCP_ENABLE_TRANSPORT_LAYER_CMD */
 }
 
@@ -488,10 +479,10 @@ void XcpTl_SetOptions(Xcp_OptionsType const *options) {
 }
 
 void XcpTl_PrintConnectionInformation(void) {
-    int  stat;
-    int  num;
-    char name[128];
-    bool ext;
+    canStatus stat;
+    int       num;
+    char      name[128];
+    bool      ext;
 
     ext  = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER);
     stat = canGetChannelData(XcpTl_Connection.handle, canCHANNELDATA_CHAN_NO_ON_CARD, &num, sizeof(num));
@@ -505,7 +496,8 @@ void XcpTl_PrintConnectionInformation(void) {
 }
 
 void XcpTl_RxHandler(void) {
-    canHandle hnd = (canHandle)XcpTl_Connection.connectedSocket;
+    canHandle hnd    = XcpTl_Connection.handle;
+    canStatus status = canOK;
     if (hnd <= 0) {
         return;
     }
@@ -516,12 +508,12 @@ void XcpTl_RxHandler(void) {
     uint8_t       data[8];
 
     while (1) {
-        canStatus st = canReadWait(hnd, &id, data, &dlc, &flags, &time, 0);
-        if (st == canERR_NOMSG) {
+        status = canReadWait(hnd, &id, data, &dlc, &flags, &time, 0);
+        if (status == canERR_NOMSG) {
             return;
         }
-        if (st != canOK) {
-            XcpHw_ErrorMsg("XcpTl_RxHandler::canReadWait()", (int)st);
+        if (status != canOK) {
+            XcpHw_ErrorMsg("XcpTl_RxHandler::canReadWait()", status);
             return;
         }
         if (dlc > 8U) {

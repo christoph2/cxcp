@@ -42,10 +42,16 @@
 #define XCP_GET_ID_0 "BlueParrot XCP running on Windows"
 #define XCP_GET_ID_1 "Example_Project"
 
-
 #define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x101)
 #define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x100)
 #define XCP_ON_CAN_BROADCAST_IDENTIFIER (0x102)
+
+#define XCP_ON_CAN_FREQ   (500000)
+#define XCP_ON_CAN_BTQ    (16)
+#define XCP_ON_CAN_TSEG1  (5)
+#define XCP_ON_CAN_TSEG2  (2)
+#define XCP_ON_CAN_SJW    (2)
+#define XCP_ON_CAN_NOSAMP (1)
 
 // #define XCP_BUILD_TYPE                              XCP_RELEASE_BUILD
 #define XCP_BUILD_TYPE             XCP_DEBUG_BUILD
@@ -201,39 +207,34 @@
 **  Transport-Layer specific Options (may not apply to every Transport).
 */
 #if !defined(XCP_TRANSPORT_LAYER_TYPE)
-#ifdef TP_CAN
-#define XCP_TRANSPORT_LAYER XCP_ON_CAN
-#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_CAN
+    #ifdef TP_CAN
+        #define XCP_TRANSPORT_LAYER      XCP_ON_CAN
+        #define XCP_TRANSPORT_LAYER_TYPE XCP_ON_CAN
 
-#define XCP_ON_CAN_BTQ                  (16)
-#define XCP_ON_CAN_TSEG1                (14)
-#define XCP_ON_CAN_TSEG2                (2)
-#define XCP_ON_CAN_SJW                  (2)
-#define XCP_ON_CAN_NOSAMP               (1)
-#elif defined(TP_BLUETOOTH)
-#define XCP_TRANSPORT_LAYER XCP_ON_BTH
-#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_BTH
+    #elif defined(TP_BLUETOOTH)
+        #define XCP_TRANSPORT_LAYER      XCP_ON_BTH
+        #define XCP_TRANSPORT_LAYER_TYPE XCP_ON_BTH
 
-#elif defined(TP_ETHER)
-#define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
-#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_ETHERNET
+    #elif defined(TP_ETHER)
+        #define XCP_TRANSPORT_LAYER      XCP_ON_ETHERNET
+        #define XCP_TRANSPORT_LAYER_TYPE XCP_ON_ETHERNET
 
-#elif defined(TP_SXI)
-#define XCP_TRANSPORT_LAYER XCP_ON_SXI
-#define XCP_TRANSPORT_LAYER_TYPE XCP_ON_SXI
+    #elif defined(TP_SXI)
+        #define XCP_TRANSPORT_LAYER      XCP_ON_SXI
+        #define XCP_TRANSPORT_LAYER_TYPE XCP_ON_SXI
 
+    #else
+        #error "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
+    #endif  // KVASER_CAN
 #else
-#error "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
-#endif  // KVASER_CAN
-#else
-#define XCP_TRANSPORT_LAYER XCP_TRANSPORT_LAYER_TYPE
+// #define XCP_TRANSPORT_LAYER XCP_TRANSPORT_LAYER_TYPE
 #endif /* XCP_TRANSPORT_LAYER_TYPE */
 
 #if !defined(XCP_MAX_CTO)
-#define XCP_MAX_CTO (64)
+    #define XCP_MAX_CTO (64)
 #endif
 #if !defined(XCP_MAX_DTO)
-#define XCP_MAX_DTO (64)
+    #define XCP_MAX_DTO (64)
 #endif
 
 /*

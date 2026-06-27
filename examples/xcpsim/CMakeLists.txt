@@ -25,6 +25,7 @@ ELSE ()
     #message(WARNING "C standard could not be set because compiler is not GNU or Clang.")
 ENDIF ()
 
+
 option(ENABLE_SOCKETCAN "Enable SocketCAN build" ON)
 option(PROFILE "Enable profiling" OFF)
 
@@ -109,10 +110,22 @@ if (CMAKE_HOST_WIN32)
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
     target_compile_definitions(xcp_sim_eth PRIVATE XCP_TRANSPORT_LAYER_TYPE=5)
+
+    IF (DEFINED ENV{KVASER_CANLIB})
+        message(INFO "KVaser exists!")
+        set(KV_DIR $ENV{KVASER_CANLIB})
+        message(INFO "${KV_DIR}")
+        add_executable(xcp_sim_can ${SOURCES} "../../src/tl/can/kvaser.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h
+                ../../src/hw/win/hw.c
+        )
+        target_include_directories(xcp_sim_can PUBLIC ${INCLUDES} ${KV_DIR}/inc)
+        target_link_libraries(xcp_sim_can ${ADD_LIBS} ${KV_DIR}/lib/x64/canlib32.lib)
+        target_compile_features(xcp_sim_can PRIVATE c_std_11)
+        target_compile_definitions(xcp_sim_can PRIVATE XCP_TRANSPORT_LAYER_TYPE=1)
+    ENDIF()
+
 elseif (CMAKE_HOST_UNIX)
     add_executable(xcp_sim_eth ${SOURCES} "../../src/tl/eth/linuxeth.c" "../../src/tl/eth/common.c" ../../src/tl/xcp_tl_timeout.c ../../inc/xcp_tl_timeout.h)
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    endif ()
     target_include_directories(xcp_sim_eth PUBLIC ${INCLUDES})
     target_link_libraries(xcp_sim_eth ${ADD_LIBS})
     target_compile_features(xcp_sim_eth PRIVATE c_std_11)
