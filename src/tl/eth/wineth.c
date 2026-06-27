@@ -26,11 +26,11 @@
 #include <stdint.h>
 
 #if defined(_WIN32) || defined(_WIN64)
-    #include <winsock2.h>
     #include <mstcpip.h>
     #include <mswsock.h>
-    //#include <ntddndis.h>
-    //#include <ws2tcpip.h>
+    #include <winsock2.h>
+    // #include <ntddndis.h>
+    // #include <ws2tcpip.h>
     #include <iphlpapi.h>
 #endif
 
