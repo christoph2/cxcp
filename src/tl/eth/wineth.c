@@ -26,12 +26,12 @@
 #include <stdint.h>
 
 #if defined(_WIN32) || defined(_WIN64)
-    #include <iphlpapi.h>
+    #include <winsock2.h>
     #include <mstcpip.h>
     #include <mswsock.h>
-    #include <ntddndis.h>
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
+    //#include <ntddndis.h>
+    //#include <ws2tcpip.h>
+    #include <iphlpapi.h>
 #endif
 
 #if defined(_MSC_VER)
@@ -410,7 +410,7 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 
 #if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
 
-void print_mac_address(BYTE *mac, DWORD length) {
+static void print_mac_address(BYTE *mac, DWORD length) {
     for (DWORD i = 0; i < length; i++) {
         if (i == length - 1) {
             printf("%.2X\n", mac[i]);
@@ -420,7 +420,7 @@ void print_mac_address(BYTE *mac, DWORD length) {
     }
 }
 
-void get_interface_mac_address(DWORD if_index, XcpTl_MacAddress *mac_address) {
+static void get_interface_mac_address(DWORD if_index, XcpTl_MacAddress *mac_address) {
     ULONG                 flags          = GAA_FLAG_INCLUDE_PREFIX;
     ULONG                 family         = AF_INET;
     PIP_ADAPTER_ADDRESSES pAddresses     = NULL;
@@ -484,7 +484,7 @@ void get_interface_mac_address(DWORD if_index, XcpTl_MacAddress *mac_address) {
     }
 }
 
-bool receive_message(SOCKET socket, char *buffer, size_t buffer_size, DWORD *bytes_received, XcpTl_MacAddress *mac_address) {
+static bool receive_message(SOCKET socket, char *buffer, size_t buffer_size, DWORD *bytes_received, XcpTl_MacAddress *mac_address) {
     WSAMSG   msg;
     WSABUF   wsabuf;
     WSABUF   control_wsabuf;
