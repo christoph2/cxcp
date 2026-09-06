@@ -34,8 +34,8 @@
     /*
     **  General Options.
     */
-    // #define TP_CAN
-    #define TP_ETHER
+     #define TP_CAN
+    //#define TP_ETHER
     // #define TP_BLUETOOTH
     #if !defined(TP_CAN) && !defined(TP_ETHER) && !defined(TP_BLUETOOTH) && !defined(TP_SXI)
         #define TP_SXI
@@ -46,7 +46,7 @@
     */
     #if defined(TP_CAN)
         #define XCP_TRANSPORT_LAYER XCP_ON_CAN
-        #define XCP_CAN_INTERFACE   (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
+        #define XCP_CAN_INTERFACE   (XCP_CAN_IF_MKR_ZERO_CAN_SHIELD)  // (XCP_CAN_IF_SEED_STUDIO_CAN_SHIELD)
 
         #define XCP_ON_CAN_INBOUND_IDENTIFIER   (0x300)
         #define XCP_ON_CAN_OUTBOUND_IDENTIFIER  (0x301)
@@ -57,7 +57,7 @@
         #define XCP_CAN_IF_MCP25XX_PIN_CS  (9)
         #define XCP_CAN_IF_MCP25XX_PIN_INT (2)
 
-        #define XCP_ON_CAN_FREQ   (CAN_500KBPS)
+        #define XCP_ON_CAN_FREQ   (500E3)
         #define XCP_ON_CAN_BTQ    (16)
         #define XCP_ON_CAN_TSEG1  (14)
         #define XCP_ON_CAN_TSEG2  (2)

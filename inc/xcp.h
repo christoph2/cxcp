@@ -42,6 +42,12 @@
 #include <assert.h>
 
 #include "xcp_config.h"
+
+#if !defined(XCP_TRANSPORT_LAYER)
+#error "XCP_TRANSPORT_LAYER must be defined."
+#endif
+
+
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp_log.h"
 #include "xcp_macros.h"
@@ -184,7 +190,7 @@ extern int cdc_debug_printf(const char *fmt, ...);
 
 #define XCP_DAQ_ENABLE_QUEUING (XCP_ON) /* Private setting for now. */
 
-#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
+#if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 
 #if !defined(XCP_ON_SXI_BITRATE)
 #define XCP_ON_SXI_BITRATE (38400)
@@ -222,7 +228,7 @@ extern int cdc_debug_printf(const char *fmt, ...);
 
 #endif
 
-#endif /* XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN */
+#endif /* XCP_TRANSPORT_LAYER == XCP_ON_CAN */
 #if XCP_TRANSPORT_LAYER == XCP_ON_SXI
 #if !defined(XCP_ON_SXI_HEADER_FORMAT)
 #error "XCP_ON_SXI_HEADER_FORMAT is not defined."
@@ -362,12 +368,12 @@ extern int cdc_debug_printf(const char *fmt, ...);
 #define XCP_DAQ_ODT_ENTRY_OFFSET   ((1)) /* Currently fixed (only abs. ODT numbers supported). */
 #define XCP_DAQ_MAX_ODT_ENTRY_SIZE (XCP_MAX_DTO - XCP_DAQ_ODT_ENTRY_OFFSET) /* Max. payload. */
 
-#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN
+#if XCP_TRANSPORT_LAYER == XCP_ON_CAN
 #else
 #if XCP_ON_CAN_MAX_DLC_REQUIRED == XCP_ON
 #error XCP_ON_CAN_MAX_DLC_REQUIRED only applies to XCP_ON_CAN
 #endif /* XCP_ON_CAN_MAX_DLC_REQUIRED */
-#endif     /* XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN */
+#endif     /* XCP_TRANSPORT_LAYER == XCP_ON_CAN */
 
 #if (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 0) && (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 1) &&                                      \
         (XCP_TRANSPORT_LAYER_COUNTER_SIZE != 2)
@@ -1223,16 +1229,16 @@ typedef struct tagXcp_1DArrayType {
 } Xcp_1DArrayType;
 
 typedef struct tagXcp_OptionsType {
-#if (XCP_TRANSPORT_LAYER_TYPE == XCP_ON_ETHERNET)
+#if (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET)
     bool ipv6;
     bool tcp;
     uint16_t port;
-#elif XCP_TRANSPORT_LAYER_TYPE == XCP_ON_BTH
+#elif XCP_TRANSPORT_LAYER == XCP_ON_BTH
     char interface2[6];
-#elif (XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN)
+#elif (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
     bool fd;
     char can_interf[64];
-#elif XCP_TRANSPORT_LAYER_TYPE == XCP_ON_SXI
+#elif XCP_TRANSPORT_LAYER == XCP_ON_SXI
     bool dummy;
 #endif
 } Xcp_OptionsType;
@@ -1475,7 +1481,7 @@ uint8_t *Xcp_GetCtoOutPtr(void);
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN)
+#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
 extern uint32_t Xcp_DtoCanId;
 #endif
 

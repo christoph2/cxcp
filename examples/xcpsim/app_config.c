@@ -9,8 +9,10 @@
 #include "xcp.h"
 
 #define CALRAM_SIZE (16 * 1024)
+#define CALRAM_ADDRESS ((uint16_t)0xc000U)
 
 uint8_t calram[CALRAM_SIZE];
+static FlsEmu_PersistentArrayType S12D512_RamBacking = { XCP_NULL, XCP_NULL, calram, 0 };
 
 #define FLS_SECTOR_SIZE (256)
 
@@ -51,7 +53,7 @@ static FlsEmu_SegmentType S12D512_EEPROM = {
 };
 
 static FlsEmu_SegmentType S12D512_RAM = {
-    "XCPSIM_RAM", CALRAM_SIZE, 1, 1, CALRAM_SIZE, 1, (Xcp_PointerSizeType) calram, XCP_NULL, 0, 0, FLSEMU_RAM, 0
+    "XCPSIM_RAM", CALRAM_SIZE, 1, 1, CALRAM_SIZE, 1, CALRAM_ADDRESS, &S12D512_RamBacking, 0, 0, FLSEMU_RAM, 0
 };
 
 static FlsEmu_SegmentType const *segments[] = {

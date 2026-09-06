@@ -143,7 +143,7 @@ void XcpTl_Init(void) {
 #endif
 
 
-#if (XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN)
+#if (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
     strncpy(ifr.ifr_name, Xcp_Options.can_interf, IFNAMSIZ - 1);
 #else
     strncpy(ifr.ifr_name, "vcan0", IFNAMSIZ - 1);
