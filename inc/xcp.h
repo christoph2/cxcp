@@ -223,7 +223,7 @@ extern int cdc_debug_printf(const char *fmt, ...);
 #endif
 
 #endif /* XCP_TRANSPORT_LAYER_TYPE == XCP_ON_CAN */
-#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_SXI
+#if XCP_TRANSPORT_LAYER == XCP_ON_SXI
 #if !defined(XCP_ON_SXI_HEADER_FORMAT)
 #error "XCP_ON_SXI_HEADER_FORMAT is not defined."
 #endif
@@ -253,11 +253,11 @@ extern int cdc_debug_printf(const char *fmt, ...);
 #else
 #error "Unknown XCP_ON_SXI_HEADER_FORMAT."
 #endif
-#endif /* XCP_TRANSPORT_LAYER_TYPE == XCP_ON_SXI */
+#endif /* XCP_TRANSPORT_LAYER == XCP_ON_SXI */
 
-#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_SXI
+#if XCP_TRANSPORT_LAYER == XCP_ON_SXI
 /* Already derived per header format above. */
-#elif (XCP_TRANSPORT_LAYER_TYPE == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER_TYPE == XCP_ON_BTH)
+#elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
 #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
 #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
 #else
@@ -272,7 +272,7 @@ extern int cdc_debug_printf(const char *fmt, ...);
 #undef XCP_TRANSPORT_LAYER_CHECKSUM_SIZE
 #endif /* XCP_TRANSPORT_LAYER_CHECKSUM_SIZE */
 
-#if XCP_TRANSPORT_LAYER_TYPE == XCP_ON_SXI
+#if XCP_TRANSPORT_LAYER == XCP_ON_SXI
 #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_NO_CHECKSUM)
 #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
 #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
