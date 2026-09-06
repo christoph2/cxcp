@@ -163,6 +163,9 @@ void *FlsEmu_BasePointer(uint8_t segmentIdx) {
     }
     segment = FlsEmu_GetConfig()->segments[segmentIdx];
     if (segment->type == FLSEMU_RAM) {
+		if ((segment->persistentArray != XCP_NULL) && (segment->persistentArray->mappingAddress != XCP_NULL)) {
+			return segment->persistentArray->mappingAddress;
+		}
         return (void *) segment->baseAddress;
     }
     return segment->persistentArray->mappingAddress;
@@ -245,28 +248,35 @@ void FlsEmu_EraseBlock(uint8_t segmentIdx, uint16_t block) {
 Xcp_MemoryMappingResultType FlsEmu_MemoryMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
     uint8_t idx = 0;
     uint8_t *ptr = XCP_NULL;
+    Xcp_PointerSizeType offset = 0UL;
     FlsEmu_SegmentType const *segment = XCP_NULL;
 
     /* printf("addr: %x ext: %d\n", src->address, src->ext); */
 
     for (idx = 0; idx < FlsEmu_GetConfig()->numSegments; ++idx) {
         segment = FlsEmu_GetConfig()->segments[idx];
+		if (src->address < segment->baseAddress) {
+			continue;
+		}
+		offset = src->address - segment->baseAddress;
+
         if (segment->type == FLSEMU_RAM) {
-            if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->memSize))) {
-                dst->address = src->address;
+			if (offset < segment->memSize) {
+				ptr = (uint8_t *) FlsEmu_BasePointer(idx);
+				dst->address = (Xcp_PointerSizeType) (ptr + offset);
                 dst->ext = src->ext;
                 return XCP_MEMORY_MAPPED;
             }
             continue;
         }
-        ptr = FlsEmu_BasePointer(idx);
-        if ((src->address >= segment->baseAddress) && (src->address < (segment->baseAddress + segment->pageSize))) {
+		if (offset < segment->pageSize) {
             if (src->ext >= FlsEmu_NumPages(idx)) {
                 return XCP_MEMORY_ADDRESS_INVALID;
             } else {
                 FlsEmu_SelectPage(idx, src->ext);
             }
-            dst->address = ((Xcp_PointerSizeType) ptr - segment->baseAddress) + src->address;
+			ptr = (uint8_t *) FlsEmu_BasePointer(idx);
+			dst->address = (Xcp_PointerSizeType) (ptr + offset);
             dst->ext = src->ext;
             /* printf("MAPPED: addr: %x ext: %d TO: %x:%d\n", src->address, src->ext,
              * dst->address, dst->ext); */
