@@ -289,8 +289,6 @@ void XcpTl_DeInit(void) {
     Kv_Info("Going off bus and closing channel");
     stat = canBusOff(XcpTl_Connection.handle);
     Kv_Check("canBusOff", stat);
-    // stat = canClose(hnd);
-    // Kv_Check("canClose", stat);
     canHandle hnd = XcpTl_Connection.handle;
     if (hnd > 0) {
         (void)canBusOff(hnd);
@@ -298,14 +296,6 @@ void XcpTl_DeInit(void) {
         XcpTl_Connection.handle = 0;
     }
 }
-
-/*
-int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec)
-{
-    canStatus stat;
-    return 1;
-}
-*/
 
 static uint16_t XcpTl_SetDLC(uint16_t len) {
     static const uint16_t FD_DLCS[] = { 12, 16, 20, 24, 32, 48, 64 };
@@ -412,22 +402,6 @@ void *XcpTl_Thread(void *param) {
     }
     return NULL;
 }
-
-/*
-void XcpTl_MainFunction(void) {
-    //Sleep(1);
-    if (XcpTl_FrameAvailable(0, 1000) > 0) {
-        XcpTl_RxHandler();
-    }
-}
-*/
-
-#if 0
-void XcpTl_RxHandler(void)
-{
-
-}
-#endif
 
 void XcpTl_SaveConnection(void) {
 }
