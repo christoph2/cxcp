@@ -33,6 +33,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(ESP_PLATFORM)
+    #include "esp_log.h"
+#endif
+
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_eth.h"
@@ -40,6 +44,10 @@
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     #include "xcp_timecorr.h"
+#endif
+
+#if defined(_WIN32)
+    #include <ws2tcpip.h>
 #endif
 
 #define MAX_IDENTIFIER_LEN (96)
@@ -68,7 +76,13 @@ XcpTl_ConnectionType XcpTl_Connection;
 
 static uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
 
-static bool XcpTl_ParseIpv4(const char *ip, struct in_addr *out) {
+#if defined(ESP_PLATFORM)
+static const char *XcpTl_EspTag            = "xcp-eth-rx";
+static bool        XcpTl_EspLoggedFirstRx  = false;
+static bool        XcpTl_EspLoggedFirstCmd = false;
+#endif
+
+bool XcpTl_ParseIpv4(const char *ip, struct in_addr *out) {
 #if defined(_WIN32)
     return InetPtonA(AF_INET, ip, out) == 1;
 #else
@@ -495,6 +509,12 @@ static int XcpTl_ReceiveFrom(void) {
         XcpTl_Connection.boundSocket, (char *)XcpTl_RxBuffer, (int)XCP_COMM_BUFLEN, 0,
         (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
     );
+#if defined(ESP_PLATFORM)
+    if ((nbytes > 0) && (!XcpTl_EspLoggedFirstRx)) {
+        XcpTl_EspLoggedFirstRx = true;
+        ESP_LOGI(XcpTl_EspTag, "First UDP datagram received (%d bytes)", nbytes);
+    }
+#endif
     if (XcpThrd_IsShuttingDown()) {
         return 0;
     }
@@ -562,6 +582,15 @@ void XcpTl_RxHandler(void) {
             }
             XCP_ASSERT_LE(dlc, XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE);
             // XcpUtl_MemCopy(Xcp_CtoIn.data, XcpTl_RxBuffer, dlc);
+#if defined(ESP_PLATFORM)
+            if ((!XcpTl_EspLoggedFirstCmd) && (dlc > 0U)) {
+                XcpTl_EspLoggedFirstCmd = true;
+                ESP_LOGI(
+                    XcpTl_EspTag, "First XCP CTO parsed [len=%u ctr=%u cmd=0x%02X]", (unsigned)dlc, (unsigned)counter,
+                    (unsigned)Xcp_CtoIn.data[0]
+                );
+            }
+#endif
             Xcp_DispatchCommand(&Xcp_CtoIn);
         } else {
             /* Shutting down */

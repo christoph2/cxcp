@@ -26,12 +26,12 @@
 #include <stdint.h>
 
 #if defined(_WIN32) || defined(_WIN64)
-#include <winsock2.h>
-#include <mstcpip.h>
-#include <mswsock.h>
+    #include <mstcpip.h>
+    #include <mswsock.h>
+    #include <winsock2.h>
     // #include <ntddndis.h>
-    // #include <ws2tcpip.h>
     #include <iphlpapi.h>
+    #include <ws2tcpip.h>
 #endif
 
 #if defined(_MSC_VER)
@@ -57,6 +57,8 @@ static LPFN_WSARECVMSG lpfnWSARecvMsg = NULL;
 #endif
 
 extern XcpTl_ConnectionType XcpTl_Connection;
+
+bool XcpTl_ParseIpv4(const char *ip, struct in_addr *out);
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     #include "xcp_timecorr.h"
@@ -106,10 +108,6 @@ static boolean Xcp_EnableSocketOption(SOCKET sock, int option);
 #if 0
 static boolean Xcp_DisableSocketOption(SOCKET sock, int option);
 #endif
-
-static bool XcpTl_ParseIpv4String(const char *ip, struct in_addr *out) {
-    return InetPtonA(AF_INET, ip, out) == 1;
-}
 
 static boolean Xcp_EnableSocketOption(SOCKET sock, int option) {
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
@@ -241,7 +239,7 @@ void XcpTl_Init(void) {
             daddr.sin_addr.s_addr = INADDR_ANY;
 
             if (bind(dsock, (struct sockaddr *)&daddr, sizeof(daddr)) == 0) {
-                if (!XcpTl_ParseIpv4String(d_ip, &dmreq.imr_multiaddr)) {
+                if (!XcpTl_ParseIpv4(d_ip, &dmreq.imr_multiaddr)) {
                     XcpHw_ErrorMsg("XcpTl_Init:invalid discovery mcast IP", WSAEINVAL);
                     closesocket(dsock);
                     dsock = INVALID_SOCKET;
@@ -291,7 +289,7 @@ void XcpTl_Init(void) {
             maddr.sin_addr.s_addr = INADDR_ANY;
 
             if (bind(msock, (struct sockaddr *)&maddr, sizeof(maddr)) == 0) {
-                if (!XcpTl_ParseIpv4String(mcast_ip, &mreq.imr_multiaddr)) {
+                if (!XcpTl_ParseIpv4(mcast_ip, &mreq.imr_multiaddr)) {
                     XcpHw_ErrorMsg("XcpTl_Init:invalid timecorr mcast IP", WSAEINVAL);
                     closesocket(msock);
                     msock = INVALID_SOCKET;
@@ -610,7 +608,7 @@ void XcpTl_UpdateMulticastGroup(uint16_t cluster_id) {
         return;
     }
     _snprintf(mcast_ip, sizeof(mcast_ip), "239.255.%u.%u", (unsigned)mcast_upper, (unsigned)mcast_lower);
-    if (!XcpTl_ParseIpv4String(mcast_ip, &mreq.imr_multiaddr)) {
+    if (!XcpTl_ParseIpv4(mcast_ip, &mreq.imr_multiaddr)) {
         XcpHw_ErrorMsg("XcpTl_UpdateMulticastGroup:invalid IP", WSAEINVAL);
         return;
     }
