@@ -28,7 +28,17 @@
 
     #if defined(_WIN32)
         #include <WinSock2.h>
-        #include <Ws2tcpip.h>
+    #elif defined(ESP_PLATFORM) || defined(ESP32) || defined(__XTENSA__)
+
+        #include <errno.h>
+        #include <string.h>
+        #include <sys/socket.h>
+        #include <sys/types.h>
+
+        #include "lwip/inet.h"
+        #include "lwip/netdb.h"
+        #include "lwip/sockets.h"
+
     #elif defined(__unix__) || defined(__APPLE__)
 
         #include <arpa/inet.h>
@@ -57,7 +67,7 @@ typedef struct tagXcpTl_ConnectionType {
     bool             connected;
     int              socketType;
 } XcpTl_ConnectionType;
-    #elif defined(__unix__) || defined(__APPLE__)
+    #elif defined(ESP_PLATFORM) || defined(ESP32) || defined(__XTENSA__) || defined(__unix__) || defined(__APPLE__)
 typedef struct tagXcpTl_ConnectionType {
     struct sockaddr_storage connectionAddress;
     struct sockaddr_storage currentAddress;
@@ -71,7 +81,7 @@ typedef struct tagXcpTl_ConnectionType {
 } XcpTl_ConnectionType;
     #endif
 
-    #if defined(__unix__) || defined(__APPLE__)
+    #if defined(ESP_PLATFORM) || defined(ESP32) || defined(__XTENSA__) || defined(__unix__) || defined(__APPLE__)
         #define SOCKET_ERROR     (-1)
         #define INVALID_SOCKET   (-1)
         #define ZeroMemory(b, l) memset((b), 0, (l))

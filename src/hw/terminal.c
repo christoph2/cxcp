@@ -69,6 +69,8 @@ void FlsEmu_Info(void);
 
 void Xcp_DisplayInfo(void);
 
+static void XcpDaq_PrintEntryAddress(XcpDaq_ODTEntryType const *entry, XcpDaq_ODTEntryIntegerType odtEntriyIdx);
+
 void XcpDaq_PrintDAQDetails(void);
 
 void XcpDaq_Info(void);
@@ -416,10 +418,7 @@ void XcpDaq_PrintDAQDetails(void) {
             printf("    ODT #%d\n\r", odtIdx);
             for (odtEntriyIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntriyIdx < odt->numOdtEntries; ++odtEntriyIdx) {
                 entry = XcpDaq_GetOdtEntry(listIdx, odtIdx, odtEntriyIdx);
-                printf(
-                    "        Entry #%d [0x%08llx] %d Byte(s)\n\r", odtEntriyIdx, (unsigned long long)entry->mta.address,
-                    entry->length
-                );
+                XcpDaq_PrintEntryAddress(entry, odtEntriyIdx);
                 total += entry->length;
             }
         }
@@ -430,6 +429,38 @@ void XcpDaq_PrintDAQDetails(void) {
         "---------------------------------------------------------------------"
         "----------\n\r"
     );
+}
+
+static void XcpDaq_PrintEntryAddress(XcpDaq_ODTEntryType const *entry, XcpDaq_ODTEntryIntegerType odtEntriyIdx) {
+    Xcp_MtaType logical = { 0 };
+    Xcp_MtaType mapped = { 0 };
+
+    logical.address = entry->mta.address;
+#if XCP_DAQ_ENABLE_ADDR_EXT == XCP_ON
+    logical.ext = entry->mta.ext;
+#else
+    logical.ext = UINT8(0);
+#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
+
+    if (Xcp_MapMemory(&mapped, &logical) && (mapped.address != logical.address || mapped.ext != logical.ext)) {
+        printf(
+            "        Entry #%d [logical: 0x%08llx ext: 0x%02x -> mapped: 0x%p ext: 0x%02x] %d Byte(s)\n\r",
+            odtEntriyIdx,
+            (unsigned long long)logical.address,
+            logical.ext,
+            (void *)(uintptr_t)mapped.address,
+            mapped.ext,
+            entry->length
+        );
+    } else {
+        printf(
+            "        Entry #%d [logical: 0x%08llx ext: 0x%02x] %d Byte(s)\n\r",
+            odtEntriyIdx,
+            (unsigned long long)logical.address,
+            logical.ext,
+            entry->length
+        );
+    }
 }
 
 void XcpDaq_Info(void) {
