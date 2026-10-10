@@ -98,8 +98,8 @@ ${self.measurement_block(m)}
     0
     ${m.get('min','0')}
     ${m.get('max','0')}
-    ${ "ECU_ADDRESS " + hex(symbol_addresses.get(m['name'], -1)) }
-    ${ "ECU_ADDRESS_EXTENSION " + "0" }
+    ${ "ECU_ADDRESS " + hex(symbol_addresses.get(m['name'], int(m.get('ecu_address', m.get('address', 0)), 0) if isinstance(m.get('ecu_address', m.get('address', 0)), str) else m.get('ecu_address', m.get('address', 0)))) }
+    ${ "ECU_ADDRESS_EXTENSION " + str(m.get('ecu_address_extension', m.get('address_extension', 0))) }
     PHYS_UNIT ${'"' + m.get('phys_unit', "") + '"'}
     % if m.get('if_data') and m['if_data'].get('XCP'):
     /begin IF_DATA XCP
