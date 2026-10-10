@@ -110,7 +110,9 @@
 #define XCP_DAQ_CAN_ID_BASE                         (0x120)
 
 /* XCP 1.4 Packed DAQ Lists */
-#define XCP_DAQ_ENABLE_PACKED_MODE      XCP_ON
+#define XCP_DAQ_ENABLE_PACKED_MODE      XCP_OFF
+#undef  XCP_ENABLE_LEVEL1_COMMANDS
+#define XCP_ENABLE_LEVEL1_COMMANDS      XCP_ON
 #define XCP_DAQ_PACKED_MAX_SAMPLE_COUNT (8)
 
 /*
@@ -206,28 +208,28 @@
 **  Transport-Layer specific Options (may not apply to every Transport).
 */
 #if !defined(XCP_TRANSPORT_LAYER)
-    #ifdef TP_CAN
-        #define XCP_TRANSPORT_LAYER      XCP_ON_CAN
+#ifdef TP_CAN
+#define XCP_TRANSPORT_LAYER      XCP_ON_CAN
 
-    #elif defined(TP_BLUETOOTH)
-        #define XCP_TRANSPORT_LAYER      XCP_ON_BTH
+#elif defined(TP_BLUETOOTH)
+#define XCP_TRANSPORT_LAYER      XCP_ON_BTH
 
-    #elif defined(TP_ETHER)
-        #define XCP_TRANSPORT_LAYER      XCP_ON_ETHERNET
+#elif defined(TP_ETHER)
+#define XCP_TRANSPORT_LAYER      XCP_ON_ETHERNET
 
-    #elif defined(TP_SXI)
-        #define XCP_TRANSPORT_LAYER      XCP_ON_SXI
+#elif defined(TP_SXI)
+#define XCP_TRANSPORT_LAYER      XCP_ON_SXI
 
-    #else
-        #error "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
-    #endif  // KVASER_CAN
+#else
+#error "No transport-layer specified. Please define either TP_ETHER, TP_CAN, or TP_BLUETOOTH."
+#endif  // KVASER_CAN
 #endif /* XCP_TRANSPORT_LAYER */
 
 #if !defined(XCP_MAX_CTO)
-    #define XCP_MAX_CTO (64)
+#define XCP_MAX_CTO (64)
 #endif
 #if !defined(XCP_MAX_DTO)
-    #define XCP_MAX_DTO (64)
+#define XCP_MAX_DTO (64)
 #endif
 
 /*

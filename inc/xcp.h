@@ -922,7 +922,9 @@ extern "C" {
             #define XCP_DAQ_PACKED_MAX_SAMPLE_COUNT (8)
         #endif
     #else
-        #define XCP_DAQ_ENABLE_PACKED_MODE (XCP_OFF)
+        #if !defined(XCP_DAQ_ENABLE_PACKED_MODE)
+            #define XCP_DAQ_ENABLE_PACKED_MODE (XCP_OFF)
+        #endif
         /* Provide a dummy size so struct compiles even when packed mode is off */
         #if !defined(XCP_DAQ_PACKED_MAX_SAMPLE_COUNT)
             #define XCP_DAQ_PACKED_MAX_SAMPLE_COUNT (1)

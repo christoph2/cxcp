@@ -1,3 +1,6 @@
+import sys
+import types
+
 import pytest
 from pyxcp_appgen import utils
 
@@ -73,3 +76,41 @@ def test_c_to_asam_type():
     assert utils.TYPES.get("uint8") == "UBYTE"
     assert utils.TYPES.get("double") == "FLOAT64_IEEE"
     assert utils.TYPES.get("invalid_type") is None
+
+
+def test_load_pe_symbols_returns_rvas_without_image_base(tmp_path, monkeypatch):
+    class FakePeParser:
+        def __init__(self, filename):
+            self.sections = [{"virtual_address": 0x2000}]
+            self.symbols = [
+                {"name": "coff_symbol", "value": 0x24, "section_number": 1},
+                {"name": "pdb_symbol", "value": 0x140003000},
+            ]
+            self.closed = False
+
+        def image_base(self):
+            return 0x140000000
+
+        def close(self):
+            self.closed = True
+
+    pe_file = tmp_path / "app.exe"
+    pe_file.write_bytes(b"MZ")
+    monkeypatch.setitem(sys.modules, "objutils.pecoff", types.SimpleNamespace(PeParser=FakePeParser))
+
+    assert utils.load_symbol_addresses_from_pe(pe_file, ["coff_symbol", "pdb_symbol"]) == {
+        "coff_symbol": 0x2024,
+        "pdb_symbol": 0x3000,
+    }
+
+
+def test_load_pe_symbols_reports_missing_optional_parser(tmp_path, monkeypatch):
+    pe_file = tmp_path / "app.exe"
+    pe_file.write_bytes(b"MZ")
+
+    def missing_parser():
+        raise ImportError("not installed")
+
+    monkeypatch.setattr(utils, "_pe_parser_class", missing_parser)
+    with pytest.raises(RuntimeError, match="objutils.pecoff.PeParser"):
+        utils.load_symbol_addresses_from_pe(pe_file, ["signal"])

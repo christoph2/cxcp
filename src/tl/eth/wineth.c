@@ -36,7 +36,11 @@
 #endif
 
 #if defined(_MSC_VER)
-#define _CRT_SECURE_NO_WARNINGS
+    #pragma warning(push)
+    #pragma warning(disable: 4996)
+    #define _CRT_SECURE_NO_WARNINGS
+    #pragma comment(lib, "ws2_32.lib")
+    #pragma comment(lib, "Iphlpapi.lib")
 #endif
 #include <memory.h>
 #include <process.h>
