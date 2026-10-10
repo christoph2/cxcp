@@ -1,0 +1,18 @@
+services:
+  cpp-env:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpp-env-ubuntu
+    networks:
+      app_net:
+        ipv4_address: 172.28.0.10
+    stdin_open: true
+    tty: true
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1
