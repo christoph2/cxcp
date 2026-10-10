@@ -1,4 +1,5 @@
 import logging
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -46,6 +47,24 @@ class Renderer:
     def render_sketch(self, sketch_ino_path: Path) -> None:
         self._render_to_file("arduino_src.mako", sketch_ino_path)
 
+    def render_pc_project(self, output_dir: Path, pc_config: Dict[str, Any]) -> None:
+        context = {
+            "pc": pc_config,
+            "pc_segments": pc_config["segments"],
+            "measurements": self.get_measurements(),
+            "pc_c_type": self.pc_c_type,
+        }
+        self._render_to_file("pc_cmake.mako", output_dir / "CMakeLists.txt", **context)
+        self._render_to_file("pc_main.cpp.mako", output_dir / "main.cpp", **context)
+        self._render_to_file("pc_application.cpp.mako", output_dir / "application.cpp", **context)
+
+    def render_address_map(self, address_map_path: Path) -> None:
+        address_map_path.parent.mkdir(parents=True, exist_ok=True)
+        address_map_path.write_text(
+            json.dumps(self.symbol_addresses, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        self.logger.info(f"Wrote generated address map to {address_map_path}")
+
     def render_a2l(self, a2l_file_path: Path) -> None:
         self._render_to_file("module.mako", a2l_file_path)
 
@@ -70,7 +89,14 @@ class Renderer:
         for group in groups:
             for k, v in defaults.items():
                 group.setdefault(k, v)
+            if "measurements" not in group and group.get("ref_measurements"):
+                group["measurements"] = group["ref_measurements"]
         return groups
+
+    @staticmethod
+    def pc_c_type(measurement: Dict[str, Any]) -> str:
+        from .pc import _C_TYPES
+        return _C_TYPES[measurement["type"]]
 
     @staticmethod
     def c_to_asam_type(tp: Optional[str]) -> str:
