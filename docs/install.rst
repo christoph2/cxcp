@@ -1,60 +1,83 @@
-Build supplied targets
+Build and test targets
 ======================
 
-CXCP has no single top-level build that combines every source file. Each
-example selects the compatible transport and platform sources for one target.
-Run the commands below from the repository root.
+CXCP is integrated per target. There is no single monolithic build that links
+all transport and hardware implementations together. Build commands below are
+executed from the repository root.
 
-Desktop simulator
------------------
+Prerequisites
+-------------
 
-``examples/xcpsim`` builds the ``xcp_sim_eth`` desktop simulator on Windows,
-Linux, and macOS. It selects the native Ethernet and hardware adapters.
+.. list-table::
+   :header-rows: 1
+
+   * - Component
+     - Used by
+     - Notes
+   * - CMake + C/C++ toolchain
+     - ``examples/xcpsim``, ``examples/debug_on_pico``, ``tests``
+     - Required for simulator, Pico build, and pybind extension build.
+   * - Python 3 + pip
+     - ``tests``, ``tools/app_gen``
+     - Install test dependencies from ``tests/requirements.txt``.
+   * - pybind11
+     - ``tests``
+     - Used by the test extension wrapped around core sources.
+   * - PlatformIO
+     - ``examples/pio``
+     - Required only for ESP32 Arduino builds.
+   * - Pico SDK
+     - ``examples/debug_on_pico``
+     - Set ``PICO_SDK_PATH`` before configuration.
+
+Desktop simulator (Ethernet)
+----------------------------
+
+Build the maintained desktop simulator target from ``examples/xcpsim``:
 
 .. code-block:: console
 
    cmake -S examples/xcpsim -B build/xcpsim
    cmake --build build/xcpsim --config Debug
 
-On Unix-like systems, the CMake project can also build ``xcp_sim_can`` when
-SocketCAN is enabled (the default except on macOS). On Windows, the CAN target
-is added only when the ``KVASER_CANLIB`` environment variable points to a
-Kvaser CANlib installation.
+Result: ``xcp_sim_eth`` in the selected build configuration.
+
+Notes:
+
+* On Linux, ``xcp_sim_can`` is usually enabled via SocketCAN.
+* On Windows, CAN support is available only when ``KVASER_CANLIB`` points to a
+  Kvaser CANlib installation.
 
 ESP32 PlatformIO example
 ------------------------
 
-``examples/pio`` is an Arduino/ESP32 project. The default PlatformIO
-environment is ``esp32doit-devkit-v1`` and builds the SXI serial transport.
-The Bluetooth environment is named ``esp32doit-devkit-v1-bth``.
+Build the ESP32 Arduino integration in ``examples/pio``:
 
 .. code-block:: console
 
    pio run -d examples/pio
    pio run -d examples/pio -e esp32doit-devkit-v1-bth
 
-The project configuration and its source filter deliberately list the core,
-transport, and Arduino hardware sources. Keep that selection aligned when
-changing the configured transport.
+The default environment uses SXI serial transport. The ``-bth`` environment
+switches to the Bluetooth transport source set.
 
 Raspberry Pi Pico example
 -------------------------
 
-``examples/debug_on_pico`` requires ``PICO_SDK_PATH`` to reference an
-installed Pico SDK, a compatible ARM toolchain, CMake, and network access
-during configuration: its CMake project fetches ``pico-mcp2515``.
+Configure and build the Pico target:
 
 .. code-block:: console
 
    cmake -S examples/debug_on_pico -B build/pico
    cmake --build build/pico --config Release
 
-Core test extension
--------------------
+The project fetches ``pico-mcp2515`` at configure time and therefore needs
+network access on first configuration.
 
-The core tests build a pybind11 extension from selected production sources and
-test-only mocks. Python development headers, CMake, a C/C++ compiler, and
-pybind11 are required.
+Core tests (pybind11 extension)
+-------------------------------
+
+Build the extension and run the core test suite:
 
 .. code-block:: console
 
@@ -64,7 +87,7 @@ pybind11 are required.
    python -m pytest -svv --hypothesis-show-statistics
    Pop-Location
 
-After the extension has been built, run one DAQ test with:
+Run a single DAQ allocation test after the extension is built:
 
 .. code-block:: console
 
@@ -72,11 +95,10 @@ After the extension has been built, run one DAQ test with:
    python -m pytest test_xcpdaq.py -k test_allocodt_ok -vv
    Pop-Location
 
-Application generator
----------------------
+Application generator package
+-----------------------------
 
-``tools/app_gen`` is an independent Python package. Its tests do not require
-the core test extension.
+``tools/app_gen`` is a separate Python package with its own tests:
 
 .. code-block:: console
 
@@ -85,10 +107,10 @@ the core test extension.
    python -m pytest tests/test_utils.py -q
    Pop-Location
 
-Building this documentation
----------------------------
+Build this documentation
+------------------------
 
-Sphinx builds the documentation source in this directory. On Windows:
+Build the Sphinx HTML site:
 
 .. code-block:: console
 
@@ -96,5 +118,5 @@ Sphinx builds the documentation source in this directory. On Windows:
    .\make.bat html
    Pop-Location
 
-The API page links to declarations in ``inc/xcp.h``. A separately generated
-Doxygen site is optional and is not required to build the Sphinx manual.
+Output is written to ``docs/build/html``. The optional Doxygen configuration in
+``docs/doxyfile`` is not part of the Sphinx build pipeline.

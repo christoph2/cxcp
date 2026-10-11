@@ -1,30 +1,38 @@
 BlueParrot XCP documentation
 ============================
 
-BlueParrot XCP (CXCP) is a configurable XCP slave implementation for
-embedded applications and host-side simulation. The stack is integrated into
-an application at build time: the application chooses a transport, supplies
-``xcp_config.h``, and builds the matching core, transport, and hardware
-sources.
+BlueParrot XCP (CXCP) is a configurable C implementation of an XCP slave for
+embedded targets and host-side simulation. The project is integrated into an
+application at build time: each target selects one transport, provides
+``xcp_config.h``, and compiles a compatible source set from core, transport,
+and platform adapters.
 
-Start with :doc:`install` to build a supplied target, then use
-:doc:`tutorial` to integrate the stack into an application. The source header
-``inc/xcp.h`` remains the authoritative definition of compile-time validation
-and public C declarations.
+Use this documentation in the following order:
+
+#. :doc:`getting_started` for a fast first build and protocol smoke test.
+#. :doc:`install` for supported build paths and target-specific requirements.
+#. :doc:`tutorial` for full integration into a custom application.
+#. :doc:`integration_examples` for end-to-end deployment examples.
+#. :doc:`options` and :doc:`hook_functions` for configuration and policy hooks.
+#. :doc:`api` for the public interface reference.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents
 
+   getting_started
    install
+   architecture
    user_manual
    tutorial
+   integration_examples
    options
    hook_functions
+   troubleshooting
    api
 
-Useful source locations
------------------------
+Repository map
+--------------
 
 * ``inc/xcp.h`` — public integration boundary, protocol types, defaults, and
   compile-time checks.
