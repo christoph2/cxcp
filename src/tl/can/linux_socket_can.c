@@ -56,8 +56,8 @@
     } while (0)
 
 typedef struct tagXcpTl_ConnectionType {
-    int can_socket;
-    int boundSocket;
+    int  can_socket;
+    int  boundSocket;
     bool connected;
 } XcpTl_ConnectionType;
 
@@ -87,11 +87,11 @@ int locate_interface(int socket, char const *name) {
 }
 
 void XcpTl_Init(void) {
-    int ret = 0;
-    int sock = -1;
+    int                 ret  = 0;
+    int                 sock = -1;
     struct sockaddr_can addr;
-    struct ifreq ifr;
-    int interface_index = 0;
+    struct ifreq        ifr;
+    int                 interface_index = 0;
 
     memset(&XcpTl_Connection, 0, sizeof(XcpTl_ConnectionType));
     XcpTl_Connection.boundSocket = -1;
@@ -103,11 +103,11 @@ void XcpTl_Init(void) {
     }
 
     struct can_filter rfilter[2];
-    rfilter[0].can_id = XCP_ON_CAN_INBOUND_IDENTIFIER;
+    rfilter[0].can_id   = XCP_ON_CAN_INBOUND_IDENTIFIER;
     rfilter[0].can_mask = CAN_SFF_MASK;
-    rfilter[1].can_id = XCP_ON_CAN_BROADCAST_IDENTIFIER;
+    rfilter[1].can_id   = XCP_ON_CAN_BROADCAST_IDENTIFIER;
     rfilter[1].can_mask = CAN_SFF_MASK;
-    ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+    ret                 = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
     if (ret < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::setsockopt(CAN_RAW_FILTER)", errno);
         close(sock);
@@ -115,8 +115,8 @@ void XcpTl_Init(void) {
     }
 
     can_err_mask_t err_mask =
-    (CAN_ERR_TX_TIMEOUT | CAN_ERR_LOSTARB | CAN_ERR_CRTL | CAN_ERR_PROT | CAN_ERR_TRX | CAN_ERR_ACK | CAN_ERR_BUSOFF |
-     CAN_ERR_BUSERROR | CAN_ERR_RESTARTED);
+        (CAN_ERR_TX_TIMEOUT | CAN_ERR_LOSTARB | CAN_ERR_CRTL | CAN_ERR_PROT | CAN_ERR_TRX | CAN_ERR_ACK | CAN_ERR_BUSOFF |
+         CAN_ERR_BUSERROR | CAN_ERR_RESTARTED);
 
     ret = setsockopt(sock, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask));
     if (ret < 0) {
@@ -142,14 +142,13 @@ void XcpTl_Init(void) {
     }
 #endif
 
-
 #if (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
     strncpy(ifr.ifr_name, Xcp_Options.can_interf, IFNAMSIZ - 1);
 #else
     strncpy(ifr.ifr_name, "vcan0", IFNAMSIZ - 1);
 #endif
     ifr.ifr_name[IFNAMSIZ - 1] = '\0';
-    ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &ifr.ifr_name, sizeof(ifr.ifr_name));
+    ret                        = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &ifr.ifr_name, sizeof(ifr.ifr_name));
     if (ret < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::setsockopt(SO_BINDTODEVICE)", errno);
         close(sock);
@@ -158,10 +157,10 @@ void XcpTl_Init(void) {
 
     interface_index = locate_interface(sock, Xcp_Options.can_interf);
 
-    addr.can_family = AF_CAN;
+    addr.can_family  = AF_CAN;
     addr.can_ifindex = interface_index;
     memset(&addr.can_addr, 0, sizeof(addr.can_addr));
-    if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         XcpHw_ErrorMsg("XcpTl_Init::bind(PF_CAN)", errno);
         close(sock);
         return;
@@ -201,7 +200,7 @@ void XcpTl_RxHandler(void) {
             exit(1);
             return;
         }
-        if ((size_t) n < sizeof(struct can_frame)) {
+        if ((size_t)n < sizeof(struct can_frame)) {
             XcpHw_ErrorMsg("XcpTl_RxHandler::read(CAN) short frame", EIO);
             return;
         }
@@ -253,7 +252,7 @@ int16_t XcpTl_FrameAvailable(uint32_t sec, uint32_t usec) {
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
-    ssize_t n = 0;
+    ssize_t          n = 0;
     struct can_frame frame;
 
     if (buf == NULL || len == 0) {
@@ -280,13 +279,13 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 #else
     frame.can_id = XCP_ON_CAN_OUTBOUND_IDENTIFIER;
 #endif
-    frame.can_dlc = (uint8_t) len;
+    frame.can_dlc = (uint8_t)len;
     memcpy(frame.data, buf, len);
 
     n = write(XcpTl_Connection.boundSocket, &frame, sizeof(struct can_frame));
     if (n < 0) {
         XcpHw_ErrorMsg("XcpTl_Send::write(CAN)", errno);
-    } else if ((size_t) n != sizeof(struct can_frame)) {
+    } else if ((size_t)n != sizeof(struct can_frame)) {
         XcpHw_ErrorMsg("XcpTl_Send::write(CAN) short write", EIO);
     }
     XCP_TL_LEAVE_CRITICAL();
@@ -307,6 +306,8 @@ bool XcpTl_VerifyConnection(void) {
 void XcpTl_PrintConnectionInformation(void) {
     bool ext = XCP_ON_CAN_IS_EXTENDED_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER);
 
-    printf("\nXCPonCAN -- listening on [%s] 0x%X [%s]\n", Xcp_Options.can_interf,
-           XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD");
+    printf(
+        "\nXCPonCAN -- listening on [%s] 0x%X [%s]\n", Xcp_Options.can_interf,
+        XCP_ON_CAN_STRIP_IDENTIFIER(XCP_ON_CAN_INBOUND_IDENTIFIER), ext ? "EXT" : "STD"
+    );
 }

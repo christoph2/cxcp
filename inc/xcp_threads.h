@@ -26,27 +26,27 @@
 #if !defined(__XCP_THREADS_H)
     #define __XCP_THREADS_H
 
-#if defined(XCP_ENABLE_EXTERN_C_GUARDS) && (XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON)
-    #if defined(__cplusplus)
+    #if defined(XCP_ENABLE_EXTERN_C_GUARDS) && (XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON)
+        #if defined(__cplusplus)
 extern "C" {
+        #endif
     #endif
-#endif
 
-void XcpThrd_RunThreads(void);
+    void XcpThrd_RunThreads(void);
 
-void XcpThrd_Exit(void);
-void XcpThrd_ShutDown(void);
-bool XcpThrd_IsShuttingDown(void);
-void XcpThrd_EnableAsyncCancellation(void);
+    void XcpThrd_Exit(void);
+    void XcpThrd_ShutDown(void);
+    bool XcpThrd_IsShuttingDown(void);
+    void XcpThrd_EnableAsyncCancellation(void);
 
-void *Xcp_Thread(void *param);
-void *XcpTerm_Thread(void *param);
-void *XcpTl_Thread(void *param);
+    void *Xcp_Thread(void *param);
+    void *XcpTerm_Thread(void *param);
+    void *XcpTl_Thread(void *param);
 
-#if defined(XCP_ENABLE_EXTERN_C_GUARDS) && (XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON)
-    #if defined(__cplusplus)
+    #if defined(XCP_ENABLE_EXTERN_C_GUARDS) && (XCP_ENABLE_EXTERN_C_GUARDS == XCP_ON)
+        #if defined(__cplusplus)
 }
+        #endif
     #endif
-#endif
 
 #endif /* __XCP_THREADS_H */

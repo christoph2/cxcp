@@ -433,32 +433,24 @@ void XcpDaq_PrintDAQDetails(void) {
 
 static void XcpDaq_PrintEntryAddress(XcpDaq_ODTEntryType const *entry, XcpDaq_ODTEntryIntegerType odtEntriyIdx) {
     Xcp_MtaType logical = { 0 };
-    Xcp_MtaType mapped = { 0 };
+    Xcp_MtaType mapped  = { 0 };
 
     logical.address = entry->mta.address;
-#if XCP_DAQ_ENABLE_ADDR_EXT == XCP_ON
+    #if XCP_DAQ_ENABLE_ADDR_EXT == XCP_ON
     logical.ext = entry->mta.ext;
-#else
+    #else
     logical.ext = UINT8(0);
-#endif /* XCP_DAQ_ENABLE_ADDR_EXT */
+    #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
     if (Xcp_MapMemory(&mapped, &logical) && (mapped.address != logical.address || mapped.ext != logical.ext)) {
         printf(
-            "        Entry #%d [logical: 0x%08llx ext: 0x%02x -> mapped: 0x%p ext: 0x%02x] %d Byte(s)\n\r",
-            odtEntriyIdx,
-            (unsigned long long)logical.address,
-            logical.ext,
-            (void *)(uintptr_t)mapped.address,
-            mapped.ext,
-            entry->length
+            "        Entry #%d [logical: 0x%08llx ext: 0x%02x -> mapped: 0x%p ext: 0x%02x] %d Byte(s)\n\r", odtEntriyIdx,
+            (unsigned long long)logical.address, logical.ext, (void *)(uintptr_t)mapped.address, mapped.ext, entry->length
         );
     } else {
         printf(
-            "        Entry #%d [logical: 0x%08llx ext: 0x%02x] %d Byte(s)\n\r",
-            odtEntriyIdx,
-            (unsigned long long)logical.address,
-            logical.ext,
-            entry->length
+            "        Entry #%d [logical: 0x%08llx ext: 0x%02x] %d Byte(s)\n\r", odtEntriyIdx, (unsigned long long)logical.address,
+            logical.ext, entry->length
         );
     }
 }
