@@ -41,7 +41,7 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(__APPLE__)
-#define O_DIRECT (0)
+    #define O_DIRECT (0)
 #endif
 
 #define handle_error(msg)                                                                                                          \
@@ -105,7 +105,7 @@ static void FlsEmu_ClosePersitentArray(FlsEmu_PersistentArrayType const *persist
     FLSEMU_ASSERT_INITIALIZED();
 
     FlsEmu_UnmapAddress(persistentArray->mappingAddress, size);
-    close((int) (intptr_t) persistentArray->fileHandle);
+    close((int)(intptr_t)persistentArray->fileHandle);
 }
 
 static void FlsEmu_MapAddress(void *mappingAddress, int offset, uint32_t size, int fd) {
@@ -126,10 +126,10 @@ static void FlsEmu_UnmapAddress(void *addr, uint32_t size) {
 FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(
     char const *fileName, uint32_t size, FlsEmu_PersistentArrayType *persistentArray
 ) {
-    int fd = 0;
-    void *addr = XCP_NULL;
-    FlsEmu_OpenCreateResultType result = OPEN_ERROR;
-    bool newFile = XCP_FALSE;
+    int                         fd      = 0;
+    void                       *addr    = XCP_NULL;
+    FlsEmu_OpenCreateResultType result  = OPEN_ERROR;
+    bool                        newFile = XCP_FALSE;
 
     /* Open existing file without fragile O_DIRECT/O_DSYNC flags for portability */
     fd = open(fileName, O_RDWR, 0666);
@@ -141,29 +141,29 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(
                 return OPEN_ERROR;
             } else {
 #if defined(__APPLE__)
-                fstore_t store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, (off_t) size};
-                int ret = fcntl(fd, F_PREALLOCATE, &store);
+                fstore_t store = { F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, (off_t)size };
+                int      ret   = fcntl(fd, F_PREALLOCATE, &store);
                 if (-1 == ret) {
                     store.fst_flags = F_ALLOCATEALL;
-                    ret = fcntl(fd, F_PREALLOCATE, &store);
+                    ret             = fcntl(fd, F_PREALLOCATE, &store);
                 }
                 if (-1 == ret) {
-                    if (ftruncate(fd, (off_t) size) == -1) {
+                    if (ftruncate(fd, (off_t)size) == -1) {
                         handle_error("ftruncate");
                         close(fd);
                         return OPEN_ERROR;
                     }
                 }
 #elif defined(__linux__)
-                if (posix_fallocate(fd, 0, (off_t) size) != 0) {
-                    if (ftruncate(fd, (off_t) size) == -1) {
+                if (posix_fallocate(fd, 0, (off_t)size) != 0) {
+                    if (ftruncate(fd, (off_t)size) == -1) {
                         handle_error("ftruncate");
                         close(fd);
                         return OPEN_ERROR;
                     }
                 }
 #else
-                if (ftruncate(fd, (off_t) size) == -1) {
+                if (ftruncate(fd, (off_t)size) == -1) {
                     handle_error("ftruncate");
                     close(fd);
                     return OPEN_ERROR;
@@ -178,8 +178,7 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(
     } else {
         newFile = XCP_FALSE;
     }
-    persistentArray->fileHandle = (MEM_HANDLE)(intptr_t)
-    fd;
+    persistentArray->fileHandle = (MEM_HANDLE)(intptr_t)fd;
 
     addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (addr == MAP_FAILED) {
@@ -187,8 +186,8 @@ FlsEmu_OpenCreateResultType FlsEmu_OpenCreatePersitentArray(
     }
 
     persistentArray->mappingAddress = addr;
-    persistentArray->mappingHandle = NULL;
-    persistentArray->currentPage = 0;
+    persistentArray->mappingHandle  = NULL;
+    persistentArray->currentPage    = 0;
 
     result = newFile ? NEW_FILE : OPEN_EXSISTING;
     return result;

@@ -3,7 +3,7 @@ ASAP2_VERSION 1 71
 /begin PROJECT hello_xcp ""
 /begin HEADER "" VERSION "1.0" PROJECT_NO VECTOR /end HEADER
 
-    
+
 /begin MODULE hello_xcp ""
 /include "XCP_104.aml"
 /begin MOD_COMMON ""
@@ -40,7 +40,7 @@ ALIGNMENT INT64 1
 /end MEASUREMENT
 
 
-/begin MEASUREMENT loop_counter "Loop counter, local measurement variable on stack" UWORD NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0xFFFFFFAC ECU_ADDRESS_EXTENSION 3  
+/begin MEASUREMENT loop_counter "Loop counter, local measurement variable on stack" UWORD NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0xFFFFFFAC ECU_ADDRESS_EXTENSION 3
 /begin IF_DATA XCP
 /begin DAQ_EVENT FIXED_EVENT_LIST
 /begin FIXED_EVENT_LIST EVENT 0 /end FIXED_EVENT_LIST
@@ -49,7 +49,7 @@ ALIGNMENT INT64 1
 /end MEASUREMENT
 
 
-/begin MEASUREMENT calc_speed.current_speed "Parameter current_speed in function calculate_speed" FLOAT32_IEEE NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0x8 ECU_ADDRESS_EXTENSION 3 PHYS_UNIT  + m['phys_unit'] +  
+/begin MEASUREMENT calc_speed.current_speed "Parameter current_speed in function calculate_speed" FLOAT32_IEEE NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0x8 ECU_ADDRESS_EXTENSION 3 PHYS_UNIT  + m['phys_unit'] +
 /begin IF_DATA XCP
 /begin DAQ_EVENT FIXED_EVENT_LIST
 /begin FIXED_EVENT_LIST EVENT 1 /end FIXED_EVENT_LIST
@@ -58,7 +58,7 @@ ALIGNMENT INT64 1
 /end MEASUREMENT
 
 
-/begin MEASUREMENT calc_speed.new_speed "Loop counter, local measurement variable on stack" FLOAT32_IEEE NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0xFFFFFFBC ECU_ADDRESS_EXTENSION 3 PHYS_UNIT  + m['phys_unit'] +  
+/begin MEASUREMENT calc_speed.new_speed "Loop counter, local measurement variable on stack" FLOAT32_IEEE NO_COMPU_METHOD 0 0 0 0 ECU_ADDRESS 0xFFFFFFBC ECU_ADDRESS_EXTENSION 3 PHYS_UNIT  + m['phys_unit'] +
 /begin IF_DATA XCP
 /begin DAQ_EVENT FIXED_EVENT_LIST
 /begin FIXED_EVENT_LIST EVENT 1 /end FIXED_EVENT_LIST
@@ -67,13 +67,13 @@ ALIGNMENT INT64 1
 /end MEASUREMENT
 
 
-/begin GROUP Parameters "Calibration Segment" 
+/begin GROUP Parameters "Calibration Segment"
 /begin REF_CHARACTERISTIC params.counter_max params.delay_us params.acceleration /end REF_CHARACTERISTIC
 /end GROUP
-/begin GROUP mainloop "Measurement event group" 
+/begin GROUP mainloop "Measurement event group"
 /begin REF_MEASUREMENT temperature speed loop_counter /end REF_MEASUREMENT
 /end GROUP
-/begin GROUP calc_speed "Measurement event group" 
+/begin GROUP calc_speed "Measurement event group"
 /begin REF_MEASUREMENT calc_speed.current_speed calc_speed.new_speed /end REF_MEASUREMENT
 /end GROUP
 /begin GROUP Events "Events" ROOT

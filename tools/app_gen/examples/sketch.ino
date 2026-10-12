@@ -12,10 +12,10 @@
 //__attribute__((section(EPK_SECTION_NAME))) __attribute__((used)) volatile static const char epk[/*sizeof(EPK_CONST_NAME)*/]
 //  __attribute__((section(EPK_SECTION_NAME))) = EPK_CONST_NAME;
 
-#define BUILD_DATE     __DATE__
-#define BUILD_TIME     __TIME__
+#define BUILD_DATE __DATE__
+#define BUILD_TIME __TIME__
 
-#define XCP_MAKE_EPK(name)     const char Xcp_EEPROM_Kennung[] = name " " BUILD_DATE " " BUILD_TIME
+#define XCP_MAKE_EPK(name) const char Xcp_EEPROM_Kennung[] = name " " BUILD_DATE " " BUILD_TIME
 
 XCP_MAKE_EPK("hello_xcp V1.1.0");
 
@@ -23,20 +23,16 @@ XCP_DAQ_BEGIN_EVENTS
 XCP_DAQ_DEFINE_EVENT(
     "Default event", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 10
 ),
-XCP_DAQ_END_EVENTS
+    XCP_DAQ_END_EVENTS
 
-XCP_DAQ_BEGIN_ID_LIST
-    0x600,
-    0x601,
-    0x602,
-    0x603,
-    0x604,
-XCP_DAQ_END_ID_LIST    
+    XCP_DAQ_BEGIN_ID_LIST 0x600,
+    0x601, 0x602, 0x603, 0x604,
+    XCP_DAQ_END_ID_LIST
 
-volatile float voltage1; // Motor temperature in °C
-volatile float voltage2; // Speed in km/h
-volatile float voltage3; // Loop counter, local measurement variable on stack
-volatile float voltage4; // Parameter current_speed in function calculate_speed
+    volatile float voltage1;  // Motor temperature in °C
+volatile float voltage2;      // Speed in km/h
+volatile float voltage3;      // Loop counter, local measurement variable on stack
+volatile float voltage4;      // Parameter current_speed in function calculate_speed
 
 enum WaveformType {
     SINE,
@@ -129,7 +125,6 @@ void update_measurements() {
 auto daq_task = PeriodicTask(Duration::microseconds(10), 0, update_measurements, micros);
 
 void loop() {
-
     XcpTl_MainFunction();
     Xcp_MainFunction();
 

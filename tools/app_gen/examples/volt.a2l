@@ -62,8 +62,8 @@ ASAP2_VERSION 1 71
     0
     -55
     200
-    
-    
+
+
     PHYS_UNIT ""
     READ_WRITE
     /begin IF_DATA XCP
@@ -83,8 +83,8 @@ ASAP2_VERSION 1 71
     0
     0
     250
-    
-    
+
+
     PHYS_UNIT "km/h"
     READ_WRITE
     /begin IF_DATA XCP
@@ -104,10 +104,10 @@ ASAP2_VERSION 1 71
     0
     0
     0
-    
-    
+
+
     PHYS_UNIT ""
-    
+
     /begin IF_DATA XCP
         /begin DAQ_EVENT FIXED_EVENT_LIST
             /begin FIXED_EVENT_LIST
@@ -125,10 +125,10 @@ ASAP2_VERSION 1 71
     0
     0
     0
-    
-    
+
+
     PHYS_UNIT "km/h"
-    
+
     /begin IF_DATA XCP
         /begin DAQ_EVENT FIXED_EVENT_LIST
             /begin FIXED_EVENT_LIST
@@ -139,10 +139,10 @@ ASAP2_VERSION 1 71
 /end MEASUREMENT
 
 
-/begin GROUP mainloop "Measurement event group" 
+/begin GROUP mainloop "Measurement event group"
 /end GROUP
 
-/begin GROUP calc_speed "Measurement event group" 
+/begin GROUP calc_speed "Measurement event group"
 /end GROUP
 
 
