@@ -466,20 +466,20 @@ void XcpDaq_SetListMode(
 void XcpDaq_SetPointer(
     XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber
 ) {
-    Xcp_StateType *Xcp_State = XCP_NULL;
+    Xcp_StateType *state = XCP_NULL;
 
-    Xcp_State                      = Xcp_GetState();
-    Xcp_State->daqPointer.daqList  = daqListNumber;
-    Xcp_State->daqPointer.odt      = odtNumber;
-    Xcp_State->daqPointer.odtEntry = odtEntryNumber;
+    state                      = Xcp_GetState();
+    state->daqPointer.daqList  = daqListNumber;
+    state->daqPointer.odt      = odtNumber;
+    state->daqPointer.odtEntry = odtEntryNumber;
 }
 
 void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xcp_PointerSizeType address) {
-    XcpDaq_ODTEntryType *entry     = XCP_NULL;
-    Xcp_StateType       *Xcp_State = XCP_NULL;
+    XcpDaq_ODTEntryType *entry = XCP_NULL;
+    Xcp_StateType       *state = XCP_NULL;
 
-    Xcp_State = Xcp_GetState();
-    entry     = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
+    state = Xcp_GetState();
+    entry = XcpDaq_GetOdtEntry(state->daqPointer.daqList, state->daqPointer.odt, state->daqPointer.odtEntry);
     if (entry == XCP_NULL) {
         /* Invalid pointer (out of range or unavailable due to configuration). */
         return;
@@ -498,16 +498,16 @@ void XcpDaq_WriteEntry(uint8_t bitOffset, uint8_t elemSize, uint8_t adddrExt, Xc
      * After writing to the last ODT entry of an ODT, the value
      * of the DAQ pointer is undefined!
      */
-    Xcp_State->daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;
+    state->daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;
 }
 
 void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, Xcp_PointerSizeType *address) {
-    XcpDaq_ODTEntryType *entry     = XCP_NULL;
-    Xcp_StateType       *Xcp_State = XCP_NULL;
+    XcpDaq_ODTEntryType *entry = XCP_NULL;
+    Xcp_StateType       *state = XCP_NULL;
 
-    Xcp_State = Xcp_GetState();
+    state = Xcp_GetState();
 
-    entry = XcpDaq_GetOdtEntry(Xcp_State->daqPointer.daqList, Xcp_State->daqPointer.odt, Xcp_State->daqPointer.odtEntry);
+    entry = XcpDaq_GetOdtEntry(state->daqPointer.daqList, state->daqPointer.odt, state->daqPointer.odtEntry);
     if (entry == XCP_NULL) {
         /* Invalid pointer; return zeroed outputs and do not advance pointer. */
         if (bitOffset) {
@@ -543,7 +543,7 @@ void XcpDaq_ReadEntry(uint8_t *bitOffset, uint8_t *elemSize, uint8_t *adddrExt, 
         *elemSize, *bitOffset
     );
 
-    Xcp_State->daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;  // s. `XcpDaq_WriteEntry` comment.
+    state->daqPointer.odtEntry += (XcpDaq_ODTEntryIntegerType)1;  // s. `XcpDaq_WriteEntry` comment.
 }
 
 bool XcpDaq_ValidateConfiguration(void) {
@@ -737,15 +737,23 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
         for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < listConf->numOdts; ++odtIdx) {
             uint16_t odt_payload = UINT16(0);
             odt                  = XcpDaq_GetOdt(daqListNumber, odtIdx);
+            if (odt == XCP_NULL) {
+                continue;
+            }
 
-            /* Compute ODT payload size once and cache it */
-            if (listState->packed_odt_size == UINT16(0)) {
-                for (odtEntryIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntryIdx < odt->numOdtEntries; ++odtEntryIdx) {
-                    entry = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, odtEntryIdx);
-                    listState->packed_odt_size += (uint16_t)entry.length;
-                }
+            /* Recompute the per-ODT payload size for each ODT. A list can contain
+             * multiple ODTs with different sizes; caching the size globally breaks
+             * the element-grouped packing logic as soon as the first ODT size does
+             * not match the following ones. */
+            listState->packed_odt_size = UINT16(0);
+            for (odtEntryIdx = (XcpDaq_ODTEntryIntegerType)0; odtEntryIdx < odt->numOdtEntries; ++odtEntryIdx) {
+                entry = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, odtEntryIdx);
+                listState->packed_odt_size += (uint16_t)entry.length;
             }
             odt_payload = listState->packed_odt_size;
+            if (odt_payload == UINT16(0)) {
+                continue;
+            }
 
             /* Check buffer overflow */
             if ((listState->packed_fill + odt_payload) > (uint16_t)(XCP_MAX_DTO * XCP_DAQ_PACKED_MAX_SAMPLE_COUNT)) {
@@ -1226,7 +1234,7 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
     #endif
     XcpUtl_MemCopy(data, XcpDaq_QueueDTOs[XcpDaq_Queue.tail].data, dto_len);
     XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE);
-    return (bool)XCP_TRUE;
+    return (bool)XcpDaq_QueueEmpty();
 }
 
 // #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */

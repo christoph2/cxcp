@@ -263,7 +263,7 @@ extern "C" {
         #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
     #else
-        /* For remaining transports (e.g., CAN), length/counter are not used. */
+/* For remaining transports (e.g., CAN), length/counter are not used. */
         #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (0)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
     #endif
@@ -295,7 +295,7 @@ extern "C" {
     #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #else
-        /* For remaining transports (e.g., CAN), checksum size is not used */
+/* For remaining transports (e.g., CAN), checksum size is not used */
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #endif
 
@@ -959,7 +959,7 @@ extern "C" {
         ERR_CMD_UNKNOWN  = UINT8(0x20),      /* Unknown command or not implemented optional command. S2 */
         ERR_CMD_SYNTAX   = UINT8(0x21),      /* Command syntax invalid   S2 */
         ERR_OUT_OF_RANGE = UINT8(0x22),      /* Command syntax valid but command
-                                                                    parameter(s) out of range.   S2 */
+                                                                             parameter(s) out of range.   S2 */
         ERR_WRITE_PROTECTED   = UINT8(0x23), /* The memory location is write protected. S2 */
         ERR_ACCESS_DENIED     = UINT8(0x24), /* The memory location is not accessible. S2 */
         ERR_ACCESS_LOCKED     = UINT8(0x25), /* Access denied, Seed & Key is required S2 */
@@ -972,11 +972,11 @@ extern "C" {
         ERR_MEMORY_OVERFLOW = UINT8(0x30), /* Memory overflow error S2 */
         ERR_GENERIC         = UINT8(0x31), /* Generic error.         S2 */
         ERR_VERIFY          = UINT8(0x32), /* The slave internal program verify routine detects
-                                                                          an error.   S3 */
+                                                                                       an error.   S3 */
 
         /* NEW IN 1.1 */
         ERR_RESOURCE_TEMPORARY_NOT_ACCESSIBLE = UINT8(0x33), /* Access to the requested resource is temporary not
-                                                                              possible.   S3 */
+                                                                                  possible.   S3 */
         ERR_TIMECORR_STATE_CHANGE = UINT8(0x34),             /* State change occurred during time correlation. S3 */
         /* Internal Success Code - not related to XCP spec. */
         ERR_SUCCESS = UINT8(0xff)
@@ -1145,10 +1145,10 @@ extern "C" {
         uint8_t  packed_ts_mode;      /* timestamp_mode bitfield                           */
         uint16_t packed_sample_count; /* number of samples per packed DTO                  */
         /* Accumulation buffer for ELEMENT_GROUPED packing */
-        uint8_t  packed_buffer[XCP_MAX_DTO * XCP_DAQ_PACKED_MAX_SAMPLE_COUNT];
-        uint16_t packed_fill;     /* bytes accumulated so far                          */
-        uint16_t packed_odt_size; /* ODT payload size (constant per list)              */
-        #endif                    /* XCP_DAQ_ENABLE_PACKED_MODE */
+        uint8_t  packed_buffer[XCP_DAQ_PACKED_MAX_SAMPLE_COUNT];  // XCP_MAX_DTO *
+        uint16_t packed_fill;                                     /* bytes accumulated so far                          */
+        uint16_t packed_odt_size;                                 /* ODT payload size (constant per list)              */
+        #endif                                                    /* XCP_DAQ_ENABLE_PACKED_MODE */
     } XcpDaq_DynamicListType;
 
     typedef struct tagXcpDaq_ListConfigurationType {
