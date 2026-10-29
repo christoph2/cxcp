@@ -1,5 +1,7 @@
 # BlueParrot XCP
 
+![BlueParrot logo](blueparrot.png)
+
 BlueParrot XCP (CXCP) is a configurable C implementation of an XCP slave for
 embedded targets and host-side simulation. It implements the protocol core,
 data acquisition (DAQ), checksums, optional programming support, and
