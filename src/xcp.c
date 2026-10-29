@@ -2813,8 +2813,7 @@ bool Xcp_MapMemory(Xcp_MtaType *dst, Xcp_MtaType const *src) {
             return XCP_TRUE;
         }
         if (res == XCP_MEMORY_NOT_MAPPED) {
-            *dst = *src;
-            return XCP_TRUE;
+            return XCP_FALSE;
         }
         return XCP_FALSE;
     }
