@@ -24,14 +24,14 @@
  */
 
 #if defined(_WIN32)
-#include <process.h>
-#include <windows.h>
+    #include <process.h>
+    #include <windows.h>
 #else
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <pthread.h>
-#include <sched.h>
+    #ifndef _GNU_SOURCE
+        #define _GNU_SOURCE
+    #endif
+    #include <pthread.h>
+    #include <sched.h>
 #endif
 
 #include <errno.h>
@@ -45,11 +45,11 @@
 */
 #if !defined(__STDC_NO_ATOMICS__)
 
-#if defined(_MSC_VER)
+    #if defined(_MSC_VER)
 typedef bool atomic_bool;
-#else
-#include <stdatomic.h>
-#endif
+    #else
+        #include <stdatomic.h>
+    #endif
 
 #endif /* __STDC_NO_ATOMICS__ */
 
@@ -90,15 +90,15 @@ void bye(void);
 
 #if defined(_WIN32)
 static unsigned __stdcall XcpThrd_WinTrampoline(void *arg) {
-    XcpThrd_ThreadFuncType func = (XcpThrd_ThreadFuncType) arg;
-    (void) func(NULL);
+    XcpThrd_ThreadFuncType func = (XcpThrd_ThreadFuncType)arg;
+    (void)func(NULL);
     return 0U;
 }
 #endif
 
 static void XcpThrd_CreateThread(XcpThrd_ThreadType *thrd, XcpThrd_ThreadFuncType func) {
 #if defined(_WIN32)
-    HANDLE hThread = (HANDLE) _beginthreadex(NULL, 0, XcpThrd_WinTrampoline, (void *) func, 0, NULL);
+    HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, XcpThrd_WinTrampoline, (void *)func, 0, NULL);
     if (hThread == NULL) {
         XcpHw_ErrorMsg("_beginthreadex()", GetLastError());
         return;
@@ -152,13 +152,11 @@ void XcpThrd_Exit(void) {
 
 void *Xcp_Thread(void *param) {
     XCP_UNREFERENCED_PARAMETER(param);
-    XCP_FOREVER{
+    XCP_FOREVER {
         if (XcpThrd_IsShuttingDown()) {
             break;
-
         }
         Xcp_MainFunction();
-
     }
     return NULL;
 }
@@ -226,7 +224,7 @@ static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
     }
 #else
 
-#if !defined(__APPLE__)
+    #if !defined(__APPLE__)
     /* Linux only (i.e. no BSD) ??? */
     int res;
 
@@ -244,7 +242,7 @@ static void XcpThrd_SetAffinity(XcpThrd_ThreadType thrd, int cpu) {
     if (res != 0) {
         XcpHw_ErrorMsg("pthread_getaffinity_np()", errno);
     }
-#endif
+    #endif
 
 #endif
 }

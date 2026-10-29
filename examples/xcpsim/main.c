@@ -39,7 +39,7 @@ void AppTask(void);
 int main(int argc, char **argv) {
     parse_options(argc, argv, &Xcp_Options);
 
-//    Xcp_Options.tcp = false;
+    //    Xcp_Options.tcp = false;
 
     FlsEmu_Init(&FlsEmu_Config);
     Xcp_Init();
