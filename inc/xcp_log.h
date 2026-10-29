@@ -27,6 +27,8 @@
 
     #if XCP_ENABLE_LOGGING == XCP_ON
 
+        #include <stdio.h>
+
         #if defined(_WIN32) || defined(__unix__) || defined(__APPLE__)
             #define DBG_PRINT(format, ...) printf(format, ##__VA_ARGS__)
             #define DBG_TRACE(format, ...) DBG_PRINT(format, ##__VA_ARGS__)
