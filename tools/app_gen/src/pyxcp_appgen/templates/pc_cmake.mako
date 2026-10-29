@@ -47,7 +47,7 @@ else()
         "${cmake}{CXCP_SRC_PATH}/src/tl/eth/linuxeth.c"
         "${cmake}{CXCP_SRC_PATH}/flsemu/posix/flsemu.c"
     )
-    set(CXCP_PLATFORM_LIBS pthread rt)
+    set(CXCP_PLATFORM_LIBS pthread rt dl)
 endif()
 
 add_executable(${project['name']} main.cpp application.cpp ${cmake}{CXCP_SOURCES})
