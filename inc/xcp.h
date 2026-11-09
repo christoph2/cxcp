@@ -263,7 +263,7 @@ extern "C" {
         #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (2)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (2)
     #else
-/* For remaining transports (e.g., CAN), length/counter are not used. */
+    /* For remaining transports (e.g., CAN), length/counter are not used. */
         #define XCP_TRANSPORT_LAYER_LENGTH_SIZE  (0)
         #define XCP_TRANSPORT_LAYER_COUNTER_SIZE (0)
     #endif
@@ -295,7 +295,7 @@ extern "C" {
     #elif (XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #else
-/* For remaining transports (e.g., CAN), checksum size is not used */
+    /* For remaining transports (e.g., CAN), checksum size is not used */
         #define XCP_TRANSPORT_LAYER_CHECKSUM_SIZE (0)
     #endif
 
