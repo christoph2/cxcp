@@ -26,21 +26,21 @@
 #include <stdint.h>
 // clang-format off
 #if defined(_WIN32) || defined(_WIN64)
-#include <winsock2.h>
-#include <mstcpip.h>
-#include <mswsock.h>
-// #include <ntddndis.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
+    #include <mstcpip.h>
+    #include <mswsock.h>
+    #include <winsock2.h>
+    // #include <ntddndis.h>
+    #include <iphlpapi.h>
+    #include <ws2tcpip.h>
 
 #endif
 
 #if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#define _CRT_SECURE_NO_WARNINGS
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "Iphlpapi.lib")
+    #pragma warning(push)
+    #pragma warning(disable: 4996)
+    #define _CRT_SECURE_NO_WARNINGS
+    #pragma comment(lib, "ws2_32.lib")
+    #pragma comment(lib, "Iphlpapi.lib")
 #endif
 #include <memory.h>
 #include <process.h>
