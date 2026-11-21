@@ -97,7 +97,7 @@
     #define XCP_DAQ_ENABLE_WRITE_THROUGH                (XCP_OFF)
     #define XCP_DAQ_QUEUE_SIZE                          (16)
     #define XCP_DAQ_MAX_DYNAMIC_ENTITIES                (16)
-    #define XCP_DAQ_MAX_EVENT_CHANNEL                   (3)
+    #define XCP_DAQ_MAX_EVENT_CHANNEL                   (2)
     #define XCP_DAQ_ENABLE_MULTIPLE_DAQ_LISTS_PER_EVENT (XCP_OFF)
 
     /*

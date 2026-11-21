@@ -28,12 +28,8 @@
 
 /* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
  * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.
- *
- * Auto ProductID layout's Bitmap:
- *   [MSB]         HID | MSC | CDC          [LSB]
  */
-#define _PID_MAP(itf, n) ((CFG_TUD_##itf) << (n))
-#define USB_PID          (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4))
+#define USB_PID 0x4005
 
 #define USB_VID 0xCafe
 #define USB_BCD 0x0200
@@ -78,6 +74,8 @@ uint8_t const *tud_descriptor_device_cb(void) {
 enum {
     ITF_NUM_CDC = 0,
     ITF_NUM_CDC_DATA,
+    ITF_NUM_DEBUG_CDC,
+    ITF_NUM_DEBUG_CDC_DATA,
     ITF_NUM_TOTAL
 };
 
@@ -118,7 +116,11 @@ enum {
 
 #endif
 
-#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN)
+#define EPNUM_DEBUG_CDC_NOTIF 0x83
+#define EPNUM_DEBUG_CDC_OUT   0x04
+#define EPNUM_DEBUG_CDC_IN    0x84
+
+#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + 2 * TUD_CDC_DESC_LEN)
 
 // full speed configuration
 uint8_t const desc_fs_configuration[] = {
@@ -127,6 +129,7 @@ uint8_t const desc_fs_configuration[] = {
 
     // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_DEBUG_CDC, 5, EPNUM_DEBUG_CDC_NOTIF, 8, EPNUM_DEBUG_CDC_OUT, EPNUM_DEBUG_CDC_IN, 64),
 };
 
 #if TUD_OPT_HIGH_SPEED
@@ -139,6 +142,7 @@ uint8_t const desc_hs_configuration[] = {
 
     // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 512),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_DEBUG_CDC, 5, EPNUM_DEBUG_CDC_NOTIF, 8, EPNUM_DEBUG_CDC_OUT, EPNUM_DEBUG_CDC_IN, 512),
 };
 
 // other speed configuration
@@ -217,7 +221,8 @@ char const *string_desc_arr[] = {
     "TinyUSB", // 1: Manufacturer
     "TinyUSB Device", // 2: Product
     NULL, // 3: Serials will use unique ID if possible
-    "TinyUSB CDC", // 4: CDC Interface
+    "XCP", // 4: XCP CDC interface
+    "Debug", // 5: debug CDC interface
 };
 
 static uint16_t _desc_str[32 + 1];
