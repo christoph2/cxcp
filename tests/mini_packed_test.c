@@ -35,9 +35,8 @@ static void test_constants(void) {
     run_test("NOT_PACKED == 0", XCP_DAQ_PACKED_MODE_NOT_PACKED == 0);
     run_test("ELEMENT_GROUPED == 1", XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED == 1);
     run_test("EVENT_GROUPED == 2", XCP_DAQ_PACKED_MODE_EVENT_GROUPED == 2);
-    run_test("TS_PRESENT == 0x01", XCP_DAQ_PACKED_TS_PRESENT == 0x01);
-    run_test("TS_SIZE_2B == 0x02", XCP_DAQ_PACKED_TS_SIZE_2B == 0x02);
-    run_test("TS_SIZE_4B == 0x04", XCP_DAQ_PACKED_TS_SIZE_4B == 0x04);
+    run_test("TIMESTAMP_LAST_SAMPLE == 0", XCP_DAQ_PACKED_TIMESTAMP_LAST_SAMPLE == 0);
+    run_test("TIMESTAMP_FIRST_SAMPLE == 1", XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE == 1);
     run_test("DAQ_LIST_PROPERTY_PACKED == 0x10", DAQ_LIST_PROPERTY_PACKED == 0x10);
 }
 
@@ -86,13 +85,12 @@ static void test_set_get_roundtrip(void) {
 
     /* Now call the API directly */
     XcpDaq_SetPackedMode(
-        (XcpDaq_ListIntegerType)0, XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED,
-        (uint8_t)(XCP_DAQ_PACKED_TS_PRESENT | XCP_DAQ_PACKED_TS_SIZE_4B), (uint16_t)10
+        (XcpDaq_ListIntegerType)0, XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED, XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE, (uint16_t)10
     );
     XcpDaq_GetPackedMode((XcpDaq_ListIntegerType)0, &rd_mode, &rd_ts, &rd_cnt);
 
     run_test("roundtrip: packed_mode == ELEMENT_GROUPED", rd_mode == XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED);
-    run_test("roundtrip: ts_mode == TS_PRESENT|TS_SIZE_4B", rd_ts == (XCP_DAQ_PACKED_TS_PRESENT | XCP_DAQ_PACKED_TS_SIZE_4B));
+    run_test("roundtrip: ts_mode == TIMESTAMP_FIRST_SAMPLE", rd_ts == XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE);
     run_test("roundtrip: sample_count == 10", rd_cnt == 10);
 }
 #endif /* XCP_DAQ_ENABLE_PACKED_MODE */
@@ -104,15 +102,15 @@ static void test_set_get_roundtrip(void) {
 static void test_dispatch_set_packed(void) {
     /*
      * Frame: [0xC0][0x01][daq_lsb][daq_msb][mode][ts_mode][count_lo][count_hi]
-     * SET_DAQ_PACKED_MODE, daq=0, ELEMENT_GROUPED, ts=0x05 (present+4B), samples=4
+     * SET_DAQ_PACKED_MODE, daq=0, ELEMENT_GROUPED, timestamp of first sample, samples=4
      */
     uint8_t cmd[] = {
         0xC0,                    /* LEVEL1 CMD indicator */
         XCP_SET_DAQ_PACKED_MODE, /* Sub-command           */
         0x00,
-        0x00,                                                    /* DAQ list number = 0  */
-        XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED,                     /* Mode                  */
-        (XCP_DAQ_PACKED_TS_PRESENT | XCP_DAQ_PACKED_TS_SIZE_4B), /* ts_mode */
+        0x00,                                  /* DAQ list number = 0  */
+        XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED,   /* Mode                  */
+        XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE, /* ts_mode */
         0x04,
         0x00 /* sample_count = 4     */
     };
