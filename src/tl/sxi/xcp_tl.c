@@ -39,6 +39,20 @@
 
     #define TIMEOUT_VALUE (100)
 
+    #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
+        #define XCP_SXI_RX_PADDING_SIZE (1)
+    #else
+        #define XCP_SXI_RX_PADDING_SIZE (0)
+    #endif
+
+    #define XCP_SXI_RX_BUFFER_SIZE                                                                                                  \
+        (XCP_MAX_CTO + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE +     \
+         XCP_SXI_RX_PADDING_SIZE)
+
+    #if (XCP_SXI_RX_BUFFER_SIZE > 0xffff)
+        #error "SXI receive buffer size exceeds the receiver index range."
+    #endif
+
     #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_BYTE)
 typedef uint8_t XcpSxiChecksumType;
     #elif (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
@@ -52,7 +66,7 @@ typedef enum tagXcpTl_ReceiverStateType {
 } XcpTl_ReceiverStateType;
 
 typedef struct tagXcpTl_ReceiverType {
-    uint8_t                 Buffer[XCP_COMM_BUFLEN];
+    uint8_t                 Buffer[XCP_SXI_RX_BUFFER_SIZE];
     XcpTl_ReceiverStateType State;
     uint16_t                Index;
     uint16_t                Remaining;
@@ -215,6 +229,12 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
+            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
+                XcpTl_ResetSM();
+                XcpTl_TimeoutStop();
+                XCP_TL_LEAVE_CRITICAL();
+                return;
+            }
             XcpTl_Receiver.State     = XCP_RCV_REMAINING;
             XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc - 1;
         #if (XCP_ON_SXI_TAIL_CHECKSUM == XCP_ON_SXI_CHECKSUM_WORD)
@@ -310,6 +330,12 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         if (XcpTl_Receiver.Index == 0x01) {
             /* DLC and CTR/FILL received */
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
+            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
+                XcpTl_ResetSM();
+                XcpTl_TimeoutStop();
+                XCP_TL_LEAVE_CRITICAL();
+                return;
+            }
             XcpTl_Receiver.State     = XCP_RCV_REMAINING;
             XcpTl_Receiver.Remaining = XcpTl_Receiver.Dlc;
         #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_CTR_BYTE)
@@ -405,9 +431,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
             XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
-            /* Validate DLC against buffer capacity (account for 2-byte LEN + 2-byte CTR) */
-            if (XcpTl_Receiver.Dlc > ((uint16_t)sizeof(XcpTl_Receiver.Buffer) - 4u)) {
-                /* Length too large: reset */
+            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
                 XCP_TL_LEAVE_CRITICAL();
@@ -507,9 +531,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         if (XcpTl_Receiver.Index == 0x03) {
             /* Wait for 4 header bytes (LEN+CTR/FILL) */
             XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
-            /* Validate DLC against buffer capacity (account for 4-byte header) */
-            if (XcpTl_Receiver.Dlc > ((uint16_t)sizeof(XcpTl_Receiver.Buffer) - 4u)) {
-                /* Length too large: reset */
+            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
                 XCP_TL_LEAVE_CRITICAL();
