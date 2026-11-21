@@ -942,12 +942,9 @@ extern "C" {
     #define XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED UINT8(1)
     #define XCP_DAQ_PACKED_MODE_EVENT_GROUPED   UINT8(2)
 
-    /* XCP 1.4 – timestamp_mode byte bitfield (in SET/GET_DAQ_PACKED_MODE) */
-    #define XCP_DAQ_PACKED_TS_PRESENT   UINT8(0x01) /* Bit 0: timestamp present in packed DTO */
-    #define XCP_DAQ_PACKED_TS_SIZE_1B   UINT8(0x00) /* Bits[2:1]=00 → 1-byte timestamp       */
-    #define XCP_DAQ_PACKED_TS_SIZE_2B   UINT8(0x02) /* Bits[2:1]=01 → 2-byte timestamp       */
-    #define XCP_DAQ_PACKED_TS_SIZE_4B   UINT8(0x04) /* Bits[2:1]=10 → 4-byte timestamp       */
-    #define XCP_DAQ_PACKED_TS_SIZE_MASK UINT8(0x06)
+    /* XCP 1.4 – DPM_TIMESTAMP_MODE (in SET/GET_DAQ_PACKED_MODE). */
+    #define XCP_DAQ_PACKED_TIMESTAMP_LAST_SAMPLE  UINT8(0)
+    #define XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE UINT8(1)
 
     typedef enum tagXcp_ReturnType {
         ERR_CMD_SYNCH = UINT8(0x00), /* Command processor synchronization. S0 */
@@ -1142,12 +1139,13 @@ extern "C" {
         #endif /* XCP_DAQ_ENABLE_PRESCALER */
         #if XCP_DAQ_ENABLE_PACKED_MODE == XCP_ON
         uint8_t  packed_mode;         /* 0=NOT_PACKED, 1=ELEMENT_GROUPED, 2=EVENT_GROUPED */
-        uint8_t  packed_ts_mode;      /* timestamp_mode bitfield                           */
+        uint8_t  packed_ts_mode;      /* DPM_TIMESTAMP_MODE: last or first sample          */
         uint16_t packed_sample_count; /* number of samples per packed DTO                  */
-        /* Accumulation buffer for ELEMENT_GROUPED packing */
-        uint8_t  packed_buffer[XCP_DAQ_PACKED_MAX_SAMPLE_COUNT];  // XCP_MAX_DTO *
-        uint16_t packed_fill;                                     /* bytes accumulated so far                          */
-        uint16_t packed_odt_size;                                 /* ODT payload size (constant per list)              */
+        /* Entry-major storage for all ODTs of the current DAQ-list collection. */
+        uint8_t  packed_buffer[XCP_MAX_DTO * XCP_DAQ_PACKED_MAX_SAMPLE_COUNT];
+        uint16_t packed_fill;              /* required storage size for the current collection */
+        uint16_t packed_samples_collected; /* number of complete event samples collected       */
+        uint32_t packed_first_timestamp;   /* timestamp of sample zero                          */
         #endif                                                    /* XCP_DAQ_ENABLE_PACKED_MODE */
     } XcpDaq_DynamicListType;
 
@@ -1164,12 +1162,13 @@ extern "C" {
         #endif /* XCP_DAQ_ENABLE_PRESCALER */
         #if XCP_DAQ_ENABLE_PACKED_MODE == XCP_ON
         uint8_t  packed_mode;         /* 0=NOT_PACKED, 1=ELEMENT_GROUPED, 2=EVENT_GROUPED */
-        uint8_t  packed_ts_mode;      /* timestamp_mode bitfield                           */
+        uint8_t  packed_ts_mode;      /* DPM_TIMESTAMP_MODE: last or first sample          */
         uint16_t packed_sample_count; /* number of samples per packed DTO                  */
-        /* Accumulation buffer for ELEMENT_GROUPED packing (used for static/predefined lists) */
+        /* Entry-major storage for all ODTs of the current DAQ-list collection. */
         uint8_t  packed_buffer[XCP_MAX_DTO * XCP_DAQ_PACKED_MAX_SAMPLE_COUNT];
-        uint16_t packed_fill;     /* bytes accumulated so far                          */
-        uint16_t packed_odt_size; /* ODT payload size                                  */
+        uint16_t packed_fill;              /* required storage size for the current collection */
+        uint16_t packed_samples_collected; /* number of complete event samples collected       */
+        uint32_t packed_first_timestamp;   /* timestamp of sample zero                          */
         #endif                    /* XCP_DAQ_ENABLE_PACKED_MODE */
     } XcpDaq_ListStateType;
 

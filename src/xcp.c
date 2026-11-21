@@ -1291,6 +1291,18 @@ XCP_STATIC void Xcp_SetDaqPackedMode_Res(Xcp_PduType const * const pdu) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
     }
+    if (packedMode != XCP_DAQ_PACKED_MODE_NOT_PACKED) {
+    #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_OFF
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    #else
+        if ((tsMode > XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE) || (sampleCount == UINT16(0)) ||
+            (sampleCount > UINT16(XCP_DAQ_PACKED_MAX_SAMPLE_COUNT))) {
+            Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+            return;
+        }
+    #endif
+    }
 
     XcpDaq_SetPackedMode(daqListNumber, packedMode, tsMode, sampleCount);
     Xcp_PositiveResponse();
