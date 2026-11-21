@@ -48,10 +48,11 @@ int cdc_debug_printf(const char* fmt, ...) {
     int len = vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
 
-    // if (tud_cdc_n_connected(DEBUG_CDC_ITF)) {
-    tud_cdc_n_write(DEBUG_CDC_ITF, buf, len);
-    tud_cdc_n_write_flush(DEBUG_CDC_ITF);
-    //}
+    if (len > 0) {
+        uint32_t count = (uint32_t)len < sizeof(buf) ? (uint32_t)len : sizeof(buf) - 1u;
+        tud_cdc_n_write(DEBUG_CDC_ITF, buf, count);
+        tud_cdc_n_write_flush(DEBUG_CDC_ITF);
+    }
     return len;
 }
 
