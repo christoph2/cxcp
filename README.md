@@ -17,7 +17,7 @@ pre-built, general-purpose library with one universal build target.
 | --- | --- | --- |
 | `examples/xcpsim` | Desktop simulator with Ethernet; CAN where the required platform support is available | CMake |
 | `examples/pio` | ESP32 Arduino example using PlatformIO | PlatformIO |
-| `examples/debug_on_pico` | Raspberry Pi Pico USB CDC/SXI example | Pico SDK + CMake |
+| [`examples/debug_on_pico`](examples/debug_on_pico/README.md) | Raspberry Pi Pico USB CDC/SXI example | Pico SDK + CMake |
 | `tests` | Python/pybind11 test extension for core and DAQ behavior | CMake + pytest |
 | `tools/app_gen` | Independent Arduino-oriented application generator | Python |
 
