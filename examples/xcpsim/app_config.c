@@ -134,7 +134,20 @@ bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_Me
 }
 
 Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
-    return FlsEmu_MemoryMapper(dst, src);
+    Xcp_MemoryMappingResultType result = FlsEmu_MemoryMapper(dst, src);
+
+    if (result != XCP_MEMORY_NOT_MAPPED) {
+        return result;
+    }
+
+    /*
+     * Fallback: identity mapping for addresses outside FlsEmu segments.
+     * On a native host process (Linux/Windows) virtual addresses are real addresses,
+     * so string literals in .rodata and other non-emulated memory can be accessed directly.
+     */
+    dst->address = src->address;
+    dst->ext     = src->ext;
+    return XCP_MEMORY_MAPPED;
 }
 
 /*
