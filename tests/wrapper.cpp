@@ -139,7 +139,7 @@ void xcp_set_mta_ptr(std::size_t address, std::uint8_t ext) {
 auto calculate_checksum(py::bytes data, Xcp_ChecksumType initial, bool first) -> Xcp_ChecksumType {
     const std::string bytes = data;
     return Xcp_CalculateChecksum(
-        reinterpret_cast<uint8_t const*>(bytes.data()), static_cast<uint32_t>(bytes.size()), initial, first
+        reinterpret_cast<uint8_t const *>(bytes.data()), static_cast<uint32_t>(bytes.size()), initial, first
     );
 }
 

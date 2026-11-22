@@ -1149,129 +1149,129 @@ void Xcp_Upload(uint8_t len) {
 }
 
 XCP_STATIC uint16_t Xcp_GetCommandMinLength(uint8_t cmd) {
-	switch (cmd) {
-		case XCP_CONNECT:
-			return UINT16(2);
-		case XCP_GET_ID:
-			return UINT16(2);
-		case XCP_SET_REQUEST:
-			return UINT16(2);
-		case XCP_GET_SEED:
-			return UINT16(3);
-		case XCP_TRANSPORT_LAYER_CMD:
-			return UINT16(2);
-		case XCP_SET_MTA:
-		case XCP_SHORT_UPLOAD:
-		case XCP_BUILD_CHECKSUM:
-		case XCP_SHORT_DOWNLOAD:
-		case XCP_PROGRAM_CLEAR:
-			return UINT16(8);
-		case XCP_UPLOAD:
-		case XCP_UNLOCK:
-		case XCP_DOWNLOAD:
-		case XCP_DOWNLOAD_NEXT:
-		case XCP_PROGRAM:
-			return UINT16(2);
-		case XCP_DOWNLOAD_MAX:
-			return UINT16(XCP_MAX_CTO);
-		case WRITE_DAQ_MULTIPLE:
-			return UINT16(2);
-		case XCP_MODIFY_BITS:
-			return UINT16(6);
-		case XCP_SET_CAL_PAGE:
-			return UINT16(4);
-		case XCP_GET_CAL_PAGE:
-		case XCP_GET_SEGMENT_MODE:
-		case XCP_SET_SEGMENT_MODE:
-			return UINT16(3);
-		case XCP_GET_SEGMENT_INFO:
-		case XCP_GET_PAGE_INFO:
-		case XCP_GET_DAQ_LIST_INFO:
-		case XCP_GET_DAQ_EVENT_INFO:
-		case XCP_CLEAR_DAQ_LIST:
-		case XCP_ALLOC_DAQ:
-		case XCP_GET_DAQ_LIST_MODE:
-		case XCP_START_STOP_DAQ_LIST:
-			return UINT16(4);
-		case XCP_COPY_CAL_PAGE:
-			return UINT16(5);
-		case XCP_SET_DAQ_PTR:
-		case XCP_ALLOC_ODT_ENTRY:
-			return UINT16(6);
-		case XCP_WRITE_DAQ:
-		case XCP_SET_DAQ_LIST_MODE:
-			return UINT16(8);
-		case XCP_ALLOC_ODT:
-			return UINT16(5);
-		case XCP_START_STOP_SYNCH:
-			return UINT16(2);
-		case XCP_PROGRAM_PREPARE:
-			return UINT16(4);
-		case XCP_GET_SECTOR_INFO:
-			return UINT16(3);
-		case XCP_PROGRAM_FORMAT:
-			return UINT16(5);
-		case XCP_TIME_CORRELATION_PROPERTIES:
-			return UINT16(6);
-		case XCP_LEVEL1_COMMAND:
-			return UINT16(2);
-		default:
-			return UINT16(1);
-	}
+    switch (cmd) {
+        case XCP_CONNECT:
+            return UINT16(2);
+        case XCP_GET_ID:
+            return UINT16(2);
+        case XCP_SET_REQUEST:
+            return UINT16(2);
+        case XCP_GET_SEED:
+            return UINT16(3);
+        case XCP_TRANSPORT_LAYER_CMD:
+            return UINT16(2);
+        case XCP_SET_MTA:
+        case XCP_SHORT_UPLOAD:
+        case XCP_BUILD_CHECKSUM:
+        case XCP_SHORT_DOWNLOAD:
+        case XCP_PROGRAM_CLEAR:
+            return UINT16(8);
+        case XCP_UPLOAD:
+        case XCP_UNLOCK:
+        case XCP_DOWNLOAD:
+        case XCP_DOWNLOAD_NEXT:
+        case XCP_PROGRAM:
+            return UINT16(2);
+        case XCP_DOWNLOAD_MAX:
+            return UINT16(XCP_MAX_CTO);
+        case WRITE_DAQ_MULTIPLE:
+            return UINT16(2);
+        case XCP_MODIFY_BITS:
+            return UINT16(6);
+        case XCP_SET_CAL_PAGE:
+            return UINT16(4);
+        case XCP_GET_CAL_PAGE:
+        case XCP_GET_SEGMENT_MODE:
+        case XCP_SET_SEGMENT_MODE:
+            return UINT16(3);
+        case XCP_GET_SEGMENT_INFO:
+        case XCP_GET_PAGE_INFO:
+        case XCP_GET_DAQ_LIST_INFO:
+        case XCP_GET_DAQ_EVENT_INFO:
+        case XCP_CLEAR_DAQ_LIST:
+        case XCP_ALLOC_DAQ:
+        case XCP_GET_DAQ_LIST_MODE:
+        case XCP_START_STOP_DAQ_LIST:
+            return UINT16(4);
+        case XCP_COPY_CAL_PAGE:
+            return UINT16(5);
+        case XCP_SET_DAQ_PTR:
+        case XCP_ALLOC_ODT_ENTRY:
+            return UINT16(6);
+        case XCP_WRITE_DAQ:
+        case XCP_SET_DAQ_LIST_MODE:
+            return UINT16(8);
+        case XCP_ALLOC_ODT:
+            return UINT16(5);
+        case XCP_START_STOP_SYNCH:
+            return UINT16(2);
+        case XCP_PROGRAM_PREPARE:
+            return UINT16(4);
+        case XCP_GET_SECTOR_INFO:
+            return UINT16(3);
+        case XCP_PROGRAM_FORMAT:
+            return UINT16(5);
+        case XCP_TIME_CORRELATION_PROPERTIES:
+            return UINT16(6);
+        case XCP_LEVEL1_COMMAND:
+            return UINT16(2);
+        default:
+            return UINT16(1);
+    }
 }
 
 XCP_STATIC bool Xcp_IsCtoLengthValid(Xcp_PduType const * const pdu) {
-	uint32_t requiredLength = 0;
-	uint8_t  cmd            = 0;
+    uint32_t requiredLength = 0;
+    uint8_t  cmd            = 0;
 
-	if ((pdu == XCP_NULL) || (pdu->data == XCP_NULL) || (pdu->len == UINT16(0)) || (pdu->len > XCP_MAX_CTO)) {
-		return false;
-	}
+    if ((pdu == XCP_NULL) || (pdu->data == XCP_NULL) || (pdu->len == UINT16(0)) || (pdu->len > XCP_MAX_CTO)) {
+        return false;
+    }
 
-	cmd            = pdu->data[0];
-	requiredLength = Xcp_GetCommandMinLength(cmd);
-	if (pdu->len < requiredLength) {
-		return false;
-	}
+    cmd            = pdu->data[0];
+    requiredLength = Xcp_GetCommandMinLength(cmd);
+    if (pdu->len < requiredLength) {
+        return false;
+    }
 
-	switch (cmd) {
-		case XCP_UNLOCK:
-		case XCP_DOWNLOAD:
-		case XCP_DOWNLOAD_NEXT:
-		case XCP_PROGRAM:
-			requiredLength = UINT32(2) + (uint32_t)pdu->data[1];
+    switch (cmd) {
+        case XCP_UNLOCK:
+        case XCP_DOWNLOAD:
+        case XCP_DOWNLOAD_NEXT:
+        case XCP_PROGRAM:
+            requiredLength = UINT32(2) + (uint32_t)pdu->data[1];
 #if XCP_ENABLE_MASTER_BLOCKMODE == XCP_ON
-			if ((cmd == XCP_DOWNLOAD) || (cmd == XCP_DOWNLOAD_NEXT)) {
-				requiredLength = UINT32(2) + XCP_MIN((uint32_t)pdu->data[1], (uint32_t)XCP_DOWNLOAD_PAYLOAD_LENGTH);
-			}
+            if ((cmd == XCP_DOWNLOAD) || (cmd == XCP_DOWNLOAD_NEXT)) {
+                requiredLength = UINT32(2) + XCP_MIN((uint32_t)pdu->data[1], (uint32_t)XCP_DOWNLOAD_PAYLOAD_LENGTH);
+            }
 #endif
-			break;
-		case XCP_SHORT_DOWNLOAD:
-			requiredLength = UINT32(8) + (uint32_t)pdu->data[1];
-			break;
-		case WRITE_DAQ_MULTIPLE:
-			requiredLength = UINT32(2) + ((uint32_t)pdu->data[1] * UINT32(8));
-			if (requiredLength > XCP_MAX_CTO) {
-				return false;
-			}
-			break;
-		case XCP_LEVEL1_COMMAND:
-			if (pdu->data[1] == XCP_SET_DAQ_PACKED_MODE) {
-				requiredLength = UINT32(8);
-			} else if (pdu->data[1] == XCP_GET_DAQ_PACKED_MODE) {
-				requiredLength = UINT32(4);
-			}
-			break;
-		case XCP_TRANSPORT_LAYER_CMD:
-			if (pdu->data[1] == UINT8(0xFA)) {
-				requiredLength = UINT32(5);
-			}
-			break;
-		default:
-			break;
-	}
+            break;
+        case XCP_SHORT_DOWNLOAD:
+            requiredLength = UINT32(8) + (uint32_t)pdu->data[1];
+            break;
+        case WRITE_DAQ_MULTIPLE:
+            requiredLength = UINT32(2) + ((uint32_t)pdu->data[1] * UINT32(8));
+            if (requiredLength > XCP_MAX_CTO) {
+                return false;
+            }
+            break;
+        case XCP_LEVEL1_COMMAND:
+            if (pdu->data[1] == XCP_SET_DAQ_PACKED_MODE) {
+                requiredLength = UINT32(8);
+            } else if (pdu->data[1] == XCP_GET_DAQ_PACKED_MODE) {
+                requiredLength = UINT32(4);
+            }
+            break;
+        case XCP_TRANSPORT_LAYER_CMD:
+            if (pdu->data[1] == UINT8(0xFA)) {
+                requiredLength = UINT32(5);
+            }
+            break;
+        default:
+            break;
+    }
 
-	return pdu->len >= requiredLength;
+    return pdu->len >= requiredLength;
 }
 
 /**
@@ -1281,14 +1281,14 @@ XCP_STATIC bool Xcp_IsCtoLengthValid(Xcp_PduType const * const pdu) {
  */
 
 void Xcp_DispatchCommand(Xcp_PduType const * const pdu) {
-	uint8_t cmd = 0;
+    uint8_t cmd = 0;
 
-	if (!Xcp_IsCtoLengthValid(pdu)) {
-		Xcp_ErrorResponse(UINT8(ERR_CMD_SYNTAX));
-		return;
-	}
+    if (!Xcp_IsCtoLengthValid(pdu)) {
+        Xcp_ErrorResponse(UINT8(ERR_CMD_SYNTAX));
+        return;
+    }
 
-	cmd = pdu->data[0];
+    cmd = pdu->data[0];
     // DBG_TRACE("<- ");
 
     if (Xcp_State.connected == (bool)XCP_TRUE) {

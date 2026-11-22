@@ -3,21 +3,20 @@
 #include "esp_random.h"
 
 #if defined(_WIN32)
-#include <windows.h>
+    #include <windows.h>
 #endif
 
 #include "app_config.h"
 #include "xcp.h"
 
-#define CALRAM_SIZE     (16U * 1024U)
-#define CALRAM_ADDRESS  (0xc000U)
+#define CALRAM_SIZE    (16U * 1024U)
+#define CALRAM_ADDRESS (0xc000U)
 
-static uint8_t calram[CALRAM_SIZE];
-static FlsEmu_PersistentArrayType ECUSim_RamBacking = {XCP_NULL, XCP_NULL, calram, 0};
+static uint8_t                    calram[CALRAM_SIZE];
+static FlsEmu_PersistentArrayType ECUSim_RamBacking = { XCP_NULL, XCP_NULL, calram, 0 };
 
-static FlsEmu_SegmentType ECUSim_Ram = {
-    "ECUSim_RAM", CALRAM_SIZE, 1, 1, CALRAM_SIZE, 1, CALRAM_ADDRESS, &ECUSim_RamBacking, 0, 0, FLSEMU_RAM, 0
-};
+static FlsEmu_SegmentType ECUSim_Ram = { "ECUSim_RAM",   CALRAM_SIZE,        1, 1, CALRAM_SIZE, 1,
+                                         CALRAM_ADDRESS, &ECUSim_RamBacking, 0, 0, FLSEMU_RAM,  0 };
 
 static FlsEmu_SegmentType const *segments[] = {
     &ECUSim_Ram,
@@ -25,63 +24,60 @@ static FlsEmu_SegmentType const *segments[] = {
 
 const FlsEmu_ConfigType FlsEmu_Config = {
     1,
-    (FlsEmu_SegmentType **) segments,
+    (FlsEmu_SegmentType **)segments,
 };
 
 #if XCP_ENABLE_DAQ_COMMANDS == XCP_ON
 XCP_DAQ_BEGIN_EVENTS
+XCP_DAQ_DEFINE_EVENT(
+    "EVT 10ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 10
+),
     XCP_DAQ_DEFINE_EVENT(
-        "EVT 10ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
-        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 10
+        "EVT sporadic", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 0
     ),
     XCP_DAQ_DEFINE_EVENT(
-        "EVT sporadic", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
-        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 0
+        "EVT 100ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST, XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 100
     ),
-    XCP_DAQ_DEFINE_EVENT(
-        "EVT 100ms", XCP_DAQ_EVENT_CHANNEL_TYPE_DAQ | XCP_DAQ_CONSISTENCY_DAQ_LIST,
-        XCP_DAQ_EVENT_CHANNEL_TIME_UNIT_1MS, 100
-    ),
-XCP_DAQ_END_EVENTS
+    XCP_DAQ_END_EVENTS
 #endif
 
 #if defined(_WIN32)
-static Xcp_MemoryMappingResultType ECUSim_PeCoffMemoryMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
-    HMODULE moduleHandle = NULL;
-    uint8_t const *imageBase = XCP_NULL;
-    IMAGE_DOS_HEADER const *dosHeader = XCP_NULL;
-    IMAGE_NT_HEADERS const *ntHeaders = XCP_NULL;
+    static Xcp_MemoryMappingResultType ECUSim_PeCoffMemoryMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
+    HMODULE                 moduleHandle = NULL;
+    uint8_t const          *imageBase    = XCP_NULL;
+    IMAGE_DOS_HEADER const *dosHeader    = XCP_NULL;
+    IMAGE_NT_HEADERS const *ntHeaders    = XCP_NULL;
 
-    uint32_t rva = (uint32_t) src->address;
+    uint32_t rva = (uint32_t)src->address;
 
     if (src->ext != 0U) {
         return XCP_MEMORY_NOT_MAPPED;
     }
 
     if (!GetModuleHandleExA(
-        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-        (LPCSTR) (uintptr_t) &ECUSim_PeCoffMemoryMapper, &moduleHandle
-    )) {
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            (LPCSTR)(uintptr_t)&ECUSim_PeCoffMemoryMapper, &moduleHandle
+        )) {
         return XCP_MEMORY_NOT_MAPPED;
     }
 
-    imageBase = (uint8_t const *) moduleHandle;
-    dosHeader = (IMAGE_DOS_HEADER const *) imageBase;
+    imageBase = (uint8_t const *)moduleHandle;
+    dosHeader = (IMAGE_DOS_HEADER const *)imageBase;
     if ((dosHeader == XCP_NULL) || (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)) {
         return XCP_MEMORY_NOT_MAPPED;
     }
 
-    ntHeaders = (IMAGE_NT_HEADERS const *) (imageBase + dosHeader->e_lfanew);
+    ntHeaders = (IMAGE_NT_HEADERS const *)(imageBase + dosHeader->e_lfanew);
     if ((ntHeaders == XCP_NULL) || (ntHeaders->Signature != IMAGE_NT_SIGNATURE)) {
         return XCP_MEMORY_NOT_MAPPED;
     }
 
-    if (rva >= (uint32_t) ntHeaders->OptionalHeader.SizeOfImage) {
+    if (rva >= (uint32_t)ntHeaders->OptionalHeader.SizeOfImage) {
         return XCP_MEMORY_NOT_MAPPED;
     }
 
-    dst->address = (uintptr_t) (imageBase + rva);
-    dst->ext = src->ext;
+    dst->address = (uintptr_t)(imageBase + rva);
+    dst->ext     = src->ext;
 
     return XCP_MEMORY_MAPPED;
 }

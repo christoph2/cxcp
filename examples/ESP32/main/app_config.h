@@ -7,7 +7,7 @@ extern "C" {
 
 #include "flsemu.h"
 
-extern const FlsEmu_ConfigType FlsEmu_Config;
+    extern const FlsEmu_ConfigType FlsEmu_Config;
 
 #ifdef __cplusplus
 }

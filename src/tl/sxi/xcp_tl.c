@@ -45,8 +45,8 @@
         #define XCP_SXI_RX_PADDING_SIZE (0)
     #endif
 
-    #define XCP_SXI_RX_BUFFER_SIZE                                                                                                  \
-        (XCP_MAX_CTO + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE +     \
+    #define XCP_SXI_RX_BUFFER_SIZE                                                                                                 \
+        (XCP_MAX_CTO + XCP_TRANSPORT_LAYER_LENGTH_SIZE + XCP_TRANSPORT_LAYER_COUNTER_SIZE + XCP_TRANSPORT_LAYER_CHECKSUM_SIZE +    \
          XCP_SXI_RX_PADDING_SIZE)
 
     #if (XCP_SXI_RX_BUFFER_SIZE > 0xffff)
@@ -228,7 +228,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_BYTE)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
-            XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
+            XcpTl_Receiver.Dlc = XcpTl_Receiver.Buffer[0];
             if ((XcpTl_Receiver.Dlc == 0u) || (XcpTl_Receiver.Dlc > XCP_MAX_CTO)) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
@@ -329,7 +329,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
             /* DLC and CTR/FILL received */
-            XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
+            XcpTl_Receiver.Dlc = XcpTl_Receiver.Buffer[0];
             if ((XcpTl_Receiver.Dlc == 0u) || (XcpTl_Receiver.Dlc > XCP_MAX_CTO)) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
