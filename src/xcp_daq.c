@@ -326,7 +326,7 @@ XcpDaq_ODTEntryType XcpDaq_GetOdtEntryValues(
     XcpDaq_ListIntegerType daqListNumber, XcpDaq_ODTIntegerType odtNumber, XcpDaq_ODTEntryIntegerType odtEntryNumber
 ) {
     XcpDaq_ODTEntryType *entry  = XcpDaq_GetOdtEntry(daqListNumber, odtNumber, odtEntryNumber);
-    XcpDaq_ODTEntryType  result = {};
+    XcpDaq_ODTEntryType  result = { 0 };
 #if XCP_DAQ_ENABLE_PREDEFINED_LISTS == XCP_ON
     uint32_t index = 0UL;
 #endif /* XCP_DAQ_ENABLE_PREDEFINED_LISTS */
@@ -1308,7 +1308,7 @@ bool XcpDaq_QueueDequeue(uint16_t *len, uint8_t *data) {
     #endif
     XcpUtl_MemCopy(data, XcpDaq_QueueDTOs[XcpDaq_Queue.tail].data, dto_len);
     XcpDaq_Queue.tail = (XcpDaq_Queue.tail + UINT8(1)) % UINT8(XCP_DAQ_QUEUE_SIZE);
-    return (bool)XcpDaq_QueueEmpty();
+    return (bool)XCP_TRUE;
 }
 
 // #endif /* XCP_DAQ_ENABLE_DYNAMIC_LISTS */
