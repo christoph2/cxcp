@@ -81,6 +81,11 @@ static void Xcp_ChecksumSendAddressError(void) {
 static bool Xcp_ChecksumReadChunk(uint8_t *dst, uint32_t length) {
     Xcp_MtaType mapped = { 0 };
 
+#if XCP_ENABLE_CHECK_MEMORY_ACCESS == XCP_ON
+    if (!Xcp_HookFunction_CheckMemoryAccess(Xcp_ChecksumJob.mta, length, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE)) {
+        return XCP_FALSE;
+    }
+#endif
     if (!Xcp_MapMemory(&mapped, &Xcp_ChecksumJob.mta)) {
         return XCP_FALSE;
     }
