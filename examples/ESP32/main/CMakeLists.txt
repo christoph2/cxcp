@@ -1,0 +1,21 @@
+idf_component_register(
+        SRCS
+        "udp_server.c"
+        "app_config.c"
+        "flsemu_backend.c"
+        "../../../src/xcp.c"
+        "../../../src/xcp_checksum.c"
+        "../../../src/xcp_daq.c"
+        "../../../src/xcp_util.c"
+        "../../../flsemu/common.c"
+        "../../../flsemu/flsemu_xcp.c"
+        "../../../src/tl/eth/common.c"
+        "../../../src/tl/xcp_tl_timeout.c"
+        "../../../src/hw/esp32/hw.cpp"
+        "../../../src/tl/eth/esp32.c"
+
+        INCLUDE_DIRS
+        "."
+        "../../../inc"
+        "../../../flsemu"
+)
