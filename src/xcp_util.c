@@ -24,10 +24,7 @@
  */
 
 /*!!! START-INCLUDE-SECTION !!!*/
-#include "xcp_util.h"
-
-#include "xcp_macros.h"
-
+#include "xcp.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 void XcpUtl_MemCopy(/*@out@*/ void *dst, /*@in@*/ void const *src, uint32_t len) {
