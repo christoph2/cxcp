@@ -284,6 +284,7 @@ static void get_interface_mac_address(int if_index, XcpTl_MacAddress *mac_addres
     char         ifname[IF_NAMESIZE];
 
     memset(mac_address, 0, sizeof(XcpTl_MacAddress));
+    memset(&ifr, 0, sizeof(ifr));
 
     if (if_indextoname(if_index, ifname) == NULL) {
         return;
@@ -311,6 +312,7 @@ bool receive_message(int socket, char *buffer, size_t buffer_size, uint32_t *byt
     ssize_t            n;
 
     *bytes_received = 0UL;
+    memset(mac_address, 0, sizeof(*mac_address));
 
     memset(&msg, 0, sizeof(msg));
     iov[0].iov_base = buffer;
