@@ -142,6 +142,14 @@ used by the core and adapters, for example ``XCP_ENTER_CRITICAL()`` and
 ``XCP_DAQ_ENTER_CRITICAL()``. Map these macros to synchronization appropriate
 for the target's foreground, interrupt, and transport execution model.
 
+Ethernet and Bluetooth builds require both the address mapper and memory-access
+check to be enabled, and require resource protection for each enabled CAL, DAQ,
+and PGM command group. These compile-time requirements do not make permissive
+hooks safe: the application must reject unmapped addresses and any access whose
+entire range is not allowed. The ESP32 example disables upload, download, and
+programming commands by default; enable them only after defining and reviewing
+an appropriate access policy.
+
 Time correlation and event APIs
 -------------------------------
 
