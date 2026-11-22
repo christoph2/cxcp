@@ -908,6 +908,11 @@ XCP_STATIC bool Xcp_CalculateChecksumFromMta(Xcp_MtaType mta, uint32_t length, X
         Xcp_MtaType mapped        = { 0 };
         uint32_t    currentLength = XCP_MIN(length, UINT32(XCP_CHECKSUM_CHUNK_SIZE));
 
+#if XCP_ENABLE_CHECK_MEMORY_ACCESS == XCP_ON
+        if (!Xcp_HookFunction_CheckMemoryAccess(mta, currentLength, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE)) {
+            return XCP_FALSE;
+        }
+#endif
         if (!Xcp_MapMemory(&mapped, &mta)) {
             return XCP_FALSE;
         }
@@ -1219,7 +1224,7 @@ XCP_STATIC bool Xcp_IsCtoLengthValid(Xcp_PduType const * const pdu) {
 	uint32_t requiredLength = 0;
 	uint8_t  cmd            = 0;
 
-	if ((pdu == XCP_NULL) || (pdu->data == XCP_NULL) || (pdu->len == UINT16(0))) {
+	if ((pdu == XCP_NULL) || (pdu->data == XCP_NULL) || (pdu->len == UINT16(0)) || (pdu->len > XCP_MAX_CTO)) {
 		return false;
 	}
 
@@ -1247,7 +1252,7 @@ XCP_STATIC bool Xcp_IsCtoLengthValid(Xcp_PduType const * const pdu) {
 		case WRITE_DAQ_MULTIPLE:
 			requiredLength = UINT32(2) + ((uint32_t)pdu->data[1] * UINT32(8));
 			if (requiredLength > XCP_MAX_CTO) {
-				return true;
+				return false;
 			}
 			break;
 		case XCP_LEVEL1_COMMAND:
@@ -1755,19 +1760,21 @@ void Xcp_Upload_Res(Xcp_PduType const * const pdu) {
 XCP_STATIC
 
 void Xcp_ShortUpload_Res(Xcp_PduType const * const pdu) {
-    uint8_t len = Xcp_GetByte(pdu, UINT8(1));
+    uint8_t     len = Xcp_GetByte(pdu, UINT8(1));
+    Xcp_MtaType mta = { 0 };
 
     DBG_TRACE("SHORT-UPLOAD [len: %u]\n\r", len);
 
     XCP_ASSERT_PGM_IDLE();
-    XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, len, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE);
     if (len > UINT8(XCP_MAX_CTO - 1)) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
     }
 
-    Xcp_State.mta.ext     = Xcp_GetByte(pdu, UINT8(3));
-    Xcp_State.mta.address = Xcp_GetDWord(pdu, UINT8(4));
+    mta.ext     = Xcp_GetByte(pdu, UINT8(3));
+    mta.address = Xcp_GetDWord(pdu, UINT8(4));
+    XCP_CHECK_MEMORY_ACCESS(mta, len, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE);
+    Xcp_State.mta = mta;
     Xcp_Upload(len);
 }
 
@@ -1982,20 +1989,26 @@ void Xcp_ModifyBits_Res(Xcp_PduType const * const pdu) {
     uint16_t    andMask    = Xcp_GetWord(pdu, UINT8(2));
     uint16_t    xorMask    = Xcp_GetWord(pdu, UINT8(4));
     Xcp_MtaType mappedMta  = { 0 };
-    uint32_t    value      = 0UL;
+    uint16_t    value      = 0u;
+    uint16_t    clearMask  = 0u;
 
     DBG_TRACE(
         "MODIFY-BITS [shiftValue: 0x%02X andMask: 0x%04x ext: xorMask: "
         "0x%04x]\n\r",
         shiftValue, andMask, xorMask
     );
+    if (shiftValue >= (uint8_t)(sizeof(value) * 8u)) {
+        Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
+        return;
+    }
     XCP_CHECK_MEMORY_ACCESS(Xcp_State.mta, 2, XCP_MEM_ACCESS_WRITE, (bool)XCP_FALSE);
     if (!Xcp_MapMemory(&mappedMta, &Xcp_State.mta)) {
         Xcp_ErrorResponse(UINT8(ERR_OUT_OF_RANGE));
         return;
     }
     XcpUtl_MemCopy(&value, (void const *)mappedMta.address, sizeof(value));
-    value = (value & ((~((uint32_t)(((uint16_t)~andMask) << shiftValue))) ^ ((uint32_t)(xorMask << shiftValue))));
+    clearMask = (uint16_t)((uint32_t)(uint16_t)~andMask << shiftValue);
+    value     = (uint16_t)((value & (uint16_t)~clearMask) ^ (uint16_t)((uint32_t)xorMask << shiftValue));
     XcpUtl_MemCopy((void *)mappedMta.address, &value, sizeof(value));
 
     Xcp_PositiveResponse();
