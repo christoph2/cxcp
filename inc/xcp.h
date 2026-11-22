@@ -1560,7 +1560,11 @@ extern "C" {
 
     bool Xcp_HookFunction_GetSeed(uint8_t resource, Xcp_1DArrayType *result);
 
+    bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const *key);
+
     Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src);
+
+    bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming);
 
     /*
      **  Hardware dependent stuff.
