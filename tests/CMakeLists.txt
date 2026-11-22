@@ -71,7 +71,6 @@ pybind11_add_module(cxcp
     ../src/xcp_util.c
     ../flsemu/common.c
     ../flsemu/flsemu_xcp.c
-    cmake_test_hooks.c
     fls_mocks.c
     xcp_mocks.c
 )

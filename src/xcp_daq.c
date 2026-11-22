@@ -662,6 +662,13 @@ XCP_STATIC bool XcpDaq_CopyMemoryFromMta(void *dst, XcpDaq_MtaType const *src, u
     logicalSrc.ext = UINT8(0);
 #endif /* XCP_DAQ_ENABLE_ADDR_EXT */
 
+#if XCP_ENABLE_CHECK_MEMORY_ACCESS == XCP_ON
+    if (!Xcp_HookFunction_CheckMemoryAccess(logicalSrc, len, XCP_MEM_ACCESS_READ, (bool)XCP_FALSE)) {
+        XcpUtl_MemSet(dst, 0, len);
+        return XCP_FALSE;
+    }
+#endif
+
     if (Xcp_MapMemory(&mappedSrc, &logicalSrc)) {
         XcpUtl_MemCopy(dst, (void const *)mappedSrc.address, len);
         return XCP_TRUE;
