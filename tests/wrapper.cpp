@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -13,8 +14,8 @@
 extern "C" {
 #include "xcp.h"
 
-    char*    data_start();
-    char*    data_end();
+    char*    cxcp_test_data_start();
+    char*    cxcp_test_data_end();
     uint16_t XcpTl_GetLastSend(uint8_t* buf, uint16_t max_len);
     void     XcpTl_ResetLastSend(void);
 }
@@ -135,6 +136,13 @@ void xcp_set_mta_ptr(std::size_t address, std::uint8_t ext) {
     Xcp_SetMta(mta);
 }
 
+auto calculate_checksum(py::bytes data, Xcp_ChecksumType initial, bool first) -> Xcp_ChecksumType {
+    const std::string bytes = data;
+    return Xcp_CalculateChecksum(
+        reinterpret_cast<uint8_t const*>(bytes.data()), static_cast<uint32_t>(bytes.size()), initial, first
+    );
+}
+
 auto dispatch_command(py::bytes request) -> std::tuple<std::uint16_t, std::uint16_t, py::bytes> {
     const std::string         request_bytes = request;
     std::vector<std::uint8_t> request_vec(request_bytes.begin(), request_bytes.end());
@@ -196,8 +204,10 @@ auto get_daq_queue_var() -> QueueInfo {
 
 struct MemoryInfo {
     explicit MemoryInfo() {
-        size = data_start() - data_end() - 4;
-        printf("Memory: %u bytes\n", size);
+        const auto start = reinterpret_cast<std::uintptr_t>(cxcp_test_data_start());
+        const auto end   = reinterpret_cast<std::uintptr_t>(cxcp_test_data_end());
+        size             = (end >= start) ? static_cast<std::uint32_t>(end - start) : 0U;
+        std::fill_n(reinterpret_cast<uint8_t*>(start), size, UINT8(0));
     }
 
     MemoryInfo(const MemoryInfo&) = default;
@@ -208,7 +218,7 @@ struct MemoryInfo {
     }
 
     std::size_t absolute_address(std::size_t offset) const noexcept {
-        return reinterpret_cast<std::size_t>(data_start()) + offset - 4;
+        return reinterpret_cast<std::size_t>(cxcp_test_data_start()) + offset;
     }
 
     std::uint8_t as_uint8(std::size_t offset) const noexcept {
@@ -243,7 +253,7 @@ PYBIND11_MODULE(cxcp, m) {
     m.def("xcp_set_mta", &xcp_set_mta_ptr, py::arg("address"), py::arg("ext") = 0);
 
     m.def("Xcp_GetConnectionState", &Xcp_GetConnectionState);
-    m.def("Xcp_CalculateChecksum", &Xcp_CalculateChecksum);  // , py::return_value_policy::move
+    m.def("Xcp_CalculateChecksum", &calculate_checksum, py::arg("data"), py::arg("initial") = 0, py::arg("first") = true);
     m.def("XcpDaq_GetDynamicEntity", &XcpDaq_GetDynamicEntity);
     m.def("get_daq_counts", &get_daq_counts);
     m.def("xcpdaq_total_dynamic_entity_count", &XcpDaq_TotalDynamicEntityCount);

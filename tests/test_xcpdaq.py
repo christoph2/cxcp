@@ -225,6 +225,7 @@ def test_daq_queue_full(xcp):
     assert daq_enqueue(b"test") == False
 
 def test_daq_queue_push_pop_seq(xcp):
+    xcpdaq_queue_init()
     for idx in range(4):
         data = str(chr(ord('0') + idx) * 8)
         daq_enqueue(data)

@@ -17,6 +17,7 @@ uint8_t  sq0_wave;
 uint8_t  sq1_wave;
 float    sine_wave;
 uint32_t end_marker;
+static uint8_t cxcp_test_memory[64];
 
 static uint8_t  last_send[256];
 static uint16_t last_send_len;
@@ -70,7 +71,7 @@ void XcpTl_Init(void) {
 
 void XcpHw_Init(void) {
     printf("XcpHw_Init\n");
-    printf("start_marker: %p\n", &start_marker);
+    printf("start_marker: %p\n", (void *)&start_marker);
     voltage1 = 0xaaaaaaaa;
     voltage2 = 0xbbbbbbbb;
     voltage3 = 0xccccccc;
@@ -142,10 +143,10 @@ void XcpTl_Send(uint8_t const *buf, uint16_t len) {
 void XcpTl_TransportLayerCmd_Res(Xcp_PduType const * const pdu) {
 }
 
-char *data_start() {
-    return (char *)&start_marker;
+char *cxcp_test_data_start() {
+    return (char *)cxcp_test_memory;
 }
 
-char *data_end() {
-    return (char *)&end_marker;
+char *cxcp_test_data_end() {
+    return (char *)(cxcp_test_memory + sizeof(cxcp_test_memory));
 }

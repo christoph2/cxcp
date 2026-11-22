@@ -1,53 +1,23 @@
+from binascii import crc_hqx
 
-import ctypes
-from pathlib import Path
-
-import pytest
-
-DLL_NAME = "./test_cs.so"
-
-if not Path(DLL_NAME).is_file():
-    pytest.skip(f"Missing shared library {DLL_NAME}", allow_module_level=True)
-
-dll = ctypes.CDLL(DLL_NAME)
-calc = dll.Xcp_CalculateChecksum
-
-TEST = [
-    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-    0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
-    0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
-    0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF, 0x00,
-]
+from cxcp import Xcp_CalculateChecksum
 
 
-def calculate_checksum(data, initial = 0, first = 1):
-    arr = ctypes.c_char_p(bytes(data))
-    return calc(arr, len(data), initial, first)
-
-print(hex(calculate_checksum(TEST)))
-
-"""
-#if (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_16_CITT)
-typedef uint16_t Xcp_ChecksumType;
-#elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_CRC_32
-typedef uint32_t Xcp_ChecksumType;
-
-#elif XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_11
-
-typedef uint8_t Xcp_ChecksumType;
-
-#elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_12) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_22)
-
-typedef uint16_t Xcp_ChecksumType;
-
-#elif (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_14) || (XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_24) || \
-
-(XCP_CHECKSUM_METHOD == XCP_CHECKSUM_METHOD_XCP_ADD_44)
-
-typedef uint32_t Xcp_ChecksumType;
-#endif // XCP_CHECKSUM_METHOD
+TEST_DATA = bytes(
+    [
+        *range(1, 17),
+        *range(0xF1, 0x100),
+        0,
+    ]
+)
 
 
-Xcp_ChecksumType Xcp_CalculateChecksum(uint8_t const * ptr, uint32_t length, Xcp_ChecksumType startValue, bool isFirstCall);
+def test_checksum_matches_crc16_citt():
+    assert Xcp_CalculateChecksum(TEST_DATA) == crc_hqx(TEST_DATA, 0xFFFF)
 
-"""
+
+def test_checksum_can_be_calculated_in_chunks():
+    split = len(TEST_DATA) // 2
+    first = Xcp_CalculateChecksum(TEST_DATA[:split])
+
+    assert Xcp_CalculateChecksum(TEST_DATA[split:], first, False) == crc_hqx(TEST_DATA, 0xFFFF)
