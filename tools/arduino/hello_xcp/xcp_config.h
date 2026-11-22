@@ -34,7 +34,9 @@
 /*
 **  General Options.
 */
-    #define TP_CAN
+    //#define TP_CAN
+
+    #define TP_SXI
     // #define TP_ETHER
     //  #define TP_BLUETOOTH
     #if !defined(TP_CAN) && !defined(TP_ETHER) && !defined(TP_BLUETOOTH) && !defined(TP_SXI)
