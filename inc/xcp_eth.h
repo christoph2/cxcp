@@ -123,6 +123,8 @@ uint8_t XcpTl_BuildStatus(bool extended);
 
 void XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *payload, size_t len);
 
-bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t len, const XcpTl_MacAddress *mac_address);
+bool XcpTl_HandleTransportMulticastPacket(
+    const uint8_t *buf, size_t len, const XcpTl_MacAddress *mac_address, const uint8_t source_ipv4[4]
+);
 
 #endif /* __XCP_ETH_H */

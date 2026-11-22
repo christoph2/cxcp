@@ -75,6 +75,27 @@
     #endif
     #define XCP_ON_BTH (128) /* XCP on Bluetooth -- non-standard. */
 
+    #if ((XCP_TRANSPORT_LAYER == XCP_ON_ETHERNET) || (XCP_TRANSPORT_LAYER == XCP_ON_BTH)) && !defined(XCP_BUILD_TESTS)
+        #if XCP_ENABLE_ADDRESS_MAPPER != XCP_ON
+            #error Network transports require XCP_ENABLE_ADDRESS_MAPPER and a restrictive address-mapper hook.
+        #endif
+        #if XCP_ENABLE_CHECK_MEMORY_ACCESS != XCP_ON
+            #error Network transports require XCP_ENABLE_CHECK_MEMORY_ACCESS and a restrictive access-check hook.
+        #endif
+        #if (XCP_ENABLE_CAL_COMMANDS == XCP_ON) && (XCP_PROTECT_CAL != XCP_ON)
+            #error Network transports require calibration-resource protection.
+        #endif
+        #if (XCP_ENABLE_PAG_COMMANDS == XCP_ON) && (XCP_PROTECT_PAG != XCP_ON)
+            #error Network transports require paging-resource protection.
+        #endif
+        #if (XCP_ENABLE_DAQ_COMMANDS == XCP_ON) && (XCP_PROTECT_DAQ != XCP_ON)
+            #error Network transports require DAQ-resource protection.
+        #endif
+        #if (XCP_ENABLE_PGM_COMMANDS == XCP_ON) && (XCP_PROTECT_PGM != XCP_ON)
+            #error Network transports require programming-resource protection.
+        #endif
+    #endif
+
     #define XCP_DAQ_CONFIG_TYPE_STATIC  (0)
     #define XCP_DAQ_CONFIG_TYPE_DYNAMIC (1)
     #define XCP_DAQ_CONFIG_TYPE_NONE    (3)
