@@ -452,6 +452,7 @@ static void *XcpTl_MulticastThread(void *param) {
             struct sockaddr_storage peer_addr;
             socklen_t               peer_len = (socklen_t)sizeof(peer_addr);
             ssize_t                 n;
+            uint8_t                 source_ipv4[4] = { 0 };
 
             n = recvfrom(XcpTl_Connection.discoverySocket, buffer, sizeof(buffer), 0, (struct sockaddr *)&peer_addr, &peer_len);
             if (n > 0) {
@@ -469,6 +470,10 @@ static void *XcpTl_MulticastThread(void *param) {
                 }
 
                 bytes_received = (uint32_t)n;
+                if (((struct sockaddr *)&peer_addr)->sa_family == AF_INET) {
+                    const struct sockaddr_in *peer4 = (const struct sockaddr_in *)&peer_addr;
+                    memcpy(source_ipv4, &peer4->sin_addr.s_addr, sizeof(source_ipv4));
+                }
 
                 if (!XcpTl_FirstDiscoveryCmdLogged && (n > 5) && (((uint8_t)buffer[4]) == (uint8_t)0xF2)) {
                     XcpTl_FirstDiscoveryCmdLogged = true;
@@ -477,7 +482,9 @@ static void *XcpTl_MulticastThread(void *param) {
 
                 XcpUtl_MemCopy(&mac_address, &XcpTl_LocalMacAddress, sizeof(mac_address));
 
-                (void)XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
+                (void)XcpTl_HandleTransportMulticastPacket(
+                    (const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4
+                );
             }
         }
         if ((XcpTl_Connection.multicastSocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
@@ -485,12 +492,19 @@ static void *XcpTl_MulticastThread(void *param) {
             struct sockaddr_storage peer_addr;
             socklen_t               peer_len = (socklen_t)sizeof(peer_addr);
             ssize_t                 n;
+            uint8_t                 source_ipv4[4] = { 0 };
 
             n = recvfrom(XcpTl_Connection.multicastSocket, buffer, sizeof(buffer), 0, (struct sockaddr *)&peer_addr, &peer_len);
             if (n > 0) {
                 bytes_received = (uint32_t)n;
+                if (((struct sockaddr *)&peer_addr)->sa_family == AF_INET) {
+                    const struct sockaddr_in *peer4 = (const struct sockaddr_in *)&peer_addr;
+                    memcpy(source_ipv4, &peer4->sin_addr.s_addr, sizeof(source_ipv4));
+                }
                 XcpUtl_MemCopy(&mac_address, &XcpTl_LocalMacAddress, sizeof(mac_address));
-                (void)XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
+                (void)XcpTl_HandleTransportMulticastPacket(
+                    (const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4
+                );
             }
         }
     }

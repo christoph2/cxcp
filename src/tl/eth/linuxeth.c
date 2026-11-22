@@ -32,7 +32,9 @@
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #include <net/if.h>
+#include <poll.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
 
@@ -41,6 +43,15 @@
 #endif /* XCP_ENABLE_TIME_CORRELATION */
 
 static void *XcpTl_MulticastThread(void *param);
+
+#if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
+static pthread_t     XcpTl_MulticastThreadHandle;
+static int           XcpTl_MulticastWakePipe[2] = { -1, -1 };
+static bool          XcpTl_MulticastThreadStarted;
+static atomic_bool   XcpTl_MulticastStopRequested = ATOMIC_VAR_INIT(false);
+#endif
+static pthread_mutex_t XcpTl_MulticastSocketMutex = PTHREAD_MUTEX_INITIALIZER;
+static bool            XcpTl_Initialized;
 
 socklen_t addrSize = sizeof(struct sockaddr_storage);
 
@@ -91,7 +102,18 @@ void XcpTl_Init(void) {
     int              sock = 0;
     int              ret  = 0;
 
+    if (XcpTl_Initialized) {
+        XcpTl_DeInit();
+        if (XcpTl_Initialized) {
+            return;
+        }
+    }
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
+    XcpTl_Connection.boundSocket      = -1;
+    XcpTl_Connection.connectedSocket  = -1;
+    XcpTl_Connection.discoverySocket  = -1;
+    XcpTl_Connection.multicastSocket  = -1;
+    XcpTl_Initialized                 = true;
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     (void)snprintf(port, sizeof(port), "%d", Xcp_Options.port);
@@ -235,14 +257,67 @@ void XcpTl_Init(void) {
 
     if ((XcpTl_Connection.discoverySocket >= 0) || (XcpTl_Connection.multicastSocket >= 0)) {
 #if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
-        pthread_t mcast_thread;
-        pthread_create(&mcast_thread, NULL, XcpTl_MulticastThread, NULL);
-        pthread_detach(mcast_thread);
+        int thread_error = 0;
+        if (pipe(XcpTl_MulticastWakePipe) != 0) {
+            XcpHw_ErrorMsg("XcpTl_Init:pipe(multicast wakeup)", errno);
+            if (XcpTl_Connection.discoverySocket >= 0) {
+                close(XcpTl_Connection.discoverySocket);
+                XcpTl_Connection.discoverySocket = -1;
+            }
+            if (XcpTl_Connection.multicastSocket >= 0) {
+                close(XcpTl_Connection.multicastSocket);
+                XcpTl_Connection.multicastSocket = -1;
+            }
+        } else {
+            atomic_store(&XcpTl_MulticastStopRequested, false);
+            thread_error = pthread_create(&XcpTl_MulticastThreadHandle, NULL, XcpTl_MulticastThread, NULL);
+            if (thread_error != 0) {
+                XcpHw_ErrorMsg("XcpTl_Init:pthread_create(multicast)", thread_error);
+                close(XcpTl_MulticastWakePipe[0]);
+                close(XcpTl_MulticastWakePipe[1]);
+                XcpTl_MulticastWakePipe[0] = -1;
+                XcpTl_MulticastWakePipe[1] = -1;
+                if (XcpTl_Connection.discoverySocket >= 0) {
+                    close(XcpTl_Connection.discoverySocket);
+                    XcpTl_Connection.discoverySocket = -1;
+                }
+                if (XcpTl_Connection.multicastSocket >= 0) {
+                    close(XcpTl_Connection.multicastSocket);
+                    XcpTl_Connection.multicastSocket = -1;
+                }
+            } else {
+                XcpTl_MulticastThreadStarted = true;
+            }
+        }
 #endif
     }
 }
 
 void XcpTl_DeInit(void) {
+    if (!XcpTl_Initialized) {
+        return;
+    }
+#if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
+    if (XcpTl_MulticastThreadStarted) {
+        const uint8_t wake = 1u;
+        int           thread_error;
+
+        atomic_store(&XcpTl_MulticastStopRequested, true);
+        if ((XcpTl_MulticastWakePipe[1] >= 0) && (write(XcpTl_MulticastWakePipe[1], &wake, sizeof(wake)) < 0)) {
+            XcpHw_ErrorMsg("XcpTl_DeInit:write(multicast wakeup)", errno);
+            close(XcpTl_MulticastWakePipe[1]);
+            XcpTl_MulticastWakePipe[1] = -1;
+        }
+        thread_error = pthread_join(XcpTl_MulticastThreadHandle, NULL);
+        if (thread_error != 0) {
+            XcpHw_ErrorMsg("XcpTl_DeInit:pthread_join(multicast)", thread_error);
+            return;
+        }
+        XcpTl_MulticastThreadStarted = false;
+        atomic_store(&XcpTl_MulticastStopRequested, false);
+    }
+#endif
+    pthread_mutex_lock(&XcpTl_MulticastSocketMutex);
     if (XcpTl_Connection.multicastSocket >= 0) {
         close(XcpTl_Connection.multicastSocket);
         XcpTl_Connection.multicastSocket = -1;
@@ -255,6 +330,18 @@ void XcpTl_DeInit(void) {
         close(XcpTl_Connection.boundSocket);
         XcpTl_Connection.boundSocket = -1;
     }
+#if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
+    if (XcpTl_MulticastWakePipe[0] >= 0) {
+        close(XcpTl_MulticastWakePipe[0]);
+        XcpTl_MulticastWakePipe[0] = -1;
+    }
+    if (XcpTl_MulticastWakePipe[1] >= 0) {
+        close(XcpTl_MulticastWakePipe[1]);
+        XcpTl_MulticastWakePipe[1] = -1;
+    }
+#endif
+    XcpTl_Initialized = false;
+    pthread_mutex_unlock(&XcpTl_MulticastSocketMutex);
 }
 
 void XcpTl_Send(uint8_t const *buf, uint16_t len) {
@@ -303,7 +390,10 @@ static void get_interface_mac_address(int if_index, XcpTl_MacAddress *mac_addres
     close(sock);
 }
 
-bool receive_message(int socket, char *buffer, size_t buffer_size, uint32_t *bytes_received, XcpTl_MacAddress *mac_address) {
+bool receive_message(
+    int socket, char *buffer, size_t buffer_size, uint32_t *bytes_received, XcpTl_MacAddress *mac_address,
+    uint8_t source_ipv4[4]
+) {
     struct msghdr      msg;
     struct iovec       iov[1];
     struct sockaddr_in peer_addr;
@@ -313,6 +403,7 @@ bool receive_message(int socket, char *buffer, size_t buffer_size, uint32_t *byt
 
     *bytes_received = 0UL;
     memset(mac_address, 0, sizeof(*mac_address));
+    memset(source_ipv4, 0, 4u);
 
     memset(&msg, 0, sizeof(msg));
     iov[0].iov_base = buffer;
@@ -330,6 +421,9 @@ bool receive_message(int socket, char *buffer, size_t buffer_size, uint32_t *byt
     if (n > 0) {
         *bytes_received = (uint32_t)n;
         result          = true;
+        if (peer_addr.sin_family == AF_INET) {
+            memcpy(source_ipv4, &peer_addr.sin_addr.s_addr, 4u);
+        }
         for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
             if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_PKTINFO) {
                 struct in_pktinfo *pi = (struct in_pktinfo *)CMSG_DATA(cmsg);
@@ -353,43 +447,85 @@ bool receive_message(int socket, char *buffer, size_t buffer_size, uint32_t *byt
 static void *XcpTl_MulticastThread(void *param) {
     char             buffer[1024];
     XcpTl_MacAddress mac_address;
+    uint8_t          source_ipv4[4];
     uint32_t         bytes_received = 0UL;
+    struct pollfd    fds[3];
+    nfds_t           fds_count       = 1u;
+    nfds_t           discovery_index = 0u;
+    nfds_t           multicast_index = 0u;
+    bool             has_discovery   = false;
+    bool             has_multicast   = false;
 
-    for (;;) {
-        fd_set rfds;
-        int    max_fd = -1;
-        int    ready;
+    fds[0].fd      = XcpTl_MulticastWakePipe[0];
+    fds[0].events  = POLLIN;
+    fds[0].revents = 0;
+    if (XcpTl_Connection.discoverySocket >= 0) {
+        discovery_index = fds_count;
+        fds[fds_count].fd      = XcpTl_Connection.discoverySocket;
+        fds[fds_count].events  = POLLIN;
+        fds[fds_count].revents = 0;
+        ++fds_count;
+        has_discovery = true;
+    }
+    if (XcpTl_Connection.multicastSocket >= 0) {
+        multicast_index = fds_count;
+        fds[fds_count].fd      = XcpTl_Connection.multicastSocket;
+        fds[fds_count].events  = POLLIN;
+        fds[fds_count].revents = 0;
+        ++fds_count;
+        has_multicast = true;
+    }
 
-        FD_ZERO(&rfds);
-        if (XcpTl_Connection.discoverySocket >= 0) {
-            FD_SET(XcpTl_Connection.discoverySocket, &rfds);
-            if (XcpTl_Connection.discoverySocket > max_fd) {
-                max_fd = XcpTl_Connection.discoverySocket;
+    while (!atomic_load(&XcpTl_MulticastStopRequested)) {
+        int ready;
+        nfds_t idx;
+
+        for (idx = 0u; idx < fds_count; ++idx) {
+            fds[idx].revents = 0;
+        }
+        ready = poll(fds, fds_count, -1);
+        if (ready < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            XcpHw_ErrorMsg("XcpTl_MulticastThread:poll()", errno);
+            break;
+        }
+        if ((fds[0].revents & POLLIN) != 0) {
+            uint8_t wake_buffer[16];
+            ssize_t wake_bytes = read(fds[0].fd, wake_buffer, sizeof(wake_buffer));
+            if ((wake_bytes < 0) && (errno != EINTR)) {
+                XcpHw_ErrorMsg("XcpTl_MulticastThread:read(wakeup)", errno);
+                break;
+            }
+            if (atomic_load(&XcpTl_MulticastStopRequested)) {
+                break;
             }
         }
-        if (XcpTl_Connection.multicastSocket >= 0) {
-            FD_SET(XcpTl_Connection.multicastSocket, &rfds);
-            if (XcpTl_Connection.multicastSocket > max_fd) {
-                max_fd = XcpTl_Connection.multicastSocket;
-            }
+        if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+            break;
         }
-        if ((XcpTl_Connection.discoverySocket < 0) && (XcpTl_Connection.multicastSocket < 0)) {
+        if (ready == 0) {
+            continue;
+        }
+        if ((has_discovery && ((fds[discovery_index].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)) ||
+            (has_multicast && ((fds[multicast_index].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0))) {
+            XcpHw_ErrorMsg("XcpTl_MulticastThread:poll socket error", EIO);
             break;
         }
 
-        ready = select(max_fd + 1, &rfds, NULL, NULL, NULL);
-        if (ready <= 0) {
-            continue;
-        }
-
-        if ((XcpTl_Connection.discoverySocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.discoverySocket, &rfds)) {
-            if (receive_message(XcpTl_Connection.discoverySocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
-                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
+        if (has_discovery && ((fds[discovery_index].revents & POLLIN) != 0)) {
+            if (receive_message(
+                    XcpTl_Connection.discoverySocket, buffer, sizeof(buffer), &bytes_received, &mac_address, source_ipv4
+                )) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4);
             }
         }
-        if ((XcpTl_Connection.multicastSocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
-            if (receive_message(XcpTl_Connection.multicastSocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
-                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
+        if (has_multicast && ((fds[multicast_index].revents & POLLIN) != 0)) {
+            if (receive_message(
+                    XcpTl_Connection.multicastSocket, buffer, sizeof(buffer), &bytes_received, &mac_address, source_ipv4
+                )) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4);
             }
         }
     }
@@ -417,16 +553,22 @@ void XcpTl_UpdateMulticastGroup(uint16_t cluster_id) {
     unsigned char  mcast_upper = (unsigned char)((cluster_id >> 8u) & 0xFFu);
     unsigned char  mcast_lower = (unsigned char)(cluster_id & 0xFFu);
 
+    pthread_mutex_lock(&XcpTl_MulticastSocketMutex);
     if (XcpTl_Connection.multicastSocket < 0) {
+        pthread_mutex_unlock(&XcpTl_MulticastSocketMutex);
         return;
     }
     snprintf(mcast_ip, sizeof(mcast_ip), "239.255.%u.%u", (unsigned)mcast_upper, (unsigned)mcast_lower);
     if (!XcpTl_ParseIpv4String(mcast_ip, &mreq.imr_multiaddr)) {
         XcpHw_ErrorMsg("XcpTl_UpdateMulticastGroup:invalid IP", EINVAL);
+        pthread_mutex_unlock(&XcpTl_MulticastSocketMutex);
         return;
     }
     mreq.imr_interface.s_addr = INADDR_ANY;
-    setsockopt(XcpTl_Connection.multicastSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+    if (setsockopt(XcpTl_Connection.multicastSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        XcpHw_ErrorMsg("XcpTl_UpdateMulticastGroup:IP_ADD_MEMBERSHIP", errno);
+    }
+    pthread_mutex_unlock(&XcpTl_MulticastSocketMutex);
 }
 
 #else /* !XCP_ENABLE_TIME_CORRELATION */

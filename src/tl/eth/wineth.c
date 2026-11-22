@@ -26,12 +26,12 @@
 #include <stdint.h>
 // clang-format off
 #if defined(_WIN32) || defined(_WIN64)
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
     #include <mstcpip.h>
     #include <mswsock.h>
-    #include <winsock2.h>
     // #include <ntddndis.h>
     #include <iphlpapi.h>
-    #include <ws2tcpip.h>
 
 #endif
 
@@ -43,6 +43,7 @@
     #pragma comment(lib, "Iphlpapi.lib")
 #endif
 #include <memory.h>
+#include <limits.h>
 #include <process.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -487,25 +488,34 @@ static void get_interface_mac_address(DWORD if_index, XcpTl_MacAddress *mac_addr
     }
 }
 
-static bool receive_message(SOCKET socket, char *buffer, size_t buffer_size, DWORD *bytes_received, XcpTl_MacAddress *mac_address) {
-    WSAMSG   msg;
-    WSABUF   wsabuf;
-    WSABUF   control_wsabuf;
-    SOCKADDR peer_addr;
-    bool     result = false;
-    char     control_buffer[1024];
+static bool receive_message(
+    SOCKET socket, char *buffer, size_t buffer_size, DWORD *bytes_received, XcpTl_MacAddress *mac_address,
+    uint8_t source_ipv4[4]
+) {
+    WSAMSG            msg;
+    WSABUF            wsabuf;
+    WSABUF            control_wsabuf;
+    SOCKADDR_STORAGE  peer_addr;
+    bool              result = false;
+    char              control_buffer[1024];
 
     *bytes_received = 0UL;
+    ZeroMemory(source_ipv4, 4u);
+    ZeroMemory(&peer_addr, sizeof(peer_addr));
+
+    if (buffer_size > (size_t)ULONG_MAX) {
+        return false;
+    }
 
     control_wsabuf.len = sizeof(control_buffer);
     control_wsabuf.buf = control_buffer;
 
-    wsabuf.len = buffer_size;
+    wsabuf.len = (ULONG)buffer_size;
     wsabuf.buf = buffer;
 
     memset(&msg, 0, sizeof(msg));
-    msg.name          = &peer_addr;
-    msg.namelen       = ADDR_LEN;
+    msg.name          = (LPSOCKADDR)&peer_addr;
+    msg.namelen       = (INT)sizeof(peer_addr);
     msg.lpBuffers     = &wsabuf;
     msg.dwBufferCount = 1;
     msg.Control.len   = control_wsabuf.len;
@@ -524,6 +534,10 @@ static bool receive_message(SOCKET socket, char *buffer, size_t buffer_size, DWO
             }
             break;
         }
+        if (peer_addr.ss_family == AF_INET) {
+            const SOCKADDR_IN *peer4 = (const SOCKADDR_IN *)&peer_addr;
+            memcpy(source_ipv4, &peer4->sin_addr.S_un.S_addr, 4u);
+        }
         DWORD dwInterface;
         if (GetBestInterfaceEx((struct sockaddr *)&peer_addr, &dwInterface) == NO_ERROR) {
             printf("Best interface index for peer: %u\n", (unsigned)dwInterface);
@@ -540,6 +554,7 @@ static bool receive_message(SOCKET socket, char *buffer, size_t buffer_size, DWO
 unsigned __stdcall XcpTl_MulticastThread(void *param) {
     char             buffer[1024];
     XcpTl_MacAddress mac_address;
+    uint8_t          source_ipv4[4];
     DWORD            bytes_received = 0UL;
 
     for (;;) {
@@ -570,13 +585,17 @@ unsigned __stdcall XcpTl_MulticastThread(void *param) {
         }
 
         if ((XcpTl_Connection.discoverySocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.discoverySocket, &rfds)) {
-            if (receive_message(XcpTl_Connection.discoverySocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
-                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
+            if (receive_message(
+                    XcpTl_Connection.discoverySocket, buffer, sizeof(buffer), &bytes_received, &mac_address, source_ipv4
+                )) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4);
             }
         }
         if ((XcpTl_Connection.multicastSocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
-            if (receive_message(XcpTl_Connection.multicastSocket, buffer, sizeof(buffer), &bytes_received, &mac_address)) {
-                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address);
+            if (receive_message(
+                    XcpTl_Connection.multicastSocket, buffer, sizeof(buffer), &bytes_received, &mac_address, source_ipv4
+                )) {
+                XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4);
             }
         }
     }

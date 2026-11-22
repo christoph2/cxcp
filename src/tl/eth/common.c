@@ -264,12 +264,19 @@ void XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *p
     free(frame);
 }
 
-bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const XcpTl_MacAddress *mac_address) {
+bool XcpTl_HandleTransportMulticastPacket(
+    const uint8_t *buf, size_t n, const XcpTl_MacAddress *mac_address, const uint8_t source_ipv4[4]
+) {
     uint8_t sub;
     uint8_t payload[256] = { 0 };
     uint8_t idx          = 0;
+    uint16_t declared_len;
 
-    if (n < 9) {
+    if ((buf == NULL) || (mac_address == NULL) || (n < (XCP_ETH_HEADER_SIZE + 2u)) || (n > XCP_COMM_BUFLEN)) {
+        return false;
+    }
+    declared_len = XCP_MAKEWORD(buf[1], buf[0]);
+    if ((size_t)declared_len != (n - XCP_ETH_HEADER_SIZE)) {
         return false;
     }
     if (buf[4] != (uint8_t)0xF2) {
@@ -278,9 +285,9 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const Xc
 
     sub = buf[5];
 
-	if (((sub == (uint8_t)0xFF) || (sub == (uint8_t)0xFD)) && (n < 12)) {
-		return false;
-	}
+    if (((sub == (uint8_t)0xFF) || (sub == (uint8_t)0xFD)) && (n < 12u)) {
+        return false;
+    }
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     if (sub == (uint8_t)0xFA) {
@@ -300,6 +307,11 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const Xc
         uint8_t  offset   = (uint8_t)XCP_MIN(Xcp_GetId0.len, MAX_IDENTIFIER_LEN);
         uint8_t  ip[4];
 
+        if ((source_ipv4 == NULL) || (resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) ||
+            (buf[8] != source_ipv4[0]) || (buf[9] != source_ipv4[1]) || (buf[10] != source_ipv4[2]) ||
+            (buf[11] != source_ipv4[3])) {
+            return false;
+        }
         (void)snprintf(
             resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]
         );
@@ -332,6 +344,11 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const Xc
         uint8_t  ip[4];
         uint8_t  offset = (uint8_t)XCP_MIN(Xcp_GetId0.len, MAX_IDENTIFIER_LEN);
 
+        if ((source_ipv4 == NULL) || (resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) ||
+            (buf[8] != source_ipv4[0]) || (buf[9] != source_ipv4[1]) || (buf[10] != source_ipv4[2]) ||
+            (buf[11] != source_ipv4[3])) {
+            return false;
+        }
         (void)snprintf(
             resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]
         );
@@ -375,11 +392,15 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const Xc
         uint16_t resp_port;
         char     resp_ip[32];
 
-        if (n < 31u) {
+        if ((n < 31u) || (source_ipv4 == NULL)) {
             return false;
         }
 
         resp_port = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
+        if ((resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) || (buf[8] == 0u) ||
+            (buf[8] >= 224u)) {
+            return false;
+        }
 
         /* Verify that the command targets this slave by matching MAC address (buf[25..30]) */
     #if defined(__APPLE__) || defined(_WIN32) || defined(__unix__) || defined(__linux) || defined(__linux__) || defined(linux) ||  \
@@ -396,7 +417,8 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const Xc
         }
     #endif
         (void)snprintf(
-            resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]
+            resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)source_ipv4[0], (unsigned)source_ipv4[1],
+            (unsigned)source_ipv4[2], (unsigned)source_ipv4[3]
         );
 
         DBG_TRACE("SET_SLAVE_IP_ADDRESS [response-address: %s:%d]\n", resp_ip, resp_port);
@@ -490,16 +512,16 @@ static int XcpTl_ReadData(uint8_t *data, uint16_t len, size_t datagram_len) {
     int       nbytes          = 0;
     socklen_t from_len        = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
 
-	if (len == 0U) {
-		return 1;
-	}
+    if (len == 0U) {
+        return 1;
+    }
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             /* For UDP, the data is already in the buffer. */
-			if (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)len)) {
-				return -2;
-			}
+            if (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)len)) {
+                return -2;
+            }
             XcpUtl_MemCopy(data, XcpTl_RxBuffer + XCP_ETH_HEADER_SIZE, len);
             nbytes = len;
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
@@ -520,7 +542,7 @@ static int XcpTl_ReadData(uint8_t *data, uint16_t len, size_t datagram_len) {
 static int XcpTl_ReceiveFrom(void) {
     socklen_t from_len = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
     int       nbytes   = recvfrom(
-		XcpTl_Connection.boundSocket, (char *)XcpTl_RxBuffer, (int)sizeof(XcpTl_RxBuffer), 0,
+        XcpTl_Connection.boundSocket, (char *)XcpTl_RxBuffer, (int)sizeof(XcpTl_RxBuffer), 0,
         (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
     );
 #if defined(ESP_PLATFORM)
@@ -539,28 +561,28 @@ void XcpTl_RxHandler(void) {
     int      res;
     uint16_t dlc     = 0U;
     uint16_t counter = 0U;
-	size_t   datagram_len = 0U;
+    size_t   datagram_len = 0U;
 
     /* Avoid unnecessary buffer clearing; we read directly into destination. */
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             res = XcpTl_ReceiveFrom();
-			if (res < 0) {
-				XcpTl_ReleaseConnection();
-				return;
-			}
-			if (res == 0) {
-				if (XcpThrd_IsShuttingDown()) {
-					XcpTl_ReleaseConnection();
-					return;
-				}
-				continue;
-			}
-			datagram_len = (size_t)res;
-			if ((datagram_len < XCP_ETH_HEADER_SIZE) || (datagram_len > XCP_COMM_BUFLEN)) {
-				continue;
-			}
+            if (res < 0) {
+                XcpTl_ReleaseConnection();
+                return;
+            }
+            if (res == 0) {
+                if (XcpThrd_IsShuttingDown()) {
+                    XcpTl_ReleaseConnection();
+                    return;
+                }
+                continue;
+            }
+            datagram_len = (size_t)res;
+            if ((datagram_len <= XCP_ETH_HEADER_SIZE) || (datagram_len > XCP_COMM_BUFLEN)) {
+                continue;
+            }
 		} else {
 			datagram_len = 0U;
 		}
@@ -583,18 +605,23 @@ void XcpTl_RxHandler(void) {
         }
 
         /* DLC-Sanity-Check. */
-		if ((dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) || (((size_t)dlc + (size_t)XCP_ETH_HEADER_SIZE) > XCP_COMM_BUFLEN)) {
-			if (XcpTl_Connection.socketType == SOCK_DGRAM) {
-				continue;
-			}
+        if (dlc == 0u) {
+            continue;
+        }
+        if ((dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) ||
+            (((size_t)dlc + (size_t)XCP_ETH_HEADER_SIZE) > XCP_COMM_BUFLEN)) {
+            if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+                continue;
+            }
             XcpHw_ErrorMsg("XcpTl_RxHandler: DLC too large", EINVAL);
             XcpTl_ReleaseConnection();
             return;
         }
 
-		if ((XcpTl_Connection.socketType == SOCK_DGRAM) && (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)dlc))) {
-			continue;
-		}
+        if ((XcpTl_Connection.socketType == SOCK_DGRAM) &&
+            (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)dlc))) {
+            continue;
+        }
 
         /* For UDP: learn peer address on first packet so replies go back via sendto(). */
         if ((XcpTl_Connection.socketType == SOCK_DGRAM) && (!XcpTl_Connection.connected)) {
@@ -604,10 +631,10 @@ void XcpTl_RxHandler(void) {
         if (!XcpThrd_IsShuttingDown()) {
             Xcp_CtoIn.len = dlc;
             /* Read payload directly into target buffer to avoid an extra copy. */
-			res = XcpTl_ReadData(Xcp_CtoIn.data, dlc, datagram_len);
-			if (res == -2) {
-				continue;
-			}
+            res = XcpTl_ReadData(Xcp_CtoIn.data, dlc, datagram_len);
+            if (res == -2) {
+                continue;
+            }
             if (res == -1) {
 #if defined(_WIN32)
                 XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
