@@ -62,9 +62,9 @@ void XcpTl_PrintBtDetails(void);
 
 static void XcpTl_Accept(void);
 
-static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter);
+static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter, size_t datagram_len);
 
-static int XcpTl_ReadData(uint8_t *data, uint16_t len);
+static int XcpTl_ReadData(uint8_t *data, uint16_t len, size_t datagram_len);
 
 static int XcpTl_ReceiveFrom(void);
 
@@ -74,7 +74,7 @@ static char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size);
 
 XcpTl_ConnectionType XcpTl_Connection;
 
-static uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN];
+static uint8_t XcpTl_RxBuffer[XCP_COMM_BUFLEN + 1U];
 
 #if defined(ESP_PLATFORM)
 static const char *XcpTl_EspTag            = "xcp-eth-rx";
@@ -278,6 +278,10 @@ bool XcpTl_HandleTransportMulticastPacket(const uint8_t *buf, size_t n, const Xc
 
     sub = buf[5];
 
+	if (((sub == (uint8_t)0xFF) || (sub == (uint8_t)0xFD)) && (n < 12)) {
+		return false;
+	}
+
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     if (sub == (uint8_t)0xFA) {
         /* GET_DAQ_CLOCK_MULTICAST */
@@ -444,7 +448,7 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
+static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter, size_t datagram_len) {
     uint8_t   header_buffer[8];
     uint8_t   bytes_remaining = XCP_ETH_HEADER_SIZE;
     uint8_t   offset          = 0;
@@ -454,6 +458,9 @@ static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             /* For UDP, the header is already in the buffer. */
+			if (datagram_len < XCP_ETH_HEADER_SIZE) {
+				return -2;
+			}
             XcpUtl_MemCopy(header_buffer, XcpTl_RxBuffer, XCP_ETH_HEADER_SIZE);
             nbytes = XCP_ETH_HEADER_SIZE;
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
@@ -477,15 +484,22 @@ static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter) {
     return 1;
 }
 
-static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
+static int XcpTl_ReadData(uint8_t *data, uint16_t len, size_t datagram_len) {
     uint16_t  bytes_remaining = len;
     uint16_t  offset          = 0;
     int       nbytes          = 0;
     socklen_t from_len        = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
 
+	if (len == 0U) {
+		return 1;
+	}
+
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             /* For UDP, the data is already in the buffer. */
+			if (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)len)) {
+				return -2;
+			}
             XcpUtl_MemCopy(data, XcpTl_RxBuffer + XCP_ETH_HEADER_SIZE, len);
             nbytes = len;
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
@@ -506,7 +520,7 @@ static int XcpTl_ReadData(uint8_t *data, uint16_t len) {
 static int XcpTl_ReceiveFrom(void) {
     socklen_t from_len = (socklen_t)sizeof(XcpTl_Connection.currentAddress);
     int       nbytes   = recvfrom(
-        XcpTl_Connection.boundSocket, (char *)XcpTl_RxBuffer, (int)XCP_COMM_BUFLEN, 0,
+		XcpTl_Connection.boundSocket, (char *)XcpTl_RxBuffer, (int)sizeof(XcpTl_RxBuffer), 0,
         (struct sockaddr *)&XcpTl_Connection.currentAddress, &from_len
     );
 #if defined(ESP_PLATFORM)
@@ -525,19 +539,36 @@ void XcpTl_RxHandler(void) {
     int      res;
     uint16_t dlc     = 0U;
     uint16_t counter = 0U;
+	size_t   datagram_len = 0U;
 
     /* Avoid unnecessary buffer clearing; we read directly into destination. */
 
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             res = XcpTl_ReceiveFrom();
-            if (res <= 0) {
-                XcpTl_ReleaseConnection();
-                return;
-            }
-        }
+			if (res < 0) {
+				XcpTl_ReleaseConnection();
+				return;
+			}
+			if (res == 0) {
+				if (XcpThrd_IsShuttingDown()) {
+					XcpTl_ReleaseConnection();
+					return;
+				}
+				continue;
+			}
+			datagram_len = (size_t)res;
+			if ((datagram_len < XCP_ETH_HEADER_SIZE) || (datagram_len > XCP_COMM_BUFLEN)) {
+				continue;
+			}
+		} else {
+			datagram_len = 0U;
+		}
 
-        res = XcpTl_ReadHeader(&dlc, &counter);
+		res = XcpTl_ReadHeader(&dlc, &counter, datagram_len);
+		if (res == -2) {
+			continue;
+		}
         if (res == -1) {
 #if defined(_WIN32)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", WSAGetLastError());
@@ -552,11 +583,18 @@ void XcpTl_RxHandler(void) {
         }
 
         /* DLC-Sanity-Check. */
-        if (dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE || dlc > (uint16_t)XCP_COMM_BUFLEN) {
+		if ((dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) || (((size_t)dlc + (size_t)XCP_ETH_HEADER_SIZE) > XCP_COMM_BUFLEN)) {
+			if (XcpTl_Connection.socketType == SOCK_DGRAM) {
+				continue;
+			}
             XcpHw_ErrorMsg("XcpTl_RxHandler: DLC too large", EINVAL);
             XcpTl_ReleaseConnection();
             return;
         }
+
+		if ((XcpTl_Connection.socketType == SOCK_DGRAM) && (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)dlc))) {
+			continue;
+		}
 
         /* For UDP: learn peer address on first packet so replies go back via sendto(). */
         if ((XcpTl_Connection.socketType == SOCK_DGRAM) && (!XcpTl_Connection.connected)) {
@@ -566,7 +604,10 @@ void XcpTl_RxHandler(void) {
         if (!XcpThrd_IsShuttingDown()) {
             Xcp_CtoIn.len = dlc;
             /* Read payload directly into target buffer to avoid an extra copy. */
-            res = XcpTl_ReadData(Xcp_CtoIn.data, dlc);
+			res = XcpTl_ReadData(Xcp_CtoIn.data, dlc, datagram_len);
+			if (res == -2) {
+				continue;
+			}
             if (res == -1) {
 #if defined(_WIN32)
                 XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadData()", WSAGetLastError());
