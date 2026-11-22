@@ -229,7 +229,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
-            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
+            if ((XcpTl_Receiver.Dlc == 0u) || (XcpTl_Receiver.Dlc > XCP_MAX_CTO)) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
                 XCP_TL_LEAVE_CRITICAL();
@@ -330,7 +330,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         if (XcpTl_Receiver.Index == 0x01) {
             /* DLC and CTR/FILL received */
             XcpTl_Receiver.Dlc       = XcpTl_Receiver.Buffer[0];
-            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
+            if ((XcpTl_Receiver.Dlc == 0u) || (XcpTl_Receiver.Dlc > XCP_MAX_CTO)) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
                 XCP_TL_LEAVE_CRITICAL();
@@ -431,7 +431,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
             XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
-            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
+            if ((XcpTl_Receiver.Dlc == 0u) || (XcpTl_Receiver.Dlc > XCP_MAX_CTO)) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
                 XCP_TL_LEAVE_CRITICAL();
@@ -531,7 +531,7 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         if (XcpTl_Receiver.Index == 0x03) {
             /* Wait for 4 header bytes (LEN+CTR/FILL) */
             XcpTl_Receiver.Dlc = XCP_SXI_MAKEWORD(XcpTl_Receiver.Buffer, 0x00);
-            if (XcpTl_Receiver.Dlc > XCP_MAX_CTO) {
+            if ((XcpTl_Receiver.Dlc == 0u) || (XcpTl_Receiver.Dlc > XCP_MAX_CTO)) {
                 XcpTl_ResetSM();
                 XcpTl_TimeoutStop();
                 XCP_TL_LEAVE_CRITICAL();
