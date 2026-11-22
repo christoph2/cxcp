@@ -489,15 +489,14 @@ static void get_interface_mac_address(DWORD if_index, XcpTl_MacAddress *mac_addr
 }
 
 static bool receive_message(
-    SOCKET socket, char *buffer, size_t buffer_size, DWORD *bytes_received, XcpTl_MacAddress *mac_address,
-    uint8_t source_ipv4[4]
+    SOCKET socket, char *buffer, size_t buffer_size, DWORD *bytes_received, XcpTl_MacAddress *mac_address, uint8_t source_ipv4[4]
 ) {
-    WSAMSG            msg;
-    WSABUF            wsabuf;
-    WSABUF            control_wsabuf;
-    SOCKADDR_STORAGE  peer_addr;
-    bool              result = false;
-    char              control_buffer[1024];
+    WSAMSG           msg;
+    WSABUF           wsabuf;
+    WSABUF           control_wsabuf;
+    SOCKADDR_STORAGE peer_addr;
+    bool             result = false;
+    char             control_buffer[1024];
 
     *bytes_received = 0UL;
     ZeroMemory(source_ipv4, 4u);

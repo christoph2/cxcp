@@ -739,13 +739,12 @@ void XcpDaq_TriggerEvent(uint8_t eventChannelNumber) {
     if (listState->packed_mode != XCP_DAQ_PACKED_MODE_NOT_PACKED) {
         XcpDaq_EventType const *eventConfig = XcpDaq_GetEventConfiguration(eventChannelNumber);
 
-#if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_OFF
+    #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_OFF
         XcpDaq_ResetPackedCollection(listState);
         return;
-#endif
+    #endif
         if ((eventConfig == XCP_NULL) || ((eventConfig->properties & XCP_DAQ_EVENT_CHANNEL_PACKED) == UINT8(0)) ||
-            (eventConfig->cycle == UINT8(0)) ||
-            ((listState->mode & XCP_DAQ_LIST_MODE_TIMESTAMP) != XCP_DAQ_LIST_MODE_TIMESTAMP)) {
+            (eventConfig->cycle == UINT8(0)) || ((listState->mode & XCP_DAQ_LIST_MODE_TIMESTAMP) != XCP_DAQ_LIST_MODE_TIMESTAMP)) {
             XcpDaq_ResetPackedCollection(listState);
             return;
         }
@@ -974,8 +973,8 @@ XCP_STATIC bool XcpDaq_StorePackedSample(
 ) {
     XcpDaq_ODTIntegerType      odtIdx;
     XcpDaq_ODTEntryIntegerType entryIdx;
-    uint32_t                    storageOffset = 0U;
-    uint32_t                    capacity      = (uint32_t)sizeof(listState->packed_buffer);
+    uint32_t                   storageOffset = 0U;
+    uint32_t                   capacity      = (uint32_t)sizeof(listState->packed_buffer);
 
     for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < listConf->numOdts; ++odtIdx) {
         XcpDaq_ODTType const *odt = XcpDaq_GetOdt(daqListNumber, odtIdx);
@@ -984,8 +983,8 @@ XCP_STATIC bool XcpDaq_StorePackedSample(
             return XCP_FALSE;
         }
         for (entryIdx = (XcpDaq_ODTEntryIntegerType)0; entryIdx < odt->numOdtEntries; ++entryIdx) {
-            XcpDaq_ODTEntryType entry = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
-            uint32_t entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
+            XcpDaq_ODTEntryType entry            = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
+            uint32_t            entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
             uint32_t sampleOffset = storageOffset + (uint32_t)entry.length * (uint32_t)listState->packed_samples_collected;
 
             if ((entry.length == UINT8(0)) || (listState->packed_sample_count == UINT16(0)) ||
@@ -1012,36 +1011,35 @@ XCP_STATIC bool XcpDaq_SendPackedDtos(
 ) {
     XcpDaq_ODTIntegerType      odtIdx;
     XcpDaq_ODTEntryIntegerType entryIdx;
-    uint32_t                    odtStorageOffset = 0U;
-    uint32_t                    capacity         = (uint32_t)sizeof(listState->packed_buffer);
+    uint32_t                   odtStorageOffset = 0U;
+    uint32_t                   capacity         = (uint32_t)sizeof(listState->packed_buffer);
 
     /* Validate every DTO before queueing anything. A packed DAQ list is only
      * valid if all of its ODT DTOs contain the configured sample count. */
     for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < listConf->numOdts; ++odtIdx) {
-        XcpDaq_ODTType const *odt = XcpDaq_GetOdt(daqListNumber, odtIdx);
+        XcpDaq_ODTType const *odt            = XcpDaq_GetOdt(daqListNumber, odtIdx);
         uint32_t              odtStorageSize = 0U;
-        uint16_t              dtoOverhead = UINT16(0);
+        uint16_t              dtoOverhead    = UINT16(0);
 
         if (odt == XCP_NULL) {
             return XCP_FALSE;
         }
-#if !((XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN))
+    #if !((XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN))
         dtoOverhead += UINT16(1);
-#endif
-#if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
+    #endif
+    #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
         if ((odtIdx == (XcpDaq_ODTIntegerType)0) && (insertTimestamp == XCP_TRUE)) {
             dtoOverhead += XCP_DAQ_TIMESTAMP_SIZE;
         }
-#endif
+    #endif
         if (dtoOverhead > UINT16(XCP_MAX_DTO)) {
             return XCP_FALSE;
         }
         for (entryIdx = (XcpDaq_ODTEntryIntegerType)0; entryIdx < odt->numOdtEntries; ++entryIdx) {
-            XcpDaq_ODTEntryType entry = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
-            uint32_t entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
+            XcpDaq_ODTEntryType entry            = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
+            uint32_t            entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
 
-            if ((entry.length == UINT8(0)) || (odtStorageOffset > capacity) ||
-                (odtStorageSize > (capacity - odtStorageOffset)) ||
+            if ((entry.length == UINT8(0)) || (odtStorageOffset > capacity) || (odtStorageSize > (capacity - odtStorageOffset)) ||
                 (entryStorageSize > (capacity - odtStorageOffset - odtStorageSize)) ||
                 (entryStorageSize > (uint32_t)(UINT16(XCP_MAX_DTO) - dtoOverhead))) {
                 return XCP_FALSE;
@@ -1056,24 +1054,24 @@ XCP_STATIC bool XcpDaq_SendPackedDtos(
     odtStorageOffset = 0U;
 
     for (odtIdx = (XcpDaq_ODTIntegerType)0; odtIdx < listConf->numOdts; ++odtIdx) {
-        XcpDaq_ODTType const *odt = XcpDaq_GetOdt(daqListNumber, odtIdx);
-        uint8_t               data[XCP_MAX_DTO] = { 0 };
-        uint16_t              offset = UINT16(0);
-        uint32_t              odtStorageSize = 0U;
+        XcpDaq_ODTType const *odt                = XcpDaq_GetOdt(daqListNumber, odtIdx);
+        uint8_t               data[XCP_MAX_DTO]  = { 0 };
+        uint16_t              offset             = UINT16(0);
+        uint32_t              odtStorageSize     = 0U;
         uint32_t              entryStorageOffset = odtStorageOffset;
         uint16_t              sampleIdx;
 
         if (odt == XCP_NULL) {
             return XCP_FALSE;
         }
-#if !((XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN))
+    #if !((XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN))
         data[offset++] = (uint8_t)(firstPid + odtIdx);
-#endif
-#if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
+    #endif
+    #if XCP_DAQ_ENABLE_TIMESTAMPING == XCP_ON
         if ((odtIdx == (XcpDaq_ODTIntegerType)0) && (insertTimestamp == XCP_TRUE)) {
-            uint32_t dtoTimestamp = (listState->packed_ts_mode == XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE)
-                                        ? listState->packed_first_timestamp
-                                        : timestamp;
+            uint32_t dtoTimestamp = (listState->packed_ts_mode == XCP_DAQ_PACKED_TIMESTAMP_FIRST_SAMPLE) ?
+                                        listState->packed_first_timestamp :
+                                        timestamp;
 
             if ((uint16_t)(offset + XCP_DAQ_TIMESTAMP_SIZE) > UINT16(XCP_MAX_DTO)) {
                 return XCP_FALSE;
@@ -1081,14 +1079,14 @@ XCP_STATIC bool XcpDaq_SendPackedDtos(
             XcpDaq_CopyMemory(&data[offset], &dtoTimestamp, XCP_DAQ_TIMESTAMP_SIZE);
             offset += XCP_DAQ_TIMESTAMP_SIZE;
         }
-#else
+    #else
         (void)timestamp;
         (void)insertTimestamp;
-#endif
+    #endif
         if ((listState->packed_mode == XCP_DAQ_PACKED_MODE_ELEMENT_GROUPED)) {
             for (entryIdx = (XcpDaq_ODTEntryIntegerType)0; entryIdx < odt->numOdtEntries; ++entryIdx) {
-                XcpDaq_ODTEntryType entry = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
-                uint32_t entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
+                XcpDaq_ODTEntryType entry            = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
+                uint32_t            entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
 
                 if ((entryStorageSize > (capacity - entryStorageOffset)) ||
                     (entryStorageSize > (uint32_t)(UINT16(XCP_MAX_DTO) - offset))) {
@@ -1103,11 +1101,12 @@ XCP_STATIC bool XcpDaq_SendPackedDtos(
             for (sampleIdx = UINT16(0); sampleIdx < listState->packed_sample_count; ++sampleIdx) {
                 entryStorageOffset = odtStorageOffset;
                 for (entryIdx = (XcpDaq_ODTEntryIntegerType)0; entryIdx < odt->numOdtEntries; ++entryIdx) {
-                    XcpDaq_ODTEntryType entry = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
-                    uint32_t entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
-                    uint32_t sampleOffset = entryStorageOffset + (uint32_t)entry.length * (uint32_t)sampleIdx;
+                    XcpDaq_ODTEntryType entry            = XcpDaq_GetOdtEntryValues(daqListNumber, odtIdx, entryIdx);
+                    uint32_t            entryStorageSize = (uint32_t)entry.length * (uint32_t)listState->packed_sample_count;
+                    uint32_t            sampleOffset     = entryStorageOffset + (uint32_t)entry.length * (uint32_t)sampleIdx;
 
-                    if ((entryStorageSize > (capacity - entryStorageOffset)) || ((uint32_t)entry.length > (capacity - sampleOffset)) ||
+                    if ((entryStorageSize > (capacity - entryStorageOffset)) ||
+                        ((uint32_t)entry.length > (capacity - sampleOffset)) ||
                         ((uint16_t)entry.length > (uint16_t)(UINT16(XCP_MAX_DTO) - offset))) {
                         return XCP_FALSE;
                     }
@@ -1118,11 +1117,11 @@ XCP_STATIC bool XcpDaq_SendPackedDtos(
                 }
             }
         }
-#if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
+    #if (XCP_DAQ_ENABLE_PID_OFF == XCP_ON) && (XCP_TRANSPORT_LAYER == XCP_ON_CAN)
         (void)XcpDaq_QueueEnqueue(offset, data, (uint32_t)XCP_DAQ_CAN_ID_BASE + (uint32_t)(firstPid + odtIdx));
-#else
+    #else
         (void)XcpDaq_QueueEnqueue(offset, data);
-#endif
+    #endif
         odtStorageOffset += odtStorageSize;
     }
     return XCP_TRUE;

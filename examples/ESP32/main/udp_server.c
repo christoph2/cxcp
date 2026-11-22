@@ -1,14 +1,13 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include "app_config.h"
 #include "esp_err.h"
 #include "esp_event.h"
 #include "esp_netif.h"
-#include "nvs_flash.h"
 #include "esp_task_wdt.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "nvs_flash.h"
 #include "protocol_examples_common.h"
 #include "xcp.h"
-#include "app_config.h"
 
 Xcp_OptionsType Xcp_Options = {
 #if defined(CONFIG_EXAMPLE_IPV6)
@@ -16,7 +15,7 @@ Xcp_OptionsType Xcp_Options = {
 #else
     .ipv6 = false,
 #endif
-    .tcp = false,
+    .tcp  = false,
     .port = (uint16_t)XCP_ON_ETHERNET_PORT,
 };
 
@@ -34,9 +33,9 @@ void app_main(void) {
 
     {
         esp_task_wdt_config_t wdt_config = {
-            .timeout_ms = 10000,
+            .timeout_ms     = 10000,
             .idle_core_mask = 0,
-            .trigger_panic = true,
+            .trigger_panic  = true,
         };
         esp_err_t wdt_err = esp_task_wdt_deinit();
 

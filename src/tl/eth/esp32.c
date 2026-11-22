@@ -482,9 +482,7 @@ static void *XcpTl_MulticastThread(void *param) {
 
                 XcpUtl_MemCopy(&mac_address, &XcpTl_LocalMacAddress, sizeof(mac_address));
 
-                (void)XcpTl_HandleTransportMulticastPacket(
-                    (const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4
-                );
+                (void)XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4);
             }
         }
         if ((XcpTl_Connection.multicastSocket != INVALID_SOCKET) && FD_ISSET(XcpTl_Connection.multicastSocket, &rfds)) {
@@ -502,9 +500,7 @@ static void *XcpTl_MulticastThread(void *param) {
                     memcpy(source_ipv4, &peer4->sin_addr.s_addr, sizeof(source_ipv4));
                 }
                 XcpUtl_MemCopy(&mac_address, &XcpTl_LocalMacAddress, sizeof(mac_address));
-                (void)XcpTl_HandleTransportMulticastPacket(
-                    (const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4
-                );
+                (void)XcpTl_HandleTransportMulticastPacket((const uint8_t *)buffer, bytes_received, &mac_address, source_ipv4);
             }
         }
     }

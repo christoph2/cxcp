@@ -267,9 +267,9 @@ void XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *p
 bool XcpTl_HandleTransportMulticastPacket(
     const uint8_t *buf, size_t n, const XcpTl_MacAddress *mac_address, const uint8_t source_ipv4[4]
 ) {
-    uint8_t sub;
-    uint8_t payload[256] = { 0 };
-    uint8_t idx          = 0;
+    uint8_t  sub;
+    uint8_t  payload[256] = { 0 };
+    uint8_t  idx          = 0;
     uint16_t declared_len;
 
     if ((buf == NULL) || (mac_address == NULL) || (n < (XCP_ETH_HEADER_SIZE + 2u)) || (n > XCP_COMM_BUFLEN)) {
@@ -397,8 +397,7 @@ bool XcpTl_HandleTransportMulticastPacket(
         }
 
         resp_port = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
-        if ((resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) || (buf[8] == 0u) ||
-            (buf[8] >= 224u)) {
+        if ((resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) || (buf[8] == 0u) || (buf[8] >= 224u)) {
             return false;
         }
 
@@ -417,8 +416,8 @@ bool XcpTl_HandleTransportMulticastPacket(
         }
     #endif
         (void)snprintf(
-            resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)source_ipv4[0], (unsigned)source_ipv4[1],
-            (unsigned)source_ipv4[2], (unsigned)source_ipv4[3]
+            resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)source_ipv4[0], (unsigned)source_ipv4[1], (unsigned)source_ipv4[2],
+            (unsigned)source_ipv4[3]
         );
 
         DBG_TRACE("SET_SLAVE_IP_ADDRESS [response-address: %s:%d]\n", resp_ip, resp_port);
@@ -480,9 +479,9 @@ static int XcpTl_ReadHeader(uint16_t *len, uint16_t *counter, size_t datagram_le
     XCP_FOREVER {
         if (XcpTl_Connection.socketType == SOCK_DGRAM) {
             /* For UDP, the header is already in the buffer. */
-			if (datagram_len < XCP_ETH_HEADER_SIZE) {
-				return -2;
-			}
+            if (datagram_len < XCP_ETH_HEADER_SIZE) {
+                return -2;
+            }
             XcpUtl_MemCopy(header_buffer, XcpTl_RxBuffer, XCP_ETH_HEADER_SIZE);
             nbytes = XCP_ETH_HEADER_SIZE;
         } else if (XcpTl_Connection.socketType == SOCK_STREAM) {
@@ -559,8 +558,8 @@ static int XcpTl_ReceiveFrom(void) {
 
 void XcpTl_RxHandler(void) {
     int      res;
-    uint16_t dlc     = 0U;
-    uint16_t counter = 0U;
+    uint16_t dlc          = 0U;
+    uint16_t counter      = 0U;
     size_t   datagram_len = 0U;
 
     /* Avoid unnecessary buffer clearing; we read directly into destination. */
@@ -583,14 +582,14 @@ void XcpTl_RxHandler(void) {
             if ((datagram_len <= XCP_ETH_HEADER_SIZE) || (datagram_len > XCP_COMM_BUFLEN)) {
                 continue;
             }
-		} else {
-			datagram_len = 0U;
-		}
+        } else {
+            datagram_len = 0U;
+        }
 
-		res = XcpTl_ReadHeader(&dlc, &counter, datagram_len);
-		if (res == -2) {
-			continue;
-		}
+        res = XcpTl_ReadHeader(&dlc, &counter, datagram_len);
+        if (res == -2) {
+            continue;
+        }
         if (res == -1) {
 #if defined(_WIN32)
             XcpHw_ErrorMsg("XcpTl_RxHandler:XcpTl_ReadHeader()", WSAGetLastError());
@@ -608,8 +607,7 @@ void XcpTl_RxHandler(void) {
         if (dlc == 0u) {
             continue;
         }
-        if ((dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) ||
-            (((size_t)dlc + (size_t)XCP_ETH_HEADER_SIZE) > XCP_COMM_BUFLEN)) {
+        if ((dlc > XCP_TRANSPORT_LAYER_CTO_BUFFER_SIZE) || (((size_t)dlc + (size_t)XCP_ETH_HEADER_SIZE) > XCP_COMM_BUFLEN)) {
             if (XcpTl_Connection.socketType == SOCK_DGRAM) {
                 continue;
             }
@@ -618,8 +616,7 @@ void XcpTl_RxHandler(void) {
             return;
         }
 
-        if ((XcpTl_Connection.socketType == SOCK_DGRAM) &&
-            (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)dlc))) {
+        if ((XcpTl_Connection.socketType == SOCK_DGRAM) && (datagram_len != ((size_t)XCP_ETH_HEADER_SIZE + (size_t)dlc))) {
             continue;
         }
 

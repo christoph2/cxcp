@@ -45,10 +45,10 @@
 static void *XcpTl_MulticastThread(void *param);
 
 #if (XCP_ENABLE_ETH_DISCOVERY == XCP_ON) || (defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON))
-static pthread_t     XcpTl_MulticastThreadHandle;
-static int           XcpTl_MulticastWakePipe[2] = { -1, -1 };
-static bool          XcpTl_MulticastThreadStarted;
-static atomic_bool   XcpTl_MulticastStopRequested = ATOMIC_VAR_INIT(false);
+static pthread_t   XcpTl_MulticastThreadHandle;
+static int         XcpTl_MulticastWakePipe[2] = { -1, -1 };
+static bool        XcpTl_MulticastThreadStarted;
+static atomic_bool XcpTl_MulticastStopRequested = ATOMIC_VAR_INIT(false);
 #endif
 static pthread_mutex_t XcpTl_MulticastSocketMutex = PTHREAD_MUTEX_INITIALIZER;
 static bool            XcpTl_Initialized;
@@ -109,11 +109,11 @@ void XcpTl_Init(void) {
         }
     }
     XcpUtl_ZeroMem(&XcpTl_Connection, sizeof(XcpTl_ConnectionType));
-    XcpTl_Connection.boundSocket      = -1;
-    XcpTl_Connection.connectedSocket  = -1;
-    XcpTl_Connection.discoverySocket  = -1;
-    XcpTl_Connection.multicastSocket  = -1;
-    XcpTl_Initialized                 = true;
+    XcpTl_Connection.boundSocket     = -1;
+    XcpTl_Connection.connectedSocket = -1;
+    XcpTl_Connection.discoverySocket = -1;
+    XcpTl_Connection.multicastSocket = -1;
+    XcpTl_Initialized                = true;
     memset(&hints, 0, sizeof(hints));
     XcpTl_Connection.socketType = Xcp_Options.tcp ? SOCK_STREAM : SOCK_DGRAM;
     (void)snprintf(port, sizeof(port), "%d", Xcp_Options.port);
@@ -391,8 +391,7 @@ static void get_interface_mac_address(int if_index, XcpTl_MacAddress *mac_addres
 }
 
 bool receive_message(
-    int socket, char *buffer, size_t buffer_size, uint32_t *bytes_received, XcpTl_MacAddress *mac_address,
-    uint8_t source_ipv4[4]
+    int socket, char *buffer, size_t buffer_size, uint32_t *bytes_received, XcpTl_MacAddress *mac_address, uint8_t source_ipv4[4]
 ) {
     struct msghdr      msg;
     struct iovec       iov[1];
@@ -460,7 +459,7 @@ static void *XcpTl_MulticastThread(void *param) {
     fds[0].events  = POLLIN;
     fds[0].revents = 0;
     if (XcpTl_Connection.discoverySocket >= 0) {
-        discovery_index = fds_count;
+        discovery_index        = fds_count;
         fds[fds_count].fd      = XcpTl_Connection.discoverySocket;
         fds[fds_count].events  = POLLIN;
         fds[fds_count].revents = 0;
@@ -468,7 +467,7 @@ static void *XcpTl_MulticastThread(void *param) {
         has_discovery = true;
     }
     if (XcpTl_Connection.multicastSocket >= 0) {
-        multicast_index = fds_count;
+        multicast_index        = fds_count;
         fds[fds_count].fd      = XcpTl_Connection.multicastSocket;
         fds[fds_count].events  = POLLIN;
         fds[fds_count].revents = 0;
@@ -477,7 +476,7 @@ static void *XcpTl_MulticastThread(void *param) {
     }
 
     while (!atomic_load(&XcpTl_MulticastStopRequested)) {
-        int ready;
+        int    ready;
         nfds_t idx;
 
         for (idx = 0u; idx < fds_count; ++idx) {

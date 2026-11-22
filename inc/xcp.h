@@ -1167,7 +1167,7 @@ extern "C" {
         uint16_t packed_fill;              /* required storage size for the current collection */
         uint16_t packed_samples_collected; /* number of complete event samples collected       */
         uint32_t packed_first_timestamp;   /* timestamp of sample zero                          */
-        #endif                                                    /* XCP_DAQ_ENABLE_PACKED_MODE */
+        #endif                             /* XCP_DAQ_ENABLE_PACKED_MODE */
     } XcpDaq_DynamicListType;
 
     typedef struct tagXcpDaq_ListConfigurationType {
@@ -1190,7 +1190,7 @@ extern "C" {
         uint16_t packed_fill;              /* required storage size for the current collection */
         uint16_t packed_samples_collected; /* number of complete event samples collected       */
         uint32_t packed_first_timestamp;   /* timestamp of sample zero                          */
-        #endif                    /* XCP_DAQ_ENABLE_PACKED_MODE */
+        #endif                             /* XCP_DAQ_ENABLE_PACKED_MODE */
     } XcpDaq_ListStateType;
 
     typedef enum tagXcpDaq_EntityKindType {

@@ -34,7 +34,7 @@
 /*
 **  General Options.
 */
-    //#define TP_CAN
+// #define TP_CAN
 
     #define TP_SXI
     // #define TP_ETHER

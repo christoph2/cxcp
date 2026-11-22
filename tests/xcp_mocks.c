@@ -12,11 +12,11 @@ uint32_t voltage2;
 uint32_t voltage3;
 uint32_t voltage4;
 // Measurements.
-uint16_t triangle_wave;
-uint8_t  sq0_wave;
-uint8_t  sq1_wave;
-float    sine_wave;
-uint32_t end_marker;
+uint16_t       triangle_wave;
+uint8_t        sq0_wave;
+uint8_t        sq1_wave;
+float          sine_wave;
+uint32_t       end_marker;
 static uint8_t cxcp_test_memory[64];
 
 static uint8_t  last_send[256];

@@ -17,7 +17,7 @@
 
 #include "xcp.h"
 
-void XcpTl_ResetLastSend(void);
+void     XcpTl_ResetLastSend(void);
 uint16_t XcpTl_GetLastSend(uint8_t *buf, uint16_t max_len);
 
 bool XcpHw_SetCalPage(uint8_t segment, uint8_t page, uint8_t mode) {
@@ -58,63 +58,64 @@ static void test_constants(void) {
 }
 
 static int last_response_is_error(uint8_t error_code) {
-	uint8_t  response[256] = { 0 };
-	uint16_t response_len  = XcpTl_GetLastSend(response, (uint16_t)sizeof(response));
-	size_t   payload_offset = XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
+    uint8_t  response[256]  = { 0 };
+    uint16_t response_len   = XcpTl_GetLastSend(response, (uint16_t)sizeof(response));
+    size_t   payload_offset = XCP_TRANSPORT_LAYER_BUFFER_OFFSET;
 
-	return (response_len >= (payload_offset + 2U)) && (response[payload_offset] == XCP_PACKET_IDENTIFIER_ERR) &&
-	       (response[payload_offset + 1U] == error_code);
+    return (response_len >= (payload_offset + 2U)) && (response[payload_offset] == XCP_PACKET_IDENTIFIER_ERR) &&
+           (response[payload_offset + 1U] == error_code);
 }
 
 static void test_dispatch_rejects_malformed_ctos(void) {
-	uint8_t     connect[]        = { XCP_CONNECT, 0x00 };
-	uint8_t     empty_request    = 0;
-	uint8_t     truncated_mta[]  = { XCP_SET_MTA };
-	Xcp_PduType pdu              = { (uint16_t)sizeof(connect), connect };
+    uint8_t     connect[]       = { XCP_CONNECT, 0x00 };
+    uint8_t     empty_request   = 0;
+    uint8_t     truncated_mta[] = { XCP_SET_MTA };
+    Xcp_PduType pdu             = { (uint16_t)sizeof(connect), connect };
 
-	Xcp_Init();
-	Xcp_DispatchCommand(&pdu);
+    Xcp_Init();
+    Xcp_DispatchCommand(&pdu);
 
-	XcpTl_ResetLastSend();
-	pdu.len  = 0;
-	pdu.data = &empty_request;
-	Xcp_DispatchCommand(&pdu);
-	run_test("dispatch rejects an empty CTO", last_response_is_error((uint8_t)ERR_CMD_SYNTAX));
+    XcpTl_ResetLastSend();
+    pdu.len  = 0;
+    pdu.data = &empty_request;
+    Xcp_DispatchCommand(&pdu);
+    run_test("dispatch rejects an empty CTO", last_response_is_error((uint8_t)ERR_CMD_SYNTAX));
 
-	XcpTl_ResetLastSend();
-	pdu.len  = (uint16_t)sizeof(truncated_mta);
-	pdu.data = truncated_mta;
-	Xcp_DispatchCommand(&pdu);
-	run_test("dispatch rejects a truncated SET_MTA", last_response_is_error((uint8_t)ERR_CMD_SYNTAX));
+    XcpTl_ResetLastSend();
+    pdu.len  = (uint16_t)sizeof(truncated_mta);
+    pdu.data = truncated_mta;
+    Xcp_DispatchCommand(&pdu);
+    run_test("dispatch rejects a truncated SET_MTA", last_response_is_error((uint8_t)ERR_CMD_SYNTAX));
 }
 
 static void test_dispatch_rejects_truncated_variable_ctos(void) {
-	static const struct {
-		uint16_t    length;
-		uint8_t     data[8];
-		char const *name;
-	} cases[] = {
-		{ 2, { XCP_GET_SEED, 0 }, "dispatch rejects a truncated GET_SEED" },
-		{ 3, { XCP_DOWNLOAD, 2, 0xAA }, "dispatch rejects a truncated DOWNLOAD payload" },
-		{ 8, { XCP_SHORT_DOWNLOAD, 1, 0, 0, 0, 0, 0, 0 }, "dispatch rejects a truncated SHORT_DOWNLOAD payload" },
-		{ 1, { XCP_DOWNLOAD_MAX }, "dispatch rejects a truncated DOWNLOAD_MAX" },
-		{ 2, { XCP_TRANSPORT_LAYER_CMD, 0xFA }, "dispatch rejects a truncated transport-layer command" },
-		{ 2, { WRITE_DAQ_MULTIPLE, 1 }, "dispatch rejects a truncated WRITE_DAQ_MULTIPLE" },
-		{ 2, { XCP_LEVEL1_COMMAND, XCP_SET_DAQ_PACKED_MODE }, "dispatch rejects a truncated level-1 command" },
-	};
-	uint8_t     connect[] = { XCP_CONNECT, 0x00 };
-	Xcp_PduType pdu       = { (uint16_t)sizeof(connect), connect };
+    static const struct {
+        uint16_t    length;
+        uint8_t     data[8];
+        char const *name;
+    } cases[] = {
+        { 2, { XCP_GET_SEED, 0 },                             "dispatch rejects a truncated GET_SEED"                },
+        { 3, { XCP_DOWNLOAD, 2, 0xAA },                       "dispatch rejects a truncated DOWNLOAD payload"        },
+        { 8, { XCP_SHORT_DOWNLOAD, 1, 0, 0, 0, 0, 0, 0 },     "dispatch rejects a truncated SHORT_DOWNLOAD payload"  },
+        { 1, { XCP_DOWNLOAD_MAX },                            "dispatch rejects a truncated DOWNLOAD_MAX"            },
+        { 2, { XCP_TRANSPORT_LAYER_CMD, 0xFA },               "dispatch rejects a truncated transport-layer command" },
+        { 2, { WRITE_DAQ_MULTIPLE, 1 },                       "dispatch rejects a truncated WRITE_DAQ_MULTIPLE"      },
+        { 2, { XCP_LEVEL1_COMMAND, XCP_SET_DAQ_PACKED_MODE }, "dispatch rejects a truncated level-1 command"         },
+    };
 
-	Xcp_Init();
-	Xcp_DispatchCommand(&pdu);
+    uint8_t     connect[] = { XCP_CONNECT, 0x00 };
+    Xcp_PduType pdu       = { (uint16_t)sizeof(connect), connect };
 
-	for (size_t idx = 0; idx < (sizeof(cases) / sizeof(cases[0])); ++idx) {
-		XcpTl_ResetLastSend();
-		pdu.len  = cases[idx].length;
-		pdu.data = (uint8_t *)cases[idx].data;
-		Xcp_DispatchCommand(&pdu);
-		run_test(cases[idx].name, last_response_is_error((uint8_t)ERR_CMD_SYNTAX));
-	}
+    Xcp_Init();
+    Xcp_DispatchCommand(&pdu);
+
+    for (size_t idx = 0; idx < (sizeof(cases) / sizeof(cases[0])); ++idx) {
+        XcpTl_ResetLastSend();
+        pdu.len  = cases[idx].length;
+        pdu.data = (uint8_t *)cases[idx].data;
+        Xcp_DispatchCommand(&pdu);
+        run_test(cases[idx].name, last_response_is_error((uint8_t)ERR_CMD_SYNTAX));
+    }
 }
 
 /* ------------------------------------------------------------------ */
