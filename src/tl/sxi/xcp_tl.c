@@ -226,6 +226,14 @@ static void XcpTl_ProcessOctet(uint8_t octet) {
         XcpTl_Receiver.State = XCP_RCV_UNTIL_LENGTH;
         XcpTl_TimeoutStart();
     #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_BYTE)
+        if (octet == 0u) {
+            XcpTl_ResetSM();
+            XcpTl_TimeoutStop();
+            XCP_TL_LEAVE_CRITICAL();
+            return;
+        }
+    #endif
+    #if (XCP_ON_SXI_HEADER_FORMAT == XCP_ON_SXI_HEADER_LEN_BYTE)
     } else if (XcpTl_Receiver.State == XCP_RCV_UNTIL_LENGTH) {
         if (XcpTl_Receiver.Index == 0x01) {
             XcpTl_Receiver.Dlc = XcpTl_Receiver.Buffer[0];
