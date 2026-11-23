@@ -77,11 +77,23 @@
     /*
      ** Resource Protection.
      */
-    #define XCP_PROTECT_CAL  (XCP_OFF)
-    #define XCP_PROTECT_PAG  (XCP_ON)
-    #define XCP_PROTECT_DAQ  (XCP_OFF)
+    #if defined(TP_BLUETOOTH)
+        #define XCP_PROTECT_CAL (XCP_ON)
+    #else
+        #define XCP_PROTECT_CAL (XCP_OFF)
+    #endif
+    #define XCP_PROTECT_PAG (XCP_ON)
+    #if defined(TP_BLUETOOTH)
+        #define XCP_PROTECT_DAQ (XCP_ON)
+    #else
+        #define XCP_PROTECT_DAQ (XCP_OFF)
+    #endif
     #define XCP_PROTECT_STIM (XCP_ON)
-    #define XCP_PROTECT_PGM  (XCP_OFF)
+    #if defined(TP_BLUETOOTH)
+        #define XCP_PROTECT_PGM (XCP_ON)
+    #else
+        #define XCP_PROTECT_PGM (XCP_OFF)
+    #endif
 
     /*
      **  DAQ Settings.
@@ -248,10 +260,15 @@
     /*
      **  Customization Options.
      */
-    #define XCP_ENABLE_ADDRESS_MAPPER      (XCP_OFF)
-    #define XCP_ENABLE_CHECK_MEMORY_ACCESS (XCP_OFF)
-    #define XCP_REPLACE_STD_COPY_MEMORY    (XCP_OFF)
-    #define XCP_ENABLE_GET_ID_HOOK         (XCP_OFF)
+    #if defined(TP_BLUETOOTH)
+        #define XCP_ENABLE_ADDRESS_MAPPER      (XCP_ON)
+        #define XCP_ENABLE_CHECK_MEMORY_ACCESS (XCP_ON)
+    #else
+        #define XCP_ENABLE_ADDRESS_MAPPER      (XCP_OFF)
+        #define XCP_ENABLE_CHECK_MEMORY_ACCESS (XCP_OFF)
+    #endif
+    #define XCP_REPLACE_STD_COPY_MEMORY (XCP_OFF)
+    #define XCP_ENABLE_GET_ID_HOOK      (XCP_OFF)
 
     /*
      **

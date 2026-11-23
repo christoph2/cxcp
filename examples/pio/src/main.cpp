@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <stdint.h>
 
 #include "esp_log.h"
 #include "xcp.h"
@@ -63,6 +64,43 @@ XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(dummy), XCP_DAQ_DEFINE_MEASUREMENT_VARIABLE(
 
 unsigned long time_point;
 unsigned long elapsed_time;
+
+#if defined(TP_BLUETOOTH)
+static bool Xcp_IsAllowedMeasurementRange(Xcp_MtaType mta, uint32_t length) {
+    const uintptr_t address  = static_cast<uintptr_t>(mta.address);
+    const uintptr_t starts[] = {
+        reinterpret_cast<uintptr_t>(&dummy),    reinterpret_cast<uintptr_t>(&voltage1), reinterpret_cast<uintptr_t>(&voltage2),
+        reinterpret_cast<uintptr_t>(&voltage3), reinterpret_cast<uintptr_t>(&voltage4),
+    };
+    const size_t sizes[] = { sizeof(dummy), sizeof(voltage1), sizeof(voltage2), sizeof(voltage3), sizeof(voltage4) };
+    size_t       i;
+
+    if ((mta.ext != 0u) || (length == 0u)) {
+        return false;
+    }
+    for (i = 0u; i < (sizeof(starts) / sizeof(starts[0])); ++i) {
+        if ((address >= starts[i]) && ((address - starts[i]) < sizes[i]) &&
+            ((uintptr_t)length <= (sizes[i] - (address - starts[i])))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+extern "C" Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
+    if ((dst == nullptr) || (src == nullptr) || !Xcp_IsAllowedMeasurementRange(*src, 1u)) {
+        return XCP_MEMORY_NOT_MAPPED;
+    }
+    *dst = *src;
+    return XCP_MEMORY_MAPPED;
+}
+
+extern "C" bool Xcp_HookFunction_CheckMemoryAccess(
+    Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming
+) {
+    return !programming && (access == XCP_MEM_ACCESS_READ) && Xcp_IsAllowedMeasurementRange(mta, length);
+}
+#endif
 
 enum WaveformType {
     SINE,
@@ -133,7 +171,7 @@ auto wg2 = WaveformGenerator(SINE, 1.0f, 100.0f, amplitiude_value(AMPLITUDE_SCAL
 auto wg3 = WaveformGenerator(TRIANGLE, 0.5f, 100.0f, amplitiude_value(AMPLITUDE_SCALE, -6.0F));
 auto wg4 = WaveformGenerator(SAWTOOTH, 0.5f, 100.0f, amplitiude_value(AMPLITUDE_SCALE, -6.0F), -90.0);
 
-static int serial_vprintf(const char* fmt, va_list args) {
+static int serial_vprintf(const char *fmt, va_list args) {
     // Serial must already be initialized
     return vprintf(fmt, args);  // vprintf verwendet das systemweite printf-Backend
 }
