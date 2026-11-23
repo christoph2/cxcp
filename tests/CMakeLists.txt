@@ -82,7 +82,7 @@ configure_test_target(cxcp)
 if (BUILD_TESTING)
     add_executable(test_eth_discovery test_eth_discovery.c)
     target_include_directories(test_eth_discovery PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_config
+        ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../inc
         ${CMAKE_CURRENT_SOURCE_DIR}/../src/tl/eth
     )
@@ -97,11 +97,17 @@ if (BUILD_TESTING)
             ../src/tl/sxi/xcp_tl.c
         )
         target_include_directories(${target_name} PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/test_sxi_config
+            ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/../inc
         )
         target_compile_definitions(${target_name} PRIVATE
             XCP_SXI_TEST_HEADER_FORMAT=${header_format}
+            XCP_TRANSPORT_LAYER=XCP_ON_SXI
+            XCP_ON_SXI_HEADER_FORMAT=${header_format}
+            XCP_ON_SXI_TAIL_CHECKSUM=0
+            XCP_ON_SXI_ENABLE_FRAMING=XCP_OFF
+            XCP_ON_SXI_SYNC_CHAR=0xAA
+            XCP_ON_SXI_ESC_CHAR=0xAB
             XCP_ENABLE_EXTERN_C_GUARDS=XCP_OFF
             XCP_BUILD_TESTS=1
         )
@@ -118,7 +124,7 @@ if (BUILD_TESTING)
             ../src/tl/eth/linuxeth.c
         )
         target_include_directories(test_linuxeth_lifecycle PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/test_config
+            ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/../inc
         )
         target_compile_definitions(test_linuxeth_lifecycle PRIVATE XCP_BUILD_TESTS=1 _GNU_SOURCE)

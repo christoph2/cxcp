@@ -38,9 +38,9 @@
 #endif
 
 /*!!! START-INCLUDE-SECTION !!!*/
+#include "discovery_validation.h"
 #include "xcp.h"
 #include "xcp_eth.h"
-#include "discovery_validation.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
@@ -372,8 +372,7 @@ bool XcpTl_HandleTransportMulticastPacket(
         char     resp_ip[32];
 
         resp_port = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
-        if ((resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) || (buf[8] == 0u) ||
-            (buf[8] >= 224u)) {
+        if ((resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) || (buf[8] == 0u) || (buf[8] >= 224u)) {
             return false;
         }
 
