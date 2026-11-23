@@ -37,7 +37,9 @@
 */
 #define TP_ETHER
 
-#define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
+#if !defined(XCP_TRANSPORT_LAYER)
+    #define XCP_TRANSPORT_LAYER XCP_ON_ETHERNET
+#endif
 
 #define XCP_GET_ID_0 "BlueParrot XCP running on Windows"
 #define XCP_GET_ID_1 "Example_Project"

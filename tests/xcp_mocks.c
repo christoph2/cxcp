@@ -150,3 +150,8 @@ char *cxcp_test_data_start() {
 char *cxcp_test_data_end() {
     return (char *)(cxcp_test_memory + sizeof(cxcp_test_memory));
 }
+
+Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
+    *dst = *src;
+    return XCP_MEMORY_MAPPED;
+}
