@@ -85,7 +85,7 @@
 #define XCP_PROTECT_PAG  XCP_ON
 #define XCP_PROTECT_DAQ  XCP_ON
 #define XCP_PROTECT_STIM XCP_ON
-#define XCP_PROTECT_PGM  XCP_OFF
+#define XCP_PROTECT_PGM  XCP_ON
 
 /*
 **  DAQ Settings.
