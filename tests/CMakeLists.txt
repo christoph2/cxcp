@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20...3.30)
 project(cxcp_tests LANGUAGES C CXX)
+include(CTest)
 
 if (POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
@@ -77,3 +78,56 @@ pybind11_add_module(cxcp
 target_include_directories(cxcp PRIVATE ${EXTENSION_INCS})
 target_compile_definitions(cxcp PRIVATE XCP_BUILD_TYPE=XCP_DEBUG_BUILD XCP_BUILD_TESTS=1)
 configure_test_target(cxcp)
+
+if (BUILD_TESTING)
+    add_executable(test_eth_discovery test_eth_discovery.c)
+    target_include_directories(test_eth_discovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_config
+        ${CMAKE_CURRENT_SOURCE_DIR}/../inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/tl/eth
+    )
+    target_compile_definitions(test_eth_discovery PRIVATE XCP_BUILD_TESTS=1)
+    configure_test_target(test_eth_discovery)
+    add_test(NAME eth_discovery_validation COMMAND test_eth_discovery)
+
+    foreach (header_format RANGE 1 6)
+        set(target_name test_sxi_header_${header_format})
+        add_executable(${target_name}
+            test_sxi.c
+            ../src/tl/sxi/xcp_tl.c
+        )
+        target_include_directories(${target_name} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/test_sxi_config
+            ${CMAKE_CURRENT_SOURCE_DIR}/../inc
+        )
+        target_compile_definitions(${target_name} PRIVATE
+            XCP_SXI_TEST_HEADER_FORMAT=${header_format}
+            XCP_ENABLE_EXTERN_C_GUARDS=XCP_OFF
+            XCP_BUILD_TESTS=1
+        )
+        configure_test_target(${target_name})
+        if (NOT MSVC)
+            target_compile_options(${target_name} PRIVATE -Wno-error=unused-function)
+        endif ()
+        add_test(NAME sxi_zero_length_header_${header_format} COMMAND ${target_name})
+    endforeach ()
+
+    if (UNIX AND NOT APPLE)
+        add_executable(test_linuxeth_lifecycle
+            test_eth_lifecycle.c
+            ../src/tl/eth/linuxeth.c
+        )
+        target_include_directories(test_linuxeth_lifecycle PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/test_config
+            ${CMAKE_CURRENT_SOURCE_DIR}/../inc
+        )
+        target_compile_definitions(test_linuxeth_lifecycle PRIVATE XCP_BUILD_TESTS=1 _GNU_SOURCE)
+        target_compile_options(test_linuxeth_lifecycle PRIVATE -ffunction-sections -fdata-sections)
+        target_link_options(test_linuxeth_lifecycle PRIVATE -Wl,--gc-sections)
+        target_link_libraries(test_linuxeth_lifecycle PRIVATE pthread)
+        configure_test_target(test_linuxeth_lifecycle)
+        target_compile_options(test_linuxeth_lifecycle PRIVATE -Wno-error=unused-function)
+        add_test(NAME linuxeth_multicast_thread_lifecycle COMMAND test_linuxeth_lifecycle)
+        set_tests_properties(linuxeth_multicast_thread_lifecycle PROPERTIES TIMEOUT 10 SKIP_RETURN_CODE 77)
+    endif ()
+endif ()
