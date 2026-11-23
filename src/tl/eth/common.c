@@ -40,6 +40,7 @@
 /*!!! START-INCLUDE-SECTION !!!*/
 #include "xcp.h"
 #include "xcp_eth.h"
+#include "discovery_validation.h"
 /*!!! END-INCLUDE-SECTION !!!*/
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
@@ -267,27 +268,15 @@ void XcpTl_SendUdpResponse(const char *mcast_ip, uint16_t port, uint8_t const *p
 bool XcpTl_HandleTransportMulticastPacket(
     const uint8_t *buf, size_t n, const XcpTl_MacAddress *mac_address, const uint8_t source_ipv4[4]
 ) {
-    uint8_t  sub;
-    uint8_t  payload[256] = { 0 };
-    uint8_t  idx          = 0;
-    uint16_t declared_len;
+    uint8_t sub;
+    uint8_t payload[256] = { 0 };
+    uint8_t idx          = 0;
 
-    if ((buf == NULL) || (mac_address == NULL) || (n < (XCP_ETH_HEADER_SIZE + 2u)) || (n > XCP_COMM_BUFLEN)) {
-        return false;
-    }
-    declared_len = XCP_MAKEWORD(buf[1], buf[0]);
-    if ((size_t)declared_len != (n - XCP_ETH_HEADER_SIZE)) {
-        return false;
-    }
-    if (buf[4] != (uint8_t)0xF2) {
+    if ((mac_address == NULL) || !XcpTl_ValidateDiscoveryPacket(buf, n, source_ipv4)) {
         return false;
     }
 
     sub = buf[5];
-
-    if (((sub == (uint8_t)0xFF) || (sub == (uint8_t)0xFD)) && (n < 12u)) {
-        return false;
-    }
 
 #if defined(XCP_ENABLE_TIME_CORRELATION) && (XCP_ENABLE_TIME_CORRELATION == XCP_ON)
     if (sub == (uint8_t)0xFA) {
@@ -307,11 +296,6 @@ bool XcpTl_HandleTransportMulticastPacket(
         uint8_t  offset   = (uint8_t)XCP_MIN(Xcp_GetId0.len, MAX_IDENTIFIER_LEN);
         uint8_t  ip[4];
 
-        if ((source_ipv4 == NULL) || (resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) ||
-            (buf[8] != source_ipv4[0]) || (buf[9] != source_ipv4[1]) || (buf[10] != source_ipv4[2]) ||
-            (buf[11] != source_ipv4[3])) {
-            return false;
-        }
         (void)snprintf(
             resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]
         );
@@ -344,11 +328,6 @@ bool XcpTl_HandleTransportMulticastPacket(
         uint8_t  ip[4];
         uint8_t  offset = (uint8_t)XCP_MIN(Xcp_GetId0.len, MAX_IDENTIFIER_LEN);
 
-        if ((source_ipv4 == NULL) || (resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) ||
-            (buf[8] != source_ipv4[0]) || (buf[9] != source_ipv4[1]) || (buf[10] != source_ipv4[2]) ||
-            (buf[11] != source_ipv4[3])) {
-            return false;
-        }
         (void)snprintf(
             resp_ip, sizeof(resp_ip), "%u.%u.%u.%u", (unsigned)buf[8], (unsigned)buf[9], (unsigned)buf[10], (unsigned)buf[11]
         );
@@ -392,12 +371,9 @@ bool XcpTl_HandleTransportMulticastPacket(
         uint16_t resp_port;
         char     resp_ip[32];
 
-        if ((n < 31u) || (source_ipv4 == NULL)) {
-            return false;
-        }
-
         resp_port = (uint16_t)((uint16_t)buf[6] | ((uint16_t)buf[7] << 8u));
-        if ((resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) || (buf[8] == 0u) || (buf[8] >= 224u)) {
+        if ((resp_port == 0u) || (source_ipv4[0] == 0u) || (source_ipv4[0] >= 224u) || (buf[8] == 0u) ||
+            (buf[8] >= 224u)) {
             return false;
         }
 
