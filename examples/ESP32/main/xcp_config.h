@@ -213,17 +213,17 @@
     #define XCP_ENABLE_GET_SEED           (XCP_ON)
     #define XCP_ENABLE_UNLOCK             (XCP_ON)
     #define XCP_ENABLE_SET_MTA            (XCP_ON)
-    #define XCP_ENABLE_UPLOAD             (XCP_ON)
-    #define XCP_ENABLE_SHORT_UPLOAD       (XCP_ON)
-    #define XCP_ENABLE_BUILD_CHECKSUM     (XCP_ON)
+    #define XCP_ENABLE_UPLOAD             (XCP_OFF)
+    #define XCP_ENABLE_SHORT_UPLOAD       (XCP_OFF)
+    #define XCP_ENABLE_BUILD_CHECKSUM     (XCP_OFF)
     #define XCP_ENABLE_USER_CMD           (XCP_OFF)
 
     #define XCP_ENABLE_CAL_COMMANDS (XCP_ON)
 
     #define XCP_ENABLE_DOWNLOAD_NEXT  (XCP_OFF)
-    #define XCP_ENABLE_DOWNLOAD_MAX   (XCP_ON)
-    #define XCP_ENABLE_SHORT_DOWNLOAD (XCP_ON)
-    #define XCP_ENABLE_MODIFY_BITS    (XCP_ON)
+    #define XCP_ENABLE_DOWNLOAD_MAX   (XCP_OFF)
+    #define XCP_ENABLE_SHORT_DOWNLOAD (XCP_OFF)
+    #define XCP_ENABLE_MODIFY_BITS    (XCP_OFF)
 
     #define XCP_ENABLE_PAG_COMMANDS (XCP_OFF)
 
@@ -248,7 +248,7 @@
     #define XCP_ENABLE_ALLOC_ODT_ENTRY         (XCP_ON)
     #define XCP_ENABLE_WRITE_DAQ_MULTIPLE      (XCP_OFF)
 
-    #define XCP_ENABLE_PGM_COMMANDS (XCP_ON)
+    #define XCP_ENABLE_PGM_COMMANDS (XCP_OFF)
 
     #define XCP_ENABLE_GET_PGM_PROCESSOR_INFO (XCP_ON)
     #define XCP_ENABLE_GET_SECTOR_INFO        (XCP_ON)
