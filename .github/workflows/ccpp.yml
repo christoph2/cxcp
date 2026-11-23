@@ -42,3 +42,62 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: tests
         run: python -m pytest -svv --hypothesis-show-statistics
+      - name: Run transport regression tests
+        run: ctest --test-dir tests/build -C Debug --output-on-failure
+
+  esp32:
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [esp32doit-devkit-v1, esp32doit-devkit-v1-bth]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PlatformIO
+        run: python -m pip install platformio
+      - name: Build ESP32 configuration
+        run: pio run -d examples/pio -e ${{ matrix.environment }}
+
+  pico:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-sdk
+          ref: 2.1.1
+          path: pico-sdk
+          submodules: recursive
+      - name: Install Pico toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+      - name: Configure Pico example
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+        run: cmake -S examples/debug_on_pico -B build/debug_on_pico -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build Pico example
+        run: cmake --build build/debug_on_pico --parallel 2
+
+  clang-tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install clang-tidy and pre-commit
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang-tidy
+          python -m pip install pre-commit
+      - name: Generate compile database
+        run: cmake -S examples/xcpsim -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug
+      - name: Run clang-tidy
+        run: |
+          pre-commit run clang-tidy --files \
+            src/xcp.c src/xcp_checksum.c src/xcp_daq.c src/xcp_util.c \
+            src/tl/eth/common.c src/tl/eth/linuxeth.c

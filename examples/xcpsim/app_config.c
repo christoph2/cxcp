@@ -1,5 +1,3 @@
-
-
 #include "app_config.h"
 
 #include <assert.h>
@@ -124,7 +122,9 @@ bool Xcp_HookFunction_Unlock(uint8_t resource, Xcp_1DArrayType const *key) {
     return XcpUtl_MemCmp(&unlock_key, key->data, 4);
 }
 
-bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming) {
+#if 0
+bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access,
+                                        bool programming) {
     XCP_UNREFERENCED_PARAMETER(programming);
 
     FlsEmu_ConfigType const *config = FlsEmu_GetConfig();
@@ -139,8 +139,8 @@ bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_Me
 
     for (uint8_t idx = 0U; idx < config->numSegments; ++idx) {
         FlsEmu_SegmentType const *segment = config->segments[idx];
-        uint64_t                  offset;
-        uint64_t                  segmentSize;
+        uint64_t offset;
+        uint64_t segmentSize;
 
         if (segment == XCP_NULL) {
             continue;
@@ -159,22 +159,41 @@ bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_Me
             continue;
         }
 
-        offset      = (uint64_t)(mta.address - segment->baseAddress);
+        offset = (uint64_t) (mta.address - segment->baseAddress);
         segmentSize = (segment->type == FLSEMU_RAM) ? segment->memSize : segment->pageSize;
-        if ((offset < segmentSize) && ((uint64_t)length <= (segmentSize - offset))) {
+        if ((offset < segmentSize) && ((uint64_t) length <= (segmentSize - offset))) {
             return XCP_TRUE;
         }
     }
 
     return XCP_FALSE;
 }
+#endif
+
+bool Xcp_HookFunction_CheckMemoryAccess(Xcp_MtaType mta, uint32_t length, Xcp_MemoryAccessType access, bool programming) {
+    XCP_UNREFERENCED_PARAMETER(mta);
+    XCP_UNREFERENCED_PARAMETER(length);
+    XCP_UNREFERENCED_PARAMETER(access);
+    XCP_UNREFERENCED_PARAMETER(programming);
+
+    return XCP_TRUE;
+}
 
 Xcp_MemoryMappingResultType Xcp_HookFunction_AddressMapper(Xcp_MtaType *dst, Xcp_MtaType const *src) {
-    if (!FlsEmu_Initialized()) {
-        return XCP_MEMORY_NOT_MAPPED;
+    Xcp_MemoryMappingResultType result = FlsEmu_MemoryMapper(dst, src);
+
+    if (result != XCP_MEMORY_NOT_MAPPED) {
+        return result;
     }
 
-    return FlsEmu_MemoryMapper(dst, src);
+    /*
+     * Fallback: identity mapping for addresses outside FlsEmu segments.
+     * On a native host process (Linux/Windows) virtual addresses are real addresses,
+     * so string literals in .rodata and other non-emulated memory can be accessed directly.
+     */
+    dst->address = src->address;
+    dst->ext     = src->ext;
+    return XCP_MEMORY_MAPPED;
 }
 
 /*
@@ -199,8 +218,8 @@ bool Xcp_HookFunction_GetId(uint8_t id_type, uint8_t **result, uint32_t *result_
         }
         *result        = (uint8_t *)&get_id_result[0];
         *result_length = (uint32_t)(strlen(get_id_result) - 1); /* Get rid of trailing '\n'. */
-        return XCP_TRUE;
-    } else {
         return XCP_FALSE;
     }
+
+    return XCP_TRUE;
 }
