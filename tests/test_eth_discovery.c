@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "discovery_validation.h"
+#include "../src/tl/eth/discovery_validation.h"
 
 static void make_packet(uint8_t *packet, size_t packet_size, uint8_t subcommand, const uint8_t source_ipv4[4]) {
     const size_t payload_size = packet_size - XCP_ETH_HEADER_SIZE;
