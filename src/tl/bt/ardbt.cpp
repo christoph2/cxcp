@@ -170,7 +170,7 @@ void XcpTl_Init(void) {
         DBG_PRINT("XcpTl_Init: BluetoothSerial.begin failed\n");
         return;
     }
-    if ((XCP_ON_BTH_PIN[0] != '\0') && !XcpBt_Serial.setPin(XCP_ON_BTH_PIN, (uint8_t)strlen(XCP_ON_BTH_PIN))) {
+    if ((XCP_ON_BTH_PIN[0] != '\0') && !XcpBt_Serial.setPin(XCP_ON_BTH_PIN)) {
         DBG_PRINT("XcpTl_Init: BluetoothSerial.setPin failed\n");
     }
     #elif XCP_ON_BTH_ACTIVE_DRIVER == XCP_ON_BTH_DRIVER_ARDUINO_BLE
